@@ -7,7 +7,7 @@ const STAGES = {
   bytes: ['Bytes', '--dim'], decode: ['Decode', '--pink'], text: ['Text', '--blue'], sentences: ['Statements', '--ink2'],
   names: ['Names', '--acc'], figures: ['Figures', '--amber'], dates: ['Dates', '--date'], frame: ['Frame', '--green'],
   canon: ['Identity', '--acc2'], junk: ['Keep or set aside', '--mut'], echo: ['Echoes', '--blue'], store: ['Store', '--mut'],
-  holograph: ['Holograph', '--acc'], null: ['Null', '--amber'], paradigm: ['Paradigm', '--pink'],
+  holograph: ['Holograph', '--acc'], null: ['Null', '--amber'], fort: ['Fort', '--amber'], paradigm: ['Paradigm', '--pink'],
 };
 const REAL_SPEEDS = [[1, '1×'], [0.1, '1/10×'], [0.01, '1/100×'], [0.001, '1/1,000×'], [1e-4, '1/10,000×'], [1e-5, '1/100,000×']];
 const STEP_SPEEDS = [[2, '2 events/s'], [8, '8 events/s'], [30, '30 events/s'], [120, '120 events/s'], [600, '600 events/s']];
@@ -65,7 +65,7 @@ const CSS = `
 
 
 // Replay state is a pure fold of the trace: the same events 0..k always give the same picture, whichever way the playhead came.
-const fresh = () => ({ nodes: new Map(), edges: new Map(), marks: new Map(), paradigm: '', echo: new Map() });
+const fresh = () => ({ nodes: new Map(), edges: new Map(), marks: new Map(), paradigm: '', echo: new Map(), odd: new Map() });
 const node = (S, n) => S.nodes.get(n) || (S.nodes.set(n, { n, c: 0, st: 'cand', mine: false }), S.nodes.get(n));
 const ek = (a, b) => a < b ? a + '\u0001' + b : b + '\u0001' + a;
 const mark = (S, e, cls) => { if (e.doc == null || e.s == null) return; (S.marks.get(e.doc) || (S.marks.set(e.doc, []), S.marks.get(e.doc))).push({ s: e.s, e: e.e, cls }); };
@@ -80,16 +80,17 @@ function apply(S, e) {
   else if (e.kind === 'admit') { (e.ns || []).forEach(n => { const x = node(S, n); if (x.st !== 'prior' || !x.mine) x.mine = true; x.st = 'fold'; x.c++; });
     (e.pairs || []).forEach(([a, b]) => { const key = ek(a, b); const E = S.edges.get(key) || { a, b, c: 0, neg: false, mine: true }; E.c++; E.mine = true; if (e.neg) E.neg = true; S.edges.set(key, E); }); }
   else if (e.kind === 'pair') S.echo.set(e.id, (S.echo.get(e.id) || []).concat(e));
+  else if (e.stage === 'fort' && e.standing) S.odd.set(e.name, e.standing);
   else if (e.stage === 'paradigm') S.paradigm = e.kind === 'group' ? 'Paradigm “' + e.label + '” · ' + e.n + ' sources' : 'No paradigm';
 }
 export function foldTrace(T, k = T.ev.length - 1) { const S = fresh(); for (let i = 0; i <= k; i++) apply(S, T.ev[i]); return S; }
 
 let styled = false, current = null;
-export function open(T) {
+export function open(T, opt = {}) {
   if (current) current.close();
   if (!styled) { const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st); styled = true; }
   const chip = document.querySelector('.hdp-chip'); if (chip) chip.remove();
-  current = mount(T);
+  current = mount(T, opt);
 }
 export function chipFor(T) {
   document.querySelectorAll('.hdp-chip').forEach(c => c.remove());
@@ -97,7 +98,7 @@ export function chipFor(T) {
   b.onclick = () => open(T); document.body.appendChild(b);
 }
 
-function mount(T) {
+function mount(T, opt = {}) {
   const ev = T.ev, N = ev.length, css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#888';
   const docs = new Map((T.docs || []).map(d => [d.id, d]));
   const root = document.createElement('div'); root.className = 'hdp'; root.setAttribute('role', 'dialog'); root.setAttribute('aria-label', 'Replay of how this was read');
@@ -109,7 +110,7 @@ function mount(T) {
       <div class="hdp-log" style="grid-template-rows:1fr auto"><div class="hdp-rows" tabindex="0"><div class="hdp-sz"></div></div><div class="hdp-now"></div></div>
       <div class="hdp-right"><div class="hdp-lens"></div>
         <div class="hdp-graph"><canvas></canvas><div class="hdp-par"></div>
-          <div class="hdp-key"><span><i style="background:var(--acc)"></i>folded from what you added</span><span><i style="background:var(--blue)"></i>already in the picture</span><span><i style="border:1.5px solid var(--dim)"></i>found, not yet admitted</span><span><i style="background:var(--bad)"></i>bond negated in what you added</span></div></div></div>
+          <div class="hdp-key"><span><i style="background:var(--acc)"></i>folded from what you added</span><span><i style="background:var(--blue)"></i>already in the picture</span><span><i style="border:1.5px solid var(--dim)"></i>found, not yet admitted</span><span><i style="background:var(--bad)"></i>bond negated in what you added</span><span><i style="border:2px solid var(--amber)"></i>odd: Fort raised it and it stands</span></div></div></div>
     </div>
     <div class="hdp-bar"><div class="hdp-rib" title="Drag to scrub"><canvas></canvas></div>
       <div class="hdp-ctl">
@@ -179,7 +180,7 @@ function mount(T) {
 
   // ---------- holograph (canvas, persistent positions so rewinding keeps the layout) ----------
   const P = new Map(); let W = 0, H = 0, dpr = 1, col = {};
-  const readCols = () => { col = { acc: css('--acc'), blue: css('--blue'), dim: css('--dim'), ink: css('--ink'), ink2: css('--ink2'), bad: css('--bad'), edge: css('--edge'), line2: css('--line2'), bg: css('--bg') }; };
+  const readCols = () => { col = { acc: css('--acc'), blue: css('--blue'), dim: css('--dim'), ink: css('--ink'), ink2: css('--ink2'), bad: css('--bad'), amber: css('--amber'), edge: css('--edge'), line2: css('--line2'), bg: css('--bg') }; };
   function size() { const r = gc.getBoundingClientRect(); dpr = window.devicePixelRatio || 1; W = r.width; H = r.height; gc.width = W * dpr; gc.height = H * dpr; const q = rc.getBoundingClientRect(); rc.width = q.width * dpr; rc.height = q.height * dpr; drawRibbon(); }
   const nearOf = (S, n) => { let sx = 0, sy = 0, c = 0; S.edges.forEach(E => { const o = E.a === n ? E.b : E.b === n ? E.a : null; const q = o && P.get(o); if (q) { sx += q.x; sy += q.y; c++; } }); return c ? { x: sx / c, y: sy / c } : null; };
   const posOf = (x, S) => { let p = P.get(x.n); if (!p && S && x.st !== 'cand') { const q = nearOf(S, x.n); if (q) { const u = hash(x.n) * 6.283; p = { x: q.x + Math.cos(u) * 18, y: q.y + Math.sin(u) * 18, vx: 0, vy: 0 }; P.set(x.n, p); } } if (!p) { const u = hash(x.n), v = hash(x.n + '#'); const R = Math.min(W, H) * (x.st === 'cand' ? 0.44 : 0.22); p = { x: W / 2 + Math.cos(u * 6.283) * R * (0.6 + 0.4 * v), y: H / 2 + Math.sin(u * 6.283) * R * (0.6 + 0.4 * v), vx: 0, vy: 0 }; P.set(x.n, p); } return p; };
@@ -202,6 +203,7 @@ function mount(T) {
     const big = new Set([...S.nodes.values()].filter(x => x.st === 'prior' && !x.mine).sort((a, b) => b.c - a.c).slice(0, 10).map(x => x.n));
     S.nodes.forEach(x => { const p = P.get(x.n); if (!p) return; const r = Math.min(16, 3.5 + Math.sqrt(x.c) * 2), h = hot.has(x.n);
       g.beginPath(); g.arc(p.x, p.y, r + (h ? 3 : 0), 0, 6.283);
+      const od = S.odd.get(x.n); if (od === 'stands' || od === 'contested') { g.save(); g.beginPath(); g.arc(p.x, p.y, r + 6, 0, 6.283); g.strokeStyle = col.amber; g.lineWidth = 2; g.setLineDash(od === 'contested' ? [3, 3] : []); g.stroke(); g.restore(); g.beginPath(); g.arc(p.x, p.y, r + (h ? 3 : 0), 0, 6.283); }
       if (x.st === 'cand' || x.st === 'drop') { g.globalAlpha = x.st === 'drop' ? 0.3 : 0.8; g.strokeStyle = h ? col.acc : col.dim; g.lineWidth = 1.5; g.stroke(); }
       else { g.globalAlpha = 1; g.fillStyle = x.mine ? col.acc : col.blue; g.fill(); if (h) { g.strokeStyle = col.ink; g.lineWidth = 2; g.stroke(); } }
       if (x.st === 'prior' && !x.mine && !h && !big.has(x.n)) return;
@@ -249,8 +251,8 @@ function mount(T) {
   const ro = new ResizeObserver(() => { size(); render(false); }); ro.observe(gc.parentElement);
   function close() { cancelAnimationFrame(raf); ro.disconnect(); document.removeEventListener('keydown', onKey); root.remove(); if (current && current.root === root) current = null; }
 
-  readCols(); fillSpeeds(); size(); seek(0);
-  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setDir(1);
+  readCols(); fillSpeeds(); size(); seek(opt.seek != null ? opt.seek : 0);
+  if (opt.seek == null && !matchMedia('(prefers-reduced-motion: reduce)').matches) setDir(1);
   raf = requestAnimationFrame(loop);
   return { root, close };
 }

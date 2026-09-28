@@ -140,6 +140,14 @@ select option{background:var(--s1);color:var(--ink)}
               </sc-for>
             </div>
           </sc-if>
+          <sc-if value="{{ just.hasOdd }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <sc-for list="{{ just.odd }}" as="o" hint-placeholder-count="1">
+                <div style="font:400 13px/1.45 'Hanken Grotesk';color:var(--ink2);max-width:80ch"><span style="color:var(--amber);font-weight:600">{{ o.tag }}</span> “{{ o.label }}” <span style="color:var(--dim)">· {{ o.why }}</span> <button onClick="{{ o.onInspect }}" style="all:unset;cursor:pointer;color:var(--acc);font-weight:600" style-hover="color:var(--ink)">Inspect</button></div>
+              </sc-for>
+              <sc-if value="{{ just.oddMore }}" hint-placeholder-val="{{ false }}"><button onClick="{{ just.onOddAll }}" style="all:unset;cursor:pointer;font:400 13px 'Hanken Grotesk';color:var(--dim)" style-hover="color:var(--ink)">{{ just.oddMore }}</button></sc-if>
+            </div>
+          </sc-if>
           <sc-if value="{{ just.hasNote }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--dim);max-width:75ch">{{ just.noteLine }}</span></sc-if>
           <div style="display:flex;gap:4px 18px;flex-wrap:wrap;padding-top:2px">
             <sc-if value="{{ justSeen }}" hint-placeholder-val="{{ false }}"><button onClick="{{ justKeep }}" style="all:unset;cursor:pointer;font:600 14px 'Hanken Grotesk';color:var(--acc)" style-hover="color:var(--ink)">Keep as a source</button></sc-if>
@@ -2470,7 +2478,7 @@ function analyze(corpus, htmlMap) {
   const canonOf0 = nm => {
     if (alias[nm]) return alias[nm];
     if (nm.includes(' ')) { const w = nm.split(' '); const pool = [...new Set([...(byFirst.get(w[0]) || []), ...(byLast.get(w[w.length - 1]) || [])])]; const c = pool.filter(o => nest(nm, o)).sort((x, y) => y.length - x.length); if (c.length && c.every(o => o === c[0] || nest(o, c[0])) && (rawN.get(c[0]) || 0) >= 2) return c[0]; return nm; }
-    return lastMap[nm] && lastMap[nm].size === 1 ? [...lastMap[nm]][0] : nm;
+    return lastMap[nm] && lastMap[nm].size === 1 && (rawN.get([...lastMap[nm]][0]) || 0) >= 2 ? [...lastMap[nm]][0] : nm;
   };
   const names = {}; const aliasOf = {}; Object.keys(alias).forEach(a => { (aliasOf[alias[a]] = aliasOf[alias[a]] || []).push(a); });
   sts.forEach(st => {
@@ -2773,6 +2781,7 @@ function stripHtml(s) { return s.replace(/<(script|style|head)[\s\S]*?<\/\1>/gi,
 function jsonText(s) { try { const out = []; (function walk(v, k) { if (typeof v === 'string') out.push((k && isNaN(k) ? k + ': ' : '') + v); else if (typeof v === 'number' && k && isNaN(k)) out.push(k + ': ' + v); else if (v && typeof v === 'object') Object.entries(v).forEach(([kk, vv]) => walk(vv, kk)); })(JSON.parse(s)); return out.map(x => /[.!?]$/.test(x) ? x : x + '.').join('\n'); } catch (e) { return s; } }
 function csvText(s) { const lines = s.split(/\r?\n/).filter(l => l.trim()); if (lines.length < 2) return s; const sep = lines[0].includes('\t') ? '\t' : ','; const sp = l => l.split(sep).map(x => x.replace(/^"|"$/g, '').trim()); const h = sp(lines[0]); return lines.slice(1).map(l => { const c = sp(l); return h.map((k, i) => c[i] ? k + ': ' + c[i] : '').filter(Boolean).join('; ') + '.'; }).join('\n'); }
 function loadScript(src) { return new Promise((res, rej) => { if (document.querySelector('script[src="' + src + '"]')) { const w = () => window.JSZip ? res() : setTimeout(w, 50); return w(); } const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('could not load reader')); document.head.appendChild(s); }); }
+let _hdFort = null; try { import(new URL('holodeck-fort.js', location.href).href).then(M => { _hdFort = M; }).catch(() => {}); } catch (e) {}
 let _hdMed = null; const hdMedia = () => _hdMed || (_hdMed = import(new URL('holodeck-media.js', location.href).href));
 const hdTr = (a, b, c, x) => hdT(a, b, c, x);
 // Every file comes through here. Sound, images, scores, math, sheets and unknown bytes go to holodeck-media.js; everything
@@ -3981,11 +3990,23 @@ class Component extends DCLogic {
       r.parts.forEach(p => hdT('holograph', p.kind, p.text, { ...D, name: p.name, w: p.w })); K.admit(H, st); });
     // The null: this material's own words, shuffled (seeded), through the same sentence and name finders. Name-finding is
     // driven by capitals and adjacency, so shuffled text still yields "names"; what matters is how many more real text yields.
+    const nullByDoc = {};
     T.docs.forEach(d => { const w = d.text.split(/\s+/).filter(Boolean); if (w.length < 8) return; let sd = 1; for (let i = 0; i < d.text.length; i++) sd = (sd * 31 + d.text.charCodeAt(i)) % 2147483647;
       const rec = text => { const c = new Map(); splitSentences(text).forEach(se => new Set(findNames(se.t).map(n => n.name).filter(n => /\s/.test(n))).forEach(n => c.set(n, (c.get(n) || 0) + 1))); const all = [...c.values()], tot = all.reduce((a, b) => a + b, 0); return tot ? Math.round(all.filter(v => v >= 2).reduce((a, b) => a + b, 0) / tot * 100) : 0; };
       const R = []; for (let t = 0; t < 5; t++) { const x = w.slice(); for (let i = x.length - 1; i > 0; i--) { sd = (sd * 48271) % 2147483647; const j = sd % (i + 1); [x[i], x[j]] = [x[j], x[i]]; } R.push(rec(x.join(' '))); }
       const real = rec(d.text), hi = Math.max(...R), mean = R.reduce((a, b) => a + b, 0) / R.length;
+      nullByDoc[d.id] = real > hi ? 'above' : 'chance';
       hdT('null', real > hi ? 'above' : 'chance', 'Null: share of name mentions that are repeats of a name used in another statement. The same words shuffled 5 times give ' + R.map(x => x + '%').join(', ') + '; this text gives ' + real + '%' + (real > hi ? '. Its names recur more than its own words by chance.' : '. No more recurring names than its own words shuffled, so names folded from it may be accidents of capitalisation.'), { doc: d.id, real, shuffled: R, mean }); });
+    // Archon Fort: raise what is odd, then let its swarm of ants try to falsify each oddity (holodeck-fort.js).
+    if (_hdFort) { const merges = T.ev.filter(e => e.kind === 'merge' && fresh.has(e.doc)).map(e => ({ from: e.from, to: e.to, doc: e.doc, id: e.id }));
+      const { oddities, ctx } = _hdFort.fortScan(A, { focus: fresh, nullByDoc, merges });
+      hdT('fort', 'scan', 'Archon Fort read what you added: ' + (oddities.length ? oddities.length + ' odd thing' + (oddities.length === 1 ? '' : 's') + ' raised' : 'nothing odd raised') + ' · its floor comes from ' + ctx.sample + ' statements already here (1st percentile: ' + Math.round(ctx.floor * 100) + '% of word pairs seen elsewhere)', { n: oddities.length });
+      const SAY = { stands: 'Stands: every ant that spoke says artifact. A person should look at this.', falsified: 'Falsified: the ants show it is real.', contested: 'Contested: the ants disagree; both sides are kept.', unexamined: 'Unexamined: no ant had ground to speak.' };
+      T.odd = []; oddities.forEach(o => { const at = T.ev.length; hdT('fort', 'raise', 'Fort raises “' + o.subject + '”: ' + o.why, { doc: o.doc, id: o.id, name: o.subject, kinds: o.kinds });
+        o.ants.forEach(a => hdT('fort', 'ant', 'Ant ' + a.ant + ' says ' + (a.verdict === 'silent' ? 'nothing' : a.verdict) + ': ' + a.why, { doc: o.doc, id: o.id, name: o.subject, verdict: a.verdict }));
+        hdT('fort', o.standing, SAY[o.standing], { doc: o.doc, id: o.id, name: o.subject, standing: o.standing });
+        if (o.standing === 'stands' || o.standing === 'contested') T.odd.push({ subject: o.subject, why: o.why, short: o.short || o.why, standing: o.standing, kinds: o.kinds, at }); }); }
+    else hdT('fort', 'skip', 'Archon Fort had not loaded yet, so nothing was checked for oddness');
     const P = paradigms(A); const mineP = P.groups.filter(g => g.docs.some(d => fresh.has(d.id)));
     if (mineP.length) mineP.forEach(g => hdT('paradigm', 'group', 'Joins the paradigm “' + g.label + '”: ' + g.n + ' sources that share two or more uncommon names', { label: g.label, n: g.n, docs: g.docs.map(d => d.title) }));
     else hdT('paradigm', 'none', 'No paradigm: nothing here shares two or more uncommon names (reach ≤ ' + (Math.sqrt(A.docs.length) + 1).toFixed(1) + ' sources) with another source');
@@ -4006,10 +4027,10 @@ class Component extends DCLogic {
     this.saveAdded(added);
     hdT('store', 'analyze', 'Re-reading the whole workspace (' + (this.baseDocs(id).length + added[id].length) + ' sources) so the new material is linked to everything already there');
     const A = analyze({ docs: this.baseDocs(id).concat(added[id]) }, this._html);
-    const ids = nd.map(d => d.id); try { this.hdFinish(T, A, prev, ids); } catch (e) { console.warn('ingest trace', e); HD_TR = null; } const sts = A.sts.filter(s => ids.includes(s.doc));
+    const ids = nd.map(d => d.id); try { this.hdFinish(T, A, prev, ids); } catch (e) { console.warn('ingest trace', e); HD_TR = null; } const odd = (T && T.odd) || []; const sts = A.sts.filter(s => ids.includes(s.doc));
     const nm = [...new Set(sts.flatMap(s => s.names))];
     const echoN = sts.filter(s => (A.echoes[s.id] || []).some(e => !ids.includes(A.byId[e.id].doc))).length;
-    this.setState({ added, just: { ids, title: nd.length === 1 ? nd[0].title : plural(nd.length, 'item'), n: sts.length, linked: nm.filter(n => prev.names[n]), fresh: nm.filter(n => !prev.names[n]), echoN, notes: list.map(x => x.note).filter(Boolean), first: nd[0].id }, view: aopt && aopt.open ? 'reader' : 'summary', sel: aopt && aopt.open ? { type: 'doc', id: nd[0].id } : null, f: {}, q: '', readDoc: aopt && aopt.open ? nd[0].id : null, readMode: 'original', draftTitle: '', draftYear: '', draftText: '', showAdd: false, busy: '', note: '' });
+    this.setState({ added, just: { ids, title: nd.length === 1 ? nd[0].title : plural(nd.length, 'item'), n: sts.length, linked: nm.filter(n => prev.names[n]), fresh: nm.filter(n => !prev.names[n]), echoN, odd, notes: list.map(x => x.note).filter(Boolean), first: nd[0].id }, view: aopt && aopt.open ? 'reader' : 'summary', sel: aopt && aopt.open ? { type: 'doc', id: nd[0].id } : null, f: {}, q: '', readDoc: aopt && aopt.open ? nd[0].id : null, readMode: 'original', draftTitle: '', draftYear: '', draftText: '', showAdd: false, busy: '', note: '' });
   }
 
   match(st, A, skip) {
@@ -4558,9 +4579,13 @@ class Component extends DCLogic {
     const segOpen = S.segOpen; const segToggleLabel = 'Folds'; const segCount = String(segList.length);
     const toggleSegOpen = () => { const open = !segOpen; try { localStorage.setItem('fold-explorer-segopen', open ? '1' : '0'); } catch (e) {} this.setState({ segOpen: open }); };
     const just = J ? (() => { const tr = (window.__hdTraces || []).slice().reverse().find(t => (t.focus || []).includes(J.first));
+      const oddN = new Map((J.odd || []).map(o => [o.subject, o])); const player = at => tr && import(new URL('holodeck-ingest-player.js', location.href).href).then(M => M.open(tr, { seek: at }));
       const names = J.linked.slice(0, 8).map(n => ({ label: n, w: 600, col: 'var(--ink)', tip: 'Already in this workspace', onClick: selN(n) })).concat(J.fresh.slice(0, Math.max(0, 10 - Math.min(8, J.linked.length))).map(n => ({ label: n, w: 400, col: 'var(--ink2)', tip: 'New here', onClick: selN(n) })));
+      names.forEach(x => { const o = oddN.get(x.label); if (o) { x.col = 'var(--amber)'; x.label += ' ?'; x.tip = 'Archon Fort: ' + o.why; } });
       const more = J.linked.length + J.fresh.length - names.length; if (more > 0) names.push({ label: '+' + more + ' more', w: 400, col: 'var(--dim)', tip: 'All names', onClick: () => this.go('names') });
       return { title: J.title, summary: [plural(J.n, 'statement'), J.linked.length ? plural(J.linked.length, 'name') + ' already here' : '', J.echoN ? plural(J.echoN, 'echo', 'echoes') : ''].filter(Boolean).join(' · '),
+        hasOdd: !!(J.odd && J.odd.some(o => o.standing === 'stands')), odd: (J.odd || []).filter(o => o.standing === 'stands').slice(0, 3).map(o => ({ tag: 'Odd', label: o.subject, why: o.short, onInspect: () => player(o.at) })),
+        oddMore: (() => { const st = (J.odd || []).filter(o => o.standing === 'stands').length, ct = (J.odd || []).filter(o => o.standing === 'contested').length; const parts = [st > 3 ? (st - 3) + ' more odd' : '', ct ? ct + ' disputed' : ''].filter(Boolean); return parts.length ? parts.join(', ') + ', in the replay' : ''; })(), onOddAll: () => { const f = (J.odd || [])[0]; if (f) player(f.at); },
         hasNames: names.length > 0, names, hasNote: J.notes.length > 0, noteLine: J.notes.join(' '),
         hasReplay: !!tr, onReplay: () => tr && import(new URL('holodeck-ingest-player.js', location.href).href).then(M => M.open(tr)),
         onRead: () => this.read(J.first), onConnections: () => this.go('connections'), onPatterns: () => this.go('patterns') }; })() : { names: [] };
