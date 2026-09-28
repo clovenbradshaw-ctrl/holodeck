@@ -127,37 +127,26 @@ select option{background:var(--s1);color:var(--ink)}
       </sc-if>
 
       <sc-if value="{{ hasJust }}" hint-placeholder-val="{{ false }}">
-        <div style="background:var(--sel);border:1px solid #8b5cf6;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px">
-          <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">
-            <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--ok)">Added</span>
-            <span style="font:500 19px 'Newsreader',serif;color:var(--ink)">{{ just.title }}</span>
-            <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">{{ just.summary }}</span>
-            <button onClick="{{ dismissJust }}" title="Dismiss" style="margin-left:auto;background:none;border:0;color:var(--mut);cursor:pointer;font-size:14px">✕</button>
+        <div style="display:flex;flex-direction:column;gap:6px;padding:4px 0 14px;border-bottom:1px solid var(--line)">
+          <div style="display:flex;gap:4px 12px;align-items:baseline;flex-wrap:wrap">
+            <span style="font:500 18px 'Newsreader',serif;color:var(--ink)">Added {{ just.title }}</span>
+            <span style="font:400 13px 'Hanken Grotesk';color:var(--dim)">{{ just.summary }}</span>
+            <button onClick="{{ dismissJust }}" title="Dismiss" aria-label="Dismiss" style="all:unset;margin-left:auto;cursor:pointer;color:var(--dim);font-size:13px;padding:0 4px" style-hover="color:var(--ink)">✕</button>
           </div>
-          <sc-if value="{{ just.hasLinked }}" hint-placeholder-val="{{ false }}">
-            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-              <span style="font:600 14px 'Hanken Grotesk';color:var(--ink);margin-right:4px;white-space:nowrap">Linked to what was already here:</span>
-              <sc-for list="{{ just.linked }}" as="x" hint-placeholder-count="2">
-                <button onClick="{{ x.onClick }}" style="background:var(--s1);border:1px solid {{ x.color }};border-radius:999px;padding:2px 10px;cursor:pointer;font:600 14px 'Hanken Grotesk';color:var(--ink)">↔ {{ x.label }}</button>
+          <sc-if value="{{ just.hasNames }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:2px 14px;flex-wrap:wrap">
+              <sc-for list="{{ just.names }}" as="x" hint-placeholder-count="3">
+                <button onClick="{{ x.onClick }}" title="{{ x.tip }}" style="all:unset;cursor:pointer;font:{{ x.w }} 14px 'Hanken Grotesk';color:{{ x.col }}" style-hover="text-decoration:underline">{{ x.label }}</button>
               </sc-for>
             </div>
           </sc-if>
-          <sc-if value="{{ just.hasFresh }}" hint-placeholder-val="{{ false }}">
-            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-              <span style="font:500 14px 'Hanken Grotesk';color:var(--mut);margin-right:4px;white-space:nowrap">New names:</span>
-              <sc-for list="{{ just.fresh }}" as="x" hint-placeholder-count="2">
-                <button onClick="{{ x.onClick }}" style="background:var(--s1);border:1px solid var(--line2);border-radius:999px;padding:2px 10px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)">{{ x.label }}</button>
-              </sc-for>
-            </div>
-          </sc-if>
-          <sc-for list="{{ just.notes }}" as="n" hint-placeholder-count="0">
-            <span style="font:400 14px 'Hanken Grotesk';color:var(--amber)">{{ n.text }}</span>
-          </sc-for>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <sc-if value="{{ justSeen }}" hint-placeholder-val="{{ false }}"><button onClick="{{ justKeep }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 14px;cursor:pointer;font:600 14px 'Hanken Grotesk'">Keep as a source</button></sc-if>
-            <button onClick="{{ just.onRead }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 14px;cursor:pointer;font:600 14px 'Hanken Grotesk'">Read it</button>
-            <button onClick="{{ just.onConnections }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">See connections</button>
-            <button onClick="{{ just.onPatterns }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">See what recurs in Patterns</button>
+          <sc-if value="{{ just.hasNote }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--dim);max-width:75ch">{{ just.noteLine }}</span></sc-if>
+          <div style="display:flex;gap:4px 18px;flex-wrap:wrap;padding-top:2px">
+            <sc-if value="{{ justSeen }}" hint-placeholder-val="{{ false }}"><button onClick="{{ justKeep }}" style="all:unset;cursor:pointer;font:600 14px 'Hanken Grotesk';color:var(--acc)" style-hover="color:var(--ink)">Keep as a source</button></sc-if>
+            <button onClick="{{ just.onRead }}" style="all:unset;cursor:pointer;font:600 14px 'Hanken Grotesk';color:var(--acc)" style-hover="color:var(--ink)">Read it →</button>
+            <sc-if value="{{ just.hasReplay }}" hint-placeholder-val="{{ false }}"><button onClick="{{ just.onReplay }}" style="all:unset;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink)">Watch it being read</button></sc-if>
+            <button onClick="{{ just.onConnections }}" style="all:unset;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink)">Connections</button>
+            <button onClick="{{ just.onPatterns }}" style="all:unset;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink)">Patterns</button>
           </div>
         </div>
       </sc-if>
@@ -2000,6 +1989,39 @@ function holoRun(stream, alpha, keep, base) {
     bits[i] = tot; if (det) det.push(d); }
   return { bits, det };
 }
+// The holograph: who is in the picture, which of them are bonded, and what value each measure holds. Shared by the
+// surprise view and the ingest replay, so the replay folds statements by exactly the rules the surprise view uses.
+function holoKit(A, opt) { const cur = opt.cur; const srcShort = opt.srcShort;
+  const NEG = /\b(not|no|never|denied|denies|den(y|ies)|without|failed to|did not|does not|was not|were not|has not|have not|isn’t|wasn’t|didn’t|doesn’t|won’t|cannot|can’t)\b/i;
+  const namesOf = st => [...new Set(st.names.filter(n => holoName(n, A) && (/\s/.test(n) || /^[A-Z]{2,}$/.test(n))))].slice(0, 8);
+  const figsOf = (st, ns) => { const out = []; const anchor = ns.slice().sort((a, b) => ((A.names[b] || {}).sts || []).length - ((A.names[a] || {}).sts || []).length)[0] || '';
+    const MW = /\b(budget|contract|grant|funding|allocation|appropriation|salary|cost|deficit|shortfall|revenue|spending|reimbursements?|beds|units|positions|households|encampments?|count|point-in-time|pit|homeless(?:ness)?|housed|housing|shelter)\b/gi;
+    const VB = /\b(moved|relocated|housed|placed|counted|served|identified|sheltered|evicted|exited|enrolled|hired|cut|added|funded|awarded|approved|requested|returned|spent|allocated)\b/gi;
+    st.figs.forEach(g => { const u = g.unit || ''; const v = +g.value; if (!isFinite(v) || !v) return; if (!u && v >= 1900 && v <= 2100) return; if (!/dollar|percent/.test(u) && !(u && v >= 10)) return;
+      const raw = clean(g.raw || String(v)); const at = st.text.indexOf(g.raw || raw); const win = at >= 0 ? st.text.slice(Math.max(0, at - 70), at + (g.raw || raw).length + 50) : '';
+      const mws = (win.match(MW) || []).map(w => w.toLowerCase().replace(/s$/, '')); const vbs = (win.match(VB) || []).map(w => w.toLowerCase());
+      const measure = [vbs[0], mws[0]].filter(Boolean).join(' ');
+      out.push({ key: measure ? u + '|' + measure + '|' + anchor : null, measure: measure ? (measure + (/dollar/.test(u) ? '' : ' ' + u)).trim() : u.replace(/s$/, ''), anchor, v, raw }); }); return out; };
+  const pk = (a, b) => a < b ? a + '\u0001' + b : b + '\u0001' + a;
+  const mkH = () => ({ ent: new Map(), bond: new Map(), bneg: new Map(), val: new Map() });
+  const admit = (H, st) => { const I = infoOf(st); I.ns.forEach(n => H.ent.set(n, (H.ent.get(n) || 0) + 1));
+    for (let i = 0; i < I.ns.length; i++) for (let j = i + 1; j < I.ns.length; j++) { const k = pk(I.ns[i], I.ns[j]); H.bond.set(k, (H.bond.get(k) || 0) + 1); if (I.neg) H.bneg.set(k, (H.bneg.get(k) || 0) + 1); }
+    I.fs.forEach(f => { if (!f.key) return; const L = H.val.get(f.key) || []; L.push({ v: f.v, raw: f.raw, st }); H.val.set(f.key, L); }); };
+  const when = st => { const d = A.docById[st.doc] || {}; return d.pubLabel || (d.year ? String(d.year) : 'undated'); };
+  const shiftOf = (st, H) => { const I = infoOf(st); const parts = [];
+    const bonds = [];
+    for (let i = 0; i < I.ns.length; i++) for (let j = i + 1; j < I.ns.length; j++) { const a = I.ns[i], b = I.ns[j]; if (a.includes(b) || b.includes(a)) continue; const k = pk(a, b); const ca = H.ent.get(a) || 0, cb = H.ent.get(b) || 0; const had = H.bond.get(k) || 0;
+      if (!had) { if (ca >= 2 && cb >= 2) bonds.push({ w: 1 + 0.5 * Math.log2(1 + Math.min(ca, cb)), kind: 'bond', text: 'First time ' + a + ' and ' + b + ' are held together (' + a + ' already in ' + plural(ca, 'statement') + ', ' + b + ' in ' + cb + ')', name: a });
+        else if (ca || cb) { const kn = ca >= cb ? a : b, nw = ca >= cb ? b : a; bonds.push({ w: 0.3 + 0.1 * Math.log2(1 + Math.max(ca, cb)), kind: 'enter', text: nw + ' enters the picture, bonded to ' + kn, name: nw }); } }
+      else if (I.neg && !(H.bneg.get(k) || 0) && had >= 1) bonds.push({ w: 1.5, kind: 'turn', text: 'Negates the bond between ' + a + ' and ' + b + ': ' + plural(had, 'earlier statement') + ' held it without a “not”', name: a }); }
+    bonds.sort((x, y) => y.w - x.w); bonds.forEach((b, i) => { b.w *= Math.pow(0.6, i); parts.push(b); });
+    I.fs.forEach(f => { if (!f.key) return; const L = (H.val.get(f.key) || []).filter(o => o.st.doc !== st.doc || cur === 'source'); if (!L.length) { if (f.anchor && H.ent.get(f.anchor)) parts.push({ w: 0.4, kind: 'value', text: 'First “' + f.measure + '” figure for ' + f.anchor + ': ' + f.raw, name: f.anchor }); return; }
+      const last = L[L.length - 1]; if (Math.abs(last.v - f.v) / Math.max(Math.abs(last.v), 1e-9) < 0.005) return;
+      const r = Math.abs(Math.log2(Math.max(f.v, 1e-9) / Math.max(last.v, 1e-9))); parts.push({ w: 2 + Math.min(2, r), kind: 'revise', text: 'Changes the “' + f.measure + '” figure' + (f.anchor ? ' for ' + f.anchor : '') + ': ' + last.raw + ' (' + srcShort(A, last.st) + ', ' + when(last.st) + ') → ' + f.raw, name: f.anchor || null }); });
+    parts.sort((x, y) => y.w - x.w); return { shift: parts.reduce((s, p) => s + p.w, 0), parts }; };
+  const info = new Map(); const infoOf = st => { let I = info.get(st.id); if (!I) { const ns = namesOf(st); I = { ns, fs: figsOf(st, ns), neg: NEG.test(st.text.replace(/\b(no|not) (fewer|less|more|later|earlier|sooner) than\b|\bnot only\b|\bno doubt\b|\bnot yet\b/gi, '')) }; info.set(st.id, I); } return I; };
+  return { NEG, namesOf, figsOf, info, infoOf, pk, mkH, admit, shiftOf };
+}
 const dmdCo = (nab, na, nb, N) => nab >= 2 && N > 0 && nab * N > na * nb * 1.2;
 const TOPIC_STOP = new Set('the and for with from that this into about over under what when where which their there were been have has had not are was its'.split(' '));
 const termsOf = s => (s || '').toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length >= 3 && !TOPIC_STOP.has(w));
@@ -2266,7 +2288,16 @@ const ROWS = [
 ];
 const CELL = {}; ROWS.forEach(r => r.cells.forEach(c => { CELL[c[0]] = { id: c[0], label: c[1], terrain: c[2], question: c[3], row: r.label, color: r.color }; }));
 
-function splitSentences(text) {
+// Ingest trace. While HD_TR is set, the real ingest functions below report each step they take; the replay player
+// (holodeck-ingest-player.js) animates exactly these events. With no trace running, every hook is one null check.
+let HD_TR = null;
+function hdTraceStart(label) { if (HD_TR) return HD_TR; HD_TR = { schema: 'HolodeckIngestTrace@1', label, startedAt: new Date().toISOString(), t0: performance.now(), ev: [], focus: new Set(), docs: [] }; hdT('bytes', 'start', 'Ingest started: ' + label); return HD_TR; }
+function hdT(stage, kind, msg, data) { const T = HD_TR; if (T) T.ev.push({ t: performance.now() - T.t0, stage, kind, msg, ...(data || {}) }); }
+const hdF = doc => !!HD_TR && HD_TR.focus.has(doc);
+// read-only handle for tests: the real functions, so a harness can recompute what a trace claims happened
+setTimeout(() => { try { window.__holodeck = Object.freeze({ analyze, holoKit, paradigms, splitSentences, findNames, isJunk, readAny }); } catch (e) {} }, 0);
+const hdCut = (t, n) => { t = String(t || '').replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
+function splitSentences(text, tr) {
   const out = []; const re = /[^\n]+?(?:[.!?]+(?=\s|$)|(?=\n)|$)/g; let m;
   const ABBR = /(?:\b(?:a\.m|p\.m|U\.S|U\.K|Mr|Mrs|Ms|Dr|St|Pte|Ltd|Inc|Co|No|vs|Jr|Sr|Gov|Sen|Rep|Mt|Ft|approx|etc|e\.g|i\.e)|\b[A-Z])\.$/;
   // page furniture: short lines repeated 3+ times (running heads/feet) and bare page numbers
@@ -2277,11 +2308,11 @@ function splitSentences(text) {
     if (!tt) continue;
     const s = m.index + lead, e = s + tt.length; const prev = out[out.length - 1];
     const whole = /(^|\n)[ \t]*$/.test(text.slice(Math.max(0, s - 40), s)) && /^[ \t]*(\n|$)/.test(text.slice(e, e + 40));
-    if (whole && FURN(tt)) { skipped = true; continue; }
+    if (whole && FURN(tt)) { skipped = true; tr && tr('sentences', 'furniture', 'Skipped page furniture “' + hdCut(tt, 60) + '” (' + (/^(page\s*)?\d/i.test(tt) ? 'a page number' : 'repeats ' + lc.get(tt) + ' times with no end punctuation') + ')', { s, e }); continue; }
     const gapOK = /^[ \t]*\n[ \t]*$/.test(text.slice(prev ? prev.e : 0, s)) || (skipped && !!prev); skipped = false;
-    if (prev && ABBR.test(prev.t) && !/\n/.test(text.slice(prev.e, s))) { prev.e = e; prev.t = text.slice(prev.s, e); continue; }
+    if (prev && ABBR.test(prev.t) && !/\n/.test(text.slice(prev.e, s))) { tr && tr('sentences', 'join', 'Kept going past “' + hdCut(prev.t.slice(-14), 16) + '”: an abbreviation, not a sentence end', { s: prev.s, e }); prev.e = e; prev.t = text.slice(prev.s, e); continue; }
     // hard-wrapped line (PDF, minutes, transcripts): join when the previous line is unfinished and there's no blank line between
-    if (prev && gapOK && !/[.!?:;"”’)\]]$/.test(prev.t) && (/^[a-z(,;–—-]/.test(tt) || /\b(the|of|to|with|and|or|a|an|for|in|on|by|that|from|at|as|is|are|was|were|be|this|its|their|our)$/i.test(prev.t)) && prev.t.length + tt.length < 900) { prev.e = e; prev.t = prev.t + ' ' + tt; continue; }
+    if (prev && gapOK && !/[.!?:;"”’)\]]$/.test(prev.t) && (/^[a-z(,;–—-]/.test(tt) || /\b(the|of|to|with|and|or|a|an|for|in|on|by|that|from|at|as|is|are|was|were|be|this|its|their|our)$/i.test(prev.t)) && prev.t.length + tt.length < 900) { tr && tr('sentences', 'join', 'Joined a hard-wrapped line: “' + hdCut(prev.t.slice(-24), 26) + '” continues', { s: prev.s, e }); prev.e = e; prev.t = prev.t + ' ' + tt; continue; }
     out.push({ s, e, t: tt });
   }
   return out.filter(x => x.t.length >= 3);
@@ -2414,22 +2445,31 @@ function analyze(corpus, htmlMap) {
       body.querySelectorAll('p,li,tr,blockquote,dd,figcaption,pre').forEach(el => { const o = firstOff(el); if (o !== null) x.blocks.push(o); });
       x.heads.sort((a, b) => a.o - b.o); x.blocks.sort((a, b) => a - b);
     }
+    if (hdF(x.id)) { HD_TR.docs.push({ id: x.id, title: x.title, type: x.type, text: x.text }); hdT('text', 'walk', x.format === 'pdf' ? 'Took ' + x.text.length + ' characters from the PDF text layer' : 'Walked the page tree: ' + x.text.length + ' characters of text, ' + x.heads.length + ' headings, ' + x.blocks.length + ' blocks, ' + (x.links || []).length + ' links', { doc: x.id, chars: x.text.length }); }
     return x; });
   const sts = []; const found = []; const alias = {}; const info = {};
-  docs.forEach(d => splitSentences(d.text).forEach((se, i) => {
+  docs.forEach(d => { const on = hdF(d.id); const ss = splitSentences(d.text, on ? (a, b, c, x) => hdT(a, b, c, { doc: d.id, ...x }) : null); if (on) hdT('sentences', 'split', 'Split into ' + ss.length + ' statements', { doc: d.id, n: ss.length }); ss.forEach((se, i) => {
     const ns = findNames(se.t);
     ns.forEach(n => { if (n.alias) alias[n.alias] = n.name; });
-    sts.push({ id: d.id + ':' + i, doc: d.id, s: se.s, e: se.e, text: se.t, rawNames: ns, figs: findFigures(se.t), dates: findDates(se.t), frame: frameOf(se.t) });
-  }));
+    const st0 = { id: d.id + ':' + i, doc: d.id, s: se.s, e: se.e, text: se.t, rawNames: ns, figs: findFigures(se.t), dates: findDates(se.t), frame: frameOf(se.t) }; sts.push(st0);
+    if (on) { const D = { doc: d.id, id: st0.id }; hdT('sentences', 'statement', 'Statement ' + (i + 1) + ': \u201c' + hdCut(se.t, 90) + '\u201d', { ...D, s: se.s, e: se.e });
+      ns.forEach(n => hdT('names', 'name', 'Name \u201c' + n.name + '\u201d' + (n.title ? ' after the title ' + n.title : '') + (n.alias ? ', short form (' + n.alias + ')' : '') + (n.saidAfter ? ', followed by a reporting verb' : '') + (n.acr ? ', an acronym' : ''), { ...D, name: n.name, s: se.s + n.s, e: se.s + n.e }));
+      st0.figs.forEach(g => hdT('figures', 'figure', 'Figure \u201c' + g.raw + '\u201d = ' + g.value.toLocaleString() + ' ' + g.label, { ...D, s: se.s + g.s, e: se.s + g.e }));
+      st0.dates.forEach(g => hdT('dates', 'date', 'Date \u201c' + g.raw + '\u201d' + (g.year ? ' (year ' + g.year + ')' : ''), { ...D, s: se.s + g.s, e: se.s + g.e }));
+      hdT('frame', 'frame', 'Frame: ' + st0.frame + ({ uncertain: ' (a hedge word)', attributed: ' (a reporting verb)', plan: ' (a future or intent word)', fact: ' (no hedge, report or plan word)' })[st0.frame], { ...D, frame: st0.frame }); }
+  }); });
   const lastMap = {};
   sts.forEach(st => st.rawNames.forEach(n => { const w = n.name.split(' '); const l = w[w.length - 1]; if (w.length > 1 && !ORG.has(l) && !PLACE.has(l)) (lastMap[l] = lastMap[l] || new Set()).add(n.name); }));
   const allRaw = [...new Set(sts.flatMap(st => st.rawNames.map(n => n.name)))];
   const nest = (short, long) => { const a = short.split(' '), b = long.split(' '); if (b.length <= a.length) return false; return a.every((w, i) => b[i] === w) || a.every((w, i) => b[b.length - a.length + i] === w); };
   const canonMemo = new Map(); const canonOf = nm => { let v = canonMemo.get(nm); if (v === undefined) { v = canonOf0(nm); canonMemo.set(nm, v); } return v; };
   const byFirst = new Map(), byLast = new Map(); allRaw.forEach(o => { if (!o.includes(' ')) return; const w = o.split(' '); const f0 = w[0], l0 = w[w.length - 1]; (byFirst.get(f0) || byFirst.set(f0, []).get(f0)).push(o); (byLast.get(l0) || byLast.set(l0, []).get(l0)).push(o); });
+  // a longer name may absorb a shorter one only if the longer one recurs itself (2+ statements, the bar holoName uses):
+  // otherwise one stray capitalised run (measured: word salad's “Office The Brookmeade Park”) renames a real place everywhere
+  const rawN = new Map(); sts.forEach(st => new Set(st.rawNames.map(n => n.name)).forEach(n => rawN.set(n, (rawN.get(n) || 0) + 1)));
   const canonOf0 = nm => {
     if (alias[nm]) return alias[nm];
-    if (nm.includes(' ')) { const w = nm.split(' '); const pool = [...new Set([...(byFirst.get(w[0]) || []), ...(byLast.get(w[w.length - 1]) || [])])]; const c = pool.filter(o => nest(nm, o)).sort((x, y) => y.length - x.length); if (c.length && c.every(o => o === c[0] || nest(o, c[0]))) return c[0]; return nm; }
+    if (nm.includes(' ')) { const w = nm.split(' '); const pool = [...new Set([...(byFirst.get(w[0]) || []), ...(byLast.get(w[w.length - 1]) || [])])]; const c = pool.filter(o => nest(nm, o)).sort((x, y) => y.length - x.length); if (c.length && c.every(o => o === c[0] || nest(o, c[0])) && (rawN.get(c[0]) || 0) >= 2) return c[0]; return nm; }
     return lastMap[nm] && lastMap[nm].size === 1 ? [...lastMap[nm]][0] : nm;
   };
   const names = {}; const aliasOf = {}; Object.keys(alias).forEach(a => { (aliasOf[alias[a]] = aliasOf[alias[a]] || []).push(a); });
@@ -2437,6 +2477,7 @@ function analyze(corpus, htmlMap) {
     st.spans = []; const set = new Set();
     st.rawNames.forEach(n => {
       const canon = canonOf(n.name);
+      if (canon !== n.name && hdF(st.doc)) hdT('canon', 'merge', '\u201c' + n.name + '\u201d is read as \u201c' + canon + '\u201d (' + (alias[n.name] ? 'declared in parentheses' : n.name.includes(' ') ? 'it sits inside that longer name' : 'the only full name ending in it') + ')', { doc: st.doc, id: st.id, from: n.name, to: canon });
       if (n.alias && n.alias === canon) return;
       const I = info[canon] || (info[canon] = { aliases: new Set() });
       if (n.title) I.person = true; if (n.saidAfter) I.said = true; if (n.acr && !alias[n.name]) I.acr = true;
@@ -2455,21 +2496,28 @@ function analyze(corpus, htmlMap) {
     st.topics = [...new Set(words.filter(w => !STOP.has(w) && !nameWords.has(w) && !MONTHS.has(w[0].toUpperCase() + w.slice(1))).map(w => w.length > 4 ? w.replace(/(ies)$/, 'y').replace(/([^s])s$/, '$1') : w))];
   });
   Object.values(names).forEach(n => { const I = info[n.name] || {}; n.type = nameType(n.name, I); n.aliases = [...(I.aliases || [])]; });
+  if (HD_TR) Object.values(names).forEach(n => { if (![...n.docs].some(hdF)) return; const I = info[n.name] || {}; hdT('canon', 'type', n.name + ' \u2192 ' + n.type + (I.person ? ' (had a title)' : I.said ? ' (followed by a reporting verb)' : I.acr ? ' (an acronym)' : n.type === 'other' ? ' (no rule matched)' : ' (by its first or last word)') + ' \u00b7 ' + n.sts.length + ' mention' + (n.sts.length === 1 ? '' : 's') + ' in ' + n.docs.size + ' source' + (n.docs.size === 1 ? '' : 's'), { name: n.name, type: n.type, mentions: n.sts.length, docsN: n.docs.size }); });
   { const DM = new Map(docs.map(x => [x.id, x])); sts.forEach(st => { st.where = whereOf(DM.get(st.doc), st.s); }); }
   const furn = {}; docs.forEach(d => { const set = new Set(); const nt = t => clean(t).toLowerCase().replace(/[^a-z0-9]/g, ''); if (d.title) set.add(nt(d.title)); (d.heads || []).forEach(h => set.add(nt(h.text))); const H = d.heads || []; const back = []; H.forEach((h, i) => { if (!/^(external links|references|further reading|notes|citations|sources|bibliography|see also|footnotes|works cited|general and cited references)\b/i.test(h.text)) return; let e = Infinity; for (let j = i + 1; j < H.length; j++) if (H[j].lv <= h.lv) { e = H[j].o; break; } back.push([h.o, e]); }); furn[d.id] = { set, nt, back }; });
   const aboutDocs = new Set(docs.filter(d => d.aboutOnly).map(d => d.id));
-  sts.forEach(st => { st.ref = isJunk(st, furn[st.doc]) || aboutDocs.has(st.doc); const w = clean(st.text).match(/[A-Za-z]{2,}/g) || []; st.claimy = !st.ref && w.length >= 8 && VERB_RE.test(st.text); });
+  sts.forEach(st => { st.ref = isJunk(st, furn[st.doc]) || aboutDocs.has(st.doc); const w = clean(st.text).match(/[A-Za-z]{2,}/g) || []; st.claimy = !st.ref && w.length >= 8 && VERB_RE.test(st.text); if (hdF(st.doc)) hdT('junk', st.ref ? 'ref' : st.claimy ? 'claim' : 'thin', st.ref ? 'Set aside as reference matter: \u201c' + hdCut(st.text, 50) + '\u201d' : st.claimy ? 'Kept as a claim (8+ words and a verb)' : 'Kept, but too thin to count as a claim', { doc: st.doc, id: st.id }); });
   const EB = 48; const hsh = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
   const vecs = sts.map(st => { const v = new Float64Array(EB); st.topics.forEach(w => { v[hsh(w) % EB] += 1; }); st.names.forEach(n => { v[hsh('n:' + n) % EB] += 2; }); let nn = 0; for (let i = 0; i < EB; i++) nn += v[i] * v[i]; nn = Math.sqrt(nn) || 1; const q = new Uint8Array(EB); for (let i = 0; i < EB; i++) q[i] = Math.round(v[i] / nn * 255); st.echo = q; st.shadow = [st.frame, [...new Set(st.names.map(n => (names[n] || {}).type))].sort().join('+'), [...new Set(st.figs.map(g => g.unit))].sort().join('+'), st.dates.length ? 'dated' : ''].join('|'); return q; });
   const cos = (a, b, off) => { let s = 0, na = 0, nb = 0; for (let i = 0; i < EB; i++) { const x = a[i], y = b[(i + (off || 0)) % EB]; s += x * y; na += x * x; nb += y * y; } return na && nb ? s / Math.sqrt(na * nb) : 0; };
-  const byD = {}; sts.forEach((st, i) => { if (!st.ref && st.claimy) (byD[st.doc] = byD[st.doc] || []).push(i); });
+  // a measured doc's sentences are our own description of an image, sound or score: their wording is a template, so they
+  // would echo each other (and anything sharing the template words) by form, not content. They stay out of echo matching.
+  const measuredD = new Set(docs.filter(d => d.measured).map(d => d.id));
+  const byD = {}; sts.forEach((st, i) => { if (!st.ref && st.claimy && !measuredD.has(st.doc)) (byD[st.doc] = byD[st.doc] || []).push(i); });
+  if (HD_TR && docs.some(d => hdF(d.id) && d.measured)) hdT('echo', 'skip', 'Left the measured description out of echo matching: its sentences are our template, so any echo would be of wording, not content');
   const lists = Object.values(byD); const IX = []; for (let r = 0; IX.length < 1600 && lists.some(l => r < l.length); r++) lists.forEach(l => { if (r < l.length && IX.length < 1600) IX.push(l[r]); });
   const N = IX.length; const nullS = [];
   for (let k = 0; k < 800 && N > 1; k++) { const i = IX[(k * 7919) % N], j = IX[(k * 104729 + 13) % N]; if (i === j || sts[i].doc === sts[j].doc) continue; nullS.push(cos(vecs[i], vecs[j], 1 + (k % (EB - 1)))); }
   nullS.sort((a, b) => a - b); const echoFloor = Math.max(0.35, nullS.length ? nullS[Math.floor(nullS.length * 0.99)] : 0.5);
+  if (HD_TR && HD_TR.focus.size) { const mine = sts.filter(st => hdF(st.doc) && st.claimy && !st.ref).length, inIX = IX.filter(i => hdF(sts[i].doc)).length; hdT('echo', 'vectors', 'Hashed each claim\u2019s topic words and names into a ' + EB + '-slot vector; ' + inIX + ' of your ' + mine + ' claims are among the ' + N + ' compared', { n: N, mine, inIX }); hdT('echo', 'null', 'Null: ' + nullS.length + ' cross-source pairs with one vector rotated; 99th percentile ' + (nullS.length ? nullS[Math.floor(nullS.length * 0.99)].toFixed(3) : 'n/a') + ' \u2192 echo floor ' + echoFloor.toFixed(3) + (echoFloor === 0.35 ? ' (the 0.35 minimum)' : ''), { floor: echoFloor, nullN: nullS.length, hist: nullS.filter((_, k) => k % Math.max(1, Math.floor(nullS.length / 80)) === 0) }); }
   const echoes = {};
   for (let ii = 0; ii < N; ii++) for (let jj = ii + 1; jj < N; jj++) { const i = IX[ii], j = IX[jj]; if (sts[i].doc === sts[j].doc) continue; const s = cos(vecs[i], vecs[j]); if (s >= echoFloor && sts[i].text !== sts[j].text) { (echoes[sts[i].id] = echoes[sts[i].id] || []).push({ id: sts[j].id, sim: s }); (echoes[sts[j].id] = echoes[sts[j].id] || []).push({ id: sts[i].id, sim: s }); } }
   Object.values(echoes).forEach(l => { l.sort((a, b) => b.sim - a.sim); l.length = Math.min(l.length, 4); });
+  if (HD_TR && HD_TR.focus.size) { const byIdE = new Map(sts.map(x => [x.id, x])); const dt = id => (docs.find(x => x.id === id) || {}).title || id; sts.forEach(st => { if (!hdF(st.doc)) return; (echoes[st.id] || []).forEach(e => { const o = byIdE.get(e.id); hdT('echo', 'pair', 'Echo ' + e.sim.toFixed(2) + ' with \u201c' + hdCut(o.text, 50) + '\u201d in ' + hdCut(dt(o.doc), 40), { doc: st.doc, id: st.id, other: e.id, otherDoc: o.doc, otherTitle: dt(o.doc), sim: e.sim, mine: hdF(o.doc) }); }); }); }
   const stsByDoc = {}; sts.forEach(s => { (stsByDoc[s.doc] = stsByDoc[s.doc] || []).push(s); });
   return { stsByDoc, echoes, echoFloor, docs, sts, names, byId: Object.fromEntries(sts.map(s => [s.id, s])), docById: Object.fromEntries(docs.map(d => [d.id, d])) };
 }
@@ -2725,7 +2773,31 @@ function stripHtml(s) { return s.replace(/<(script|style|head)[\s\S]*?<\/\1>/gi,
 function jsonText(s) { try { const out = []; (function walk(v, k) { if (typeof v === 'string') out.push((k && isNaN(k) ? k + ': ' : '') + v); else if (typeof v === 'number' && k && isNaN(k)) out.push(k + ': ' + v); else if (v && typeof v === 'object') Object.entries(v).forEach(([kk, vv]) => walk(vv, kk)); })(JSON.parse(s)); return out.map(x => /[.!?]$/.test(x) ? x : x + '.').join('\n'); } catch (e) { return s; } }
 function csvText(s) { const lines = s.split(/\r?\n/).filter(l => l.trim()); if (lines.length < 2) return s; const sep = lines[0].includes('\t') ? '\t' : ','; const sp = l => l.split(sep).map(x => x.replace(/^"|"$/g, '').trim()); const h = sp(lines[0]); return lines.slice(1).map(l => { const c = sp(l); return h.map((k, i) => c[i] ? k + ': ' + c[i] : '').filter(Boolean).join('; ') + '.'; }).join('\n'); }
 function loadScript(src) { return new Promise((res, rej) => { if (document.querySelector('script[src="' + src + '"]')) { const w = () => window.JSZip ? res() : setTimeout(w, 50); return w(); } const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('could not load reader')); document.head.appendChild(s); }); }
+let _hdMed = null; const hdMedia = () => _hdMed || (_hdMed = import(new URL('holodeck-media.js', location.href).href));
+const hdTr = (a, b, c, x) => hdT(a, b, c, x);
+// Every file comes through here. Sound, images, scores, math, sheets and unknown bytes go to holodeck-media.js; everything
+// else to the text readers below. Either way the trace records the bytes, the signature, and what was read.
 async function readAny(file) {
+  const name = file.name || 'Pasted file', ext = ((name.match(/\.([^.]+)$/) || [])[1] || '').toLowerCase(), title = name.replace(/\.[^.]+$/, '');
+  const year = new Date(file.lastModified || Date.now()).getFullYear();
+  hdT('bytes', 'file', name + ' · ' + (file.size || 0).toLocaleString() + ' bytes' + (file.type ? ' · ' + file.type : ''), { size: file.size || 0 });
+  let M = null; try { M = await hdMedia(); } catch (e) { hdT('bytes', 'fail', 'Media readers did not load (' + e.message + '); using the text readers only'); }
+  if (M) try {
+    const head = new Uint8Array(await file.slice(0, 4096).arrayBuffer()); const kind = M.sniffReport(head, hdTr);
+    const all = async () => new Uint8Array(await file.arrayBuffer()); const txt = async () => await file.text(); let r = null;
+    if (ext === 'mid' || ext === 'midi' || kind === 'midi') r = M.readMidi(file, await all(), hdTr);
+    else if (ext === 'abc') r = M.readAbc(file, await txt(), hdTr);
+    else if (ext === 'musicxml' || (ext === 'xml' && /<score-(partwise|timewise)/.test(new TextDecoder().decode(head)))) r = M.readMusicXml(file, await txt(), hdTr);
+    else if (ext === 'tex' || ext === 'latex' || ext === 'ltx') r = M.readTex(file, await txt(), hdTr);
+    else if (ext === 'mml' || (ext === 'xml' && /<math[\s>]/.test(new TextDecoder().decode(head)))) r = M.readMathMl(file, await txt(), hdTr);
+    else if ((/^image\//.test(file.type) && file.type !== 'image/svg+xml') || ['png', 'jpeg', 'gif', 'webp', 'bmp'].includes(kind)) r = await M.readImage(file, head, hdTr);
+    else if (/^(audio|video)\//.test(file.type) || ['wav', 'mp3', 'flac', 'ogg', 'mp4'].includes(kind)) r = await M.readSound(file, await all(), hdTr, /^video\//.test(file.type) || (kind === 'mp4' && !/^audio/.test(file.type)) ? 'Video' : 'Audio');
+    if (r) { hdT('decode', 'done', 'Read as ' + r.type + (r.note ? ' — ' + r.note : ''), { type: r.type }); return { title, year, ...r }; }
+  } catch (e) { hdT('decode', 'fail', 'Media reader failed (' + e.message + '); falling back to the text readers'); }
+  const r = await readText(file, M);
+  hdT('decode', 'done', 'Read as ' + r.type + (r.note ? ' — ' + r.note : ''), { type: r.type }); return r;
+}
+async function readText(file, M) {
   const name = file.name || 'Pasted file', ext = ((name.match(/\.([^.]+)$/) || [])[1] || '').toLowerCase(), title = name.replace(/\.[^.]+$/, '');
   const year = new Date(file.lastModified || Date.now()).getFullYear();
   let type = ext ? ext.toUpperCase() : 'File';
@@ -2733,6 +2805,7 @@ async function readAny(file) {
     if (ext === 'pdf' || file.type === 'application/pdf') {
       const buf = await file.arrayBuffer(); const pdfjs = await pdfLib(); const pdf = await pdfjs.getDocument({ data: new Uint8Array(buf).slice() }).promise; let text = '';
       const pages = []; for (let i = 1; i <= Math.min(pdf.numPages, PDF_MAX_PAGES); i++) { pages.push(text.length); const c = await (await pdf.getPage(i)).getTextContent(); for (const it of c.items) text += (it.str || '') + (it.hasEOL ? '\n' : ' '); text += '\n'; }
+      hdT('decode', 'pdf', 'Read the text layer of ' + pages.length + ' of ' + pdf.numPages + ' pages', { pages: pages.length });
       return { title, year, type: 'PDF', format: 'pdf', text, pages, pdf: buf, note: text.trim() ? null : title + ' has no text layer (it may be scanned) — its pages are shown, but nothing in it can be linked.' };
     }
     let html = '';
@@ -2742,6 +2815,7 @@ async function readAny(file) {
       if (ext === 'docx') { html = docxToHtml(await zip.file('word/document.xml').async('string')); type = 'Word'; }
       else if (ext === 'pptx') { for (const f of all.filter(f => /^ppt\/slides\/slide\d+\.xml$/.test(f)).sort((a, b) => num(a) - num(b))) { const x = new DOMParser().parseFromString(await zip.file(f).async('string'), 'application/xml'); const ps = [...x.getElementsByTagName('a:p')].map(p => esc([...p.getElementsByTagName('a:t')].map(q => q.textContent).join(''))).filter(Boolean); if (ps.length) html += '<section><h2>' + ps[0] + '</h2>' + ps.slice(1).map(p => '<p>' + p + '</p>').join('') + '</section><hr>'; } type = 'Slides'; }
       else if (ext === 'epub') { for (const f of all.filter(f => /\.x?html?$/.test(f)).sort()) { const raw = await zip.file(f).async('string'); html += (raw.match(/<body[^>]*>([\s\S]*)<\/body>/i) || [0, raw])[1]; } type = 'Book'; }
+      else if (ext === 'xlsx' && M && zip.file('xl/workbook.xml')) { html = await M.readXlsx(zip, hdTr); type = 'Spreadsheet'; }
       else { const f = ext === 'xlsx' ? 'xl/sharedStrings.xml' : 'content.xml'; html = zip.file(f) ? textToHtml(stripHtml(await zip.file(f).async('string'))) : ''; if (ext === 'xlsx') type = 'Spreadsheet'; }
     } else if (/^image\//.test(file.type)) {
       const url = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(file); });
@@ -2756,7 +2830,7 @@ async function readAny(file) {
       else if (/^(html?|xhtml|xml|svg|mhtml)$/.test(ext) || /<\/?(html|body|p|div|h1|article)[\s>]/i.test(raw.slice(0, 3000))) { html = raw; type = 'Web page'; }
       else if (ext === 'eml') { html = textToHtml(raw.replace(/=\r?\n/g, '')); type = 'Email'; }
       else if (ext === 'rtf') html = textToHtml(raw.replace(/\\[a-z]+-?\d* ?|[{}]/g, ''));
-      else { const bad = (raw.slice(0, 4000).match(/[\x00-\x08\x0E-\x1F\uFFFD]/g) || []).length; if (bad > 40) return { title, year, type, text: '', note: 'No readable text in ' + name + '.' }; html = textToHtml(raw); type = { txt: 'Text', log: 'Log' }[ext] || type; }
+      else { const bad = (raw.slice(0, 4000).match(/[\x00-\x08\x0E-\x1F\uFFFD]/g) || []).length; if (bad > 40) { if (M) return { title, year, ...M.readStrings(file, new Uint8Array(await file.arrayBuffer()), hdTr) }; return { title, year, type, text: '', note: 'No readable text in ' + name + '.' }; } html = textToHtml(raw); type = { txt: 'Text', log: 'Log' }[ext] || type; }
     }
     const clean = sanitizeHtml(html);
     return { title, year, type, format: 'html', html: clean, note: htmlToText(clean).trim() ? null : 'No readable text found in ' + name + '.' };
@@ -2839,17 +2913,18 @@ class Component extends DCLogic {
   async ingest(dt) {
     if (!dt) return;
     const files = [...(dt.files || [])];
-    if (files.length) { this.setState({ busy: 'Reading ' + plural(files.length, 'file') + '…' }); const list = []; for (const fl of files) list.push(await readAny(fl)); this.addDocs(list); return; }
+    if (files.length) { hdTraceStart(files.length === 1 ? files[0].name : plural(files.length, 'file')); this.setState({ busy: 'Reading ' + plural(files.length, 'file') + '…' }); const list = []; for (const fl of files) list.push(await readAny(fl)); this.addDocs(list); return; }
     let text = (dt.getData('text/plain') || '').trim(); const html = dt.getData('text/html') || '';
     if (!text) text = ((dt.getData('text/uri-list') || '').split('\n').find(l => l && l[0] !== '#') || '').trim();
     const title = dt.getData('application/x-fold-title'); const year = +dt.getData('application/x-fold-year') || null; const fallback = dt.getData('application/x-fold-fallback') || null;
+    if (text || html) hdTraceStart(/^https?:\/\/\S+$/.test(text) ? text : 'pasted text'); if (text || html) hdT('bytes', 'paste', 'Received ' + (html && html.length > text.length * 0.8 ? html.length.toLocaleString() + ' characters of HTML' : text.length.toLocaleString() + ' characters of plain text'));
     if (/^https?:\/\/\S+$/.test(text)) return this.ingestUrl(text, { title, year, fallback });
     if (html && html.length > text.length * 0.8) { const clean = sanitizeHtml(html); if (htmlToText(clean).trim()) return this.addDocs([{ title: title || short(text.replace(/\s+/g, ' '), 48), year: year || new Date().getFullYear(), type: 'Dropped text', format: 'html', html: clean }]); }
     if (!text) return;
     this.addDocs([{ title: title || short(text.replace(/\s+/g, ' '), 48), year: year || new Date().getFullYear(), type: title ? 'Text' : 'Dropped text', text }]);
   }
   async ingestUrl(url, opt) {
-    opt = opt || {}; const wt = wikiTitleOf(url);
+    opt = opt || {}; const wt = wikiTitleOf(url); hdTraceStart(url); hdT('bytes', 'fetch', 'Fetching ' + url + (wt ? ' (Wikipedia article API)' : ''));
     this.setState({ busy: 'Fetching ' + (opt.title || (wt ? wt.replace(/_/g, ' ') : 'link')) + '…' });
     try {
       let html, title = opt.title, type = 'Web page', fmt = 'html';
@@ -2859,8 +2934,10 @@ class Component extends DCLogic {
         const got = await fetchAnySite(url);
         html = got.html; note = got.note; title = title || got.title || url; fmt = got.format || 'html'; url = got.url || url;
       }
+      hdT('bytes', 'fetched', 'Received ' + (html || '').length.toLocaleString() + ' characters of HTML' + (note ? ' \u2014 ' + note : ''));
       this.addDocs([{ title, year: opt.year || new Date().getFullYear(), type, format: fmt, html, url, note }], { open: opt.open });
     } catch (e) {
+      hdT('bytes', 'fail', 'Fetch failed: ' + e.message + (opt.fallback ? '; using the saved excerpt' : ''));
       if (opt.fallback) this.addDocs([{ title: opt.title || url, year: opt.year, type: wt ? 'Wikipedia article (excerpt)' : 'Text', text: opt.fallback, url, note: 'Couldn’t reach the live page, so a saved excerpt was used.' }], { open: opt.open });
       else this.addDocs([{ title: url, year: new Date().getFullYear(), type: 'Link', text: '', url, note: 'That site doesn’t let its page be read from here — open it, then drag or paste its text instead.' }]);
     }
@@ -3837,6 +3914,7 @@ class Component extends DCLogic {
     const id = this.corpusId(); const seenU = new Set(); const docs = this.baseDocs(id).concat(this.state.added[id] || []).filter(d => { const u = d.url && d.url.replace(/^https?:\/\/(www\.)?/, '').replace(/[#?].*$/, '').replace(/\/$/, '').toLowerCase(); if (!u || d.ohsId) { if (u) seenU.add(u); return true; } if (seenU.has(u)) return false; seenU.add(u); return true; });
     const key = id + ':' + docs.map(d => d.id).join(',') + ':' + this.state.htmlVer;
     if (this._key !== key) { this._key = key; this._A = analyze({ docs }, this._html); }
+    try { window.__holodeckA = this._A; } catch (e) {}
     return this._A;
   }
   setF(k, v) { this.setState(s => ({ f: { ...s.f, [k]: v } })); }
@@ -3883,17 +3961,52 @@ class Component extends DCLogic {
   go(view) { this.setState({ view, readDoc: null }); }
   read(docId, stId) { const S0 = this.state; if (S0.view !== 'reader' || docId !== S0.readDoc || (S0.sel && S0.sel.type === 'name')) this.pushHist(); this.markRead(docId); if (docId !== this.state.readDoc) { this.state.seekT = 0; this._faithFound = null; } this.setState({ view: 'reader', readDoc: docId, sel: stId ? { type: 'statement', id: stId } : { type: 'doc', id: docId } }); }
   saveAdded(added) { try { localStorage.setItem('fold-explorer-added', JSON.stringify(added)); } catch (e) {} }
+  // Fold the new statements into the holograph by the surprise view's own rules (holoKit), recording each step,
+  // then hand the trace to the replay player. The picture before is everything else in the workspace.
+  hdFinish(T, A, prev, ids) {
+    const fresh = new Set(ids); const K = holoKit(A, { cur: 'pub', srcShort: (A2, st) => this.srcShort(A2, st) }); const H = K.mkH();
+    A.sts.forEach(st => { if (!st.ref && !fresh.has(st.doc)) K.admit(H, st); });
+    const mine = A.sts.filter(st => fresh.has(st.doc) && !st.ref); const touch = new Set(); mine.forEach(st => K.infoOf(st).ns.forEach(n => touch.add(n)));
+    const nm = [...new Set(A.sts.filter(st => fresh.has(st.doc)).flatMap(st => st.names))];
+    hdT('store', 'names', nm.length + ' distinct names: ' + nm.filter(n => prev.names[n]).length + ' already in the workspace, ' + nm.filter(n => !prev.names[n]).length + ' new', { linked: nm.filter(n => prev.names[n]).slice(0, 40), fresh: nm.filter(n => !prev.names[n]).slice(0, 40) });
+    const nodes = [...touch].filter(n => H.ent.get(n)).map(n => ({ n, c: H.ent.get(n) })); const edges = [];
+    H.bond.forEach((c, k) => { const [a, b] = k.split('\u0001'); if (touch.has(a) || touch.has(b)) edges.push({ a, b, c, neg: H.bneg.get(k) || 0 }); });
+    edges.sort((x, y) => y.c - x.c); const keepE = edges.slice(0, 36); keepE.forEach(e => [e.a, e.b].forEach(n => { if (!nodes.some(x => x.n === n)) nodes.push({ n, c: H.ent.get(n) || 0 }); }));
+    hdT('holograph', 'prior', 'The picture before: ' + H.ent.size + ' names and ' + H.bond.size + ' bonds from the ' + (A.docs.length - ids.length) + ' other sources; ' + nodes.length + ' of those names are near what you added', { nodes, edges: keepE, ents: H.ent.size, bonds: H.bond.size });
+    mine.forEach(st => { const I = K.infoOf(st); const D = { doc: st.doc, id: st.id };
+      const left = st.names.filter(n => !I.ns.includes(n)); if (left.length) hdT('holograph', 'drop', 'Kept out of the picture: ' + left.slice(0, 5).map(n => n + ' (' + (!holoName(n, A) ? ((A.names[n] || {}).sts || []).length < 2 ? 'mentioned once' : 'code or boilerplate' : 'a single word') + ')').join(', '), { ...D, names: left });
+      if (!I.ns.length && !I.fs.length) { hdT('holograph', 'pass', 'Nothing to fold from this statement', D); return; }
+      const r = K.shiftOf(st, H); const pairs = []; for (let i = 0; i < I.ns.length; i++) for (let j = i + 1; j < I.ns.length; j++) pairs.push([I.ns[i], I.ns[j]]);
+      hdT('holograph', 'admit', 'Folded in ' + (I.ns.length ? I.ns.join(', ') : 'a figure') + (I.neg ? ' (negated)' : '') + (r.parts.length ? ' · shift ' + r.shift.toFixed(2) : ' · no change to the picture'), { ...D, ns: I.ns, pairs, neg: I.neg, vals: I.fs.filter(f => f.key).map(f => ({ anchor: f.anchor, measure: f.measure, raw: f.raw })), shift: r.shift });
+      r.parts.forEach(p => hdT('holograph', p.kind, p.text, { ...D, name: p.name, w: p.w })); K.admit(H, st); });
+    // The null: this material's own words, shuffled (seeded), through the same sentence and name finders. Name-finding is
+    // driven by capitals and adjacency, so shuffled text still yields "names"; what matters is how many more real text yields.
+    T.docs.forEach(d => { const w = d.text.split(/\s+/).filter(Boolean); if (w.length < 8) return; let sd = 1; for (let i = 0; i < d.text.length; i++) sd = (sd * 31 + d.text.charCodeAt(i)) % 2147483647;
+      const rec = text => { const c = new Map(); splitSentences(text).forEach(se => new Set(findNames(se.t).map(n => n.name).filter(n => /\s/.test(n))).forEach(n => c.set(n, (c.get(n) || 0) + 1))); const all = [...c.values()], tot = all.reduce((a, b) => a + b, 0); return tot ? Math.round(all.filter(v => v >= 2).reduce((a, b) => a + b, 0) / tot * 100) : 0; };
+      const R = []; for (let t = 0; t < 5; t++) { const x = w.slice(); for (let i = x.length - 1; i > 0; i--) { sd = (sd * 48271) % 2147483647; const j = sd % (i + 1); [x[i], x[j]] = [x[j], x[i]]; } R.push(rec(x.join(' '))); }
+      const real = rec(d.text), hi = Math.max(...R), mean = R.reduce((a, b) => a + b, 0) / R.length;
+      hdT('null', real > hi ? 'above' : 'chance', 'Null: share of name mentions that are repeats of a name used in another statement. The same words shuffled 5 times give ' + R.map(x => x + '%').join(', ') + '; this text gives ' + real + '%' + (real > hi ? '. Its names recur more than its own words by chance.' : '. No more recurring names than its own words shuffled, so names folded from it may be accidents of capitalisation.'), { doc: d.id, real, shuffled: R, mean }); });
+    const P = paradigms(A); const mineP = P.groups.filter(g => g.docs.some(d => fresh.has(d.id)));
+    if (mineP.length) mineP.forEach(g => hdT('paradigm', 'group', 'Joins the paradigm “' + g.label + '”: ' + g.n + ' sources that share two or more uncommon names', { label: g.label, n: g.n, docs: g.docs.map(d => d.title) }));
+    else hdT('paradigm', 'none', 'No paradigm: nothing here shares two or more uncommon names (reach ≤ ' + (Math.sqrt(A.docs.length) + 1).toFixed(1) + ' sources) with another source');
+    hdT('store', 'done', 'Ingest finished'); T.ms = performance.now() - T.t0; T.focus = [...T.focus]; HD_TR = null;
+    (window.__hdTraces = window.__hdTraces || []).push(T); if (window.__hdTraces.length > 8) window.__hdTraces.shift();
+    import(new URL('holodeck-ingest-player.js', location.href).href).then(M => M.open(T)).catch(e => console.warn('ingest player', e));
+  }
   addDocs(list, aopt) {
-    if (!list.length) { this.setState({ busy: '' }); return; }
+    if (!list.length) { HD_TR = null; this.setState({ busy: '' }); return; }
+    const T = hdTraceStart(list.length === 1 ? (list[0].title || 'Untitled') : plural(list.length, 'item'));
     const id = this.corpusId(); const prev = this.analysis();
-    { const nu = u => (u || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '').toLowerCase(); const have = {}; prev.docs.forEach(d => { if (d.url) have[nu(d.url)] = d; }); const dup = list.filter(x => x.url && have[nu(x.url)]); if (dup.length) { list = list.filter(x => !(x.url && have[nu(x.url)])); if (!list.length) { this.setState({ busy: '', view: 'reader', readDoc: have[nu(dup[0].url)].id, note: 'Already in this workspace — opened it.' }); return; } } }
-    const nd = list.map(x => ({ id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: x.title || 'Untitled', year: x.year || null, type: x.type || 'Text', format: x.format || 'text', hasHtml: !!x.html, url: x.url || null, pages: x.pages || null, ...(x.extra || {}), text: x.format === 'pdf' ? (x.text || '') : x.html ? pageText(x.html, x.format).slice(0, 60000) : (x.text || '') }));
+    { const nu = u => (u || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '').toLowerCase(); const have = {}; prev.docs.forEach(d => { if (d.url) have[nu(d.url)] = d; }); const dup = list.filter(x => x.url && have[nu(x.url)]); if (dup.length) { list = list.filter(x => !(x.url && have[nu(x.url)])); if (!list.length) { HD_TR = null; this.setState({ busy: '', view: 'reader', readDoc: have[nu(dup[0].url)].id, note: 'Already in this workspace — opened it.' }); return; } } }
+    const nd = list.map(x => ({ id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: x.title || 'Untitled', year: x.year || null, type: x.type || 'Text', format: x.format || 'text', hasHtml: !!x.html, url: x.url || null, pages: x.pages || null, ...(x.extra || {}), measured: !!x.measured, text: x.format === 'pdf' ? (x.text || '') : x.html ? pageText(x.html, x.format).slice(0, 60000) : (x.text || '') }));
     nd.forEach(d => { d.status = aopt && aopt.open ? 'seen' : 'source'; });
+    T.focus = new Set(nd.map(d => d.id)); nd.forEach(d => hdT('store', 'mint', 'Stored \u201c' + hdCut(d.title, 60) + '\u201d as ' + d.id + (list[nd.indexOf(d)].html ? ' \u00b7 full page kept; ' + d.text.length.toLocaleString() + ' characters indexed for search' + (d.text.length >= 60000 ? ' (the cap; the reading below uses the whole page)' : '') : ' \u00b7 ' + d.text.length.toLocaleString() + ' characters kept'), { doc: d.id }));
     nd.forEach((d, i) => { const x = list[i]; if (x.html) { this._html[d.id] = x.html; idbPut('html:' + d.id, x.html).catch(() => {}); } if (x.pdf) idbPut('pdf:' + d.id, x.pdf).catch(() => {}); });
     const added = { ...this.state.added, [id]: [...(this.state.added[id] || []), ...nd] };
     this.saveAdded(added);
+    hdT('store', 'analyze', 'Re-reading the whole workspace (' + (this.baseDocs(id).length + added[id].length) + ' sources) so the new material is linked to everything already there');
     const A = analyze({ docs: this.baseDocs(id).concat(added[id]) }, this._html);
-    const ids = nd.map(d => d.id); const sts = A.sts.filter(s => ids.includes(s.doc));
+    const ids = nd.map(d => d.id); try { this.hdFinish(T, A, prev, ids); } catch (e) { console.warn('ingest trace', e); HD_TR = null; } const sts = A.sts.filter(s => ids.includes(s.doc));
     const nm = [...new Set(sts.flatMap(s => s.names))];
     const echoN = sts.filter(s => (A.echoes[s.id] || []).some(e => !ids.includes(A.byId[e.id].doc))).length;
     this.setState({ added, just: { ids, title: nd.length === 1 ? nd[0].title : plural(nd.length, 'item'), n: sts.length, linked: nm.filter(n => prev.names[n]), fresh: nm.filter(n => !prev.names[n]), echoN, notes: list.map(x => x.note).filter(Boolean), first: nd[0].id }, view: aopt && aopt.open ? 'reader' : 'summary', sel: aopt && aopt.open ? { type: 'doc', id: nd[0].id } : null, f: {}, q: '', readDoc: aopt && aopt.open ? nd[0].id : null, readMode: 'original', draftTitle: '', draftYear: '', draftText: '', showAdd: false, busy: '', note: '' });
@@ -4444,7 +4557,13 @@ class Component extends DCLogic {
     const hasSegments = segList.length > 0;
     const segOpen = S.segOpen; const segToggleLabel = 'Folds'; const segCount = String(segList.length);
     const toggleSegOpen = () => { const open = !segOpen; try { localStorage.setItem('fold-explorer-segopen', open ? '1' : '0'); } catch (e) {} this.setState({ segOpen: open }); };
-    const just = J ? { title: J.title, summary: plural(J.n, 'statement') + ' read. ' + (J.linked.length ? plural(J.linked.length, 'name') + ' matched things already here.' : J.n ? 'None of its names were here before.' : '') + (J.echoN ? ' ' + plural(J.echoN, 'statement') + ' echo something already here.' : ''), hasLinked: J.linked.length > 0, hasFresh: J.fresh.length > 0, linked: J.linked.slice(0, 16).map(n => ({ label: n, color: TYPE_C[A.names[n] ? A.names[n].type : 'other'], onClick: selN(n) })), fresh: J.fresh.slice(0, 12).map(n => ({ label: n, onClick: selN(n) })).concat(J.fresh.length > 12 ? [{ label: '+' + (J.fresh.length - 12) + ' more', onClick: () => this.go('names') }] : []), notes: J.notes.map(x => ({ text: x })), onRead: () => this.read(J.first), onConnections: () => this.go('connections'), onPatterns: () => this.go('patterns') } : { linked: [], fresh: [], notes: [] };
+    const just = J ? (() => { const tr = (window.__hdTraces || []).slice().reverse().find(t => (t.focus || []).includes(J.first));
+      const names = J.linked.slice(0, 8).map(n => ({ label: n, w: 600, col: 'var(--ink)', tip: 'Already in this workspace', onClick: selN(n) })).concat(J.fresh.slice(0, Math.max(0, 10 - Math.min(8, J.linked.length))).map(n => ({ label: n, w: 400, col: 'var(--ink2)', tip: 'New here', onClick: selN(n) })));
+      const more = J.linked.length + J.fresh.length - names.length; if (more > 0) names.push({ label: '+' + more + ' more', w: 400, col: 'var(--dim)', tip: 'All names', onClick: () => this.go('names') });
+      return { title: J.title, summary: [plural(J.n, 'statement'), J.linked.length ? plural(J.linked.length, 'name') + ' already here' : '', J.echoN ? plural(J.echoN, 'echo', 'echoes') : ''].filter(Boolean).join(' · '),
+        hasNames: names.length > 0, names, hasNote: J.notes.length > 0, noteLine: J.notes.join(' '),
+        hasReplay: !!tr, onReplay: () => tr && import(new URL('holodeck-ingest-player.js', location.href).href).then(M => M.open(tr)),
+        onRead: () => this.read(J.first), onConnections: () => this.go('connections'), onPatterns: () => this.go('patterns') }; })() : { names: [] };
     const allYears = [...new Set(A.docs.map(d => d.year).filter(Boolean))].sort();
     const isEmpty = A.docs.length === 0;
     const V = {}; ['draft', 'summary', 'search', 'sources', 'surprise', 'names', 'types', 'figures', 'statements', 'connections', 'framing', 'views', 'patterns', 'reader', 'profile', 'ingest', 'reading'].forEach(k => { V[k] = !isEmpty && view === k; });
@@ -4771,34 +4890,8 @@ class Component extends DCLogic {
     else { left = docs.filter(d => pubMs(d) === Infinity).length; leftLabel = left ? plural(left, 'undated source') + ' read last' : ''; groups = [byOrder(pubMs)]; }
     // The holograph: who is in the picture, which of them are bonded, and what value each measure holds.
     // Statements are admitted along the chosen arrow of time; a statement's shift is how much it changes that picture.
-    const NEG = /\b(not|no|never|denied|denies|den(y|ies)|without|failed to|did not|does not|was not|were not|has not|have not|isn’t|wasn’t|didn’t|doesn’t|won’t|cannot|can’t)\b/i;
-    const namesOf = st => [...new Set(st.names.filter(n => holoName(n, A) && (/\s/.test(n) || /^[A-Z]{2,}$/.test(n))))].slice(0, 8);
-    const figsOf = (st, ns) => { const out = []; const anchor = ns.slice().sort((a, b) => ((A.names[b] || {}).sts || []).length - ((A.names[a] || {}).sts || []).length)[0] || '';
-      const MW = /\b(budget|contract|grant|funding|allocation|appropriation|salary|cost|deficit|shortfall|revenue|spending|reimbursements?|beds|units|positions|households|encampments?|count|point-in-time|pit|homeless(?:ness)?|housed|housing|shelter)\b/gi;
-      const VB = /\b(moved|relocated|housed|placed|counted|served|identified|sheltered|evicted|exited|enrolled|hired|cut|added|funded|awarded|approved|requested|returned|spent|allocated)\b/gi;
-      st.figs.forEach(g => { const u = g.unit || ''; const v = +g.value; if (!isFinite(v) || !v) return; if (!u && v >= 1900 && v <= 2100) return; if (!/dollar|percent/.test(u) && !(u && v >= 10)) return;
-        const raw = clean(g.raw || String(v)); const at = st.text.indexOf(g.raw || raw); const win = at >= 0 ? st.text.slice(Math.max(0, at - 70), at + (g.raw || raw).length + 50) : '';
-        const mws = (win.match(MW) || []).map(w => w.toLowerCase().replace(/s$/, '')); const vbs = (win.match(VB) || []).map(w => w.toLowerCase());
-        const measure = [vbs[0], mws[0]].filter(Boolean).join(' ');
-        out.push({ key: measure ? u + '|' + measure + '|' + anchor : null, measure: measure ? (measure + (/dollar/.test(u) ? '' : ' ' + u)).trim() : u.replace(/s$/, ''), anchor, v, raw }); }); return out; };
-    const all = groups.flat(); const info = new Map(all.map(st => { const ns = namesOf(st); return [st.id, { ns, fs: figsOf(st, ns), neg: NEG.test(st.text.replace(/\b(no|not) (fewer|less|more|later|earlier|sooner) than\b|\bnot only\b|\bno doubt\b|\bnot yet\b/gi, '')) }]; }));
-    const pk = (a, b) => a < b ? a + '\u0001' + b : b + '\u0001' + a;
-    const mkH = () => ({ ent: new Map(), bond: new Map(), bneg: new Map(), val: new Map() });
-    const admit = (H, st) => { const I = info.get(st.id); I.ns.forEach(n => H.ent.set(n, (H.ent.get(n) || 0) + 1));
-      for (let i = 0; i < I.ns.length; i++) for (let j = i + 1; j < I.ns.length; j++) { const k = pk(I.ns[i], I.ns[j]); H.bond.set(k, (H.bond.get(k) || 0) + 1); if (I.neg) H.bneg.set(k, (H.bneg.get(k) || 0) + 1); }
-      I.fs.forEach(f => { if (!f.key) return; const L = H.val.get(f.key) || []; L.push({ v: f.v, raw: f.raw, st }); H.val.set(f.key, L); }); };
-    const when = st => { const d = A.docById[st.doc] || {}; return d.pubLabel || (d.year ? String(d.year) : 'undated'); };
-    const shiftOf = (st, H) => { const I = info.get(st.id); const parts = [];
-      const bonds = [];
-      for (let i = 0; i < I.ns.length; i++) for (let j = i + 1; j < I.ns.length; j++) { const a = I.ns[i], b = I.ns[j]; if (a.includes(b) || b.includes(a)) continue; const k = pk(a, b); const ca = H.ent.get(a) || 0, cb = H.ent.get(b) || 0; const had = H.bond.get(k) || 0;
-        if (!had) { if (ca >= 2 && cb >= 2) bonds.push({ w: 1 + 0.5 * Math.log2(1 + Math.min(ca, cb)), kind: 'bond', text: 'First time ' + a + ' and ' + b + ' are held together (' + a + ' already in ' + plural(ca, 'statement') + ', ' + b + ' in ' + cb + ')', name: a });
-          else if (ca || cb) { const kn = ca >= cb ? a : b, nw = ca >= cb ? b : a; bonds.push({ w: 0.3 + 0.1 * Math.log2(1 + Math.max(ca, cb)), kind: 'enter', text: nw + ' enters the picture, bonded to ' + kn, name: nw }); } }
-        else if (I.neg && !(H.bneg.get(k) || 0) && had >= 1) bonds.push({ w: 1.5, kind: 'turn', text: 'Negates the bond between ' + a + ' and ' + b + ': ' + plural(had, 'earlier statement') + ' held it without a “not”', name: a }); }
-      bonds.sort((x, y) => y.w - x.w); bonds.forEach((b, i) => { b.w *= Math.pow(0.6, i); parts.push(b); });
-      I.fs.forEach(f => { if (!f.key) return; const L = (H.val.get(f.key) || []).filter(o => o.st.doc !== st.doc || cur === 'source'); if (!L.length) { if (f.anchor && H.ent.get(f.anchor)) parts.push({ w: 0.4, kind: 'value', text: 'First “' + f.measure + '” figure for ' + f.anchor + ': ' + f.raw, name: f.anchor }); return; }
-        const last = L[L.length - 1]; if (Math.abs(last.v - f.v) / Math.max(Math.abs(last.v), 1e-9) < 0.005) return;
-        const r = Math.abs(Math.log2(Math.max(f.v, 1e-9) / Math.max(last.v, 1e-9))); parts.push({ w: 2 + Math.min(2, r), kind: 'revise', text: 'Changes the “' + f.measure + '” figure' + (f.anchor ? ' for ' + f.anchor : '') + ': ' + last.raw + ' (' + this.srcShort(A, last.st) + ', ' + when(last.st) + ') → ' + f.raw, name: f.anchor || null }); });
-      parts.sort((x, y) => y.w - x.w); return { shift: parts.reduce((s, p) => s + p.w, 0), parts }; };
+    const K = holoKit(A, { cur, srcShort: (A2, st) => this.srcShort(A2, st) }); const { mkH, admit, shiftOf } = K;
+    const all = groups.flat(); const info = K.info; all.forEach(st => K.infoOf(st));
     const by = {}; let n = 0;
     const judge = (st, H) => { n++; const I = info.get(st.id); if (!I.ns.length && !I.fs.length) return; const r = shiftOf(st, H); if (!r.parts.length) return;
       by[st.id] = { st, bits: r.shift, excess: r.shift, whyL: r.parts.slice(0, 3), kinds: r.parts.reduce((m, p) => { m[p.kind] = (m[p.kind] || 0) + 1; return m; }, {}), L: 1, det: [], pos: n }; };
