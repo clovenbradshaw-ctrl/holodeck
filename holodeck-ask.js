@@ -52,6 +52,48 @@ async function chatWebLLM(id, messages, { onToken, format, maxTokens, signal } =
 export const OLLAMA = 'http://localhost:11434';
 const BASE_PROMPT = 'You are helping a reporter read the documents in their workspace: audits, meeting transcripts, reports, pages and records. Answer the question in plain prose. Where the passages below cover it, answer from them. Where they do not, say what is missing instead of filling it in.';
 
+// --- EXPERIMENT: live_priors as a labeled, clearly-separate background-knowledge fallback ---
+// Reuses the same raw-GitHub base as index.html's LP_SETS/loadBaseline (kept in sync by hand here
+// since this is a throwaway experiment, not the real build — the real wiring, further along in this
+// session's own build chain, should import the one shared list rather than duplicate it like this).
+export const LP_RAW = 'https://raw.githubusercontent.com/clovenbradshaw-ctrl/live_priors/main/';
+// A SMALL, HARDCODED subset of live_priors' own fixed encyclopedic title list (index.html's LP_SETS.ency),
+// keyword -> path. This is the honest limit worth surfacing: live_priors is wired into Holodeck today as a
+// small FIXED set of ~66 specific documents (8 books, 31 Wikipedia articles, 27 statutes), never a live
+// full-text search index — so this fallback can only ever help when a question happens to land on one of
+// these exact topics, not general knowledge at large.
+const LP_ENCY_TOPICS = [
+  ['aristotle', 'Aristotle'], ['byzantine', 'Byzantine_Empire'], ['chemistry', 'Chemistry'],
+  ['christianity', 'Christian', 'Christianity'], ['cold war', 'Cold_War'], ['confucianism', 'confucius', 'Confucianism'],
+  ['dna', 'DNA'], ['drama', 'Drama'], ['entropy', 'Entropy'], ['evolution', 'Evolution'],
+  ['epistemology', 'Epistemology'], ['ethics', 'Ethics'], ['nietzsche', 'Friedrich_Nietzsche'],
+  ['general relativity', 'relativity', 'General_relativity'], ['hinduism', 'Hinduism'], ['homer', 'Homer'],
+  ['kant', 'Immanuel_Kant'], ['industrial revolution', 'Industrial_Revolution'], ['islam', 'Islam'],
+  ['judaism', 'Judaism'], ['tolstoy', 'Leo_Tolstoy'], ['logic', 'Logic'], ['mathematics', 'math', 'Mathematics'],
+  ['ming dynasty', 'Ming_dynasty'], ['mongol', 'Mongol_Empire'], ['neuroscience', 'Neuroscience'],
+  ['novel', 'Novel'], ['plato', 'Plato'], ['poetry', 'Poetry'], ['quantum', 'Quantum_mechanics'],
+  ['renaissance', 'Renaissance'],
+].map((row) => ({ keys: row.slice(0, -1).map((k) => k.toLowerCase()), path: '02-encyclopedic/wikipedia/' + row[row.length - 1] + '.txt', title: row[row.length - 1].replace(/_/g, ' ') }));
+
+export function matchLivePriorTopic(question) {
+  const q = ' ' + String(question).toLowerCase() + ' ';
+  for (const t of LP_ENCY_TOPICS) if (t.keys.some((k) => q.includes(k))) return t;
+  return null;
+}
+
+const _lpDocCache = new Map();
+export async function fetchLivePriorExcerpt(path, maxChars = 3000) {
+  if (_lpDocCache.has(path)) return _lpDocCache.get(path);
+  const r = await fetch(LP_RAW + path);
+  if (!r.ok) { _lpDocCache.set(path, null); return null; }
+  let text = await r.text();
+  text = text.replace(/^---[\s\S]*?\n---\n/, '').trim();
+  const excerpt = text.slice(0, maxChars);
+  const result = { path, chars: text.length, excerpt };
+  _lpDocCache.set(path, result);
+  return result;
+}
+
 export async function probe(base = OLLAMA) {
   try {
     const r = await fetch(base + '/api/tags', { cache: 'no-store' });
@@ -117,6 +159,29 @@ export async function turn(conv, IX, question, { base = OLLAMA, model = DEFAULT_
   while (offered.length > 1 && approxTokens(messages) > ctx - 760) { offered = offered.slice(0, -1); messages = build(offered, factBlock); }
   if (approxTokens(messages) > ctx - 760 && factBlock && factBlock.lines) { const fb = { ...factBlock, text: factBlock.text.split('\n').slice(0, 14).join('\n') }; messages = build(offered.slice(0, 2).map(c => ({ ...c, text: c.text.slice(0, 500) })), fb); }
   const notes = factBlock ? { lines: factBlock.lines || [], coverage: factBlock.coverage || 0, empty: !!factBlock.empty, omitted: factBlock.omitted || 0, spans: (factBlock.spans || []).length, sentences: factBlock.sentenceCount || 0 } : null;
+
+  // EXPERIMENT: workspace retrieval came back thin (nothing, or only very short passages) — see whether
+  // live_priors' own fixed corpus covers the question, and if so, fold it in as CLEARLY LABELED background
+  // knowledge, never mixed into `offered`/`notes` so it can never masquerade as a workspace citation.
+  let livePriors = null;
+  const thin = offered.length === 0 || offered.every((c) => (c.text || '').length < 80);
+  if (thin) {
+    const topic = matchLivePriorTopic(question);
+    if (topic) {
+      try {
+        const doc = await fetchLivePriorExcerpt(topic.path);
+        if (doc && doc.excerpt) {
+          livePriors = { topic: topic.title, path: topic.path, chars: doc.chars, usedChars: doc.excerpt.length };
+          const bgBlock = 'Background knowledge (from live_priors\' own "' + topic.title + '" reference article — this is NOT the person\'s workspace material; if you use it, say plainly that it is general background, not something the workspace states):\n' + doc.excerpt;
+          messages = messages.map((m) => (m.role === 'system' && /passages|material/i.test(m.content)) ? { ...m, content: m.content + '\n\n' + bgBlock } : m);
+          // fold.js's buildTurnMessages puts the source block in a later user-role message in some builds —
+          // fall back to appending onto the LAST message if no system message matched the heuristic above.
+          if (!messages.some((m) => m.content.includes(bgBlock))) messages[messages.length - 1] = { ...messages[messages.length - 1], content: messages[messages.length - 1].content + '\n\n' + bgBlock };
+        }
+      } catch (e) { livePriors = { topic: topic.title, path: topic.path, error: String(e && e.message || e) }; }
+    }
+  }
+
   const sentChars = FOLD.charCount(messages);
   const transcriptChars = conv.history.reduce((n, m) => n + (m.content || '').length, 0) + question.length;
   onStage && onStage('answering');
@@ -145,7 +210,7 @@ export async function turn(conv, IX, question, { base = OLLAMA, model = DEFAULT_
   } catch (e) { summary = FOLD.advanceSummaryFold(summary, foldLine); refresh = { ok: false, why: String(e.message || e) }; }
   const t = { n: turnNo, question, answer, used: used.map(ref => ({ ref, text: String(readRange(IX.texts, ref) || '').trim().slice(0, 700) })), offered: offered.map(c => ({ ref: c.ref, source: c.source, start: c.start, end: c.end, label: c.label, text: c.text.slice(0, 700) })),
     attr: attr.map(a => ({ text: a.text, ref: a.ref || null, via: a.via || null })), findings: (grounding.findings || []).map(f => ({ text: f.text, kind: f.atomKind, start: f.start, end: f.end, echoesQuestion: !!f.echoesQuestion })),
-    examined: !!grounding.examined, record, foldLine, refresh, computed, reading: reading ? { lines: reading.lines } : null, notes, resolved: resolved && resolved.length ? resolved : null, sentChars, transcriptChars, messages, model, ms: Date.now() - t0,
+    examined: !!grounding.examined, record, foldLine, refresh, computed, reading: reading ? { lines: reading.lines } : null, notes, livePriors, resolved: resolved && resolved.length ? resolved : null, sentChars, transcriptChars, messages, model, ms: Date.now() - t0,
     tokens: res.stats ? { out: res.stats.eval_count, in: res.stats.prompt_eval_count, secs: res.stats.total_duration ? res.stats.total_duration / 1e9 : null } : null };
   return { conv: { summary, history: [...conv.history, { role: 'user', content: question }, { role: 'assistant', content: answer }], turns: [...conv.turns, t] }, turn: t };
 }
