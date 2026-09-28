@@ -39,7 +39,7 @@ select option{background:var(--s1);color:var(--ink)}
           <option value="{{ o.id }}">{{ o.name }}</option>
         </sc-for>
       </select>
-      <button onClick="{{ openAdd }}" style="width:100%;box-sizing:border-box;background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:8px 10px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">+ Add source</button>
+      <button onClick="{{ openAdd }}" style="width:100%;box-sizing:border-box;background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:8px 10px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Add source</button>
       <button onClick="{{ repo.open }}" title="{{ repo.title }}" style="width:100%;box-sizing:border-box;display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)"><span style="width:8px;height:8px;border-radius:50%;background:{{ repo.dot }}"></span>Data</button>
     </div>
     <nav style="display:flex;flex-direction:column;gap:2px">
@@ -51,17 +51,42 @@ select option{background:var(--s1);color:var(--ink)}
           </button>
         </sc-for>
       </div>
-      <sc-if value="{{ hasSegments }}" hint-placeholder-val="{{ false }}">
       <div style="display:flex;flex-direction:column;gap:1px;padding:10px 0 12px;border-top:1px solid var(--line)">
-        <span style="font:600 12px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--acc);padding:2px 12px 6px" title="These don't share a name or figure with each other">Segment</span>
-        <sc-for list="{{ segList }}" as="p" hint-placeholder-count="2">
-          <button onClick="{{ p.onClick }}" title="{{ p.label }}" style="white-space:normal;text-align:left;cursor:pointer;padding:5px 12px 5px 20px;border-radius:8px;background:{{ p.bg }};border:1px solid {{ p.bd }};display:flex;justify-content:space-between;align-items:baseline;gap:10px" style-hover="background:var(--s2)">
-            <span style="font:500 14px 'Hanken Grotesk';color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.label }}</span>
-            <span style="font:500 12px 'JetBrains Mono';color:var(--mut);white-space:nowrap">{{ p.n }}</span>
+        <span style="font:600 12px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--acc);padding:2px 12px 6px">{{ navRead.label }}</span>
+        <sc-for list="{{ navRead.items }}" as="g" hint-placeholder-count="3">
+          <button onClick="{{ g.onClick }}" style="white-space:normal;text-align:left;cursor:pointer;padding:5px 12px 5px 20px;border-radius:8px;background:{{ g.bg }};border:1px solid {{ g.bd }};display:flex;justify-content:space-between;align-items:baseline;gap:10px" style-hover="background:var(--s2)">
+            <span style="font:{{ g.weight }} 14px 'Hanken Grotesk';color:var(--ink2)">{{ g.label }}</span>
+            <span style="font:500 12px 'JetBrains Mono';color:var(--mut);white-space:nowrap">{{ g.count }}</span>
           </button>
         </sc-for>
       </div>
-      </sc-if>
+      <div style="display:flex;flex-direction:column;gap:1px;padding:10px 0 12px;border-top:1px solid var(--line)">
+        <span style="font:600 12px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--acc);padding:2px 12px 6px">{{ navExplore.label }}</span>
+        <sc-for list="{{ navExplore.items }}" as="g" hint-placeholder-count="3">
+          <button onClick="{{ g.onClick }}" style="white-space:normal;text-align:left;cursor:pointer;padding:5px 12px 5px 20px;border-radius:8px;background:{{ g.bg }};border:1px solid {{ g.bd }};display:flex;justify-content:space-between;align-items:baseline;gap:10px" style-hover="background:var(--s2)">
+            <span style="font:{{ g.weight }} 14px 'Hanken Grotesk';color:var(--ink2)">{{ g.label }}</span>
+            <span style="font:500 12px 'JetBrains Mono';color:var(--mut);white-space:nowrap">{{ g.count }}</span>
+          </button>
+        </sc-for>
+        <button onClick="{{ toggleSegOpen }}" style="white-space:normal;text-align:left;cursor:pointer;padding:5px 12px 5px 20px;border-radius:8px;background:transparent;border:0;display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:4px" style-hover="background:var(--s2)">
+          <span style="font:500 14px 'Hanken Grotesk';color:var(--ink2)">{{ segToggleLabel }}</span>
+          <span style="font:500 12px 'JetBrains Mono';color:var(--mut);white-space:nowrap">{{ segCount }}</span>
+        </button>
+        <sc-if value="{{ segOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:6px;padding:2px 12px 2px 20px">
+            <sc-for list="{{ segList }}" as="s" hint-placeholder-count="2">
+              <button onClick="{{ s.onJump }}" style="all:unset;box-sizing:border-box;width:100%;cursor:pointer;display:flex;flex-direction:column;gap:3px;border-radius:8px;background:{{ s.bg }};border:1px solid {{ s.bd }};padding:6px 10px" style-hover="background:var(--s2)">
+                <div style="display:flex;align-items:center;gap:8px;width:100%">
+                  <span style="font:500 13px 'Hanken Grotesk';color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0">{{ s.label }}</span>
+                  <span style="font:500 12px 'JetBrains Mono';color:var(--mut);white-space:nowrap;flex:none">{{ s.n }}</span>
+                  <sc-if value="{{ s.hasRemove }}" hint-placeholder-val="{{ false }}"><span onClick="{{ s.onRemove }}" title="Remove" style="cursor:pointer;flex:none;color:var(--mut);font-size:12px;padding:2px">✕</span></sc-if>
+                </div>
+                <span style="font:400 12px 'Hanken Grotesk';color:var(--mut);text-wrap:pretty;text-align:left">{{ s.desc }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
       <sc-for list="{{ navRest }}" as="G" hint-placeholder-count="3">
         <div style="display:flex;flex-direction:column;gap:1px;padding:10px 0 12px;border-top:1px solid var(--line)">
           <sc-if value="{{ G.hasLabel }}" hint-placeholder-val="{{ true }}"><span style="font:600 12px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--acc);padding:2px 12px 6px">{{ G.label }}</span></sc-if>
@@ -147,7 +172,6 @@ select option{background:var(--s1);color:var(--ink)}
       <sc-if value="{{ hdrShow }}" hint-placeholder-val="{{ true }}">
         <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
           <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:4px">
-            <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:{{ hdr.color }}">{{ hdr.eyebrow }}</span>
             <h1 style="margin:0;font:500 30px/1.2 'Newsreader',serif;color:var(--ink);text-wrap:pretty">{{ hdr.title }}</h1>
             <p style="margin:0;color:var(--mut);font-size:15px;text-wrap:pretty">{{ hdr.sub }}{{ sr.sub }}</p>
             <sc-if value="{{ sr.hasOthers }}" hint-placeholder-val="{{ false }}">
@@ -165,6 +189,7 @@ select option{background:var(--s1);color:var(--ink)}
                 <sc-for list="{{ chips }}" as="ch" hint-placeholder-count="1">
                   <button onClick="{{ ch.onClear }}" title="Remove" style="display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid #8b5cf6;color:var(--ink);border-radius:999px;padding:3px 5px 3px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk'"><span style="color:var(--mut)">{{ ch.k }}</span><b style="font-weight:600">{{ ch.v }}</b><span style="width:18px;height:18px;border-radius:50%;background:var(--line2);display:flex;align-items:center;justify-content:center;font-size:10px">✕</span></button>
                 </sc-for>
+                <sc-if value="{{ addAsFold.show }}" hint-placeholder-val="{{ false }}"><button onClick="{{ addAsFold.onClick }}" style="margin-left:auto;background:none;border:1px solid #8b5cf6;border-radius:999px;color:var(--acc);cursor:pointer;font:500 13px 'Hanken Grotesk';padding:3px 10px;white-space:nowrap">{{ addAsFold.label }}</button></sc-if>
                 <button onClick="{{ clearAll }}" style="margin-left:auto;background:none;border:0;color:var(--acc);cursor:pointer;font:500 14px 'Hanken Grotesk';white-space:nowrap">Show everything</button>
               </div>
             </sc-if>
@@ -830,7 +855,6 @@ select option{background:var(--s1);color:var(--ink)}
       </sc-if>
 
       <sc-if value="{{ v.sources }}" hint-placeholder-val="{{ false }}">
-        <p style="margin:0;font:400 15px/1.5 'Hanken Grotesk';color:var(--mut);max-width:720px;text-wrap:pretty">A source is a whole document kept in this workspace. Links you open are held as <b style="color:var(--ink)">seen</b> until you keep them.</p>
         <sc-if value="{{ hasFacets }}" hint-placeholder-val="{{ false }}">
           <div style="display:flex;flex-direction:column;gap:8px;background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:12px 14px">
             <sc-for list="{{ srcFacets }}" as="fa" hint-placeholder-count="3">
@@ -2534,6 +2558,7 @@ function loadAdded() {
 }
 function loadTheme() { try { return localStorage.getItem('fold-explorer-theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'); } catch (e) { return 'dark'; } }
 function loadRailOpen() { try { const v = localStorage.getItem('fold-explorer-rail'); return v === null ? true : v === '1'; } catch (e) { return true; } }
+function loadSegOpen() { try { return localStorage.getItem('fold-explorer-segopen') === '1'; } catch (e) { return false; } }
 // display names for workspaces forked out of an existing one -- the fixed sample corpora and 'custom' never need an entry here
 function loadWorkspaceNames() { try { return JSON.parse(localStorage.getItem('fold-explorer-workspaces') || '{}'); } catch (e) { return {}; } }
 function saveWorkspaceNames(w) { try { localStorage.setItem('fold-explorer-workspaces', JSON.stringify(w)); } catch (e) {} }
@@ -2786,7 +2811,7 @@ const whenOf = (st, d) => d.pubLabel || (d.year ? String(d.year) : 'Undated');
 const assertLine = (st, A) => { const d = A.docById[st.doc]; const w = whoSays(st, A); return (w ? w.who + (w.how === 'quoted' ? ' (quoted)' : w.how === 'publisher' ? '' : ' (' + w.how + ')') + ' · ' : '') + d.title + ' · ' + whenOf(st, d); };
 
 class Component extends DCLogic {
-  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, draftTitle: '', draftYear: '', draftText: '', note: '', theme: loadTheme(), railOpen: loadRailOpen(), dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, ground: { on: true, names: true, figures: true, dates: true, sentences: true } };
+  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, draftTitle: '', draftYear: '', draftText: '', note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, ground: { on: true, names: true, figures: true, dates: true, sentences: true } };
   _html = {};
 
   componentDidMount() {
@@ -3360,7 +3385,17 @@ class Component extends DCLogic {
       recs, hasRecs: recs.length > 0, meter: 'Next turn carries about ' + nextChars.toLocaleString() + ' characters plus the new passages. The transcript it stands in for is ' + trChars.toLocaleString() + '.',
       canSent: !!this._lastMsgs, sentOpen: !!S.akShowSent && !!this._lastMsgs, toggleSent: () => this.setState({ akShowSent: !S.akShowSent }), sentLabel: S.akShowSent ? 'Hide what was sent' : 'Show exactly what the last turn sent',
       sent: (this._lastMsgs || []).map(m => ({ role: m.role, text: m.content.length > 4000 ? m.content.slice(0, 4000) + '…' : m.content, n: m.content.length.toLocaleString() + ' chars' })),
-      examples: ['What did the audit find about the Office of Homeless Services?', 'Who is responsible for the encampment closures?', 'How many sources are there by kind?'].map(x => ({ t: x, onClick: () => this.setState({ akQ: x }) })) } };
+      examples: (() => {
+        const qs = [];
+        const nameEntries = Object.entries(A.names || {}).filter(([, n]) => (n.type === 'person' || n.type === 'organisation') && n.docs.size > 1);
+        nameEntries.sort((a, b) => b[1].sts.length - a[1].sts.length);
+        if (nameEntries.length) qs.push('What does this workspace say about ' + nameEntries[0][0] + '?');
+        const kinds = [...new Set(A.docs.map(d => d.kind || d.type).filter(Boolean))];
+        if (kinds.length > 1) qs.push('How many sources are there by kind?');
+        const years = A.docs.map(d => d.year).filter(Boolean); if (years.length) qs.push('What happened in ' + Math.max(...years) + '?');
+        if (!qs.length && A.docs.length) qs.push('What is this workspace about?');
+        return qs.slice(0, 3).map(x => ({ t: x, onClick: () => this.setState({ akQ: x }) }));
+      })() } };
   }
   readingVals(A, view) {
     const S = this.state; const X = this._rix; const docOf = src => { const id = String(src).replace(/\.(txt|json)$/, ''); return A.docs.find(d => d.ohsId === id) || null; };
@@ -3818,7 +3853,8 @@ class Component extends DCLogic {
     const near = (a, B) => B.some(b => { let i = 0; a.forEach(w => { if (b.has(w)) i++; }); return i / ((a.size + b.size - i) || 1) >= 0.8; });
     const rank = (a, b) => (a.year || 9999) - (b.year || 9999) || per[b.id].length - per[a.id].length || (a.id < b.id ? -1 : 1);
     const hosts = {}; kept.forEach(d => { const h = hostK(d); if (h) (hosts[h] = hosts[h] || []).push(d); });
-    Object.values(hosts).forEach(L => { if (L.length < 2) return; const c = L.slice().sort(rank)[0]; L.forEach(d => { if (d !== c) out[d.id] = { of: c.id, why: 'Same outlet as' }; }); });
+    const hostFloor = Math.sqrt(kept.length) + 1; // a domain hosting more than this share of the corpus (e.g. a government TLD) is too broad to mean "same outlet"
+    Object.values(hosts).forEach(L => { if (L.length < 2 || L.length > hostFloor) return; const c = L.slice().sort(rank)[0]; L.forEach(d => { if (d !== c) out[d.id] = { of: c.id, why: 'Same outlet as' }; }); });
     kept.forEach(d => { if (out[d.id]) return; const mine = per[d.id]; if (mine.length < 5) return; let best = null;
       kept.forEach(o => { if (o.id === d.id || rank(o, d) > 0) return; let hit = 0; mine.forEach((st, i) => { if (texts[o.id].has(nt(st.text)) || near(W[d.id][i], W[o.id])) hit++; }); const r = hit / mine.length; if (!best || r > best.r) best = { o, r, hit }; });
       if (best && best.r >= 0.5 && best.hit >= 5) out[d.id] = { of: best.o.id, why: 'Copies ' + Math.round(best.r * 100) + '% of its text from' };
@@ -3828,6 +3864,13 @@ class Component extends DCLogic {
   counted(d) { return this.mOf(d).status !== 'seen'; }
   inFold(st) { const t = this._fold; if (!t || !t.length) return true; const x = st.text.toLowerCase(); return t.some(w => x.includes(w)); }
   setMeta(docId, patch) { const cid = this.corpusId(); const all = { ...this.metaAll() }; const w = { ...(all[cid] || {}) }; w[docId] = typeof patch === 'string' ? patch : { ...(w[docId] || {}), ...patch }; all[cid] = w; this._meta = all; try { localStorage.setItem('fold-explorer-srcmeta', JSON.stringify(all)); } catch (e) {} this.setState({ metaVer: (this.state.metaVer || 0) + 1 }); }
+  // manually-created folds: a snapshot of whatever filter (f/q) was active when saved, not a typed label --
+  // a plain array on the same per-workspace store __topic already lives in, not routed through setMeta
+  // since its string/object-patch split isn't the right shape for an array
+  myFolds() { return ((this.metaAll()[this.corpusId()] || {}).__folds) || []; }
+  _saveFolds(folds) { const cid = this.corpusId(); const all = { ...this.metaAll() }; all[cid] = { ...(all[cid] || {}), __folds: folds }; this._meta = all; try { localStorage.setItem('fold-explorer-srcmeta', JSON.stringify(all)); } catch (e) {} this.setState({ metaVer: (this.state.metaVer || 0) + 1 }); }
+  addFoldFromFilter(label, f, q, n) { label = (label || '').trim(); if (!label) return; const folds = this.myFolds(); if (folds.some(x => x.label === label)) return; this._saveFolds([...folds, { label, f, q, n }]); }
+  removeFold(label) { this._saveFolds(this.myFolds().filter(x => x.label !== label)); }
   discard(docId) { const cid = this.corpusId(); const added = { ...this.state.added, [cid]: (this.state.added[cid] || []).filter(d => d.id !== docId) }; this.saveAdded(added); this.setState({ added, view: 'sources', readDoc: null, sel: null, just: null }); }
   // copies a paradigm's own-added docs into a brand-new workspace (never removes them from where they are --
   // a fork branches, it doesn't cut); base/sample docs in the cluster stay in the original, since they aren't this browser's to move
@@ -3836,7 +3879,7 @@ class Component extends DCLogic {
     const added = { ...this.state.added, [newId]: moving }; this.saveAdded(added);
     saveWorkspaceNames({ ...loadWorkspaceNames(), [newId]: p.label });
     this.setState({ added, corpus: newId, view: 'summary', sel: null, f: {}, q: '', readDoc: null, just: null }); }
-  sel(type, id) { const S0 = this.state; if (type === 'name' && S0.view === 'reader' && !(S0.sel && S0.sel.type === 'name' && S0.sel.id === id)) this.pushHist(); this.setState(s => (s.sel && s.sel.type === type && s.sel.id === id) ? { sel: null, selAll: false, pfIdx: 0, pfAll: false } : { sel: { type, id }, selAll: false, pfIdx: 0, pfAll: false }); }
+  sel(type, id) { const S0 = this.state; if (type === 'name' && S0.view === 'reader' && !(S0.sel && S0.sel.type === 'name' && S0.sel.id === id)) this.pushHist(); if (type === 'doc') this.markRead(id); this.setState(s => (s.sel && s.sel.type === type && s.sel.id === id) ? { sel: null, selAll: false, pfIdx: 0, pfAll: false } : { sel: { type, id }, selAll: false, pfIdx: 0, pfAll: false }); }
   go(view) { this.setState({ view, readDoc: null }); }
   read(docId, stId) { const S0 = this.state; if (S0.view !== 'reader' || docId !== S0.readDoc || (S0.sel && S0.sel.type === 'name')) this.pushHist(); this.markRead(docId); if (docId !== this.state.readDoc) { this.state.seekT = 0; this._faithFound = null; } this.setState({ view: 'reader', readDoc: docId, sel: stId ? { type: 'statement', id: stId } : { type: 'doc', id: docId } }); }
   saveAdded(added) { try { localStorage.setItem('fold-explorer-added', JSON.stringify(added)); } catch (e) {} }
@@ -4350,11 +4393,11 @@ class Component extends DCLogic {
       : view === 'surprise' ? (S.suMode === 'belief' ? { eyebrow: 'What changed the picture', title: 'Statements that shifted the picture', sub: 'Read along the arrow of time: statements that revised a figure, negated a bond, or held two known names together for the first time.', color: 'var(--amber)' }
         : { eyebrow: 'What changed the picture', title: 'Where independent sources meet', sub: 'Two claims from sources that don’t draw on each other, joined by one exact value, saying together what neither says alone.', color: 'var(--amber)' })
       : view === 'reader' && S.readDoc ? { eyebrow: 'Reading · ' + docMeta(A.docById[S.readDoc]), title: A.docById[S.readDoc].title, sub: plural((A.stsByDoc[S.readDoc] || []).length, 'statement') + ' · names, figures and dates are marked', color: 'var(--acc)' }
-      : view === 'reading' ? { eyebrow: 'The constitutional reading', title: 'What the reader made of this corpus', sub: 'From the causal text reader’s full pass over the ground documents (no model). The cast it admitted, the bonds it witnessed, and the identities it kept revising, read from its own record.' }
-      : view === 'ingest' ? { eyebrow: 'Ingest and publish', title: 'Bring in more, and make it public', sub: 'Find new material, transcribe it in this browser, and publish it to this workspace’s public Matrix room as a hash-chained record. Your own work syncs to a private room you can invite others to.' }
-      : view === 'records' ? { eyebrow: 'Assertions', title: 'The workspace as tables', sub: 'Every source, statement, name, figure and date is a record, linked to the records it came from. No schema was declared: the tables, field types and relations are read off the data, and each reading is written into the same log with the count it came from.', color: 'var(--acc)' }
+      : view === 'reading' ? { eyebrow: 'The constitutional reading', title: 'Every name, found automatically', sub: 'A mechanical pass over every source (no AI) — every name it found, which spellings it merged into the same person or org as evidence came in, and who keeps turning up together.' }
+      : view === 'ingest' ? { eyebrow: 'Ingest and publish', title: 'Bring in more, and make it public', sub: 'Find new material, transcribe it here, and publish what you keep.' }
+      : view === 'records' ? { eyebrow: 'Assertions', title: 'The workspace as tables', sub: 'Every source, statement, name, figure and date, linked back to where it came from.', color: 'var(--acc)' }
       : view === 'ask' ? { eyebrow: 'Ask the Fold', title: 'Ask the sources', sub: 'Answered by a small model running in this tab, from passages found by the question’s own words. Afterwards every sentence is checked: a numbered address where it matches a passage, a dotted line where it is the model’s own, a wavy line where a figure or name is not in the material.', color: 'var(--acc)' }
-      : view === 'draft' ? { eyebrow: 'Draft', title: 'Claims and the excerpts behind them', sub: 'Private to this browser. Pin passages while reading; each pin keeps the words as you saw them and a pointer back to where they came from.', color: 'var(--acc)' }
+      : view === 'draft' ? { eyebrow: 'Draft', title: 'Claims and the excerpts behind them', sub: 'Private to this browser — pinned passages keep their source.', color: 'var(--acc)' }
       : c ? { eyebrow: c.row + (this.props.showTerrainNames ? ' · ' + c.terrain : ''), title: c.label, sub: c.question, color: c.color }
       : { eyebrow: 'Overview', title: this.corpusName(), sub: plural(docsIn.length, 'document') + ' · ' + plural(F.length, 'statement') + ' · ' + plural(D.nameList.length, 'name') + ' · ' + plural(figCount, 'figure') + '.', color: 'var(--acc)' };
 
@@ -4373,6 +4416,7 @@ class Component extends DCLogic {
     if (f.period) chips.push({ k: f.period.mode === 'happened' ? 'Happened in' : 'Published in', v: periodLabel(f.period.key), onClear: () => this.setF('period', null) });
     if (S.q.trim() && !IS_Q(S.q) && !PARSE_REL(S.q)) chips.push({ k: 'Search', v: '“' + S.q.trim() + '”', onClear: () => this.setState(s => ({ q: '', ...(s.view === 'search' ? { view: s.prevView || 'summary' } : {}) })) });
     this._chips = chips;
+    const addAsFold = { show: chips.length > 0 && view !== 'search', label: 'Save as a fold', onClick: () => { const label = chips.map(c => c.k.toLowerCase() + ' ' + c.v).join(' · '); if (!label) return; this.addFoldFromFilter(label, { ...f }, S.q, new Set(F.map(st => st.doc)).size); } };
 
     const addN = k => (S.added[k] || []).length;
     const wsNames = loadWorkspaceNames();
@@ -4384,8 +4428,22 @@ class Component extends DCLogic {
     // mechanism the Topic box already uses) and the Overview page's cards (a one-shot search jump, kept as-is)
     const P = A.docs.length ? paradigms(A) : { groups: [], strayN: 0 };
     const segOn = this._topicStr || '';
-    const segList = P.groups.slice(0, 6).map(p => { const on = segOn === p.label; return { label: p.label, n: String(p.n), on, bg: on ? 'var(--sel)' : 'transparent', bd: on ? '#8b5cf6' : 'transparent', onClick: () => this.setMeta('__topic', on ? '' : p.label) }; });
+    const sameF = (a, b) => JSON.stringify(a || {}) === JSON.stringify(b || {});
+    // a fold row's own click both shows what it is (name, count, one-line description, always visible)
+    // and applies/clears it in that same click -- one click, like every other nav row, not click-to-preview
+    // then click-to-open
+    const autoSegs = P.groups.slice(0, 6).map(p => ({ key: 'a:' + p.label, label: p.label, n: p.n, auto: true, desc: 'Discovered: ' + plural(p.n, 'source') + ' sharing real names with each other, anchored by “' + p.label + '”.' }));
+    const manualFolds = this.myFolds().map(x => ({ key: 'm:' + x.label, label: x.label, n: x.n, auto: false, _f: x.f, _q: x.q, desc: 'Yours: ' + plural(x.n, 'source') + ' when you saved it.' }));
+    const segList = [...autoSegs, ...manualFolds].map(s => { const on = s.auto ? (segOn === s.label) : (sameF(S.f, s._f) && (S.q || '') === (s._q || ''));
+      return { ...s, n: String(s.n), on, hasRemove: !s.auto, bg: on ? 'var(--sel)' : 'transparent', bd: on ? '#8b5cf6' : 'transparent',
+        onJump: () => { if (on) { if (s.auto) this.setMeta('__topic', ''); else this.setState({ f: {}, q: '' }); }
+          else if (s.auto) this.setMeta('__topic', s.label);
+          else this.setState({ f: { ...(s._f || {}) }, q: s._q || '' }); },
+        onRemove: e => { e.stopPropagation(); this.removeFold(s.label); } };
+    });
     const hasSegments = segList.length > 0;
+    const segOpen = S.segOpen; const segToggleLabel = 'Folds'; const segCount = String(segList.length);
+    const toggleSegOpen = () => { const open = !segOpen; try { localStorage.setItem('fold-explorer-segopen', open ? '1' : '0'); } catch (e) {} this.setState({ segOpen: open }); };
     const just = J ? { title: J.title, summary: plural(J.n, 'statement') + ' read. ' + (J.linked.length ? plural(J.linked.length, 'name') + ' matched things already here.' : J.n ? 'None of its names were here before.' : '') + (J.echoN ? ' ' + plural(J.echoN, 'statement') + ' echo something already here.' : ''), hasLinked: J.linked.length > 0, hasFresh: J.fresh.length > 0, linked: J.linked.slice(0, 16).map(n => ({ label: n, color: TYPE_C[A.names[n] ? A.names[n].type : 'other'], onClick: selN(n) })), fresh: J.fresh.slice(0, 12).map(n => ({ label: n, onClick: selN(n) })).concat(J.fresh.length > 12 ? [{ label: '+' + (J.fresh.length - 12) + ' more', onClick: () => this.go('names') }] : []), notes: J.notes.map(x => ({ text: x })), onRead: () => this.read(J.first), onConnections: () => this.go('connections'), onPatterns: () => this.go('patterns') } : { linked: [], fresh: [], notes: [] };
     const allYears = [...new Set(A.docs.map(d => d.year).filter(Boolean))].sort();
     const isEmpty = A.docs.length === 0;
@@ -4410,10 +4468,17 @@ class Component extends DCLogic {
     ];
     const gHi = on => ({ bg: on ? 'var(--sel)' : 'transparent', bd: on ? '#8b5cf6' : 'transparent', weight: on ? 600 : 500 });
     const goalNav = [{ id: 'summary', label: 'Start here', count: '' }, { id: 'draft', label: 'Draft', count: this.activePins().length ? String(this.activePins().length) : '' }, { id: 'reading', label: 'The reading', count: this._rix ? String(this._rix.castTotal) : '' }, { id: 'ask', label: 'Ask the Fold', count: this._conv && this._conv.turns && this._conv.turns.length ? String(this._conv.turns.length) : '' }, { id: 'records', label: 'Records', count: this._db ? String(this._db.schema.tables.length) : '' }, { id: 'ingest', label: 'Ingest & publish', count: (this._net && this._net.chain && this._net.chain.length) ? String(this._net.chain.length) : '' }, ...GOALS.map(g => ({ id: g[0], label: g[1], count: counts[g[0]] }))].map(g => ({ ...g, ...gHi(view === g.id), onClick: () => this.go(g.id) }));
-    const NAVG = [['', [['summary', 'Start here'], ['ask', 'Ask the Fold']]], ['Read', [['sources', 'Sources'], ['names', 'Names'], ['records', 'Assertions'], ['reading', 'The reading']]], ['Look closer', [['surprise', 'What changed'], ['views', 'Over time'], ['connections', 'Connections']]], ['Your work', [['draft', 'Draft'], ['ingest', 'Add & publish']]]];
-    const navGroups = NAVG.map(([label, items]) => ({ label, hasLabel: !!label, items: items.map(([id, lab]) => ({ label: lab, count: id === 'draft' && this.activePins().length ? String(this.activePins().length) : '', ...gHi(view === id), onClick: () => this.go(id) })) }));
-    // split so Segment can sit right under Start here / Ask the Fold, above Read/Look closer/Your work
-    const navTop = navGroups[0].items; const navRest = navGroups.slice(1);
+    const NAVG = [['', [['summary', 'Start here'], ['ask', 'Ask the Fold']]], ['Read', [['sources', 'Sources'], ['names', 'Names'], ['records', 'Assertions']]], ['Explore', [['reading', 'The reading'], ['connections', 'Connections']]], ['Your work', [['draft', 'Draft'], ['ingest', 'Add & publish']]]];
+    const countFor = id => ({
+      sources: String(A.docs.filter(d => this.counted(d)).length), names: String(D.nameList.length), records: String(F.length),
+      reading: this._rix ? String(this._rix.castTotal) : '', connections: String(D.edgeList.length),
+      draft: this.activePins().length ? String(this.activePins().length) : '',
+      ingest: (this._net && this._net.chain && this._net.chain.length) ? String(this._net.chain.length) : '',
+      ask: (this._conv && this._conv.turns && this._conv.turns.length) ? String(this._conv.turns.length) : '',
+    }[id] || '');
+    const navGroups = NAVG.map(([label, items]) => ({ label, hasLabel: !!label, items: items.map(([id, lab]) => ({ label: lab, count: countFor(id), ...gHi(view === id), onClick: () => this.go(id) })) }));
+    // split so Folds can sit right under The reading / Connections, inside Explore
+    const navTop = navGroups[0].items; const navRead = navGroups[1]; const navExplore = navGroups[2]; const navRest = navGroups.slice(3);
     const goalCards = GOALS.map(g => ({ label: g[1], question: g[2], count: counts[g[0]], headline: heads[g[0]], examples: ex[g[0]], onClick: () => this.go(g[0]) }));
     const checks = [
       ...(juncMode ? (JN.length ? [{ label: plural(JN.length, 'junction') + ' between independent sources that nothing in the record links', onClick: () => this.go('surprise') }] : [])
@@ -4521,7 +4586,7 @@ class Component extends DCLogic {
       readerFold: S.readDoc && this._fold.length ? ' ' + (A.stsByDoc[S.readDoc] || []).filter(s => this.inFold(s)).length + ' of its statements touch the topic.' : '',
       readerKeep: () => this.setMeta(S.readDoc, { status: 'source' }), readerDiscard: () => this.discard(S.readDoc),
       justSeen: !!(S.just && A.docById[S.just.first] && this.mOf(A.docById[S.just.first]).status === 'seen'), justKeep: () => S.just && this.setMeta(S.just.first, { status: 'source' }),
-      corpusId: cid, corpusOptions: opts, q: S.q, corpusName: this.corpusName(), segList, hasSegments, navTop, navRest,
+      corpusId: cid, corpusOptions: opts, q: S.q, corpusName: this.corpusName(), segList, hasSegments, segOpen, segToggleLabel, segCount, toggleSegOpen, addAsFold, navTop, navRead, navExplore, navRest,
       addr: S.addr || '', onAddr: e => this.setState({ addr: e.target.value }), bookmarkletRef: this.bookmarkletRef,
       onAddrKey: e => { if (e.key === 'Enter') { const u = (S.addr || '').trim(); if (u) { this.setState({ addr: '' }); this.ingestUrl(/^https?:\/\//.test(u) ? u : 'https://' + u, { open: true }); } } },
       openAddr: () => { const u = (S.addr || '').trim(); if (u) { this.setState({ addr: '' }); this.ingestUrl(/^https?:\/\//.test(u) ? u : 'https://' + u, { open: true }); } },
@@ -4617,10 +4682,15 @@ class Component extends DCLogic {
     const allTxt = A.sts.filter(x => this._cnt.has(x.doc)).map(x => x.text).join(' ');
     const geo = n => n.type === 'place' || new RegExp('\\b' + n.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ',\\s*(TN|Tenn|Tennessee)\\b').test(allTxt) || /^(Nashville|Davidson County|Tennessee|Metro|TN)$/.test(n.name);
     const hubScore = n => { const tf = titlesL.filter(t => t.includes(n.name.toLowerCase())).length / Math.max(1, titlesL.length); return (topicL && n.name.toLowerCase().includes(topicL) ? 1e4 : 0) + (tf > 0.5 ? 0 : tf * 40) + n.sts.length * 0.2 + n.docs.size - (geo(n) ? 1e3 : 0) + (n.type === 'organisation' ? 10 : 0); };
-    const hub = focus || pool.slice().sort((x, y) => hubScore(y) - hubScore(x) || y.sts.length - x.sts.length)[0];
     const sid = n => new Set(n.sts.map(x => x.id));
     const S = {}; pool.forEach(n => { S[n.name] = sid(n); });
     const tie = (x, y) => { if (x === y) return 0; const A1 = S[x.name], B1 = S[y.name]; let k = 0; const [sm, lg] = A1.size < B1.size ? [A1, B1] : [B1, A1]; sm.forEach(v => { if (lg.has(v)) k++; }); if (!k || !dmdCo(k, A1.size, B1.size, F.length)) return 0; return k / Math.sqrt(A1.size * B1.size); };
+    // an auto-picked hub must have at least one real, significance-tested tie -- else a boilerplate phrase
+    // that appears everywhere but ties to nothing (e.g. stock contract-approval language) wins on raw
+    // frequency alone and leaves the whole system empty
+    const hasTies = n => pool.some(o => o !== n && tie(n, o) > 0);
+    const ranked = pool.slice().sort((x, y) => hubScore(y) - hubScore(x) || y.sts.length - x.sts.length);
+    const hub = focus || ranked.find(hasTies) || ranked[0];
     const cand = pool.filter(n => n !== hub).map(n => ({ n, wc: tie(hub, n) })).sort((x, y) => y.wc - x.wc || y.n.sts.length - x.n.sts.length);
     const planets = [], moons = [], moonN = {};
     cand.forEach(c => { if (planets.length + moons.length >= 44) return; let best = { id: null, w: c.wc };

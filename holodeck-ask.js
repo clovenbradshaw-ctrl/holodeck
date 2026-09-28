@@ -171,11 +171,18 @@ const approxTokens = msgs => Math.ceil(msgs.reduce((n, m) => n + (m.content || '
 export function readingBlock(rix, question) {
   if (!rix || !Array.isArray(rix.cast)) return null;
   const q = ' ' + foldDiacritics(String(question).toLowerCase()).replace(/[^a-z0-9\s]/g, ' ') + ' ';
+  const norm = x => foldDiacritics(String(x).toLowerCase()).replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
   const hits = [];
-  for (const c of rix.cast) { const surf = (c.surfaces || [c.id]).filter(Boolean); const m = surf.find(x => { const k = foldDiacritics(String(x).toLowerCase()).replace(/[^a-z0-9\s]/g, ' ').trim(); return k.length >= 4 && q.includes(' ' + k + ' '); }); if (m) hits.push({ c, m }); }
-  hits.sort((a, b) => b.m.length - a.m.length || (b.c.mentions || 0) - (a.c.mentions || 0));
-  const seen = new Set(); const refs = [];
-  for (const h of hits) { if (seen.has(h.c.id)) continue; seen.add(h.c.id); refs.push(h.c); if (refs.length >= 3) break; }
+  for (const c of rix.cast) { const surf = (c.surfaces || [c.id]).filter(Boolean); let hit = null;
+    for (const x of surf) { const k = norm(x); if (k.length >= 4 && q.includes(' ' + k + ' ')) { hit = { c, m: x, k }; break; } }
+    if (hit) hits.push(hit); }
+  hits.sort((a, b) => b.k.length - a.k.length || (b.c.mentions || 0) - (a.c.mentions || 0));
+  const seen = new Set(); const refs = []; const taken = [];
+  for (const h of hits) {
+    if (seen.has(h.c.id)) continue;
+    if (taken.some(t => t.includes(h.k) || h.k.includes(t))) continue; // an overlapping fragment of an already-accepted match (compared on the same normalized form used to find it) -- same underlying phrase, not a distinct entity
+    seen.add(h.c.id); taken.push(h.k); refs.push(h.c); if (refs.length >= 3) break;
+  }
   if (!refs.length) return null;
   const lines = refs.map(c => { const surf = (c.surfaces || []).slice(0, 5); const nm = surf[0] || c.id;
     const bonds = (rix.bonds || []).filter(b => b.a === nm || b.b === nm).sort((a, b) => b.n - a.n).slice(0, 5).map(b => (b.a === nm ? b.b : b.a) + ' (' + b.n + ')');
