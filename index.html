@@ -42,19 +42,27 @@ select option{background:var(--s1);color:var(--ink)}
       <button onClick="{{ openAdd }}" style="width:100%;box-sizing:border-box;background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:8px 10px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">+ Add source</button>
       <button onClick="{{ repo.open }}" title="{{ repo.title }}" style="width:100%;box-sizing:border-box;display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)"><span style="width:8px;height:8px;border-radius:50%;background:{{ repo.dot }}"></span>Data</button>
     </div>
-    <sc-if value="{{ hasSegments }}" hint-placeholder-val="{{ false }}">
-    <div style="display:flex;flex-direction:column;gap:1px;padding:10px 0 12px;border-top:1px solid var(--line)">
-      <span style="font:600 12px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--acc);padding:2px 12px 6px" title="These don't share a name or figure with each other">Segment</span>
-      <sc-for list="{{ segList }}" as="p" hint-placeholder-count="2">
-        <button onClick="{{ p.onClick }}" title="{{ p.label }}" style="white-space:normal;text-align:left;cursor:pointer;padding:5px 12px 5px 20px;border-radius:8px;background:{{ p.bg }};border:1px solid {{ p.bd }};display:flex;justify-content:space-between;align-items:baseline;gap:10px" style-hover="background:var(--s2)">
-          <span style="font:500 14px 'Hanken Grotesk';color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.label }}</span>
-          <span style="font:500 12px 'JetBrains Mono';color:var(--mut);white-space:nowrap">{{ p.n }}</span>
-        </button>
-      </sc-for>
-    </div>
-    </sc-if>
     <nav style="display:flex;flex-direction:column;gap:2px">
-      <sc-for list="{{ navGroups }}" as="G" hint-placeholder-count="4">
+      <div style="display:flex;flex-direction:column;gap:1px;padding:10px 0 12px;border-top:1px solid var(--line)">
+        <sc-for list="{{ navTop }}" as="g" hint-placeholder-count="2">
+          <button onClick="{{ g.onClick }}" style="white-space:normal;text-align:left;cursor:pointer;padding:5px 12px 5px 20px;border-radius:8px;background:{{ g.bg }};border:1px solid {{ g.bd }};display:flex;justify-content:space-between;align-items:baseline;gap:10px" style-hover="background:var(--s2)">
+            <span style="font:{{ g.weight }} 14px 'Hanken Grotesk';color:var(--ink2)">{{ g.label }}</span>
+            <span style="font:500 12px 'JetBrains Mono';color:var(--mut);white-space:nowrap">{{ g.count }}</span>
+          </button>
+        </sc-for>
+      </div>
+      <sc-if value="{{ hasSegments }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:1px;padding:10px 0 12px;border-top:1px solid var(--line)">
+        <span style="font:600 12px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--acc);padding:2px 12px 6px" title="These don't share a name or figure with each other">Segment</span>
+        <sc-for list="{{ segList }}" as="p" hint-placeholder-count="2">
+          <button onClick="{{ p.onClick }}" title="{{ p.label }}" style="white-space:normal;text-align:left;cursor:pointer;padding:5px 12px 5px 20px;border-radius:8px;background:{{ p.bg }};border:1px solid {{ p.bd }};display:flex;justify-content:space-between;align-items:baseline;gap:10px" style-hover="background:var(--s2)">
+            <span style="font:500 14px 'Hanken Grotesk';color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.label }}</span>
+            <span style="font:500 12px 'JetBrains Mono';color:var(--mut);white-space:nowrap">{{ p.n }}</span>
+          </button>
+        </sc-for>
+      </div>
+      </sc-if>
+      <sc-for list="{{ navRest }}" as="G" hint-placeholder-count="3">
         <div style="display:flex;flex-direction:column;gap:1px;padding:10px 0 12px;border-top:1px solid var(--line)">
           <sc-if value="{{ G.hasLabel }}" hint-placeholder-val="{{ true }}"><span style="font:600 12px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--acc);padding:2px 12px 6px">{{ G.label }}</span></sc-if>
           <sc-for list="{{ G.items }}" as="g" hint-placeholder-count="3">
@@ -3099,8 +3107,8 @@ class Component extends DCLogic {
   }
   defaultSubject(A) { if (this._dsA === A) return this._ds; const L = Object.values(A.names || {}).sort((a, b) => b.sts.length - a.sts.length); const o = L.find(n => /\b(Office|Department|Division|Agency|Authority|Commission|Council)\b/.test(n.name)) || L[0]; this._dsA = A; this._ds = o ? o.name : ''; return this._ds; }
   headlines(A) {
-    const key = A.sts.length + '|' + (this._cnt ? this._cnt.size : 0); if (this._hl && this._hl.A === A && this._hl.key === key) return this._hl.v;
-    const G = this.gIndex(A); const rows = G.rows.filter(r => (!this._cnt || this._cnt.has(r.st.doc)) && !r.bp && !r.frag);
+    const key = A.sts.length + '|' + (this._cnt ? this._cnt.size : 0) + '|' + (this._topicStr || ''); if (this._hl && this._hl.A === A && this._hl.key === key) return this._hl.v;
+    const G = this.gIndex(A); const rows = G.rows.filter(r => (!this._cnt || this._cnt.has(r.st.doc)) && !r.bp && !r.frag && this.inFold(r.st));
     const nDocs = new Set(rows.map(r => r.st.doc)).size || 1; const ddf = new Map(); const seen = new Map();
     rows.forEach(r => r.T.forEach(w => { const k = w + '|' + r.st.doc; if (seen.has(k)) return; seen.set(k, 1); ddf.set(w, (ddf.get(w) || 0) + 1); }));
     const NEWS = /\b(approv\w*|pass(ed|es)|vot(ed|es)|announc\w*|found|cut|increas\w*|doubl\w*|tripl\w*|creat\w*|establish\w*|clos(ed|es)|open(ed|s)|hir(ed|es)|resign\w*|fir(ed|es)|su(ed|es)|award\w*|request\w*|launch\w*|releas\w*|spent|fail\w*|withh\w*|lapse\w*|expir\w*|terminat\w*|reject\w*|delay\w*|audit\w*|investigat\w*|allocat\w*|fund(ed|s)|lost|lose|shortfall|deficit|violat\w*)\b/i;
@@ -4404,6 +4412,8 @@ class Component extends DCLogic {
     const goalNav = [{ id: 'summary', label: 'Start here', count: '' }, { id: 'draft', label: 'Draft', count: this.activePins().length ? String(this.activePins().length) : '' }, { id: 'reading', label: 'The reading', count: this._rix ? String(this._rix.castTotal) : '' }, { id: 'ask', label: 'Ask the Fold', count: this._conv && this._conv.turns && this._conv.turns.length ? String(this._conv.turns.length) : '' }, { id: 'records', label: 'Records', count: this._db ? String(this._db.schema.tables.length) : '' }, { id: 'ingest', label: 'Ingest & publish', count: (this._net && this._net.chain && this._net.chain.length) ? String(this._net.chain.length) : '' }, ...GOALS.map(g => ({ id: g[0], label: g[1], count: counts[g[0]] }))].map(g => ({ ...g, ...gHi(view === g.id), onClick: () => this.go(g.id) }));
     const NAVG = [['', [['summary', 'Start here'], ['ask', 'Ask the Fold']]], ['Read', [['sources', 'Sources'], ['names', 'Names'], ['records', 'Assertions'], ['reading', 'The reading']]], ['Look closer', [['surprise', 'What changed'], ['views', 'Over time'], ['connections', 'Connections']]], ['Your work', [['draft', 'Draft'], ['ingest', 'Add & publish']]]];
     const navGroups = NAVG.map(([label, items]) => ({ label, hasLabel: !!label, items: items.map(([id, lab]) => ({ label: lab, count: id === 'draft' && this.activePins().length ? String(this.activePins().length) : '', ...gHi(view === id), onClick: () => this.go(id) })) }));
+    // split so Segment can sit right under Start here / Ask the Fold, above Read/Look closer/Your work
+    const navTop = navGroups[0].items; const navRest = navGroups.slice(1);
     const goalCards = GOALS.map(g => ({ label: g[1], question: g[2], count: counts[g[0]], headline: heads[g[0]], examples: ex[g[0]], onClick: () => this.go(g[0]) }));
     const checks = [
       ...(juncMode ? (JN.length ? [{ label: plural(JN.length, 'junction') + ' between independent sources that nothing in the record links', onClick: () => this.go('surprise') }] : [])
@@ -4511,7 +4521,7 @@ class Component extends DCLogic {
       readerFold: S.readDoc && this._fold.length ? ' ' + (A.stsByDoc[S.readDoc] || []).filter(s => this.inFold(s)).length + ' of its statements touch the topic.' : '',
       readerKeep: () => this.setMeta(S.readDoc, { status: 'source' }), readerDiscard: () => this.discard(S.readDoc),
       justSeen: !!(S.just && A.docById[S.just.first] && this.mOf(A.docById[S.just.first]).status === 'seen'), justKeep: () => S.just && this.setMeta(S.just.first, { status: 'source' }),
-      corpusId: cid, corpusOptions: opts, q: S.q, corpusName: this.corpusName(), segList, hasSegments,
+      corpusId: cid, corpusOptions: opts, q: S.q, corpusName: this.corpusName(), segList, hasSegments, navTop, navRest,
       addr: S.addr || '', onAddr: e => this.setState({ addr: e.target.value }), bookmarkletRef: this.bookmarkletRef,
       onAddrKey: e => { if (e.key === 'Enter') { const u = (S.addr || '').trim(); if (u) { this.setState({ addr: '' }); this.ingestUrl(/^https?:\/\//.test(u) ? u : 'https://' + u, { open: true }); } } },
       openAddr: () => { const u = (S.addr || '').trim(); if (u) { this.setState({ addr: '' }); this.ingestUrl(/^https?:\/\//.test(u) ? u : 'https://' + u, { open: true }); } },
@@ -4968,7 +4978,7 @@ class Component extends DCLogic {
       d = { eyebrow: 'Statement · ' + fr.label, color: fr.color, title: docT(st.doc), quote: clean(st.text),
         facts: [...(() => { const w = whoSays(st, A); const d0 = A.docById[st.doc]; return [...(w ? [{ k: w.how === 'quoted' ? 'Said by' : w.how === 'publisher' ? 'Issued by' : 'Written by', v: w.who }] : []), { k: 'Published', v: d0.pubLabel || (d0.year ? String(d0.year) : 'Undated') }]; })(), ...(st.where ? [{ k: 'Where', v: st.where }] : []), ...(su && su.sig ? [{ k: 'Moved the picture', v: 'Shift ' + su.excess.toFixed(1) }] : [])],
         tagTitle: 'Names in it', tags: st.names.slice(0, 10).map(nameTag),
-        actions: [{ label: 'Show in its document', onClick: () => this.read(st.doc, st.id) }, { label: 'Narrow to this source', onClick: () => this.setF('doc', st.doc) }], listTitle: 'Similar wording elsewhere', list: (A.echoes[st.id] || []).map(e => { const o = A.byId[e.id]; return { text: o.text, meta: docT(o.doc) + ' · similarity ' + e.sim.toFixed(2) + ' (baseline ' + A.echoFloor.toFixed(2) + ')', onClick: () => this.sel('statement', o.id) }; }) };
+        actions: [{ label: 'Show in its document', onClick: () => this.read(st.doc, st.id) }, { label: 'Narrow to this source', onClick: () => this.setF('doc', st.doc) }], listTitle: 'Similar wording elsewhere', list: (A.echoes[st.id] || []).map(e => { const o = A.byId[e.id]; const L = SRC_LINE(o, A); return { text: clean(o.text), ...L, hasBy: !!L.by, op: 1, onClick: () => this.sel('statement', o.id) }; }) };
     } else if (sel.type === 'doc' && A.docById[sel.id]) {
       const doc = A.docById[sel.id]; const sts = A.stsByDoc[doc.id] || []; const nm = [...new Set(sts.flatMap(s => s.names))];
       d = { eyebrow: 'Source', color: 'var(--acc)', title: doc.title,
