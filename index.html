@@ -1515,6 +1515,34 @@ select option{background:var(--s1);color:var(--ink)}
           </div>
           <span style="grid-column:1 / -1;border-top:1px solid var(--line);padding-top:10px;font:400 13px/1.45 'Hanken Grotesk';color:var(--dim);text-wrap:pretty">{{ suNote }}</span>
         </div>
+        <div style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;justify-content:space-between">
+            <span style="font:600 15px 'Hanken Grotesk';color:var(--ink)">Read three ways</span>
+            <sc-if value="{{ suPerspNotReady }}" hint-placeholder-val="{{ true }}"><button onClick="{{ onSuPerspLoad }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Read as three genres from live_priors →</button></sc-if>
+            <sc-if value="{{ suPerspLoading }}" hint-placeholder-val="{{ false }}"><span style="font:500 13px 'Hanken Grotesk';color:var(--mut)">Reading…</span></sc-if>
+          </div>
+          <sc-if value="{{ suPerspReady }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
+              <sc-for list="{{ suPerspCards }}" as="g" hint-placeholder-count="3">
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <span style="font:600 14px 'Hanken Grotesk';color:var(--ink)">{{ g.label }}</span>
+                  <span style="height:6px;border-radius:3px;background:var(--line);display:block;overflow:hidden"><span style="display:block;height:6px;width:{{ g.pct }};background:var(--amber)"></span></span>
+                  <span style="font:400 13px 'Hanken Grotesk';color:var(--mut)">{{ g.stat }}</span>
+                  <span style="font:400 12px 'Hanken Grotesk';color:var(--dim)">{{ g.desc }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--dim);text-wrap:pretty">{{ suPerspNote }}</span>
+            <span style="font:600 13px 'Hanken Grotesk';color:var(--ink);margin-top:4px">Where the readings disagree</span>
+            <sc-for list="{{ suDivergeItems }}" as="d" hint-placeholder-count="2">
+              <button onClick="{{ d.onClick }}" style="all:unset;cursor:pointer;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px" style-hover="border-color:var(--acc)">
+                <span style="font:500 12px 'JetBrains Mono';color:var(--amber)">{{ d.stat }}</span>
+                <span style="font:400 15px/1.4 'Newsreader',serif;color:var(--ink);text-wrap:pretty">{{ d.text }}</span>
+              </button>
+            </sc-for>
+            <sc-if value="{{ noDiverge }}" hint-placeholder-val="{{ false }}"><p style="margin:0;color:var(--mut)">No statement in view is read as notable by one genre and ordinary by another, yet.</p></sc-if>
+          </sc-if>
+        </div>
         <sc-if value="{{ suNeedLens }}" hint-placeholder-val="{{ false }}">
           <div style="border:1px dashed var(--line2);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:6px">
             <span style="font:500 20px 'Newsreader',serif;color:var(--ink)">Choose where to look from.</span>
@@ -1539,6 +1567,7 @@ select option{background:var(--s1);color:var(--ink)}
                   </sc-for>
                 </div>
                 <span style="font:400 14px 'Hanken Grotesk';color:var(--dim)">{{ x.meta }}</span>
+                <sc-if value="{{ x.hasPersp }}" hint-placeholder-val="{{ false }}"><span style="font:500 12px 'JetBrains Mono';letter-spacing:.02em;color:var(--amber)">{{ x.persp }}</span></sc-if>
               </div>
             </sc-for>
             <sc-if value="{{ suMore }}" hint-placeholder-val="{{ false }}"><button onClick="{{ onSuMore }}" style="align-self:flex-start;background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">{{ suMoreLabel }}</button></sc-if>
@@ -4471,7 +4500,9 @@ class Component extends DCLogic {
         const isQA = IS_Q(qv) || !!PARSE_REL(qv);
         return { sr: { sub: isQA ? '' : sub, none: !isQA && !hit.length && !titleHit.length, hasNames: nameRows.length > 0, names: nameRows, hasDocs: docIds.length > 0, docs: docIds.slice(0, 8).map(id => { const d0 = A.docById[id]; const n = (docsHit[id] || []).length; return { label: d0.title, meta: (d0.pubLabel || d0.year ? (d0.pubLabel || d0.year) + ' · ' : '') + (d0.authors && d0.authors.length ? d0.authors.join(', ') + ' · ' : '') + (n ? plural(n, 'match', 'matches') : 'title matches'), pct: Math.max(4, Math.round(100 * n / mxD)) + '%', onClick: () => this.read(id, (docsHit[id] || [])[0] && docsHit[id][0].id), onNarrow: () => this.setF('doc', id) }; }), moreDocs: docIds.length > 8 ? '+ ' + (docIds.length - 8) + ' more sources' : '', hasMoreDocs: docIds.length > 8, hasFigs: figs.length > 0, figs, hasCo: co.length > 0, co, sts: stRows, hasSts: stRows.length > 0, stTitle: plural(ranked.length, 'statement') + ', most telling first', hasMore: ranked.length > N, moreLabel: 'Show ' + Math.min(25, ranked.length - N) + ' more', onMore: () => this.setState({ srN: N + 25 }), others: this._chips.filter(ch => ch.k !== 'Search'), hasOthers: this._chips.length > 1 } };
       })(),
-      suItems: suF.slice(0, S.suN || 30).map(x => { const d0 = A.docById[x.st.doc]; return { text: clean(x.st.text), meta: assertLine(x.st, A), stat: 'Shift ' + x.bits.toFixed(1), sub: [x.kinds.revise ? plural(x.kinds.revise, 'figure revised', 'figures revised') : '', x.kinds.turn ? plural(x.kinds.turn, 'bond negated', 'bonds negated') : '', x.kinds.bond ? plural(x.kinds.bond, 'new bond') : '', x.kinds.enter ? plural(x.kinds.enter, 'new name') : '', x.kinds.value ? plural(x.kinds.value, 'first figure') : ''].filter(Boolean).join(' · ') + ' · larger than ' + Math.round(100 * (x.K - x.ge) / x.K) + '% of shifts in view', why: this.suWhy(x).map(w => ({ text: w.text, onClick: w.name ? selN(w.name) : () => this.sel('statement', x.st.id) })), onClick: () => this.read(x.st.doc, x.st.id), onSel: () => this.sel('statement', x.st.id) }; }),
+      suItems: suF.slice(0, S.suN || 30).map(x => { const d0 = A.docById[x.st.doc];
+        const perspLine = x.persp ? (x.pfacts ? x.pfacts.event + ' \u00b7 ' : '') + SU.perspectives.genres.map(g => x.persp[g.id] ? g.label + (x.persp[g.id].notable ? ' ⚠' : ' · ordinary') : '').filter(Boolean).join('   ') : '';
+        return { text: clean(x.st.text), meta: assertLine(x.st, A), stat: 'Shift ' + x.bits.toFixed(1), sub: [x.kinds.revise ? plural(x.kinds.revise, 'figure revised', 'figures revised') : '', x.kinds.turn ? plural(x.kinds.turn, 'bond negated', 'bonds negated') : '', x.kinds.bond ? plural(x.kinds.bond, 'new bond') : '', x.kinds.enter ? plural(x.kinds.enter, 'new name') : '', x.kinds.value ? plural(x.kinds.value, 'first figure') : ''].filter(Boolean).join(' · ') + ' · larger than ' + Math.round(100 * (x.K - x.ge) / x.K) + '% of shifts in view', why: this.suWhy(x).map(w => ({ text: w.text, onClick: w.name ? selN(w.name) : () => this.sel('statement', x.st.id) })), onClick: () => this.read(x.st.doc, x.st.id), onSel: () => this.sel('statement', x.st.id), persp: perspLine, hasPersp: !!perspLine }; }),
       suJunc: juncMode, suBelief: !juncMode,
       suModes: [['junction', 'Junctions'], ['belief', 'Belief shift']].map(([id, label]) => { const on = (id === 'belief') === !juncMode; return { label, bg: on ? 'var(--sel)' : 'var(--s1)', bd: on ? '#8b5cf6' : 'var(--line2)', fw: on ? 600 : 500, onClick: () => this.setState({ suMode: id }) }; }),
       suModeDesc: juncMode ? 'Two independently sourced claims that were never stated together, joined by a shared value.' : 'Single statements that change the picture at the moment they arrive, in the order you choose.',
@@ -4499,6 +4530,21 @@ class Component extends DCLogic {
         return { suLensOpts: lensOpts, suLensGroups: [lg('Topic', ['fin', 'audit']), lg('Name', ['name']), lg('Month', ['time'])].filter(g => g.items.length), suBaseOpts: baseOpts, suNeedLens: !L, suHasLens: !!L, suLensText: S.suLensText || '', onSuLensText: e => this.setState({ suLensText: e.target.value }), onSuLensKey: e => { if (e.key === 'Enter' && e.target.value.trim()) setL({ k: 'text', v: e.target.value.trim() }); },
           suBaseNote: bid === 'none' ? 'No outside baseline: expectations come only from this content, so anything new to the record looks surprising.' : bl ? 'Normal = ' + bl.desc + ': ' + plural(bl.files, 'document') + ', ' + bl.N.toLocaleString() + ' content words. A word common there moves little; one rare there moves a lot the first time this view meets it.' : 'Loading ' + LP_SETS[bid].desc + '…',
           suViewLine: L ? 'Looking from ' + this.lensLabel(L) + (SU && SU.n ? ': ' + plural(SU.n, 'statement') + ' in view' : '') : '' }; })(),
+      // Three readers, never one baseline (replaces the dead
+      // suBaseOpts/suBaseNote above, which fed a single filtered score
+      // nothing in the template ever rendered). A holograph per live_priors
+      // genre, trained on sentence structure alone; predict()-only against
+      // each workspace statement so nothing here can leak this workspace's
+      // words back out, and nothing this workspace says can leak into what
+      // a genre expects next. Kept apart via divergence(), not averaged.
+      suPerspReady: !!this._persp, suPerspLoading: !!this._perspLoading, suPerspNotReady: !this._persp && !this._perspLoading, onSuPerspLoad: () => this.ensurePerspectives(),
+      suPerspNote: 'Three readers, not one baseline: a holograph per live_priors genre (books, encyclopedic, government & legal), each trained on what its sentences do to the picture held so far — a first bond between two known names, a new name entering bonded to one already there, a bond negated, a bond merely restated. Never on words. Every statement here is read the same way and scored against each reader without ever teaching it anything. A statement one reader finds notable and another finds ordinary is the reason for three readers rather than one.',
+      suPerspCards: (SU && SU.perspectives) ? SU.perspectives.genres.map(g => { const items = SU.perspectives.items.filter(x => x.byGenre[g.id]); const notable = items.filter(x => x.byGenre[g.id].notable).length;
+        return { id: g.id, label: g.label, desc: g.desc + ' \u00b7 ' + ((this._persp[g.id] && this._persp[g.id].sentences) || 0).toLocaleString() + ' sentences read', stat: notable + ' of ' + items.length + ' statements in view notable to this reader (its top 15%)', pct: items.length ? Math.max(4, Math.round(100 * notable / items.length)) + '%' : '0%' }; }) : [],
+      suDivergeItems: (SU && SU.perspectives) ? SU.perspectives.pairs.flatMap(p => p.conflicting.map(c => { const id = c.claim.replace(/^notable:/, ''); const x = SU.perspectives.byId[id]; if (!x) return null;
+        const ga = SU.perspectives.genres.find(g => g.id === p.a), gb = SU.perspectives.genres.find(g => g.id === p.b); const aNotable = c[p.a] === 'holds';
+        return { stat: x.facts.event + ' \u00b7 ' + (aNotable ? ga.label : gb.label) + ' finds this notable · ' + (aNotable ? gb.label : ga.label) + ' does not', text: clean(x.st.text), onClick: () => this.read(x.st.doc, x.st.id) }; })).filter(Boolean).slice(0, 12) : [],
+      noDiverge: !(SU && SU.perspectives && SU.perspectives.pairs.some(p => p.conflicting.length)),
       suCursors: SU_CURSORS.map(c => { const on = SU && SU.cur === c.id; return { label: c.label, desc: c.desc, bg: on ? 'var(--sel)' : 'var(--s1)', bd: on ? '#8b5cf6' : 'var(--line2)', fw: on ? 600 : 500, onClick: () => this.setState({ cursor: c.id, suN: 30 }) }; }),
       suReadingEmpty: !!(SU && SU.cur === 'reading' && SU.n === 0),
       onOmni: e => { const v = e.target.value; clearTimeout(this._omniT); this._omniT = setTimeout(() => { this._omniLast = v; this.setState(s => ({ qDraft: v, ...(!v.trim() && s.q ? { q: '', ...(s.view === 'search' ? { view: s.prevView || 'summary' } : {}) } : {}) })); }, 120); },
@@ -4740,7 +4786,22 @@ class Component extends DCLogic {
     { const arr = Object.values(by); const vals = arr.map(x => x.bits).sort((a, b) => a - b); const K = vals.length || 1; const q85 = vals[Math.floor(0.85 * (K - 1))] || 0, med = vals[Math.floor(K / 2)] || 0;
       arr.forEach(x => { const ge = vals.filter(v => v >= x.bits).length; Object.assign(x, { q95: q85, med, K, ge, p: ge / K, rank: x.bits, sig: x.bits >= Math.max(1.5, q85) }); }); }
     const cdef = SU_CURSORS.find(c => c.id === cur);
-    this._su = { A, key, cur, cdef, lens, lensLabel: this.lensLabel(lens), base, bid, by, n, D, ALPHA, left, leftLabel, groups: groups.length, list: Object.values(by).filter(x => x.sig).sort((a, b) => (b.rank ?? b.excess) - (a.rank ?? a.excess)) };
+    // Three embodied readers, read-only against this workspace: each
+    // top-ranked statement's own structural shape (not its words) is
+    // scored via predict() against a genre holograph trained on live_priors
+    // sentences, and never trains those holographs in return. Kept apart
+    // via perspective.js's own divergence(), never merged into one number.
+    let perspectives = null;
+    if (this._persp && this._perspM) {
+      const M = this._perspM;
+      // The readers judge EVERY statement in view, not only the ones the belief-shift scorer above flagged: what is interesting is decided by the standpoints, not filtered through a single score first.
+      // Each reading order is one stream with one picture (the same window the genre readers were trained under), so what a statement does to the picture is read here exactly as it was read there.
+      const items = []; const byId = {};
+      groups.forEach(sts => { const fs = M.factsAlong(sts.map(st => st.text)); sts.forEach((st, i) => { const byGenre = M.scorePerspectives(this._persp, fs[i]); const it = { id: st.id, st, facts: fs[i], byGenre }; items.push(it); byId[st.id] = it; if (by[st.id]) { by[st.id].persp = byGenre; by[st.id].pfacts = fs[i]; } }); });
+      const { projected, pairs } = M.projectAndDiverge(M.buildPerspectiveLog(items));
+      perspectives = { genres: M.GENRES, projected, pairs, items, byId, scoredCount: items.length };
+    }
+    this._su = { A, key, cur, cdef, lens, lensLabel: this.lensLabel(lens), base, bid, by, n, D, ALPHA, left, leftLabel, groups: groups.length, list: Object.values(by).filter(x => x.sig).sort((a, b) => (b.rank ?? b.excess) - (a.rank ?? a.excess)), perspectives };
     return this._su;
   }
   junctions(A, Fid) {
@@ -4886,6 +4947,24 @@ class Component extends DCLogic {
   }
   restatedVals(d, A) { const v = this.restate(d, A); return v.ok ? v : { note: v.note, sections: [], hasCover: false, cover: { pairs: [] } }; }
   ensureBaseline(id) { if (this._lpLoading === id) return; this._lpLoading = id; loadBaseline(id, (n, t) => this.setState({ busy: 'Loading the ' + LP_SETS[id].label.toLowerCase() + ' baseline from live_priors… ' + n + ' / ' + t })).then(() => { this._lpLoading = null; this._su = null; this.setState({ busy: '', suVer: (this.state.suVer || 0) + 1 }); }); }
+  // Three readers, not one filter: builds a genre holograph for each of
+  // live_priors' lit / ency / gov categories (bayes-surprise.js's own
+  // Dirichlet counts, trained on structure alone) and keeps them apart
+  // (perspective.js's own divergence()) rather than collapsing them into a
+  // single baseline the way the dead ensureBaseline()/holoRun() pair above
+  // tried to and never actually wired into surprise()'s real scorer.
+  ensurePerspectives() {
+    if (this._perspLoading || this._persp) return;
+    this._perspLoading = true;
+    this.setState({ busy: 'Reading three ways from live_priors: literature, encyclopedic, government & legal…' });
+    import(new URL('holodeck-perspectives.js', location.href).href).then(M => {
+      this._perspM = M;
+      return M.buildAllGenres(LP_SETS, (id, label, n, t, s) => this.setState({ busy: 'Reading as ' + label.toLowerCase() + '… ' + n + ' / ' + t + ' documents, ' + s + ' sentences' }));
+    }).then(holos => {
+      this._persp = holos; this._perspLoading = false; this._su = null;
+      this.setState({ busy: '', suVer: (this.state.suVer || 0) + 1 });
+    }).catch(e => { this._perspLoading = false; this.setState({ busy: '' }); console.error('perspectives failed', e); });
+  }
   lensFn(L, A) {
     const MON = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
     if (L.k === 'fin') { const re = /\b(budget|budgets|fund|funds|funding|funded|grant|grants|contract|contracts|spend|spending|spent|cost|costs|revenue|revenues|million|billion|dollars?|appropriat\w*|fiscal|payment|payments|paid|salary|salaries|invoice\w*)\b/i; return st => re.test(st.text) || st.figs.some(g => /dollar|percent/.test(g.unit)); }

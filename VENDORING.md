@@ -20,6 +20,7 @@ date: 2026-09-25T19:46:51Z
 
 | Fold Explorer v7.dc.html — Records (holodeck-records.js) | clovenbradshaw-ctrl/bare-metal-eo-matrix-app: src/fold.js, public/data-chat.js (vendored unchanged under vendor/bare-metal/; src/operators.js replaced by a local no-network shim) |
 | Fold Explorer v7.dc.html — Ask the Fold (holodeck-ask.js, holodeck-reader.js) | clovenbradshaw-ctrl/the-fold: fold.js, holon.js (surf-and-fold wiring, ported); eoreader7: native/the-fold/reader-bundle.js (ported to fetch-loaded priors), native/organs/{source,measure,cite,grounding,web,speaker,hypergraph,fact-block,aposiopesis,cast,asserted,heard-surfaces,kind-standing}.js, native/adapters/text/{priors,spans,surfaces,pronouns,relations-language,relations-gfp,relations-positional,clause-spans,grain-typing,wordclass,morphology}.js, native/{memory,kernel}/*, native/priors/{pos,morphology}-eng.json (vendored unchanged) |
+| Fold Explorer v7.dc.html — Read three ways (holodeck-perspectives.js) | eoreader7: native/kernel/{perspective,bayes-surprise}.js (vendored byte-identical; diffed against upstream on copy). Three readers, one per live_priors genre, each a Dirichlet holograph over what a sentence does to the picture (never words); scored read-only against the workspace; kept apart with perspective.js divergence(). native/adapters/text/priors.js closed classes reused. |
 
 ## Sync history
 - 2026-09-25T19:11:34Z · ohs-custody @40cf318 — no upstream changes; same-bytes badges, Ingest & publish view
