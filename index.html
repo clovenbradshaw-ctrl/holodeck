@@ -203,6 +203,124 @@ select option{background:var(--s1);color:var(--ink)}
       </sc-if>
 
       <sc-if value="{{ v.summary }}" hint-placeholder-val="{{ true }}">
+        <div style="position:relative;z-index:31">
+          <sc-if value="{{ hb.isOpen }}" hint-placeholder-val="{{ false }}"><div onClick="{{ hb.close }}" style="position:fixed;inset:0;z-index:1"></div></sc-if>
+          <div style="position:relative;z-index:2;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));background:var(--s1);border:1px solid var(--line);border-radius:12px;overflow:hidden">
+            <div style="position:relative;min-width:0;border-right:1px solid var(--line);background:{{ hb.src.bg }}">
+              <button onClick="{{ hb.src.onClick }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;padding:12px 16px;display:flex;flex-direction:column;gap:3px;min-width:0" style-hover="opacity:.85"><span style="font:700 11px 'Hanken Grotesk';letter-spacing:.1em;text-transform:uppercase;color:var(--acc)">{{ hb.src.label }}</span><span style="font:600 16px/1.3 'Hanken Grotesk';color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ hb.src.value }}</span><span style="font:400 12.5px 'Hanken Grotesk';color:var(--dim)">{{ hb.src.caption }}</span></button>
+            </div>
+            <div style="position:relative;min-width:0;border-right:1px solid var(--line);background:{{ hb.flt.bg }}">
+              <button onClick="{{ hb.flt.onClick }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;padding:12px 16px;display:flex;flex-direction:column;gap:3px;min-width:0;padding-right:34px" style-hover="opacity:.85"><span style="font:700 11px 'Hanken Grotesk';letter-spacing:.1em;text-transform:uppercase;color:var(--acc)">{{ hb.flt.label }}</span><span style="font:600 16px/1.3 'Hanken Grotesk';color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ hb.flt.value }}</span><span style="font:400 12.5px 'Hanken Grotesk';color:var(--dim)">{{ hb.flt.caption }}</span></button>
+              <sc-if value="{{ hb.flt.active }}" hint-placeholder-val="{{ false }}"><button onClick="{{ hb.flt.onClear }}" title="Clear every filter" style="all:unset;cursor:pointer;position:absolute;top:8px;right:10px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%;font:500 16px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink);background:var(--sel)">×</button></sc-if>
+            </div>
+            <div style="position:relative;min-width:0;background:{{ hb.per.bg }}">
+              <button onClick="{{ hb.per.onClick }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;padding:12px 16px;display:flex;flex-direction:column;gap:3px;min-width:0" style-hover="opacity:.85"><span style="display:flex;align-items:center;gap:8px"><span style="font:700 11px 'Hanken Grotesk';letter-spacing:.1em;text-transform:uppercase;color:var(--acc)">{{ hb.per.label }}</span><sc-for list="{{ hb.dots }}" as="d" hint-placeholder-count="3"><span style="width:8px;height:8px;border-radius:50%;background:{{ d.color }};opacity:{{ d.op }}"></span></sc-for></span><span style="font:600 16px/1.3 'Hanken Grotesk';color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ hb.per.value }}</span><span style="font:400 12.5px 'Hanken Grotesk';color:var(--dim)">{{ hb.per.caption }}</span></button>
+            </div>
+          </div>
+
+          <sc-if value="{{ hb.openSources }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;left:0;right:0;top:calc(100% + 8px);z-index:3;background:var(--s1);border:1px solid var(--line2);border-radius:14px;padding:16px 18px 18px;box-shadow:0 16px 44px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;justify-content:space-between">
+                <span style="font:400 13.5px/1.45 'Hanken Grotesk';color:var(--mut)">Which sources are in. Untick one to leave it out of every view, or keep just one.</span>
+                <button onClick="{{ hb.srcAll }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Include all</button>
+              </div>
+              <div style="max-height:320px;overflow:auto;display:flex;flex-direction:column">
+                <sc-for list="{{ hb.srcRows }}" as="s" hint-placeholder-count="5">
+                  <div style="display:flex;align-items:center;gap:12px;padding:8px 2px;border-top:1px solid var(--line)">
+                    <input type="checkbox" checked="{{ s.on }}" onChange="{{ s.onToggle }}" style="cursor:pointer">
+                    <span style="flex:1 1 auto;min-width:0;font:500 14px 'Hanken Grotesk';color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.title }}</span>
+                    <span style="font:400 12.5px 'Hanken Grotesk';color:var(--dim);white-space:nowrap">{{ s.meta }}</span>
+                    <button onClick="{{ s.onOnly }}" style="background:none;border:1px solid var(--line2);border-radius:6px;padding:2px 10px;cursor:pointer;font:500 12.5px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Only</button>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ hb.openFiltering }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;left:0;right:0;top:calc(100% + 8px);z-index:3;background:var(--s1);border:1px solid var(--line2);border-radius:14px;padding:16px 18px 18px;box-shadow:0 16px 44px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:12px">
+              <span style="font:400 13.5px/1.45 'Hanken Grotesk';color:var(--mut)">Conditions apply to every view. Add as many as you like, then choose whether a statement must meet all of them or any one.</span>
+              <sc-for list="{{ hb.filt.rows }}" as="r" hint-placeholder-count="2">
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">
+                  <span style="width:44px;font:600 11px 'JetBrains Mono';letter-spacing:.06em;text-transform:uppercase;color:var(--dim)">{{ r.joiner }}</span>
+                  <select value="{{ r.field }}" onChange="{{ r.onField }}" style="background:var(--s1);border:1px solid var(--line2);border-radius:8px;color:var(--ink);font:500 13.5px 'Hanken Grotesk';padding:6px 8px;cursor:pointer;outline:none"><sc-for list="{{ r.fieldOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.label }}</option></sc-for></select>
+                  <select value="{{ r.cmp }}" onChange="{{ r.onCmp }}" style="background:var(--s1);border:1px solid var(--line2);border-radius:8px;color:var(--ink);font:500 13.5px 'Hanken Grotesk';padding:6px 8px;cursor:pointer;outline:none"><sc-for list="{{ r.cmpOpts }}" as="o" hint-placeholder-count="2"><option value="{{ o.v }}">{{ o.label }}</option></sc-for></select>
+                  <sc-if value="{{ r.isSelect }}" hint-placeholder-val="{{ true }}"><select value="{{ r.val }}" onChange="{{ r.onVal }}" style="background:var(--s1);border:1px solid var(--line2);border-radius:8px;color:var(--ink);font:500 13.5px 'Hanken Grotesk';padding:6px 8px;cursor:pointer;outline:none;max-width:320px"><sc-for list="{{ r.valOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.label }}</option></sc-for></select></sc-if>
+                  <sc-if value="{{ r.isText }}" hint-placeholder-val="{{ false }}"><input value="{{ r.val }}" onChange="{{ r.onVal }}" placeholder="words that must appear" style="background:var(--s1);border:1px solid var(--line2);border-radius:8px;color:var(--ink);font:500 13.5px 'Hanken Grotesk';padding:6px 8px;cursor:pointer;outline:none;cursor:text;min-width:220px"></sc-if>
+                  <button onClick="{{ r.onRemove }}" title="Remove this condition" style="all:unset;cursor:pointer;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;font:500 16px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink);background:var(--sel)">×</button>
+                </div>
+              </sc-for>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                <sc-if value="{{ hb.filt.canAdd }}" hint-placeholder-val="{{ true }}"><button onClick="{{ hb.filt.onAdd }}" style="background:var(--sel);border:1px solid #8b5cf6;border-radius:8px;padding:5px 13px;cursor:pointer;font:600 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">+ Add a filter</button></sc-if>
+                <sc-if value="{{ hb.filt.multi }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ hb.filt.all.onClick }}" style="background:{{ hb.filt.all.bg }};border:1px solid {{ hb.filt.all.bd }};border-radius:999px;padding:3px 12px;cursor:pointer;font:{{ hb.filt.all.fw }} 13px 'Hanken Grotesk';color:var(--ink)">{{ hb.filt.all.label }}</button>
+                  <button onClick="{{ hb.filt.any.onClick }}" style="background:{{ hb.filt.any.bg }};border:1px solid {{ hb.filt.any.bd }};border-radius:999px;padding:3px 12px;cursor:pointer;font:{{ hb.filt.any.fw }} 13px 'Hanken Grotesk';color:var(--ink)">{{ hb.filt.any.label }}</button>
+                </sc-if>
+              </div>
+              <sc-if value="{{ hb.filt.hasFolds }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+                  <span style="font:600 11px 'JetBrains Mono';letter-spacing:.06em;text-transform:uppercase;color:var(--dim)">Merge in a saved fold</span>
+                  <sc-for list="{{ hb.filt.foldPills }}" as="f" hint-placeholder-count="2"><button onClick="{{ f.onClick }}" style="background:var(--s1);border:1px solid var(--line2);border-radius:999px;padding:3px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">+ {{ f.label }}</button></sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ hb.filt.hasChips }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+                  <span style="font:600 11px 'JetBrains Mono';letter-spacing:.06em;text-transform:uppercase;color:var(--dim)">Also applied from other views</span>
+                  <sc-for list="{{ hb.filt.chips }}" as="c" hint-placeholder-count="2"><button onClick="{{ c.onClear }}" title="Remove" style="background:var(--sel);border:1px solid #8b5cf6;border-radius:999px;padding:3px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)">{{ c.text }} ×</button></sc-for>
+                </div>
+              </sc-if>
+              <div style="border-top:1px solid var(--line);padding-top:12px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between">
+                <span style="font:400 13.5px 'Hanken Grotesk';color:var(--ink2)">{{ hb.filt.summary }}</span>
+                <span style="display:flex;gap:8px">
+                  <sc-if value="{{ hb.filt.canSave }}" hint-placeholder-val="{{ false }}"><button onClick="{{ hb.filt.onSave }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 13px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Save as a fold</button></sc-if>
+                  <sc-if value="{{ hb.flt.active }}" hint-placeholder-val="{{ false }}"><button onClick="{{ hb.filt.onClearAll }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 13px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Clear all</button></sc-if>
+                </span>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ hb.openPerspectives }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;left:0;right:0;top:calc(100% + 8px);z-index:3;background:var(--s1);border:1px solid var(--line2);border-radius:14px;padding:16px 18px 18px;box-shadow:0 16px 44px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:12px">
+              <sc-if value="{{ hb.ready }}" hint-placeholder-val="{{ false }}">
+                <span style="font:400 13.5px/1.45 'Hanken Grotesk';color:var(--mut)">Every perspective has a stated line for what counts as notable: the top 15% of what it has itself read. Set any aside, but one always stays. There is no reading from nowhere.</span>
+                <div style="display:grid;grid-template-columns:150px minmax(0,1fr);column-gap:16px;row-gap:5px;align-items:end">
+                  <span style="justify-self:start;font:600 10.5px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--dim);padding:0 4px 3px">sources by date</span>
+                  <div style="display:flex;gap:3px;height:10px">
+                    <sc-for list="{{ hb.cols }}" as="c" hint-placeholder-count="5"><span onMouseEnter="{{ c.onEnter }}" onMouseLeave="{{ c.onLeave }}" title="{{ c.tip }}" style="flex:{{ c.grow }} 1 0px;min-width:3px;border-radius:3px;background:{{ c.bg }};opacity:{{ c.op }};outline:1px solid {{ c.bd }};outline-offset:-1px"></span></sc-for>
+                  </div>
+                  <sc-for list="{{ hb.staves }}" as="r" hint-placeholder-count="3">
+                    <div style="display:contents">
+                      <button onClick="{{ r.onToggle }}" title="{{ r.tip }}" style="justify-self:start;display:flex;align-items:center;gap:7px;background:none;border:1px solid {{ r.chipBd }};border-radius:999px;padding:2px 11px 2px 8px;cursor:pointer;font:500 12.5px 'Hanken Grotesk';color:var(--ink);opacity:{{ r.chipOp }};margin-bottom:2px"><span style="width:9px;height:9px;border-radius:50%;background:{{ r.color }}"></span>{{ r.label }}</button>
+                      <div style="display:flex;gap:3px;height:32px;align-items:stretch;border-bottom:1px solid var(--line2)">
+                        <sc-for list="{{ r.cols }}" as="c" hint-placeholder-count="5"><span onMouseEnter="{{ c.onEnter }}" onMouseLeave="{{ c.onLeave }}" title="{{ c.tip }}" style="flex:{{ c.grow }} 1 0px;min-width:3px;background:{{ c.hl }};display:flex;align-items:flex-end;border-radius:4px 4px 0 0"><span style="display:block;width:100%;height:{{ c.h }};background:{{ c.color }};opacity:{{ c.op }};border-radius:3px 3px 0 0"></span></span></sc-for>
+                      </div>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{ hb.hasPart }}" hint-placeholder-val="{{ true }}">
+                    <span style="justify-self:start;font:600 11px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--pink);padding:0 4px 3px;margin-top:6px">where they part</span>
+                    <div style="display:flex;gap:3px;height:20px;align-items:stretch;border-bottom:1px solid var(--pink);margin-top:6px">
+                      <sc-for list="{{ hb.part }}" as="c" hint-placeholder-count="5"><span onMouseEnter="{{ c.onEnter }}" onMouseLeave="{{ c.onLeave }}" title="{{ c.tip }}" style="flex:{{ c.grow }} 1 0px;min-width:3px;background:{{ c.hl }};display:flex;align-items:flex-end;border-radius:4px 4px 0 0"><span style="display:block;width:100%;height:{{ c.h }};background:var(--pink);border-radius:3px 3px 0 0"></span></span></sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+                <div style="font:400 13px/1.4 'Hanken Grotesk';color:var(--mut);min-height:18px">{{ hb.readout }}</div>
+                <div style="border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:12px">
+                  <span style="font:400 14.5px/1.5 'Hanken Grotesk';color:var(--ink2);text-wrap:pretty">{{ hb.caption }}</span>
+                  <sc-for list="{{ hb.partings }}" as="p" hint-placeholder-count="2">
+                    <button onClick="{{ p.onClick }}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;gap:3px;border-left:2px solid var(--pink);padding-left:14px" style-hover="opacity:.8"><span style="font:500 12px 'JetBrains Mono';color:var(--pink)">{{ p.who }}</span><span style="font:400 16.5px/1.45 'Newsreader',serif;color:var(--ink);text-wrap:pretty">{{ p.text }}</span></button>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ hb.notReady }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between">
+                  <span style="font:400 14px/1.45 'Hanken Grotesk';color:var(--ink2);flex:1 1 320px;text-wrap:pretty">{{ hb.caption }}</span>
+                  <button onClick="{{ hb.onLoad }}" style="background:var(--sel);border:1px solid #8b5cf6;border-radius:8px;padding:7px 15px;cursor:pointer;font:600 13px 'Hanken Grotesk';color:var(--ink);white-space:nowrap" style-hover="border-color:var(--acc)">Bring in perspectives →</button>
+                </div>
+              </sc-if>
+              <sc-if value="{{ hb.loading }}" hint-placeholder-val="{{ false }}"><span style="font:500 13px 'Hanken Grotesk';color:var(--mut)">Reading books, encyclopedia articles and statutes to learn what each expects…</span></sc-if>
+            </div>
+          </sc-if>
+        </div>
         <section style="display:flex;flex-direction:column;gap:8px">
           <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Topic · what this workspace folds around</span>
           <input value="{{ topic }}" onChange="{{ onTopic }}" placeholder="{{ topicPlaceholder }}" style="background:var(--s1);border:1px solid var(--line2);border-radius:10px;color:var(--ink);font:400 22px 'Newsreader',serif;padding:10px 14px;outline:none">
@@ -2844,7 +2962,7 @@ class Component extends DCLogic {
   _html = {};
 
   componentDidMount() {
-    this.applyTheme(); this._c = 0; import(new URL('holodeck-match.js', location.href).href).then(M => { this._mt = M; this._qc = null; this.forceUpdate(); }).catch(() => {}); this.loadHtml(); this.restoreMeet(); if (typeof location !== 'undefined' && /fx-share=/.test(location.hash)) { this.netInit(); this.setState({ view: 'draft' }); }
+    this.applyTheme(); this.restoreReaders(); this._c = 0; import(new URL('holodeck-match.js', location.href).href).then(M => { this._mt = M; this._qc = null; this.forceUpdate(); }).catch(() => {}); this.loadHtml(); this.restoreMeet(); if (typeof location !== 'undefined' && /fx-share=/.test(location.hash)) { this.netInit(); this.setState({ view: 'draft' }); }
     this._onRz = () => { if ((window.innerWidth < SIDE_PANEL_MIN_VW) !== this._narrow) this.forceUpdate(); }; window.addEventListener('resize', this._onRz);
     this._onSelCh = () => { cancelAnimationFrame(this._selRaf); this._selRaf = requestAnimationFrame(() => this.updatePinPop()); };
     document.addEventListener('selectionchange', this._onSelCh); window.addEventListener('scroll', this._onSelCh, true);
@@ -3898,7 +4016,7 @@ class Component extends DCLogic {
   // since its string/object-patch split isn't the right shape for an array
   myFolds() { return ((this.metaAll()[this.corpusId()] || {}).__folds) || []; }
   _saveFolds(folds) { const cid = this.corpusId(); const all = { ...this.metaAll() }; all[cid] = { ...(all[cid] || {}), __folds: folds }; this._meta = all; try { localStorage.setItem('fold-explorer-srcmeta', JSON.stringify(all)); } catch (e) {} this.setState({ metaVer: (this.state.metaVer || 0) + 1 }); }
-  addFoldFromFilter(label, f, q, n) { label = (label || '').trim(); if (!label) return; const folds = this.myFolds(); if (folds.some(x => x.label === label)) return; this._saveFolds([...folds, { label, f, q, n }]); }
+  addFoldFromFilter(label, f, q, n, fx) { label = (label || '').trim(); if (!label) return; const folds = this.myFolds(); if (folds.some(x => x.label === label)) return; this._saveFolds([...folds, { label, f, q, n, fx: fx && fx.conds && fx.conds.length ? fx : undefined }]); }
   removeFold(label) { this._saveFolds(this.myFolds().filter(x => x.label !== label)); }
   discard(docId) { const cid = this.corpusId(); const added = { ...this.state.added, [cid]: (this.state.added[cid] || []).filter(d => d.id !== docId) }; this.saveAdded(added); this.setState({ added, view: 'sources', readDoc: null, sel: null, just: null }); }
   // copies a paradigm's own-added docs into a brand-new workspace (never removes them from where they are --
@@ -3933,6 +4051,7 @@ class Component extends DCLogic {
     if (this._cnt && !this._cnt.has(st.doc) && f.doc !== st.doc) return false;
     if (this.state.offDocs && this.state.offDocs[st.doc]) return false;
     if (st.ref) return false;
+    if (this._fxFn && !this._fxFn(st, A2)) return false;
     if (this.state.tMax && st.year && st.year > this.state.tMax) return false;
     if (this._fold && this._fold.length && !this.state.showOutside && !this.inFold(st)) return false;
     if (f.name && skip !== 'name' && !st.names.includes(f.name)) return false;
@@ -4113,6 +4232,7 @@ class Component extends DCLogic {
     const origin = id => { let x = id; for (let k = 0; k < 8; k++) { const p = parentOf(x); if (!p || p === id) break; x = p; } return x; };
     const indep = ids => new Set([...ids].map(origin)).size;
     const srcN = ids => { const n = ids.size, k = indep(ids); return plural(n, 'source') + (k < n ? ' (' + k + ' independent)' : ''); }; this._srcN = srcN;
+    this._fxFn = this.compileFx(this.fxOf(), A);
     const F = A.sts.filter(st => this.match(st, A));
     const D = this.derive(A, F);
     const sel = S.sel;
@@ -4445,7 +4565,7 @@ class Component extends DCLogic {
     if (f.period) chips.push({ k: f.period.mode === 'happened' ? 'Happened in' : 'Published in', v: periodLabel(f.period.key), onClear: () => this.setF('period', null) });
     if (S.q.trim() && !IS_Q(S.q) && !PARSE_REL(S.q)) chips.push({ k: 'Search', v: '“' + S.q.trim() + '”', onClear: () => this.setState(s => ({ q: '', ...(s.view === 'search' ? { view: s.prevView || 'summary' } : {}) })) });
     this._chips = chips;
-    const addAsFold = { show: chips.length > 0 && view !== 'search', label: 'Save as a fold', onClick: () => { const label = chips.map(c => c.k.toLowerCase() + ' ' + c.v).join(' · '); if (!label) return; this.addFoldFromFilter(label, { ...f }, S.q, new Set(F.map(st => st.doc)).size); } };
+    const addAsFold = { show: chips.length > 0 && view !== 'search', label: 'Save as a fold', onClick: () => { const label = chips.map(c => c.k.toLowerCase() + ' ' + c.v).join(' · '); if (!label) return; this.addFoldFromFilter(label, { ...f }, S.q, new Set(F.map(st => st.doc)).size, JSON.parse(JSON.stringify(this.fxOf()))); } };
 
     const addN = k => (S.added[k] || []).length;
     const wsNames = loadWorkspaceNames();
@@ -4462,12 +4582,12 @@ class Component extends DCLogic {
     // and applies/clears it in that same click -- one click, like every other nav row, not click-to-preview
     // then click-to-open
     const autoSegs = P.groups.slice(0, 6).map(p => ({ key: 'a:' + p.label, label: p.label, n: p.n, auto: true, desc: 'Discovered: ' + plural(p.n, 'source') + ' sharing real names with each other, anchored by “' + p.label + '”.' }));
-    const manualFolds = this.myFolds().map(x => ({ key: 'm:' + x.label, label: x.label, n: x.n, auto: false, _f: x.f, _q: x.q, desc: 'Yours: ' + plural(x.n, 'source') + ' when you saved it.' }));
-    const segList = [...autoSegs, ...manualFolds].map(s => { const on = s.auto ? (segOn === s.label) : (sameF(S.f, s._f) && (S.q || '') === (s._q || ''));
+    const manualFolds = this.myFolds().map(x => ({ key: 'm:' + x.label, label: x.label, n: x.n, auto: false, _f: x.f, _q: x.q, _fx: x.fx, desc: 'Yours: ' + plural(x.n, 'source') + ' when you saved it.' }));
+    const segList = [...autoSegs, ...manualFolds].map(s => { const on = s.auto ? (segOn === s.label) : (sameF(S.f, s._f) && (S.q || '') === (s._q || '') && JSON.stringify(this.fxOf().conds) === JSON.stringify((s._fx || { conds: [] }).conds));
       return { ...s, n: String(s.n), on, hasRemove: !s.auto, bg: on ? 'var(--sel)' : 'transparent', bd: on ? '#8b5cf6' : 'transparent',
-        onJump: () => { if (on) { if (s.auto) this.setMeta('__topic', ''); else this.setState({ f: {}, q: '' }); }
+        onJump: () => { if (on) { if (s.auto) this.setMeta('__topic', ''); else this.setState({ f: {}, q: '', fx: { op: 'and', conds: [], n: 0 } }); }
           else if (s.auto) this.setMeta('__topic', s.label);
-          else this.setState({ f: { ...(s._f || {}) }, q: s._q || '' }); },
+          else this.setState({ f: { ...(s._f || {}) }, q: s._q || '', fx: s._fx ? JSON.parse(JSON.stringify(s._fx)) : { op: 'and', conds: [], n: 0 } }); },
         onRemove: e => { e.stopPropagation(); this.removeFold(s.label); } };
     });
     const hasSegments = segList.length > 0;
@@ -4602,6 +4722,7 @@ class Component extends DCLogic {
       // each workspace statement so nothing here can leak this workspace's
       // words back out, and nothing this workspace says can leak into what
       // a genre expects next. Kept apart via divergence(), not averaged.
+      hb: (V.summary && !isEmpty) ? this.heroBar(A, F) : { cols: [], staves: [], part: [], partings: [], all: {}, ready: false, notReady: false, loading: false, hasPart: false, hasPartings: false, caption: '', line: '' },
       suPerspReady: !!this._persp, suPerspLoading: !!this._perspLoading, suPerspNotReady: !this._persp && !this._perspLoading, onSuPerspLoad: () => this.ensurePerspectives(),
       suPerspNote: 'Three readers, not one baseline: a holograph per live_priors genre (books, encyclopedic, government & legal), each trained on what its sentences do to the picture held so far — a first bond between two known names, a new name entering bonded to one already there, a bond negated, a bond merely restated. Never on words. Every statement here is read the same way and scored against each reader without ever teaching it anything. A statement one reader finds notable and another finds ordinary is the reason for three readers rather than one.',
       suPerspCards: (SU && SU.perspectives) ? SU.perspectives.genres.map(g => { const items = SU.perspectives.items.filter(x => x.byGenre[g.id]); const notable = items.filter(x => x.byGenre[g.id].notable).length;
@@ -5023,6 +5144,225 @@ class Component extends DCLogic {
   // (perspective.js's own divergence()) rather than collapsing them into a
   // single baseline the way the dead ensureBaseline()/holoRun() pair above
   // tried to and never actually wired into surprise()'s real scorer.
+  // Readers are counts over structural slots (no text), so they are kept in this browser between visits; a reader trained under other declared numbers is refused, not reused.
+  restoreReaders() {
+    try {
+      const raw = localStorage.getItem('holodeck-readers-v1'); if (!raw || this._persp) return;
+      import(new URL('holodeck-perspectives.js', location.href).href).then(M => {
+        const r = M.reviveReaders(JSON.parse(raw)); if (!r || this._persp) return;
+        this._perspM = M; this._persp = r; this._su = null; this._hb = null; this.forceUpdate();
+      }).catch(() => {});
+    } catch (e) {}
+  }
+  // ---- the top bar: Sources / Filtering / Perspectives ------------------------------------------------------------------
+  // Sources = what is included; Filtering = how it is sliced (a real condition builder, applied to every view through match());
+  // Perspectives = who is reading it. The first two are what most apps call filtering and joining; the third is the one they leave out:
+  // every reading is for someone, so the bar always names who, and never lets the last perspective be set aside.
+  fxOf() { const x = this.state.fx; return x && Array.isArray(x.conds) ? x : { op: 'and', conds: [] }; }
+  setFx(fn) { this.setState(s => { const cur = s.fx && Array.isArray(s.fx.conds) ? s.fx : { op: 'and', conds: [], n: 0 }; return { fx: fn({ ...cur, conds: cur.conds.map(c => ({ ...c })) }) }; }); }
+  // the subset of match() a saved fold needs, evaluated for one statement against that fold's own snapshot
+  passesF(st, A, f, q) {
+    const d = A.docById[st.doc] || {};
+    if (f.name && !st.names.includes(f.name)) return false;
+    if (f.doc && st.doc !== f.doc) return false;
+    if (f.topic && !st.topics.includes(f.topic)) return false;
+    if (f.frame && st.frame !== f.frame) return false;
+    if (f.type && !st.names.some(n => A.names[n].type === f.type)) return false;
+    if (f.unit && !st.figs.some(g => g.unit === f.unit)) return false;
+    if (f.kind && (d.kind || 'Source') !== f.kind) return false;
+    if (f.medium && (d.medium || 'Text') !== f.medium) return false;
+    if (f.standing && (d.standing || 'Source') !== f.standing) return false;
+    if (f.year && st.year && st.year > f.year) return false;
+    if (f.period) { const k = timeKey(st, d, f.period.mode); if (!k || (k !== f.period.key && !k.startsWith(f.period.key + '-'))) return false; }
+    const qq = String(q || '').trim().toLowerCase();
+    if (qq && !IS_Q(qq) && !qq.split(/\s+/).every(w => st.text.toLowerCase().includes(w))) return false;
+    return true;
+  }
+  compileFx(fx, A, seen) {
+    const conds = (fx.conds || []).filter(c => c.value !== '' && c.value != null);
+    if (!conds.length) return null;
+    const folds = this.myFolds(); seen = seen || new Set();
+    const one = c => {
+      const dd = st => A.docById[st.doc] || {}; let f;
+      switch (c.field) {
+        case 'kind': f = st => (dd(st).kind || 'Source') === c.value; break;
+        case 'medium': f = st => (dd(st).medium || 'Text') === c.value; break;
+        case 'standing': f = st => (dd(st).standing || 'Source') === c.value; break;
+        case 'source': f = st => st.doc === c.value; break;
+        case 'author': f = st => (dd(st).authors || []).includes(c.value); break;
+        case 'mentions': f = st => st.names.includes(c.value); break;
+        case 'topic': f = st => st.topics.includes(c.value); break;
+        case 'theme': { const lf = this.lensFn({ k: c.value }, A); f = st => lf(st); break; }
+        case 'figure': f = st => st.figs.some(g => g.unit === c.value); break;
+        case 'year': { const y = +c.value; return st => { const yy = st.year || dd(st).year; if (!yy) return false; return c.cmp === 'lte' ? yy <= y : c.cmp === 'gte' ? yy >= y : yy === y; }; }
+        case 'contains': { const ws = String(c.value).toLowerCase().split(/\s+/).filter(Boolean); f = st => { const t = st.text.toLowerCase(); return ws.every(w => t.includes(w)); }; break; }
+        case 'fold': { const fold = folds.find(x => x.label === c.value);
+          // a fold is its old-style snapshot AND the expression it was saved with; a fold that (through others) contains itself is left out rather than looped on
+          if (!fold || seen.has(fold.label)) { f = () => true; break; }
+          const inner = fold.fx ? this.compileFx(fold.fx, A, new Set([...seen, fold.label])) : null;
+          f = st => this.passesF(st, A, fold.f || {}, fold.q || '') && (!inner || inner(st)); break; }
+        default: f = () => true;
+      }
+      return c.cmp === 'isnot' ? (st => !f(st)) : f;
+    };
+    const fns = conds.map(one);
+    return fx.op === 'or' ? (st => fns.some(fn => fn(st))) : (st => fns.every(fn => fn(st)));
+  }
+  // every field the person can filter on, with the real values present in this workspace (fields with nothing to choose between are left out)
+  fxCatalog(A) {
+    const key = A.sts.length + '|' + (this._cnt ? this._cnt.size : 0) + '|' + this.myFolds().map(f => f.label).join('|');
+    if (this._fxc && this._fxc.key === key && this._fxc.A === A) return this._fxc.v;
+    const docs = A.docs.filter(d => !this._cnt || this._cnt.has(d.id));
+    const sts = A.sts.filter(st => !st.ref && (!this._cnt || this._cnt.has(st.doc)));
+    const tally = (arr, fn) => { const m = new Map(); arr.forEach(x => { const k = fn(x); (Array.isArray(k) ? k : [k]).forEach(v => { if (v) m.set(v, (m.get(v) || 0) + 1); }); }); return [...m].sort((a, b) => b[1] - a[1]); };
+    const opts = (rows, name) => rows.map(([v, n]) => { const nm = name ? name(v) : String(v); return { v: String(v), name: nm, label: nm + ' (' + n + ')' }; });
+    const ENUM = [{ v: 'is', label: 'is' }, { v: 'isnot', label: 'is not' }], HAS = [{ v: 'is', label: 'includes' }, { v: 'isnot', label: 'excludes' }];
+    const yrs = tally(docs, d => (d.year ? String(d.year) : null)).sort((a, b) => (a[0] < b[0] ? -1 : 1));
+    const F = [
+      { key: 'kind', label: 'Kind', ops: ENUM, opts: opts(tally(docs, d => d.kind || 'Source')) },
+      { key: 'medium', label: 'Medium', ops: ENUM, opts: opts(tally(docs, d => d.medium || 'Text')) },
+      { key: 'standing', label: 'Standing', ops: ENUM, opts: opts(tally(docs, d => d.standing || 'Source')) },
+      { key: 'source', label: 'Source', ops: ENUM, opts: opts(docs.map(d => [d.id, 0]), id => (A.docById[id] || {}).title || id).map(o => ({ ...o, label: o.name })) },
+      { key: 'author', label: 'Author', ops: HAS, opts: opts(tally(docs, d => d.authors || [])) },
+      { key: 'mentions', label: 'Mentions', ops: HAS, opts: opts(Object.values(A.names).sort((a, b) => b.sts.length - a.sts.length).slice(0, 60).map(n => [n.name, n.sts.length])) },
+      { key: 'topic', label: 'Topic', ops: HAS, opts: opts(tally(sts, st => st.topics || []).slice(0, 40)) },
+      { key: 'theme', label: 'Theme', ops: ENUM, opts: [{ v: 'fin', name: 'Financials', label: 'Financials' }, { v: 'audit', name: 'Audit findings', label: 'Audit findings' }] },
+      { key: 'figure', label: 'Figures in', ops: HAS, opts: opts(tally(sts, st => [...new Set((st.figs || []).map(g => g.unit).filter(Boolean))]).slice(0, 20)) },
+      { key: 'year', label: 'Year', ops: [{ v: 'lte', label: 'up to' }, { v: 'is', label: 'is' }, { v: 'gte', label: 'from' }], opts: yrs.map(([v]) => ({ v, name: v, label: v })) },
+      { key: 'contains', label: 'Text', ops: [{ v: 'is', label: 'contains' }, { v: 'isnot', label: 'does not contain' }], text: true, opts: [] },
+      { key: 'fold', label: 'Fold', ops: [{ v: 'is', label: 'is in' }, { v: 'isnot', label: 'is not in' }], opts: this.myFolds().map(f => ({ v: f.label, name: f.label, label: f.label })) },
+    ].filter(f => f.text || f.opts.length >= (f.key === 'fold' || f.key === 'source' ? 1 : 2));
+    const v = { fields: F, by: Object.fromEntries(F.map(f => [f.key, f])) };
+    this._fxc = { key, A, v }; return v;
+  }
+  fxDescribe(fx, A) {
+    const cat = this.fxCatalog(A); const parts = (fx.conds || []).filter(c => c.value !== '' && c.value != null).map(c => {
+      const f = cat.by[c.field]; if (!f) return ''; if (c.field === 'fold') return (c.cmp === 'isnot' ? 'not in' : 'in') + ' fold “' + c.value + '”'; const op = (f.ops.find(o => o.v === c.cmp) || f.ops[0]).label; const o = (f.opts || []).find(x => x.v === c.value);
+      return f.label.toLowerCase() + ' ' + op + ' ' + (f.text ? '“' + c.value + '”' : (o ? o.name : c.value)); }).filter(Boolean);
+    return parts.join(fx.op === 'or' ? ' or ' : ' and ');
+  }
+  // Hover is the one thing that changes every frame, so it is layered on the cached bar rather than recomputed with it.
+  heroBar(A, F) {
+    const v = this.heroBarBase(A, F); const S = this.state; const fx = this.fxOf(); const cat = this.fxCatalog(A);
+    const hv = S.hbHover == null ? -1 : S.hbHover;
+    const set = i => () => { if (this.state.hbHover !== i) this.setState({ hbHover: i }); };
+    const clear = () => { if (this.state.hbHover != null) this.setState({ hbHover: null }); };
+    const hl = i => (i === hv ? 'var(--sel)' : 'transparent');
+    const r = hv >= 0 ? v.raw[hv] : null;
+    const readout = !v.ready ? '' : !r ? 'Hover a source to see how each perspective weighs it.'
+      : r.name + ' · ' + plural(r.lit, 'statement') + ' passing the filter · ' + v.staves.filter(x => x.on).map(x => x.label + ' ' + r.notable[x.id] + ' notable').join(' · ') + (v.hasPart ? ' · they part on ' + r.mixed : '');
+    const open = S.hbOpen || null; const tog = k => () => this.setState(st => ({ hbOpen: st.hbOpen === k ? null : k, hbHover: null }));
+    // ---- Sources
+    const counted = A.docs.filter(d => !this._cnt || this._cnt.has(d.id)); const offDocs = S.offDocs || {}; const incl = counted.filter(d => !offDocs[d.id]);
+    const nStm = d => v.docN[d.id] || 0;
+    const src = { open: open === 'sources', bg: open === 'sources' ? 'var(--sel)' : 'transparent', onClick: tog('sources'), label: 'Sources', caption: 'the source',
+      value: this.corpusName() + ', ' + (incl.length === counted.length ? (counted.length === 1 ? 'the one source' : 'every source') : incl.length + ' of ' + plural(counted.length, 'source')) };
+    const srcRows = counted.slice().sort((a, b) => (a.published || a.year || '') < (b.published || b.year || '') ? -1 : 1).slice(0, 200).map(d => ({ title: d.title, meta: [d.kind, d.pubLabel || d.year, plural(nStm(d), 'statement')].filter(Boolean).join(' · '), on: !offDocs[d.id],
+      onToggle: () => this.setState(s => ({ offDocs: { ...(s.offDocs || {}), [d.id]: !(s.offDocs || {})[d.id] } })),
+      onOnly: () => { const o = {}; counted.forEach(x => { if (x.id !== d.id) o[x.id] = true; }); this.setState({ offDocs: o }); } }));
+    // ---- Filtering
+    const desc = this.fxDescribe(fx, A); const chips = (this._chips || []).map(c => ({ text: c.k.toLowerCase() + ' ' + c.v, onClear: c.onClear }));
+    const nAll = v.nAllStm; const passing = F.length;
+    const hasAny = !!desc || chips.length > 0;
+    const fltValue = hasAny ? [desc, ...chips.map(c => c.text)].filter(Boolean).join(fx.op === 'or' ? ' · ' : ' and ') : 'No filter';
+    const flt = { open: open === 'filtering', bg: open === 'filtering' ? 'var(--sel)' : 'transparent', onClick: tog('filtering'), label: 'Filtering', caption: hasAny ? plural(passing, 'statement') + ' of ' + nAll + ' pass' : 'the filter', value: fltValue, active: hasAny,
+      onClear: () => this.setState({ fx: { op: 'and', conds: [], n: 0 }, f: {}, q: '' }) };
+    const rows = fx.conds.map((c, i) => { const f = cat.by[c.field] || cat.fields[0]; const opt = f && f.opts;
+      const upd = patch => this.setFx(x => { x.conds[i] = { ...x.conds[i], ...patch }; return x; });
+      return { joiner: i === 0 ? 'where' : (fx.op === 'or' ? 'or' : 'and'), field: f.key, cmp: c.cmp, val: c.value, isText: !!f.text, isSelect: !f.text,
+        fieldOpts: cat.fields.map(x => ({ v: x.key, label: x.label })), cmpOpts: f.ops, valOpts: f.text ? [] : f.opts.map(o => ({ v: o.v, label: o.label })),
+        onField: e => { const nf = cat.by[e.target.value]; upd({ field: nf.key, cmp: nf.ops[0].v, value: nf.text ? '' : (nf.opts[0] || {}).v || '' }); },
+        onCmp: e => upd({ cmp: e.target.value }), onVal: e => upd({ value: e.target.value }), onRemove: () => this.setFx(x => { x.conds.splice(i, 1); return x; }) }; });
+    const firstField = cat.fields.find(x => x.key === 'kind') || cat.fields[0];
+    const opAll = fx.op !== 'or';
+    const pill = on => ({ bg: on ? 'var(--sel)' : 'var(--s1)', bd: on ? '#8b5cf6' : 'var(--line2)', fw: on ? 600 : 500 });
+    const foldPills = this.myFolds().slice(0, 10).map(fold => ({ label: fold.label, onClick: () => this.setFx(x => { x.conds.push({ id: (x.n = (x.n || 0) + 1), field: 'fold', cmp: 'is', value: fold.label }); return x; }) }));
+    const filt = { rows, hasRows: rows.length > 0, canAdd: !!firstField,
+      onAdd: () => { if (!firstField) return; this.setFx(x => { x.conds.push({ id: (x.n = (x.n || 0) + 1), field: firstField.key, cmp: firstField.ops[0].v, value: firstField.text ? '' : (firstField.opts[0] || {}).v || '' }); return x; }); },
+      multi: rows.length > 1, all: { label: 'Match all', ...pill(opAll), onClick: () => this.setFx(x => { x.op = 'and'; return x; }) }, any: { label: 'Match any', ...pill(!opAll), onClick: () => this.setFx(x => { x.op = 'or'; return x; }) },
+      foldPills, hasFolds: foldPills.length > 0, chips, hasChips: chips.length > 0,
+      summary: hasAny ? plural(passing, 'statement') + ' of ' + nAll + ' pass' + (rows.length > 1 ? ' (' + (opAll ? 'all' : 'any') + ' of the conditions)' : '') : nAll + ' statements, nothing filtered out',
+      canSave: hasAny, onSave: () => { const label = [desc, ...chips.map(c => c.text)].filter(Boolean).join(' · '); if (!label) return; this.addFoldFromFilter(label, { ...S.f }, S.q, new Set(F.map(st => st.doc)).size, JSON.parse(JSON.stringify(fx))); },
+      onClearAll: flt.onClear };
+    // ---- Perspectives
+    const act = v.ready ? v.staves.filter(x => x.on) : [];
+    const per = { open: open === 'perspectives', bg: open === 'perspectives' ? 'var(--sel)' : 'transparent', onClick: tog('perspectives'), label: 'Perspectives', caption: 'the perspective',
+      value: !v.ready ? 'None yet' : act.length <= 2 ? act.map(x => x.label).join(' and ') : act[0].label + ' and ' + (act.length - 1) + ' more' };
+    return { ...v, readout, src, srcRows, hasSrcRows: srcRows.length > 0, srcAll: () => this.setState({ offDocs: {} }), flt, filt, per, isOpen: !!open, openSources: open === 'sources', openFiltering: open === 'filtering', openPerspectives: open === 'perspectives', close: () => this.setState({ hbOpen: null, hbHover: null }),
+      dots: v.ready ? v.staves.map(x => ({ color: x.color, op: x.on ? 1 : 0.25 })) : [],
+      cols: v.cols.map((c, i) => ({ ...c, hl: hl(i), bd: i === hv || c.sel ? 'var(--acc)' : 'var(--line2)', onEnter: set(i), onLeave: clear })),
+      staves: v.staves.map(st => ({ ...st, cols: st.cols.map((c, i) => ({ ...c, hl: hl(i), onEnter: set(i), onLeave: clear })) })),
+      part: v.part.map((c, i) => ({ ...c, hl: hl(i), onEnter: set(i), onLeave: clear })) };
+  }
+  // The perspectives' side of the bar: each source is one column (by date); each perspective judges only the statements that pass the filter.
+  heroBarBase(A, F) {
+    const S = this.state, M = this._perspM, R = this._persp;
+    const off = S.hbOff || {}, offDocs = S.offDocs || {}, fdoc = null;
+    const Fs = new Set(F.map(s => s.id));
+    let h = 0; for (const st of F) { const id = st.id; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0; }
+    const key = 'hb2|' + F.length + ':' + h + '|' + (R ? 'r' : this._perspLoading ? 'l' : 'n') + '|' + JSON.stringify(off) + '|' + JSON.stringify(offDocs) + '|' + (this._cnt ? this._cnt.size : 0) + '|' + A.sts.length;
+    if (this._hb && this._hb.A === A && this._hb.key === key) return this._hb.v;
+    const di = {}; A.docs.forEach((d, i) => { di[d.id] = i; });
+    const pubMs = d => { const t = Date.parse(d.published || ''); return !isNaN(t) ? t : d.year ? Date.UTC(d.year, 0, 1) : Infinity; };
+    const docs = A.docs.filter(d => (!this._cnt || this._cnt.has(d.id)) && !offDocs[d.id]).sort((x, y) => pubMs(x) - pubMs(y) || di[x.id] - di[y.id]);
+    const byDoc = {}; A.sts.forEach(st => { if (!st.ref) (byDoc[st.doc] = byDoc[st.doc] || []).push(st); });
+    const GEN = M ? M.GENRES : [{ id: 'lit', label: 'Literature' }, { id: 'ency', label: 'Encyclopedic' }, { id: 'gov', label: 'Government & legal' }];
+    const COLOR = { lit: 'var(--amber)', ency: 'var(--blue)', gov: 'var(--green)' };
+    const label = id => (GEN.find(g => g.id === id) || {}).label || id;
+    const active = GEN.filter(g => !off[g.id]).map(g => g.id);
+    const pairs = {}; let top = []; const docN = {}; A.docs.forEach(d => { docN[d.id] = (byDoc[d.id] || []).length; });
+    const recs = docs.map(d => {
+      const all = byDoc[d.id] || []; const inSlice = all.filter(st => Fs.has(st.id));
+      const r = { d, all: all.length, lit: inSlice.length, notable: { lit: 0, ency: 0, gov: 0 }, mixed: 0 };
+      if (R && M && inSlice.length) {
+        // each source is its own stream with its own picture, exactly as each genre document was read
+        const facts = M.factsAlong(all.map(st => st.text)); const idx = new Map(all.map((st, i) => [st.id, i]));
+        inSlice.forEach(st => {
+          const sc = M.scorePerspectives(R, facts[idx.get(st.id)]);
+          GEN.forEach(g => { if (sc[g.id] && sc[g.id].notable) r.notable[g.id]++; });
+          const on = active.filter(id => sc[id]); if (on.length < 2) return;
+          const yes = on.filter(id => sc[id].notable), no = on.filter(id => !sc[id].notable);
+          if (!yes.length || !no.length) return;
+          r.mixed++;
+          yes.forEach(a => no.forEach(b => { const k = [a, b].sort().join('|'); pairs[k] = (pairs[k] || 0) + 1; }));
+          const dec = Math.min(...on.map(id => Number.isFinite(sc[id].notableBits) ? Math.abs(sc[id].bits - sc[id].notableBits) : 0));
+          top.push({ st, dec, yes, no }); if (top.length > 24) { top.sort((a, b) => b.dec - a.dec); top.length = 3; }
+        });
+      }
+      return r;
+    });
+    top.sort((a, b) => b.dec - a.dec); top = top.slice(0, 3);
+    const MAXC = 96; const per = Math.max(1, Math.ceil(recs.length / MAXC)); const cols = [];
+    for (let i = 0; i < recs.length; i += per) {
+      const g = recs.slice(i, i + per); const sum = f => g.reduce((t, r) => t + f(r), 0);
+      cols.push({ id: g.length === 1 ? g[0].d.id : null, name: g.length === 1 ? g[0].d.title : plural(g.length, 'source') + ' · ' + short(g[0].d.title, 26) + ' … ' + short(g[g.length - 1].d.title, 26),
+        all: sum(r => r.all), lit: sum(r => r.lit), mixed: sum(r => r.mixed), notable: { lit: sum(r => r.notable.lit), ency: sum(r => r.notable.ency), gov: sum(r => r.notable.gov) } });
+    }
+    const pct = (n, of) => of ? Math.round(100 * n / of) : 0;
+    const bar = (n, of) => n ? 'max(3px,' + pct(n, of) + '%)' : '1px';
+    const ready = !!(R && M);
+    const groundCols = cols.map(c => ({ grow: Math.max(1, Math.sqrt(c.all)).toFixed(2), bg: 'var(--ink2)', op: 0.08, sel: false, cursor: 'default', label: '', slice: pct(c.lit, c.all) + '%', sliceColor: 'var(--acc)',
+      tip: c.name + ' — ' + plural(c.all, 'statement') + ', ' + c.lit + ' pass the filter' }));
+    const staves = GEN.map(g => { const on = !off[g.id];
+      return { id: g.id, label: g.label, color: COLOR[g.id], on, chipOp: on ? 1 : 0.45, chipBd: on ? COLOR[g.id] : 'var(--line2)',
+        tip: on ? 'Reading through ' + g.label + ' — click to set this perspective aside' : g.label + ' is set aside — click to bring it back',
+        onToggle: () => { const cur = { ...(this.state.hbOff || {}) }; if (!cur[g.id] && active.length <= 1) return; cur[g.id] = !cur[g.id]; this.setState({ hbOff: cur }); },
+        cols: cols.map(c => ({ grow: Math.max(1, Math.sqrt(c.all)).toFixed(2), color: COLOR[g.id], h: on ? bar(c.notable[g.id], c.lit) : '1px', op: on ? 1 : 0.25,
+          tip: c.name + ' — ' + label(g.id) + ' finds ' + c.notable[g.id] + ' of ' + plural(c.lit, 'statement') + ' notable' })) }; });
+    const part = cols.map(c => ({ grow: Math.max(1, Math.sqrt(c.all)).toFixed(2), h: bar(c.mixed, c.lit), tip: c.name + ' — the perspectives part ways on ' + c.mixed + ' of ' + plural(c.lit, 'statement') }));
+    const nSt = cols.reduce((t, c) => t + c.lit, 0), nMixed = cols.reduce((t, c) => t + c.mixed, 0);
+    const bestPair = Object.entries(pairs).sort((a, b) => b[1] - a[1])[0];
+    const who = ids => ids.map(label).join(' and ');
+    let caption;
+    if (!ready) caption = 'No reading is neutral. Bring in perspectives, each with its own stated sense of what counts as notable, and see this same material through all of them.';
+    else if (active.length < 2) caption = 'Read through one perspective only: ' + label(active[0]) + '. Its line for “notable” is the top 15% of what it has itself read, so this is one stated standpoint, not the view.';
+    else caption = plural(nSt, 'statement') + ' pass the filter. The ' + active.length + ' perspectives agree on ' + (nSt - nMixed) + (nMixed ? ' and part ways on ' + nMixed + (bestPair ? ' — ' + who(bestPair[0].split('|')) + ' most (' + bestPair[1] + ')' : '') : ' — no statement splits them') + '.';
+    const v = { docN, nAllStm: recs.reduce((t, r) => t + r.all, 0), nSlice: nSt, nMixed, showLabels: false, raw: cols.map(c => ({ name: c.name, all: c.all, lit: c.lit, mixed: c.mixed, notable: c.notable })), active, ready, notReady: !ready && !this._perspLoading, loading: !ready && !!this._perspLoading, cols: groundCols, staves, part, hasPart: ready && active.length > 1, caption,
+      onLoad: () => this.ensurePerspectives(),
+      partings: top.map(t => ({ who: who(t.yes) + (t.yes.length > 1 ? ' find' : ' finds') + ' this notable · ' + who(t.no) + (t.no.length > 1 ? ' do not' : ' does not'), text: short(clean(t.st.text), 220), onClick: () => this.read(t.st.doc, t.st.id) })) };
+    v.hasPartings = v.partings.length > 0;
+    this._hb = { A, key, v }; return v;
+  }
   ensurePerspectives() {
     if (this._perspLoading || this._persp) return;
     this._perspLoading = true;
@@ -5031,7 +5371,8 @@ class Component extends DCLogic {
       this._perspM = M;
       return M.buildAllGenres(LP_SETS, (id, label, n, t, s) => this.setState({ busy: 'Reading as ' + label.toLowerCase() + '… ' + n + ' / ' + t + ' documents, ' + s + ' sentences' }));
     }).then(holos => {
-      this._persp = holos; this._perspLoading = false; this._su = null;
+      this._persp = holos; this._perspLoading = false; this._su = null; this._hb = null;
+      try { localStorage.setItem('holodeck-readers-v1', JSON.stringify(this._perspM.serializeReaders(holos))); } catch (e) {}
       this.setState({ busy: '', suVer: (this.state.suVer || 0) + 1 });
     }).catch(e => { this._perspLoading = false; this.setState({ busy: '' }); console.error('perspectives failed', e); });
   }

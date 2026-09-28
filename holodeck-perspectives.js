@@ -275,3 +275,38 @@ export function projectAndDiverge(log) {
   }
   return { projected, pairs };
 }
+
+// ---- persistence -----------------------------------------------------------
+// A reader is counts over three structural slots (no text), so it is small and
+// safe to keep in the browser between visits. It carries the declared numbers
+// it was trained under; a reader trained under different numbers is a
+// different reader and is refused on revive rather than silently reused.
+export const readerRecipe = () => ({ PICTURE_WINDOW, SAMPLE_PER_GENRE, NAME_RECURRENCE, NOTABLE_QUANTILE, MIN_SENTENCE_CHARS });
+
+export function serializeReaders(readers) {
+  const out = { recipe: readerRecipe(), readers: {} };
+  for (const g of GENRES) {
+    const r = readers && readers[g.id]; if (!r || !r.holo) continue;
+    out.readers[g.id] = {
+      files: r.files, sentences: r.sentences, notableBits: Number.isFinite(r.notableBits) ? r.notableBits : null,
+      admitted: r.holo.admitted, absentMass: r.holo.absentMass ?? 0, alpha: r.holo.alpha, gamma: r.holo.gamma,
+      slots: [...r.holo.slots].map(([slot, m]) => [slot, [...m]]),
+    };
+  }
+  return out;
+}
+
+export function reviveReaders(saved) {
+  if (!saved || !saved.readers || !saved.recipe) return null;
+  const now = readerRecipe();
+  for (const k of Object.keys(now)) if (saved.recipe[k] !== now[k]) return null;
+  const out = {};
+  for (const g of GENRES) {
+    const s = saved.readers[g.id]; if (!s) return null;
+    const holo = createHolograph({ alpha: s.alpha, gamma: s.gamma });
+    holo.admitted = s.admitted; holo.absentMass = s.absentMass;
+    s.slots.forEach(([slot, entries]) => holo.slots.set(slot, new Map(entries)));
+    out[g.id] = { holo, files: s.files, sentences: s.sentences, notableBits: s.notableBits == null ? Infinity : s.notableBits };
+  }
+  return out;
+}

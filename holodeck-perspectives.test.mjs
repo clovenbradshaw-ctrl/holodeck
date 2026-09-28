@@ -64,3 +64,19 @@ test('readers with different experience disagree, and divergence names the claim
   assert.deepEqual(litEncy.conflicting.map((c) => c.claim), ['notable:x']);
   assert.equal(pairs.find((p) => p.a === 'ency' && p.b === 'gov').conflicting.length, 0); // same experience, same verdict
 });
+
+test('a reader survives a save and a revive unchanged, and is refused if trained under other numbers', () => {
+  const holo = createHolograph(); const combos = new Map();
+  P.factsAlong(STREAM).forEach((f) => { admit(holo, f); const k = JSON.stringify(f); combos.set(k, { f, n: (combos.get(k)?.n || 0) + 1 }); });
+  const one = { holo, files: 1, sentences: STREAM.length, notableBits: P.notableBitsOf(holo, combos) };
+  const readers = { lit: one, ency: one, gov: one };
+  const saved = JSON.parse(JSON.stringify(P.serializeReaders(readers)));
+  const back = P.reviveReaders(saved);
+  const facts = { event: 'bond', known: '2', fresh: '1' };
+  for (const g of ['lit', 'ency', 'gov']) assert.equal(P.scoreAgainstGenre(back[g].holo, facts, back[g].notableBits).bits, P.scoreAgainstGenre(one.holo, facts, one.notableBits).bits);
+  assert.equal(back.lit.notableBits, one.notableBits);
+  const stale = JSON.parse(JSON.stringify(saved)); stale.recipe.PICTURE_WINDOW += 1;
+  assert.equal(P.reviveReaders(stale), null);
+  assert.equal(P.reviveReaders({}), null);
+  assert.ok(!JSON.stringify(saved).includes('Lovelace'));
+});
