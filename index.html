@@ -41,6 +41,7 @@ select option{background:var(--s1);color:var(--ink)}
         </sc-for>
       </select>
       <button onClick="{{ openAdd }}" style="width:100%;box-sizing:border-box;background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:8px 10px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Add source</button>
+      <button onClick="{{ openNewWs }}" style="width:100%;box-sizing:border-box;background:none;border:1px solid var(--line2);border-radius:8px;padding:7px 10px;cursor:pointer;font:600 13px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">+ New workspace</button>
       <button onClick="{{ repo.open }}" title="{{ repo.title }}" style="width:100%;box-sizing:border-box;display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)"><span style="width:8px;height:8px;border-radius:50%;background:{{ repo.dot }}"></span>Data</button>
     </div>
     <nav style="display:flex;flex-direction:column;gap:2px">
@@ -122,8 +123,8 @@ select option{background:var(--s1);color:var(--ink)}
       <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
         <div style="border:1px dashed var(--line2);border-radius:14px;padding:48px 32px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px">
           <h1 style="margin:0;font:500 28px 'Newsreader',serif">Nothing here yet</h1>
-          <p style="margin:0;max-width:460px;color:var(--mut)">Paste or upload any text — reports, articles, notes, transcripts, emails. It's split into statements, and every name, figure and date is traced back to where it appears.</p>
-          <button onClick="{{ openAdd }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:10px 18px;cursor:pointer;font:600 14px 'Hanken Grotesk'">+ Add content</button>
+          <p style="margin:0;max-width:460px;color:var(--mut)">Paste or upload any text — reports, articles, notes, transcripts, emails. It's split into statements, and every name, figure and date is traced back to where it appears. Or describe what you want to learn and let the workspace go fetch it.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button onClick="{{ openAdd }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:10px 18px;cursor:pointer;font:600 14px 'Hanken Grotesk'">+ Add content</button><button onClick="{{ openTask }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:10px 18px;cursor:pointer;font:600 14px 'Hanken Grotesk';color:var(--ink)">Set a research task →</button></div>
         </div>
       </sc-if>
 
@@ -144,7 +145,7 @@ select option{background:var(--s1);color:var(--ink)}
           <sc-if value="{{ just.hasOdd }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;flex-direction:column;gap:3px">
               <sc-for list="{{ just.odd }}" as="o" hint-placeholder-count="1">
-                <div style="font:400 13px/1.45 'Hanken Grotesk';color:var(--ink2);max-width:80ch"><span style="color:var(--amber);font-weight:600">{{ o.tag }}</span> “{{ o.label }}” <span style="color:var(--dim)">· {{ o.why }}</span> <button onClick="{{ o.onInspect }}" style="all:unset;cursor:pointer;color:var(--acc);font-weight:600" style-hover="color:var(--ink)">Inspect</button></div>
+                <div style="font:400 13px/1.45 'Hanken Grotesk';color:var(--ink2);max-width:80ch"><span style="color:var(--amber);font-weight:600">{{ o.tag }}</span> “{{ o.label }}” <span style="color:var(--dim)">· {{ o.why }}</span> <button onClick="{{ o.onInspect }}" style="all:unset;cursor:pointer;color:var(--acc);font-weight:600" style-hover="color:var(--ink)">Inspect</button> <button onClick="{{ o.onCorrect }}" title="That's incorrect — strike this as a name" style="all:unset;cursor:pointer;color:var(--dim);font-weight:500" style-hover="color:var(--bad)">That's incorrect</button></div>
               </sc-for>
               <sc-if value="{{ just.oddMore }}" hint-placeholder-val="{{ false }}"><button onClick="{{ just.onOddAll }}" style="all:unset;cursor:pointer;font:400 13px 'Hanken Grotesk';color:var(--dim)" style-hover="color:var(--ink)">{{ just.oddMore }}</button></sc-if>
             </div>
@@ -184,11 +185,18 @@ select option{background:var(--s1);color:var(--ink)}
               <div style="display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;margin-top:8px">
                 <span style="font:600 14px 'Hanken Grotesk';color:var(--ink);white-space:nowrap">{{ filterCount }}</span>
                 <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">·</span>
+                <span style="font:400 12px 'JetBrains Mono';color:var(--dim);white-space:nowrap">{{ tupleLine }}</span>
                 <sc-for list="{{ chips }}" as="ch" hint-placeholder-count="1">
-                  <button onClick="{{ ch.onClear }}" title="Remove" style="display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid #8b5cf6;color:var(--ink);border-radius:999px;padding:3px 5px 3px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk'"><span style="color:var(--mut)">{{ ch.k }}</span><b style="font-weight:600">{{ ch.v }}</b><span style="width:18px;height:18px;border-radius:50%;background:var(--line2);display:flex;align-items:center;justify-content:center;font-size:10px">✕</span></button>
+                  <button onClick="{{ ch.onClear }}" title="Remove" style="display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid #8b5cf6;color:var(--ink);border-radius:999px;padding:3px 5px 3px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk'"><span style="color:var(--mut)">{{ ch.k }}</span><b style="font-weight:600">{{ ch.v }}</b><span style="font:500 12px 'Hanken Grotesk';color:var(--acc);border:1px solid var(--line2);border-radius:999px;padding:1px 8px;white-space:nowrap">{{ ch.w }}</span><span style="width:18px;height:18px;border-radius:50%;background:var(--line2);display:flex;align-items:center;justify-content:center;font-size:10px">✕</span></button>
                 </sc-for>
                 <sc-if value="{{ addAsFold.show }}" hint-placeholder-val="{{ false }}"><button onClick="{{ addAsFold.onClick }}" style="margin-left:auto;background:none;border:1px solid #8b5cf6;border-radius:999px;color:var(--acc);cursor:pointer;font:500 13px 'Hanken Grotesk';padding:3px 10px;white-space:nowrap">{{ addAsFold.label }}</button></sc-if>
                 <button onClick="{{ clearAll }}" style="background:none;border:0;color:var(--mut);cursor:pointer;font:500 14px 'Hanken Grotesk';white-space:nowrap" style-hover="color:var(--ink)">Clear all</button>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;margin-top:6px">
+                <span style="font:600 11px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--dim)">What counts · for whom each filter holds</span>
+                <sc-for list="{{ fwRows }}" as="r" hint-placeholder-count="1">
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font:400 13px 'Hanken Grotesk';color:var(--mut)"><span style="color:var(--ink2);font-weight:600">{{ r.label }}</span><span>for</span><sc-for list="{{ r.givers }}" as="g" hint-placeholder-count="1"><button onClick="{{ g.onClick }}" style="cursor:pointer;padding:2px 10px;border-radius:999px;background:{{ g.bg }};border:1px solid var(--line2);font:500 13px 'Hanken Grotesk';color:var(--ink)">{{ g.label }}</button></sc-for><input value="{{ r.question }}" onChange="{{ r.onQuestion }}" placeholder="what question does it answer?" style="flex:1 1 200px;min-width:160px;background:var(--s1);border:1px solid var(--line2);border-radius:6px;color:var(--ink);font:400 13px 'Hanken Grotesk';padding:4px 10px;outline:none"></div>
+                </sc-for>
               </div>
             </sc-if>
           </div>
@@ -638,6 +646,21 @@ select option{background:var(--s1);color:var(--ink)}
               <sc-if value="{{ ing.hasShare }}" hint-placeholder-val="{{ false }}"><input readOnly="{{ true }}" value="{{ ing.share }}" style="background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:5px 10px;font:500 12px 'JetBrains Mono';color:var(--ink2);outline:none"></input></sc-if>
             </sc-if>
           </section>
+          <section style="background:var(--sel);border:1px solid #8b5cf6;border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
+            <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">Research task · fill this workspace</span>
+            <span style="font:400 14px/1.5 'Hanken Grotesk';color:var(--ink2)">Describe what this workspace should learn and run it. Seed URLs below are fetched first; web, Wikipedia and YouTube search land next. Nothing leaves your browser except the searches and page fetches themselves.</span>
+            <textarea onChange="{{ ing.task.onBrief }}" rows="3" placeholder="e.g. What caused the Key Bridge collapse, who found it, and what the replacement will cost and when it opens?" style="background:var(--s1);border:1px solid var(--line2);border-radius:8px;resize:vertical;font:400 14px/1.5 'Hanken Grotesk';color:var(--ink);outline:none;padding:8px 10px">{{ ing.task.brief }}</textarea>
+            <div style="display:flex;gap:14px;flex-wrap:wrap;font:500 13px 'Hanken Grotesk';color:var(--ink2)">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" checked="{{ ing.task.wantWeb }}" onChange="{{ ing.task.onWeb }}">Web search</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" checked="{{ ing.task.wantWiki }}" onChange="{{ ing.task.onWiki }}">Wikipedia</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" checked="{{ ing.task.wantYt }}" onChange="{{ ing.task.onYt }}">YouTube</label>
+              <label style="display:flex;align-items:center;gap:6px">Target <input value="{{ ing.task.wantN }}" onChange="{{ ing.task.onN }}" style="width:52px;background:var(--s1);border:1px solid var(--line2);border-radius:6px;padding:3px 8px;color:var(--ink);outline:none"> sources</label>
+            </div>
+            <textarea onChange="{{ ing.task.onUrls }}" rows="2" placeholder="Seed URLs, one per line (optional) — always fetched first">{{ ing.task.urls }}</textarea>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button onClick="{{ ing.task.onRun }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 14px;cursor:pointer;font:600 14px 'Hanken Grotesk'">{{ ing.task.runLabel }}</button><span style="font:400 13px 'Hanken Grotesk';color:var(--mut)">{{ ing.task.status }}</span></div>
+            <sc-if value="{{ ing.task.hasQueries }}" hint-placeholder-val="{{ false }}"><span style="font:400 12px 'JetBrains Mono';color:var(--mut)">Queries: {{ ing.task.queries }}</span></sc-if>
+            <sc-if value="{{ ing.task.hasLog }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:3px;border-top:1px solid var(--line);padding-top:8px"><sc-for list="{{ ing.task.log }}" as="l" hint-placeholder-count="3"><span style="font:400 12px/1.4 'JetBrains Mono';color:{{ l.col }}">{{ l.t }} {{ l.msg }}</span></sc-for></div></sc-if>
+          </section>
           <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
             <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Find new material</span>
             <span style="font:400 14px/1.5 'Hanken Grotesk';color:var(--mut)">Watches are saved in the public room, so they belong to this workspace. Browsers can’t query search engines directly; searches go through a SearXNG instance you run or trust.</span>
@@ -1052,6 +1075,20 @@ select option{background:var(--s1);color:var(--ink)}
       </sc-if>
 
       <sc-if value="{{ v.names }}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{ corr.has }}" hint-placeholder-val="{{ false }}">
+          <div style="background:var(--s1);border:1px solid var(--line2);border-radius:12px;padding:12px 16px;display:flex;flex-direction:column;gap:8px">
+            <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--amber)">{{ corr.title }}</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap"><input value="{{ corr.draft }}" onChange="{{ corr.onDraft }}" onKeyDown="{{ corr.onKey }}" placeholder="Plain English, e.g. &quot;INC&quot; is not a contractor — then Enter" style="flex:1 1 260px;min-width:0;background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);font:400 14px 'Hanken Grotesk';padding:7px 12px;outline:none"><button onClick="{{ corr.onFile }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:7px 14px;cursor:pointer;font:600 13px 'Hanken Grotesk'">File it</button></div>
+            <sc-for list="{{ corr.items }}" as="c" hint-placeholder-count="1">
+              <div style="display:flex;gap:10px;align-items:baseline;border-top:1px solid var(--line);padding-top:6px">
+                <span style="flex:1;min-width:0;font:400 13px/1.45 'Hanken Grotesk';color:{{ c.color }};overflow-wrap:anywhere">{{ c.text }}</span>
+                <span style="font:400 11px 'JetBrains Mono';color:var(--dim);white-space:nowrap">{{ c.meta }}</span>
+                <button onClick="{{ c.onToggle }}" style="all:unset;cursor:pointer;font:600 12px 'Hanken Grotesk';color:var(--acc);white-space:nowrap">{{ c.action }}</button>
+              </div>
+            </sc-for>
+            <span style="font:400 12px 'Hanken Grotesk';color:var(--dim)">{{ corr.note }}</span>
+          </div>
+        </sc-if>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <sc-for list="{{ nameTable.tabs }}" as="t" hint-placeholder-count="4">
             <button onClick="{{ t.onClick }}" style="display:flex;align-items:baseline;gap:6px;background:{{ t.bg }};border:1px solid {{ t.bd }};border-radius:999px;padding:4px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">{{ t.label }}<span style="font:400 12px 'JetBrains Mono';color:var(--mut)">{{ t.n }}</span></button>
@@ -1080,7 +1117,7 @@ select option{background:var(--s1);color:var(--ink)}
                   <td style="padding:8px 12px;text-align:right;font:500 13px 'JetBrains Mono';color:var(--ink2)">{{ r.first }}</td>
                   <td style="padding:8px 12px;text-align:right;font:500 13px 'JetBrains Mono';color:var(--ink2)">{{ r.last }}</td>
                   <td style="padding:8px 12px;font:400 13px 'Hanken Grotesk';color:var(--ink2);max-width:220px">{{ r.tie }}</td>
-                  <td style="padding:8px 12px;text-align:right"><button onClick="{{ r.onNarrow }}" style="background:none;border:1px solid var(--line2);border-radius:6px;padding:2px 9px;cursor:pointer;font:500 12px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">{{ r.narrowLabel }}</button></td>
+                  <td style="padding:8px 12px;text-align:right;white-space:nowrap"><button onClick="{{ r.onNarrow }}" style="background:none;border:1px solid var(--line2);border-radius:6px;padding:2px 9px;cursor:pointer;font:500 12px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">{{ r.narrowLabel }}</button> <button onClick="{{ r.onIncorrect }}" title="That's incorrect — strike this as a name" style="background:none;border:0;padding:2px 6px;cursor:pointer;font:500 12px 'Hanken Grotesk';color:var(--dim)" style-hover="color:var(--bad)">✕</button></td>
                 </tr>
               </sc-for>
             </tbody>
@@ -1675,7 +1712,7 @@ select option{background:var(--s1);color:var(--ink)}
                 <div style="display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap;margin-top:4px">
                   <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">Highlighting only</span>
                   <sc-for list="{{ chips }}" as="ch" hint-placeholder-count="1">
-                    <button onClick="{{ ch.onClear }}" title="Remove" style="display:flex;align-items:center;gap:8px;background:var(--sel);border:1px solid #8b5cf6;color:var(--ink);border-radius:999px;padding:2px 5px 2px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk'"><span style="color:var(--mut)">{{ ch.k }}</span><b style="font-weight:600">{{ ch.v }}</b><span style="width:16px;height:16px;border-radius:50%;background:var(--line2);display:flex;align-items:center;justify-content:center;font-size:9px">✕</span></button>
+                    <button onClick="{{ ch.onClear }}" title="Remove" style="display:flex;align-items:center;gap:8px;background:var(--sel);border:1px solid #8b5cf6;color:var(--ink);border-radius:999px;padding:2px 5px 2px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk'"><span style="color:var(--mut)">{{ ch.k }}</span><b style="font-weight:600">{{ ch.v }}</b><span style="font:500 12px 'Hanken Grotesk';color:var(--acc)">{{ ch.w }}</span><span style="width:16px;height:16px;border-radius:50%;background:var(--line2);display:flex;align-items:center;justify-content:center;font-size:9px">✕</span></button>
                   </sc-for>
                   <button onClick="{{ clearAll }}" style="background:none;border:0;color:var(--acc);cursor:pointer;font:500 13px 'Hanken Grotesk'">Show everything</button>
                 </div>
@@ -1804,7 +1841,28 @@ select option{background:var(--s1);color:var(--ink)}
     </main>
 
     <sc-if value="{{ pinPop.has }}" hint-placeholder-val="{{ false }}">
-      <button onMouseDown="{{ pinPop.onPin }}" style="position:fixed;z-index:60;left:{{ pinPop.x }};top:{{ pinPop.y }};transform:translateX(-50%);padding:7px 14px;border-radius:8px;border:0;background:#8b5cf6;color:#fff;font:600 14px 'Hanken Grotesk';cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.35);white-space:nowrap" style-hover="background:#7c3aed">Pin excerpt</button>
+      <div style="position:fixed;z-index:60;left:{{ pinPop.x }};top:{{ pinPop.y }};transform:translateX(-50%);display:flex;gap:8px;white-space:nowrap">
+        <button onMouseDown="{{ pinPop.onPin }}" style="padding:7px 14px;border-radius:8px;border:0;background:#8b5cf6;color:#fff;font:600 14px 'Hanken Grotesk';cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.35)" style-hover="background:#7c3aed">Pin excerpt</button>
+        <button onMouseDown="{{ pinPop.onCorrect }}" title="Comment on this into the system" style="padding:7px 14px;border-radius:8px;border:1px solid var(--line2);background:var(--s1);color:var(--ink);font:600 14px 'Hanken Grotesk';cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.35)">That's incorrect</button>
+      </div>
+    </sc-if>
+    <button onClick="{{ corr.onOpen }}" title="Comment into the system from anywhere" style="position:fixed;z-index:55;right:16px;bottom:16px;width:44px;height:44px;border-radius:50%;border:1px solid #8b5cf6;background:var(--sel);color:var(--ink);font:600 20px 'Hanken Grotesk';cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.35)">✎</button>
+    <sc-if value="{{ corr.show }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ corr.onCloseBg }}" style="position:fixed;inset:0;z-index:70;background:rgba(6,5,12,.75);display:flex;align-items:center;justify-content:center;padding:20px">
+        <div style="width:100%;max-width:520px;background:var(--s1);border:1px solid var(--line2);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <h2 style="margin:0;font:500 22px 'Newsreader',serif">Comment into the system</h2>
+            <button onClick="{{ corr.onClose }}" style="background:none;border:0;color:var(--mut);cursor:pointer;font-size:16px">✕</button>
+          </div>
+          <p style="margin:0;color:var(--mut);font-size:13px">Plain English. Negations (“X is not a contractor”) strike it everywhere, past and future. Anything else is kept on the record. Nothing is ever deleted — retract it under Names.</p>
+          <input value="{{ corr.target }}" onChange="{{ corr.onTarget }}" placeholder="What is this about? (optional if quoted below)" style="background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:9px 12px;outline:none">
+          <textarea value="{{ corr.draft }}" onChange="{{ corr.onDraft }}" placeholder="Say it, e.g. &quot;INC&quot; is not a contractor" rows="4" style="background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:10px 12px;outline:none;font:400 15px/1.5 'Hanken Grotesk';resize:vertical"></textarea>
+          <div style="display:flex;gap:10px;align-items:center">
+            <button onClick="{{ corr.onFileModal }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:9px 18px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">File it</button>
+            <span style="flex:1;font-size:13px;color:var(--mut)">Filed to “{{ corpusName }}”.</span>
+          </div>
+        </div>
+      </div>
     </sc-if>
     <sc-if value="{{ hasPinToast }}" hint-placeholder-val="{{ false }}">
       <div style="position:fixed;z-index:60;left:50%;bottom:24px;transform:translateX(-50%);display:flex;gap:14px;align-items:center;padding:10px 16px;border-radius:10px;background:var(--s2);border:1px solid var(--line2);font:500 14px 'Hanken Grotesk';color:var(--ink);box-shadow:0 8px 24px rgba(0,0,0,.3)">{{ pinToast }}<button onClick="{{ goDraft }}" style="all:unset;cursor:pointer;color:var(--acc);font-weight:600">Open draft →</button></div>
@@ -2294,6 +2352,7 @@ const LEAD_WORDS = W('But And Or So Yet On In At For From To By With After Befor
 const PLACE_FIRST = W('Port Mount Lake Fort Cape Point Isle Gulf');
 const MONTHS = W('Jan Feb Mar Apr Jun Jul Aug Sep Sept Oct Nov Dec January February March April May June July August September October November December Monday Tuesday Wednesday Thursday Friday Saturday Sunday');
 const ORG = W('Council Authority Farms Dairy Inc Ltd LLC Company Co Department Division Agency Office Group Board Committee University Hospital School Structural Associates Partners Foundation Institute Ministry Commission Services Corporation Corp Bureau Trust Union Party Press News Times Club Team Clinic Lab Labs Industries Court Caucus Congress Administration Guard Navy Army Engineers Association Society Center Service Police Senate House Assembly Bradstreet Line Lines Marine Shipping Holdings Bank Centre Coalition Alliance Network Ministries Initiative Collaborative Partnership');
+const ORG_LOWER = new Set([...ORG].map(w => w.toLowerCase()).concat(['inc.', 'ltd.', 'corp.', 'co.', 'plc', 'gmbh', 'llp', 'lp', 'pa', 'pllc', 'inc', 'corp']));
 const PLACE = W('Bridge Avenue Street Road River Park Square City County District Station Corridor Lane Way Valley Hill Harbor Harbour Island Bay Lake Coast Airport Market Centre Plaza Quarter North South East West Point Terminal Channel Tunnel Ocean Sea States Kingdom Chile Maryland Virginia Baltimore Singapore Asia America Europe Africa Dundalk');
 const TYPE_C = { person: 'var(--pink)', organisation: 'var(--blue)', place: 'var(--green)', other: 'var(--mut)' };
 const TYPE_L = { person: 'People', organisation: 'Organisations', place: 'Places', other: 'Other names' };
@@ -2354,6 +2413,7 @@ function hdEngineMerge(t, ns, eng, hy) {
     if (have.has(k)) return;
     const words = k.split(/\s+/), desc = r.routes.includes('descriptor'), body = desc ? words.slice(1) : words;
     if (!body.length || body.some(w => MONTHS.has(w[0].toUpperCase() + w.slice(1)))) return;
+    if (body.length === 1 && typeof ORG_LOWER !== 'undefined' && ORG_LOWER.has(body[0].replace(/[.,]+$/, ''))) return;
     if (hy.functionOnly(body[0]) || hy.functionOnly(body[body.length - 1])) return;
     if (!desc && body.length === 1 && hy.commonOnly(body[0])) return;
     const re = new RegExp('(?<![\\p{L}\\p{N}])' + k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+') + '(?![\\p{L}\\p{N}])', 'giu'); let x;
@@ -2473,6 +2533,8 @@ function findNames(t, hy) {
     if (atStart && words.length === 1 && !title && !acr) return;
     if (words.every(w => MONTHS.has(w) || NOT_NAMES.has(w) || TITLES.has(w.replace(/\.$/, '')) || /^(Vice|Deputy|Assistant|Acting|Interim|Senior|Chief)$/.test(w))) return;
     if (words[0].length < 2) return;
+    // a bare company suffix is never a name on its own ("INC", "LLC", "Corp") -- it only counts inside a longer name
+    if (words.length === 1 && ORG_LOWER.has(words[0].replace(/[.,]+$/, '').toLowerCase())) { if (hy) hy.note('drop', words[0], 'not a name: a company suffix standing alone'); return; }
     const name = words.join(' ');
     const am = after.match(/^\s*\(([A-Z]{2,})\)/);
     const saidAfter = /^\s+(said|says|told|reported|wants|argued|added|asked|wrote|stated|announced)\b/.test(after);
@@ -2751,6 +2813,23 @@ function loadSegOpen() { try { return localStorage.getItem('fold-explorer-segope
 // display names for workspaces forked out of an existing one -- the fixed sample corpora and 'custom' never need an entry here
 function loadWorkspaceNames() { try { return JSON.parse(localStorage.getItem('fold-explorer-workspaces') || '{}'); } catch (e) { return {}; } }
 function saveWorkspaceNames(w) { try { localStorage.setItem('fold-explorer-workspaces', JSON.stringify(w)); } catch (e) {} }
+// Corrections log: plain-English "that's incorrect" filings, per workspace. Append-only entries with
+// status active/retracted (never deleted), so every correction is revisable and auditable. Active
+// not-name corrections suppress the matching name retroactively (re-analysis) and forward (new ingests).
+function loadCorrections() { try { return JSON.parse(localStorage.getItem('fold-explorer-corrections') || '{}'); } catch (e) { return {}; } }
+function saveCorrections(c) { try { localStorage.setItem('fold-explorer-corrections', JSON.stringify(c)); } catch (e) {} }
+// Plain-English parser: '"INC" is not a contractor' -> {target:'INC', kind:'not-name'}.
+// A bare "that's incorrect" carries no target -- the caller supplies the context target (the row/flag clicked).
+function parseCorrection(text, contextTarget) {
+  const t = String(text || '').trim();
+  const q = t.match(/["“”']([^"“”']{1,60})["“”']/);
+  let target = (q && q[1].trim()) || (contextTarget || '').trim();
+  if (!target) { const cap = t.match(/\b([A-Z][A-Z&.'’-]{1,30})\b/); if (cap) target = cap[1]; }
+  const neg = /\b(not|isn't|isnt|ain't|wrong|incorrect|no)\b/i.test(t);
+  const typeM = t.match(/\bnot\s+(?:(?:a|an|the|a\s+real)\s+)?(name|person|people|organisation|organization|company|contractor|place|location|real|correct|right|true)\b/i);
+  const kind = neg && (typeM || /not\s+a\s+\w+/.test(t) || !q && contextTarget) ? 'not-name' : (neg ? 'not-name' : 'note');
+  return { target, kind, claimed: typeM ? typeM[1].toLowerCase() : null };
+}
 const DEMOS = {
   bridge: { title: 'Inspection findings', year: 2025, text: "Coastline Structural found corrosion on 14 of the Linden Bridge's 40 cables. Ruiz said the Harbor City Council will meet in July. Repairs are now estimated at $7.5 million." },
   transit: { title: 'Council minutes', year: 2025, text: 'The GTA confirmed the busway will reach East Bank by 2027. Metro Line construction may begin in 2026. The GTA estimated 9,000 riders a day.' },
@@ -3027,7 +3106,7 @@ const whenOf = (st, d) => d.pubLabel || (d.year ? String(d.year) : 'Undated');
 const assertLine = (st, A) => { const d = A.docById[st.doc]; const w = whoSays(st, A); return (w ? w.who + (w.how === 'quoted' ? ' (quoted)' : w.how === 'publisher' ? '' : ' (' + w.how + ')') + ' · ' : '') + d.title + ' · ' + whenOf(st, d); };
 
 class Component extends DCLogic {
-  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, draftTitle: '', draftYear: '', draftText: '', note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, ground: { on: true, names: true, figures: true, dates: true, sentences: true } };
+  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, fw: {}, q: '', readDoc: null, showPos: false, showAdd: false, draftTitle: '', draftYear: '', draftText: '', note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, ground: { on: true, names: true, figures: true, dates: true, sentences: true } };
   _html = {};
 
   componentDidMount() {
@@ -3402,8 +3481,8 @@ class Component extends DCLogic {
   async refreshRoom() { const N = await this.net(); const s = this._net && this._net.s; const room = this.wsRooms().pub; if (!s || !room) return; const cfg = (await N.getConfig(s, room)) || { v: 1, watches: [] }; const ch = await N.readChain(s, room); this._net = { ...this._net, cfg, chain: ch.chain, chainOk: ch.ok, head: ch.head }; this.forceUpdate(); }
   async saveWatches(watches) { return this.netDo('Save watches', async N => { const s = this._net.s; const room = this.wsRooms().pub; const cfg = { ...(this._net.cfg || { v: 1 }), watches }; await N.setConfig(s, room, cfg); this._net.cfg = cfg; this.ilog('Watches saved to the room.'); }); }
   async invitePriv(uid) { return this.netDo('Invite', async N => { await N.invite(this._net.s, this.wsRooms().priv, uid.trim()); this.ilog('Invited ' + uid + ' to your private room.'); }); }
-  syncPrivate(now) { const s = this._net && this._net.s; const room = this.wsRooms().priv; if (!s || s.guest || !room) return; clearTimeout(this._privT); this._privT = setTimeout(async () => { try { const N = await this.net(); await N.savePrivate(s, room, 'work', { pins: this.rawPins(), filters: this.state.f || {}, meta: (this.metaAll() || {})[this.corpusId()] || {}, readLog: this.readLog() }); this._net.privAt = new Date().toLocaleTimeString(); this.forceUpdate(); } catch (e) {} }, now ? 0 : 2500); }
-  async loadPrivateWork() { return this.netDo('Load private work', async N => { const d = await N.loadPrivate(this._net.s, this.wsRooms().priv, 'work'); if (!d) throw new Error('nothing saved yet'); if (d.pins) this.savePins(d.pins); if (d.filters) this.setState({ f: d.filters }); this.ilog('Loaded your pins, drafts and filters from the private room.'); }); }
+  syncPrivate(now) { const s = this._net && this._net.s; const room = this.wsRooms().priv; if (!s || s.guest || !room) return; clearTimeout(this._privT); this._privT = setTimeout(async () => { try { const N = await this.net(); await N.savePrivate(s, room, 'work', { pins: this.rawPins(), filters: this.state.f || {}, forWhoms: this.state.fw || {}, meta: (this.metaAll() || {})[this.corpusId()] || {}, readLog: this.readLog() }); this._net.privAt = new Date().toLocaleTimeString(); this.forceUpdate(); } catch (e) {} }, now ? 0 : 2500); }
+  async loadPrivateWork() { return this.netDo('Load private work', async N => { const d = await N.loadPrivate(this._net.s, this.wsRooms().priv, 'work'); if (!d) throw new Error('nothing saved yet'); if (d.pins) this.savePins(d.pins); if (d.filters) this.setState({ f: d.filters }); if (d.forWhoms) this.setState({ fw: d.forWhoms }); this.ilog('Loaded your pins, drafts and filters from the private room.'); }); }
   knownIds(A) { const s = new Set(); A.docs.forEach(d => { if (d.media && d.media.id) s.add(d.media.id); if (d.url) s.add(d.url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')); }); return s; }
   async findNew() { return this.netDo('Search', async N => { const cfg = this.netCfg(); const W = (this._net && this._net.cfg && this._net.cfg.watches) || []; if (!W.length) throw new Error('add a watch first (saved in the public room)'); const A = this.analysis(); const known = this.knownIds(A); const out = [];
     for (const w of W) { const res = await N.search(cfg.searchProxy, w.q, { videos: w.kind === 'youtube' }); res.forEach(r => { if (w.kind === 'youtube' && !r.ytid) return; const k = r.ytid || r.url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''); if (known.has(k) || out.some(o => (o.ytid || o.url) === (r.ytid || r.url))) return; out.push({ ...r, watch: w.q }); }); }
@@ -3672,12 +3751,49 @@ class Component extends DCLogic {
       proxy: cfg.searchProxy || '', onProxy: e => this.setNetCfg({ searchProxy: e.target.value.trim() }), onFind: () => this.findNew(),
       cand: (n.cand || []).map(c => ({ title: c.title, url: c.url, meta: [c.ytid ? 'YouTube' : 'Web', c.published ? String(c.published).slice(0, 10) : '', 'from “' + c.watch + '”'].filter(Boolean).join(' · '), thumbBg: c.ytid ? 'url(https://i.ytimg.com/vi/' + c.ytid + '/mqdefault.jpg)' : 'none', isYt: !!c.ytid, onAdd: () => this.addCandidate(c, false), onAddPub: () => this.addCandidate(c, true) })), hasCand: !!(n.cand && n.cand.length),
       onPaste: e => { this._paste = e.target.value; }, onAddPasted: () => { const urls = (this._paste || '').match(/https?:\/\/\S+/g) || []; urls.forEach(u => { const yt = (u.match(/[?&]v=([\w-]{11})|youtu\.be\/([\w-]{11})/) || []); this.addCandidate({ url: u, ytid: yt[1] || yt[2] || null, title: u, watch: 'pasted' }, !!(s && !s.guest && R.pub)); }); },
+      task: this.taskVals(),
       onFile: e => { const f = e.target.files && e.target.files[0]; if (f) this.transcribeFile(f, null); e.target.value = ''; },
       asr: n.asr ? n.asr.stage + (n.asr.pct != null ? ' ' + n.asr.pct + '%' : '') : '', hasAsr: !!(n.asr && n.asr.stage !== 'done'), webgpu: typeof navigator !== 'undefined' && navigator.gpu ? 'WebGPU available: transcription runs on your graphics card.' : 'No WebGPU in this browser: transcription runs on the CPU and will be slow.',
       txNeeded: txNeeded.map(d => ({ title: d.title, onPick: e => { const f = e.target.files && e.target.files[0]; if (f) this.transcribeFile(f, d); e.target.value = ''; } })), hasTx: txNeeded.length > 0,
       chain: (n.chain || []).slice().reverse().slice(0, 40).map(b => ({ title: (b.meta && (b.meta.title || b.meta.filename)) || 'block', kind: (b.meta && b.meta.kind) || '', hash: b.block ? b.block.slice(0, 16) : '', prev: b.prev ? b.prev.slice(0, 10) : 'genesis', by: b.sender || '', ok: b.linked && b.self ? 'linked' : 'broken', okCol: b.linked && b.self ? 'var(--ok)' : 'var(--bad)' })), hasChain: !!(n.chain && n.chain.length), chainLine: n.chain ? plural(n.chain.length, 'block') + ' · ' + (n.chainOk === false ? 'the chain is broken somewhere' : 'every block links to the one before') : '', onLoadRoom: () => this.loadFromRoom(), onRefresh: () => this.netDo('Refresh', () => this.refreshRoom()),
       onPubAll: () => this.publishAll(), pubAllLabel: this._pubAll ? 'Stop publishing' : 'Publish every source', pubAllLine: this._pubAll ? 'Publishing ' + (this._pubAll.done + this._pubAll.skipped + this._pubAll.failed) + ' of ' + this._pubAll.total + ' · ' + this._pubAll.done + ' new, ' + this._pubAll.skipped + ' already in the chain' : 'Adds each source’s original bytes (capture, PDF, transcript) as a block, and sends web sources to archive.org. Sources already in the chain are skipped, so it can be stopped and resumed.', canPubAll: !!(s && !s.guest && R.pub),
       log: (this._ilog || []).slice(0, 12).map(l => ({ ...l, col: l.kind === 'bad' ? 'var(--bad)' : 'var(--mut)' })), hasLog: !!(this._ilog && this._ilog.length) } };
+  }
+  createWorkspace(name) {
+    const id = 'ws-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    const nm = (name || 'Untitled workspace').trim() || 'Untitled workspace';
+    const added = { ...this.state.added, [id]: [] }; this.saveAdded(added);
+    try { saveWorkspaceNames({ ...loadWorkspaceNames(), [id]: nm }); } catch (e) {}
+    this.setState({ added, corpus: id, view: 'ingest', sel: null, f: {}, q: '', readDoc: null, just: null });
+    this.toast('New workspace “' + nm + '” — describe its research task below.');
+  }
+  taskVals() {
+    const T = this._task || (this._task = { brief: '', wantWeb: true, wantWiki: true, wantYt: false, wantN: 8, urls: '', running: false, status: '', queries: [], log: [] });
+    return { brief: T.brief, wantWeb: !!T.wantWeb, wantWiki: !!T.wantWiki, wantYt: !!T.wantYt, wantN: String(T.wantN),
+      urls: T.urls, runLabel: T.running ? 'Running…' : 'Run task',
+      status: T.status || 'Seed URLs fetch first; web / Wikipedia / YouTube search lands next.',
+      queries: (T.queries || []).join(' · '), hasQueries: (T.queries || []).length > 0,
+      log: T.log || [], hasLog: (T.log || []).length > 0,
+      onBrief: e => { T.brief = e.target.value; }, onWeb: e => { T.wantWeb = e.target.checked; this.forceUpdate(); },
+      onWiki: e => { T.wantWiki = e.target.checked; this.forceUpdate(); }, onYt: e => { T.wantYt = e.target.checked; this.forceUpdate(); },
+      onN: e => { T.wantN = Math.max(1, Math.min(25, parseInt(e.target.value) || 8)); },
+      onUrls: e => { T.urls = e.target.value; }, onRun: () => this.runTask() };
+  }
+  taskLog(msg, kind) { const T = this._task || (this._task = { log: [] }); T.log = [{ t: new Date().toLocaleTimeString(), msg, col: kind === 'bad' ? 'var(--bad)' : 'var(--mut)' }, ...(T.log || [])].slice(0, 12); }
+  async runTask() {
+    const T = this._task || (this._task = { brief: '', wantN: 8, urls: '', queries: [], log: [] });
+    if (T.running) return; T.running = true; T.status = 'Running…'; this.forceUpdate();
+    try {
+      const seeds = (T.urls || '').match(/https?:\/\/\S+/g) || [];
+      const cap = Math.max(1, Math.min(25, T.wantN || 8));
+      const urls = seeds.slice(0, cap);
+      T.queries = [T.brief.trim()].filter(Boolean).slice(0, 1);
+      if (!urls.length) { T.status = 'No seed URLs yet — paste one URL per line above, then Run.'; this.taskLog('Nothing to fetch: no seed URLs.'); return; }
+      T.status = 'Fetching ' + urls.length + ' seed URL' + (urls.length === 1 ? '' : 's') + '…';
+      let done = 0, failed = 0;
+      for (const u of urls) { try { await this.ingestUrl(u, {}); done++; this.taskLog('Added ' + u); } catch (e) { failed++; this.taskLog('Could not fetch ' + u + ' (' + (e.message || e) + ')', 'bad'); } }
+      T.status = 'Added ' + done + ' of ' + urls.length + ' seed URL' + (urls.length === 1 ? '' : 's') + (failed ? ' · ' + failed + ' failed' : '') + '. Search-driven acquisition lands next.';
+    } finally { T.running = false; this.forceUpdate(); }
   }
   pinStatement(stId) {
     const A = this.analysis(); const st = A.byId[stId]; if (!st) return; const d = A.docById[st.doc]; const txt = clean(st.text);
@@ -4057,12 +4173,80 @@ class Component extends DCLogic {
   clearMeet() { this._meet = []; idbPut('meet:ohs', []).catch(() => {}); this._key = null; this.setState(s => ({ htmlVer: s.htmlVer + 1 })); }
   analysis() {
     const id = this.corpusId(); const seenU = new Set(); const docs = this.baseDocs(id).concat(this.state.added[id] || []).filter(d => { const u = d.url && d.url.replace(/^https?:\/\/(www\.)?/, '').replace(/[#?].*$/, '').replace(/\/$/, '').toLowerCase(); if (!u || d.ohsId) { if (u) seenU.add(u); return true; } if (seenU.has(u)) return false; seenU.add(u); return true; });
-    const key = id + ':' + docs.map(d => d.id).join(',') + ':' + this.state.htmlVer;
-    if (this._key !== key) { this._key = key; this._A = analyze({ docs }, this._html); }
+    const key = id + ':' + docs.map(d => d.id).join(',') + ':' + this.state.htmlVer + ':' + this.corrKey(id);
+    if (this._key !== key) { this._key = key; this._A = analyze({ docs }, this._html); this.applyCorrections(this._A, id); }
     try { window.__holodeckA = this._A; } catch (e) {}
     return this._A;
   }
+  // Corrections: filing, revising (retract/restore), and enforcement. Entries are append-only;
+  // revising flips status and appends to history, so the log is the audit trail.
+  corrections(id) { const all = loadCorrections(); return (all[id || this.corpusId()] || []).slice(); }
+  activeCorrections(id) { return this.corrections(id).filter(c => c.status === 'active' && c.kind === 'not-name' && c.target); }
+  corrKey(id) { const cs = this.corrections(id); return cs.map(c => c.id + c.status).join(','); }
+  fileCorrection(target, text) {
+    text = String(text || '').trim();
+    if (!text) { this.toast('Say it in plain English first, e.g. "INC" is not a contractor.'); return; }
+    const id = this.corpusId(); const p = parseCorrection(text, target);
+    if (!p.target) { this.toast('Say what is incorrect, e.g. "INC" is not a contractor.'); return; }
+    const all = loadCorrections(); const list = all[id] || [];
+    const entry = { id: 'cx-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), at: new Date().toISOString(), text, target: p.target, kind: p.kind, claimed: p.claimed, status: 'active', history: [{ at: new Date().toISOString(), action: 'filed' }] };
+    all[id] = [...list, entry]; saveCorrections(all);
+    this.setState({ corrDraft: '', corrTarget: '', showCorr: false }); this.forceUpdate();
+    this.toast(p.kind === 'not-name' ? 'Noted: “' + p.target + '” is struck as a name, here and from now on. Revisable under Names.' : 'Noted and kept on the record. Revisable under Names.');
+  }
+  reviseCorrection(cid, action) {
+    const id = this.corpusId(); const all = loadCorrections(); const list = all[id] || [];
+    all[id] = list.map(c => c.id === cid ? { ...c, status: action === 'retract' ? 'retracted' : 'active', history: [...(c.history || []), { at: new Date().toISOString(), action }] } : c);
+    saveCorrections(all); this.forceUpdate();
+  }
+  openCorr(target) {
+    const t = String(target || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+    this.setState({ showCorr: true, corrTarget: t, corrDraft: t && !this.state.corrDraft ? '"' + t + '" is not correct as read' : this.state.corrDraft });
+  }
+  corrVals() {
+    const S = this.state; const all = this.corrections();
+    const active = all.filter(c => c.status === 'active');
+    return {
+      has: true, show: !!S.showCorr,
+      onOpen: () => this.openCorr(S.pinPop && S.pinPop.text),
+      onClose: () => this.setState({ showCorr: false }),
+      onCloseBg: e => { if (e.target === e.currentTarget) this.setState({ showCorr: false }); },
+      target: S.corrTarget || '', onTarget: e => this.setState({ corrTarget: e.target.value }),
+      onFileModal: () => this.fileCorrection((S.corrTarget || '').trim() || null, (S.corrDraft || '').trim()),
+      title: active.length ? 'Corrections · ' + active.length + ' in force' : 'Corrections · the system learns here',
+      draft: S.corrDraft || '',
+      onDraft: e => this.setState({ corrDraft: e.target.value }),
+      onKey: e => { if (e.key === 'Enter') this.fileCorrection(null, (this.state.corrDraft || '').trim()); },
+      onFile: () => this.fileCorrection(null, (this.state.corrDraft || '').trim()),
+      items: all.slice().reverse().slice(0, 8).map(c => ({
+        text: (c.status === 'active' ? '✓ ' : '○ ') + c.text,
+        color: c.status === 'active' ? 'var(--ink)' : 'var(--dim)',
+        meta: (c.at || '').slice(0, 10) + (c.history && c.history.length > 1 ? ' · ' + c.history.length + ' revisions' : ''),
+        action: c.status === 'active' ? 'Retract' : 'Restore',
+        onToggle: () => this.reviseCorrection(c.id, c.status === 'active' ? 'retract' : 'restore')
+      })),
+      note: active.length ? 'Active corrections strike names everywhere in this workspace — past and future — until retracted. Nothing is ever deleted.' : 'See something wrong — a name that isn’t one, a wrong type? Say so in plain English above, or hit ✕ on any row. Nothing is ever deleted; retracting restores it.'
+    };
+  }
+  applyCorrections(A, id) {    const sup = new Set(this.activeCorrections(id).map(c => c.target.toLowerCase()));
+    if (!sup.size || !A || !A.names) return;
+    A.names && Object.keys(A.names).forEach(n => { if (sup.has(n.toLowerCase())) delete A.names[n]; });
+    (A.sts || []).forEach(st => {
+      if (st.names && st.names.some(n => sup.has(n.toLowerCase()))) st.names = st.names.filter(n => !sup.has(n.toLowerCase()));
+      if (st.spans) st.spans = st.spans.filter(s => !sup.has(String(s.name || '').toLowerCase()));
+    });
+  }
   setF(k, v) { this.setState(s => ({ f: { ...s.f, [k]: v } })); }
+  // FILTER TUPLE: [sources, filters, what-counts]. Position 1 (sources) is the kept/seen
+  // toggle per document — being for this surface = document (holodeck-reader scope).
+  // Position 2 (filters) is state.f. Position 3 (what-counts) is state.fw: one for-whom
+  // frame per filter key — {giver, question} — never a view from nowhere. Empowerment,
+  // not a limit: the same filter value means different things for different whoms.
+  FW_GIVERS = ['the reader', 'the editor', 'the auditor', 'the resident', 'the council'];
+  fwOf(key) { const dfltQ = (this.state.q || '').trim() || (this._fold || []).join(' ') || 'what does this selection show?'; return (this.state.fw || {})[key] || { giver: 'the reader', question: dfltQ }; }
+  setFw(key, patch) { this.setState(s => ({ fw: { ...(s.fw || {}), [key]: { ...((s.fw || {})[key] || { giver: 'the reader', question: '' }), ...patch } } })); }
+  fwLabel(key) { const w = this.fwOf(key); return 'for ' + w.giver; }
+  filterTuple() { const S = this.state, f = S.f || {}, fw = S.fw || {}; const keys = Object.keys(f).filter(k => f[k] !== null && f[k] !== undefined && f[k] !== ''); if (S.q && S.q.trim()) keys.push('q'); const dfltQ = (S.q || '').trim() || 'what does this selection show?'; return { being: 'document', sources: { on: this._cnt ? [...this._cnt] : [], off: S.offDocs ? Object.keys(S.offDocs).filter(k => S.offDocs[k]) : [] }, filters: keys.map(k => ({ key: k, value: k === 'q' ? S.q.trim() : f[k], forWhom: fw[k] || { giver: 'the reader', question: dfltQ } })) }; }
   metaAll() { if (!this._meta) this._meta = loadMeta(); return this._meta; }
   mOf(d) { const cid = this.corpusId(); const raw = (this.state.added[cid] || []).find(x => x.id === d.id) || d; const m = (this.metaAll()[cid] || {})[d.id] || {}; return { status: m.status || raw.status || 'source', drawsOn: m.drawsOn || '' }; }
   inferOrigins(A) {
@@ -4138,9 +4322,10 @@ class Component extends DCLogic {
       const { oddities, ctx } = _hdFort.fortScan(A, { focus: fresh, nullByDoc, merges, hygiene: hdHygiene(A.docs) });
       hdT('fort', 'scan', 'Archon Fort read what you added: ' + (oddities.length ? oddities.length + ' odd thing' + (oddities.length === 1 ? '' : 's') + ' raised' : 'nothing odd raised') + ' · its floor comes from ' + ctx.sample + ' statements already here (1st percentile: ' + Math.round(ctx.floor * 100) + '% of word pairs seen elsewhere)', { n: oddities.length });
       const SAY = { stands: 'Stands: every ant that spoke says artifact. A person should look at this.', falsified: 'Falsified: the ants show it is real.', contested: 'Contested: the ants disagree; both sides are kept.', unexamined: 'Unexamined: no ant had ground to speak.' };
-      T.odd = []; oddities.forEach(o => { const at = T.ev.length; hdT('fort', 'raise', 'Fort raises “' + o.subject + '”: ' + o.why, { doc: o.doc, id: o.id, name: o.subject, kinds: o.kinds });
+      T.odd = []; const corrNow = new Set(this.activeCorrections(this.corpusId()).map(c => c.target.toLowerCase())); oddities.forEach(o => { const at = T.ev.length; hdT('fort', 'raise', 'Fort raises “' + o.subject + '”: ' + o.why, { doc: o.doc, id: o.id, name: o.subject, kinds: o.kinds });
         o.ants.forEach(a => hdT('fort', 'ant', 'Ant ' + a.ant + ' says ' + (a.verdict === 'silent' ? 'nothing' : a.verdict) + ': ' + a.why, { doc: o.doc, id: o.id, name: o.subject, verdict: a.verdict }));
-        hdT('fort', o.standing, SAY[o.standing], { doc: o.doc, id: o.id, name: o.subject, standing: o.standing });
+        if (o.subject && corrNow.has(o.subject.toLowerCase())) { o.standing = 'falsified'; hdT('fort', 'correct', 'Overruled by a user correction: “' + o.subject + '” was struck as a name and stays struck until the correction is retracted', { doc: o.doc, id: o.id, name: o.subject, standing: o.standing }); }
+        else hdT('fort', o.standing, SAY[o.standing], { doc: o.doc, id: o.id, name: o.subject, standing: o.standing });
         if (o.standing === 'stands' || o.standing === 'contested') T.odd.push({ subject: o.subject, why: o.why, short: o.short || o.why, standing: o.standing, kinds: o.kinds, at }); }); }
     else hdT('fort', 'skip', 'Archon Fort had not loaded yet, so nothing was checked for oddness');
     const P = paradigms(A); const mineP = P.groups.filter(g => g.docs.some(d => fresh.has(d.id)));
@@ -4602,7 +4787,7 @@ class Component extends DCLogic {
     const nameTable = {
       head: ntHead, q: S.ntQ || '', onQ: e => this.setState({ ntQ: e.target.value, ntN: 50 }), mLine: this._ntM && this._mt ? this._mt.modeLine(this._ntM) : '', hasM: !!(this._ntM && this._ntM.mode !== 'exact'),
       tabs: [['all', 'All'], ['person', 'People'], ['organisation', 'Organisations'], ['place', 'Places'], ['other', 'Other']].filter(([k]) => ntCounts[k]).map(([k, l]) => ({ label: l, n: String(ntCounts[k]), bg: ntType === k ? 'var(--sel)' : 'transparent', bd: ntType === k ? '#8b5cf6' : 'var(--line2)', onClick: () => this.setState({ ntType: k, ntN: 50 }) })),
-      rows: ntRows.slice(0, ntN).map(r => { const on = isSel('name', r.n.name); return { name: r.n.name, aka: (r.n.aliases || []).length ? 'also ' + r.n.aliases.slice(0, 3).join(', ') : '', hasAka: (r.n.aliases || []).length > 0, type: TYPE_L[r.n.type].replace(/s$/, '').replace('Other name', 'Other'), color: TYPE_C[r.n.type], mentions: String(r.n.sts.length), pct: Math.max(2, Math.round(r.n.sts.length / maxN * 100)) + '%', sources: String(r.n.docs.size), first: r.y0 ? String(r.y0) : '—', last: r.y1 ? String(r.y1) : '—', tie: r.tie ? r.tie.y : '—', onTie: r.tie ? selN(r.tie.y) : () => {}, bg: on ? 'var(--sel)' : 'transparent', onClick: () => this.openProfile(r.n.name), onNarrow: e => { e.stopPropagation(); this.setF('name', f.name === r.n.name ? null : r.n.name); }, narrowLabel: f.name === r.n.name ? 'Un-narrow' : 'Narrow' }; }),
+      rows: ntRows.slice(0, ntN).map(r => { const on = isSel('name', r.n.name); return { name: r.n.name, aka: (r.n.aliases || []).length ? 'also ' + r.n.aliases.slice(0, 3).join(', ') : '', hasAka: (r.n.aliases || []).length > 0, type: TYPE_L[r.n.type].replace(/s$/, '').replace('Other name', 'Other'), color: TYPE_C[r.n.type], mentions: String(r.n.sts.length), pct: Math.max(2, Math.round(r.n.sts.length / maxN * 100)) + '%', sources: String(r.n.docs.size), first: r.y0 ? String(r.y0) : '—', last: r.y1 ? String(r.y1) : '—', tie: r.tie ? r.tie.y : '—', onTie: r.tie ? selN(r.tie.y) : () => {}, bg: on ? 'var(--sel)' : 'transparent', onClick: () => this.openProfile(r.n.name), onNarrow: e => { e.stopPropagation(); this.setF('name', f.name === r.n.name ? null : r.n.name); }, narrowLabel: f.name === r.n.name ? 'Un-narrow' : 'Narrow', onIncorrect: e => { e.stopPropagation(); this.fileCorrection(r.n.name, '"' + r.n.name + '" is not a name'); } }; }),
       count: ntRows.length === ntAll.length ? plural(ntAll.length, 'name') : ntRows.length + ' of ' + plural(ntAll.length, 'name'),
       hasMore: ntRows.length > ntN, more: 'Show ' + Math.min(50, ntRows.length - ntN) + ' more', onMore: () => this.setState({ ntN: ntN + 50 }), empty: !ntRows.length
     };
@@ -4725,22 +4910,27 @@ class Component extends DCLogic {
       : c ? { eyebrow: c.row + (this.props.showTerrainNames ? ' · ' + c.terrain : ''), title: c.label, sub: c.question, color: c.color }
       : { eyebrow: 'Overview', title: this.corpusName(), sub: plural(docsIn.length, 'document') + ' · ' + plural(F.length, 'statement') + ' · ' + plural(D.nameList.length, 'name') + ' · ' + plural(figCount, 'figure') + '.', color: 'var(--acc)' };
 
-    // chips
+    // chips — each chip is position 2 (filter) + position 3 (what-counts: for-whom)
+    const chip = (key, k, v, onClear) => ({ key, k, v, w: this.fwLabel(key), onClear });
     const chips = [];
-    if (f.name) chips.push({ k: 'Mentions', v: f.name, onClear: () => this.setF('name', null) });
-    if (f.doc) chips.push({ k: 'Source', v: docT(f.doc), onClear: () => this.setF('doc', null) });
-    if (f.topic) chips.push({ k: 'Topic', v: f.topic, onClear: () => this.setF('topic', null) });
-    if (f.frame) chips.push({ k: 'Framing', v: FR[f.frame].label, onClear: () => this.setF('frame', null) });
-    if (f.type) chips.push({ k: 'Mentions', v: TYPE_L[f.type].toLowerCase(), onClear: () => this.setF('type', null) });
-    if (f.unit) chips.push({ k: 'Figures in', v: f.unit, onClear: () => this.setF('unit', null) });
-    if (f.kind) chips.push({ k: 'Kind', v: f.kind, onClear: () => this.setF('kind', null) });
-    if (f.medium) chips.push({ k: 'Medium', v: f.medium, onClear: () => this.setF('medium', null) });
-    if (f.standing) chips.push({ k: 'Standing', v: f.standing, onClear: () => this.setF('standing', null) });
-    if (f.year) chips.push({ k: 'Dated up to', v: String(f.year), onClear: () => this.setF('year', null) });
-    if (f.range) chips.push({ k: CLOCK_L[f.range.mode] || 'Dated', v: rangeLabel(f.range) + (f.range.undated ? ', plus undated' : ''), onClear: () => this.setF('range', null) });
-    if (f.period) chips.push({ k: f.period.mode === 'happened' ? 'Happened in' : 'Published in', v: periodLabel(f.period.key), onClear: () => this.setF('period', null) });
-    if (S.q.trim() && !IS_Q(S.q) && !PARSE_REL(S.q)) chips.push({ k: 'Search', v: '“' + S.q.trim() + '”', onClear: () => this.setState(s => ({ q: '', ...(s.view === 'search' ? { view: s.prevView || 'summary' } : {}) })) });
+    if (f.name) chips.push(chip('name', 'Mentions', f.name, () => this.setF('name', null)));
+    if (f.doc) chips.push(chip('doc', 'Source', docT(f.doc), () => this.setF('doc', null)));
+    if (f.topic) chips.push(chip('topic', 'Topic', f.topic, () => this.setF('topic', null)));
+    if (f.frame) chips.push(chip('frame', 'Framing', FR[f.frame].label, () => this.setF('frame', null)));
+    if (f.type) chips.push(chip('type', 'Mentions', TYPE_L[f.type].toLowerCase(), () => this.setF('type', null)));
+    if (f.unit) chips.push(chip('unit', 'Figures in', f.unit, () => this.setF('unit', null)));
+    if (f.kind) chips.push(chip('kind', 'Kind', f.kind, () => this.setF('kind', null)));
+    if (f.medium) chips.push(chip('medium', 'Medium', f.medium, () => this.setF('medium', null)));
+    if (f.standing) chips.push(chip('standing', 'Standing', f.standing, () => this.setF('standing', null)));
+    if (f.year) chips.push(chip('year', 'Dated up to', String(f.year), () => this.setF('year', null)));
+    if (f.range) chips.push(chip('range', CLOCK_L[f.range.mode] || 'Dated', rangeLabel(f.range) + (f.range.undated ? ', plus undated' : ''), () => this.setF('range', null)));
+    if (f.period) chips.push(chip('period', f.period.mode === 'happened' ? 'Happened in' : 'Published in', periodLabel(f.period.key), () => this.setF('period', null)));
+    if (S.q.trim() && !IS_Q(S.q) && !PARSE_REL(S.q)) chips.push(chip('q', 'Search', '“' + S.q.trim() + '”', () => this.setState(s => ({ q: '', ...(s.view === 'search' ? { view: s.prevView || 'summary' } : {}) }))));
     this._chips = chips;
+    // position 3 editor rows: one for-whom per active filter — giver + question, always visible
+    const fwRows = chips.map(ch => ({ key: ch.key, label: ch.k + ' ' + ch.v, giver: this.fwOf(ch.key).giver, question: this.fwOf(ch.key).question, givers: this.FW_GIVERS.map(g => ({ label: g, bg: g === this.fwOf(ch.key).giver ? 'var(--sel2)' : 'transparent', onClick: () => this.setFw(ch.key, { giver: g }) })), onGiver: e => this.setFw(ch.key, { giver: e.target.value }), onQuestion: e => this.setFw(ch.key, { question: e.target.value }) }));
+    // position 1: sources on/off — beings for this surface are documents
+    const srcTuple = { being: 'documents', on: this._cnt ? this._cnt.size : 0, off: A.docs.length - (this._cnt ? this._cnt.size : A.docs.length), total: A.docs.length };
     const addAsFold = { show: chips.length > 0 && view !== 'search', label: 'Save as a fold', onClick: () => { const label = chips.map(c => c.k.toLowerCase() + ' ' + c.v).join(' · '); if (!label) return; this.addFoldFromFilter(label, { ...f }, S.q, new Set(F.map(st => st.doc)).size); } };
 
     const addN = k => (S.added[k] || []).length;
@@ -4775,7 +4965,7 @@ class Component extends DCLogic {
       names.forEach(x => { const o = oddN.get(x.label); if (o) { x.col = 'var(--amber)'; x.label += ' ?'; x.tip = 'Archon Fort: ' + o.why; } });
       const more = J.linked.length + J.fresh.length - names.length; if (more > 0) names.push({ label: '+' + more + ' more', w: 400, col: 'var(--dim)', tip: 'All names', onClick: () => this.go('names') });
       return { title: J.title, summary: [plural(J.n, 'statement'), J.linked.length ? plural(J.linked.length, 'name') + ' already here' : '', J.echoN ? plural(J.echoN, 'echo', 'echoes') : ''].filter(Boolean).join(' · '),
-        hasOdd: !!(J.odd && J.odd.some(o => o.standing === 'stands')), odd: (J.odd || []).filter(o => o.standing === 'stands').slice(0, 3).map(o => ({ tag: 'Odd', label: o.subject, why: o.short, onInspect: () => player(o.at) })),
+        hasOdd: !!(J.odd && J.odd.some(o => o.standing === 'stands')), odd: (J.odd || []).filter(o => o.standing === 'stands').slice(0, 3).map(o => ({ tag: 'Odd', label: o.subject, why: o.short, onInspect: () => player(o.at), onCorrect: () => this.fileCorrection(o.subject, '"' + o.subject + '" is not a name') })),
         oddMore: (() => { const st = (J.odd || []).filter(o => o.standing === 'stands').length, ct = (J.odd || []).filter(o => o.standing === 'contested').length; const parts = [st > 3 ? (st - 3) + ' more odd' : '', ct ? ct + ' disputed' : ''].filter(Boolean); return parts.length ? parts.join(', ') + ', in the replay' : ''; })(), onOddAll: () => { const f = (J.odd || [])[0]; if (f) player(f.at); },
         hasNames: names.length > 0, names, hasNote: J.notes.length > 0, noteLine: J.notes.join(' '),
         hasReplay: !!tr, onReplay: () => tr && import(new URL('holodeck-ingest-player.js', location.href).href).then(M => M.open(tr)),
@@ -4835,7 +5025,7 @@ class Component extends DCLogic {
       ...(() => { const CAP = 6; const shown = P.groups.slice(0, CAP); const restN = P.groups.slice(CAP).reduce((s, p) => s + p.n, 0) + P.strayN;
         return { hasParadigms: P.groups.length > 0, paradigmsNote: P.groups.length > 0 ? 'This workspace holds ' + plural(P.groups.length, 'separate topic') + ' -- discovered from what’s actually here, not declared.' : '', hasMoreParadigms: restN > 0, moreParadigmsLine: plural(restN, 'more source') + " that don't belong to any of these.",
         paradigmList: shown.map(p => ({ label: p.label, n: plural(p.n, 'source'), onOpen: () => { this.setF('unit', null); this.setState({ q: p.label, qDraft: undefined, view: 'search', readDoc: null, srN: 25, qaN: 0, prevView: 'summary' }); }, canFork: p.docs.some(d => (S.added[cid] || []).some(a => a.id === d.id)), onFork: () => this.forkParadigm(p) })) }; })(),
-      pinPop: S.pinPop && view === 'reader' ? { has: true, x: S.pinPop.x + 'px', y: S.pinPop.y + 'px', onPin: e => { e.preventDefault(); this.pinSelection(); } } : { has: false },
+      pinPop: S.pinPop && view === 'reader' ? { has: true, x: S.pinPop.x + 'px', y: S.pinPop.y + 'px', onPin: e => { e.preventDefault(); this.pinSelection(); }, onCorrect: e => { e.preventDefault(); this.openCorr(S.pinPop.text); } } : { has: false },
       hasPinToast: !!S.pinToast, pinToast: S.pinToast || '', goDraft: () => { this.setState({ pinToast: '' }); this.go('draft'); }, plainRef: this.plainRef, omniRef: this.omniRef,
       rdPins: (() => { const n = view === 'reader' ? this.activePins().filter(p => p.docId === S.readDoc).length : 0; return { has: n > 0, label: plural(n, 'pin') + ' from this source →' }; })(), goalNav, navGroups, goalCards, checks, hasChecks: checks.length > 0, omniUrl, omniOpen,
       ...(() => {
@@ -4939,7 +5129,7 @@ class Component extends DCLogic {
       onSearch: e => this.setState({ q: e.target.value }),
       yearVal: f.year ? String(f.year) : '', yearOptions: [{ v: '', label: 'Any time' }, ...allYears.map(y => ({ v: String(y), label: 'up to ' + y }))],
       onYear: e => this.setF('year', e.target.value ? +e.target.value : null),
-      hasFilters: chips.length > 0 && view !== 'search', chips, clearAll: () => this.setState(s => ({ f: {}, q: '', ...(s.view === 'search' ? { view: s.prevView || 'summary' } : {}) })),
+      hasFilters: chips.length > 0 && view !== 'search', chips, fwRows, srcTuple, tupleLine: 'sources: ' + srcTuple.on + '/' + srcTuple.total + ' ' + srcTuple.being + ' on · ' + chips.length + ' filters · each with a for-whom', clearAll: () => this.setState(s => ({ f: {}, fw: {}, q: '', ...(s.view === 'search' ? { view: s.prevView || 'summary' } : {}) })),
       filterNote: plural(F.length, 'statement') + ' of ' + A.sts.length + ' — every terrain now reflects only these.',
       filterCount: F.length.toLocaleString() + ' of ' + A.sts.length.toLocaleString() + ' statements',
       ts: this.timeStrip(A, F),
@@ -4950,10 +5140,11 @@ class Component extends DCLogic {
           dot: ci.from ? 'var(--ok)' : 'var(--mut)', title: 'Read-only source store',
           corpusLine, wsLine, rebuild: () => { this.setState({ showRepo: false }); this.rebuildLive(); }, msg: '', hasMsg: false }; })(),
       openAdd: () => this.setState({ showAdd: true }), closeAdd: () => this.setState({ showAdd: false }),
+      openNewWs: () => this.createWorkspace(), openTask: () => this.go('ingest'),
       closeAddBg: e => { if (e.target === e.currentTarget) this.setState({ showAdd: false }); },
       goSummary: () => this.go('summary'), summaryBtn: hi(view === 'summary'),
       isEmpty, hasContent: !isEmpty, v: V, hdr, summaryRows,
-      docCards, gaps, nameGroups, nameTable, typeBlocks, measures, noMeasures: !measures.length, ...(() => { const c = this.capL('stg', stGroups, 8); return { stGroups: c.items.map(g => ({ ...g, ...this.capL('stg:' + g.title, g.items, 4) })), stgMore: c }; })(),
+      docCards, gaps, nameGroups, nameTable, corr: this.corrVals(), typeBlocks, measures, noMeasures: !measures.length, ...(() => { const c = this.capL('stg', stGroups, 8); return { stGroups: c.items.map(g => ({ ...g, ...this.capL('stg:' + g.title, g.items, 4) })), stgMore: c }; })(),
       graphEl, timeInfo, ...orbX, ...(() => { const c = this.capL('pairs', pairs, 12); return { pairs: c.items, pairsMore: c }; })(), noPairs: !pairs.length, frameCols: frameCols.map(c => ({ ...c, ...this.capL('fr:' + c.label, c.items, 5) })), timeBars, ...(() => { const c = this.capL('topics', topicChips, 24); return { topicChips: c.items, topicMore: c }; })(), ...(() => { const c = this.capL('srcbars', [...sourceBars].sort((a, b) => +b.n - +a.n), 12); return { sourceBars: c.items, srcBarMore: c }; })(), shapes, noShapes: !shapes.length, hasRoutine: (this._routineN || 0) > 0, routineLine: plural(this._routineN || 0, 'routine agreement') + ' hidden: repeated by several sources, but about names and words that appear together in most sources anyway.', holds, breaks, noBreaks: !breaks.length,
       hdrShow: !isEmpty && view !== 'reader' && view !== 'profile',
       ...(() => { const d0 = S.readDoc && A.docById[S.readDoc]; if (!d0) return { rd: { eyebrow: '', title: '', meta: '' } }; const dsts = A.stsByDoc[d0.id] || []; const nm = new Set(dsts.flatMap(s => s.names)); const host = d0.url ? (/wikipedia\.org/.test(d0.url) ? 'Wikipedia' : d0.url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]) : 'Your content'; return { rd: { eyebrow: [host, d0.type, d0.year].filter(Boolean).join(' · '), title: d0.title, meta: [d0.authors && d0.authors.length ? 'By ' + d0.authors.join(', ') : '', d0.pubLabel ? 'Published ' + d0.pubLabel : ''].filter(Boolean).map(x => x + ' · ').join('') + plural(dsts.length, 'statement') + ' · ' + plural(nm.size, 'name') + ' · ' + plural(dsts.reduce((a, s) => a + s.figs.length, 0), 'figure') } }; })(),
