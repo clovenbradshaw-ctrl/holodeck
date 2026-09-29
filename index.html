@@ -494,11 +494,43 @@ select option{background:var(--s1);color:var(--ink)}
                 <button onClick="{{ ak.retry }}" style="align-self:flex-start;background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Look for Ollama</button>
               </div>
             </sc-if>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden">
+                <sc-for list="{{ ak.modes }}" as="m" hint-placeholder-count="3"><button onClick="{{ m.onClick }}" style="border:0;background:{{ m.bg }};color:{{ m.col }};padding:5px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';white-space:nowrap">{{ m.label }}</button></sc-for>
+              </div>
+              <span style="font:400 12px 'JetBrains Mono';color:var(--dim)">{{ ak.modeNote }}</span>
+            </div>
+            <sc-if value="{{ ak.mGen }}" hint-placeholder-val="{{ false }}">
+              <div style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+                <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Generate a document from this workspace</span>
+                <div style="display:flex;gap:10px 14px;flex-wrap:wrap;align-items:center">
+                  <span style="font:500 14px 'Hanken Grotesk';color:var(--mut)">Kind</span>
+                  <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden">
+                    <sc-for list="{{ ak.gKinds }}" as="k" hint-placeholder-count="2"><button onClick="{{ k.onClick }}" style="border:0;background:{{ k.bg }};color:{{ k.col }};padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';white-space:nowrap">{{ k.label }}</button></sc-for>
+                  </div>
+                  <span style="font:500 14px 'Hanken Grotesk';color:var(--mut)">Sentences</span>
+                  <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden">
+                    <sc-for list="{{ ak.gModes }}" as="k" hint-placeholder-count="2"><button onClick="{{ k.onClick }}" style="border:0;background:{{ k.bg }};color:{{ k.col }};padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';white-space:nowrap">{{ k.label }}</button></sc-for>
+                  </div>
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                  <label style="display:flex;gap:8px;align-items:center;flex:1 1 260px;min-width:0;font:500 14px 'Hanken Grotesk';color:var(--mut)">about<input value="{{ ak.gSubj }}" onChange="{{ ak.onGSubj }}" placeholder="a person, office or topic" style="flex:1;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font:500 14px 'Hanken Grotesk';color:var(--ink);outline:none"></input></label>
+                  <button onClick="{{ ak.gFill }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:7px 16px;cursor:pointer;font:600 14px 'Hanken Grotesk';opacity:{{ ak.gOp }}" style-hover="background:#7c3aed">{{ ak.gRunLabel }}</button>
+                  <button onClick="{{ ak.gOpen }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Open the Draft →</button>
+                </div>
+                <sc-if value="{{ ak.gHasNote }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px/1.5 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">{{ ak.gNote }}</span></sc-if>
+              </div>
+            </sc-if>
+            <sc-if value="{{ ak.showCells }}" hint-placeholder-val="{{ true }}">
             <sc-for list="{{ ak.turns }}" as="t" hint-placeholder-count="0">
-              <div style="display:flex;flex-direction:column">
+              <div style="display:flex;flex-direction:column" data-cell="{{ t.i }}">
                 <div style="display:flex;gap:10px;align-items:baseline;background:var(--s2);border:1px solid var(--line);border-bottom:0;border-radius:12px 12px 0 0;padding:9px 16px;flex-wrap:wrap">
                   <span style="font:600 11px 'JetBrains Mono';color:var(--acc);white-space:nowrap">In [{{ t.n }}]</span>
-                  <span style="font:500 18px/1.35 'Newsreader',serif;color:var(--ink);text-wrap:pretty;min-width:0;flex:1">{{ t.q }}</span>
+                  <sc-if value="{{ ak.mChat }}" hint-placeholder-val="{{ true }}"><span style="font:500 18px/1.35 'Newsreader',serif;color:var(--ink);text-wrap:pretty;min-width:0;flex:1">{{ t.q }}</span></sc-if>
+                  <sc-if value="{{ ak.mNb }}" hint-placeholder-val="{{ false }}">
+                    <textarea defaultValue="{{ t.q }}" rows="1" title="Edit, then Run to re-ask with this text" style="flex:1;min-width:0;background:var(--s1);border:1px solid var(--line2);border-radius:6px;resize:vertical;font:400 14px/1.4 'JetBrains Mono';color:var(--ink);outline:none;padding:4px 8px"></textarea>
+                    <button onClick="{{ t.onRun }}" title="Run this cell — re-asks with the text above" style="flex:none;background:#8b5cf6;border:0;color:#fff;border-radius:6px;padding:4px 12px;cursor:pointer;font:600 13px 'Hanken Grotesk'">Run</button>
+                  </sc-if>
                 </div>
                 <section style="background:var(--s1);border:1px solid var(--line);border-radius:0 0 14px 14px;padding:14px 18px 16px;display:flex;flex-direction:column;gap:12px">
                   <sc-if value="{{ t.hasRes }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ t.resLines }}" as="x" hint-placeholder-count="0"><span style="font:500 12px 'JetBrains Mono';color:{{ x.col }}">{{ x.t }}</span></sc-for></sc-if>
@@ -549,7 +581,7 @@ select option{background:var(--s1);color:var(--ink)}
               </div>
             </sc-for>
             <sc-if value="{{ ak.hasPending }}" hint-placeholder-val="{{ false }}">
-              <div style="display:flex;flex-direction:column">
+              <div data-cell="pending" style="display:flex;flex-direction:column">
                 <div style="display:flex;gap:10px;align-items:baseline;background:var(--s2);border:1px solid #8b5cf6;border-bottom:0;border-radius:12px 12px 0 0;padding:9px 16px;flex-wrap:wrap">
                   <span style="font:600 11px 'JetBrains Mono';color:var(--acc);white-space:nowrap">In [{{ ak.nextN }}]</span>
                   <span style="font:500 18px/1.35 'Newsreader',serif;color:var(--ink);text-wrap:pretty;min-width:0;flex:1">{{ ak.pendingQ }}</span>
@@ -562,7 +594,7 @@ select option{background:var(--s1);color:var(--ink)}
               </div>
             </sc-if>
             <sc-if value="{{ ak.hasErr }}" hint-placeholder-val="{{ false }}"><span style="font:400 14px 'Hanken Grotesk';color:var(--bad)">{{ ak.err }}</span></sc-if>
-            <div ref="{{ askRef }}" style="position:sticky;bottom:0;z-index:12;background:var(--hdr);backdrop-filter:blur(8px);padding:10px 0 2px;border-top:1px solid var(--line)">
+            <div id="ak-composer" style="position:sticky;bottom:0;z-index:12;background:var(--hdr);backdrop-filter:blur(8px);padding:10px 0 2px;border-top:1px solid var(--line)">
               <div style="display:flex;flex-direction:column;gap:8px;background:var(--s1);border:1px solid var(--line2);border-radius:12px;padding:10px 12px">
                 <textarea value="{{ ak.q }}" onChange="{{ ak.onQ }}" onKeyDown="{{ ak.onKey }}" rows="2" placeholder="Ask about the sources in this workspace — Enter to ask, Shift+Enter for a new line" style="background:transparent;border:0;outline:none;resize:vertical;color:var(--ink);font:400 16px/1.5 'Hanken Grotesk';min-height:48px"></textarea>
                 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -574,6 +606,7 @@ select option{background:var(--s1);color:var(--ink)}
                 </div>
               </div>
             </div>
+            </sc-if>
           </div>
           <aside style="flex:0 1 290px;min-width:250px;position:sticky;top:calc(var(--hdr-h, 84px) + 12px);display:flex;flex-direction:column;gap:12px">
             <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
@@ -2699,12 +2732,30 @@ class Component extends DCLogic {
   componentWillUnmount() { window.removeEventListener('resize', this._onRz); if (this._pdfRo) { try { this._pdfRo.disconnect(); } catch (e) {} } window.removeEventListener('message', this._onYt); document.removeEventListener('selectionchange', this._onSelCh); window.removeEventListener('scroll', this._onSelCh, true); window.removeEventListener('message', this._onMsg); const h = this._h; window.removeEventListener('dragenter', h.enter); window.removeEventListener('dragleave', h.leave); window.removeEventListener('dragover', h.over); window.removeEventListener('drop', h.drop); window.removeEventListener('paste', h.paste); }
   componentDidUpdate() { this.applyTheme(); this.measureHdr(); if (this._prevCorpus !== this.state.corpus || this._prevAdded !== this.state.added) { this._prevCorpus = this.state.corpus; this._prevAdded = this.state.added; this.loadHtml(); } const rd0 = this.state.readDoc && this.analysis().docById[this.state.readDoc]; if (rd0 && rd0.media && rd0.media.kind === 'local') { this.ensureMediaUrl(rd0); } this.hookLocal(); this.syncReader(); this.ytHook(); this.syncOmni();
     const S = this.state;
-    if (S.view === 'ask' && this._askEl) {
+    const askEl = document.getElementById('ak-composer');
+    if (S.view === 'ask' && askEl) {
       const n = (S.akPending ? 1 : 0) + (this._conv ? this._conv.turns.length : 0);
       const settled = this._akWasPend && !S.akPending;
       this._akWasPend = !!S.akPending;
-      if ((n !== this._akN || settled) && n > 0) { this._akN = n; try { this._askEl.scrollIntoView({ block: 'end' }); } catch (e) {} }
+      if ((n !== this._akN || settled) && n > 0) {
+        this._akN = n;
+        try {
+          const scrollToBottom = () => {
+            const comp = (document.getElementById('ak-composer') || { getBoundingClientRect: () => ({ height: 110 }) }).getBoundingClientRect().height || 110;
+            const cells = document.querySelectorAll('[data-cell]');
+            const tgt = cells[cells.length - 1];
+            if (tgt && tgt.getBoundingClientRect && tgt.getBoundingClientRect().bottom > window.innerHeight - comp - 8) {
+              window.scrollBy(0, tgt.getBoundingClientRect().bottom - (window.innerHeight - comp - 8));
+            }
+          };
+          scrollToBottom();
+          setTimeout(scrollToBottom, 150);
+          setTimeout(scrollToBottom, 500);
+          setTimeout(scrollToBottom, 1200);
+        } catch (e) {}
+      }
     } else { this._akN = undefined; this._akWasPend = false; } }
+  askEl() { return document.getElementById('ak-composer'); }
   applyTheme() { document.documentElement.dataset.theme = this.state.theme; }
   async ingest(dt) {
     if (!dt) return;
@@ -2790,7 +2841,6 @@ class Component extends DCLogic {
   plainRef = el => { this._plainEl = el; };
   omniRef = el => { this._omniEl = el; };
   hdrRef = el => { this._hdrEl = el; this.measureHdr(); };
-  askRef = el => { this._askEl = el; };
   measureHdr() {
     const el = this._hdrEl; if (!el) return;
     const h = Math.round(el.getBoundingClientRect().height);
@@ -3346,7 +3396,7 @@ class Component extends DCLogic {
     const model = this.akModel(); const ms = this.akModels(); const MM = this._askM; const isWL = model.startsWith('webllm:'); const gpu = !!(MM && MM.webgpu()); const loaded = !!(MM && isWL && MM.webllmLoaded(model.slice(7))); const mInfo = ms.find(m => m.v === model) || { name: model, size: '' }; const LD = S.akLoad;
     const docOfName = n => this._ix && this._ix.docOf[n];
     const refInfo = ref => { const m = String(ref).match(/^(.*)#(\d+)-(\d+)$/); if (!m) return null; const id = docOfName(m[1]); const d = id && A.docById[id]; if (!d) return null; const a = +m[2], b = +m[3]; const st = (A.stsByDoc[id] || []).find(x => x.e > a && x.s < b) || null; return { id, d, st, a, b }; };
-    const turns = conv.turns.map(t => {
+    const turns = conv.turns.map((t, i) => {
       const num = new Map(); (t.attr || []).forEach(x => { if (x.ref && !num.has(x.ref)) num.set(x.ref, num.size + 1); });
       const bad = (t.findings || []).filter(f => !f.echoesQuestion);
       const sents = (t.attr && t.attr.length ? t.attr : [{ text: t.answer, ref: null }]).map(x => { const flag = bad.some(f => f.text && x.text.includes(f.text)); const info = x.ref ? refInfo(x.ref) : null;
@@ -3359,7 +3409,8 @@ class Component extends DCLogic {
       return { n: String(t.n), q: t.question, sents, srcs, hasSrcs: srcs.length > 0, bad: bad.map(f => f.text).join(' · '), hasBad: bad.length > 0, noMaterial: !(t.offered || []).length,
         hasRes: !!(t.resolved && t.resolved.length), resLines: (t.resolved || []).map(r => ({ t: r.mode === 'nearmiss' ? 'Read “' + r.from + '” as ' + r.to + ': one letter off it, and off no other name.' : 'Did not guess who “' + r.from + '” is: ' + r.why + '.', col: r.mode === 'nearmiss' ? 'var(--acc)' : 'var(--amber)' })), hasNotes: !!(t.notes && t.notes.lines && t.notes.lines.length), notesLines: ((t.notes && t.notes.lines) || []).map(l => ({ l })), notesLine: t.notes ? (t.notes.empty ? 'The reader made no notes on these passages, and the model was told so.' : plural(t.notes.lines.length, 'note') + ' from ' + t.notes.coverage + '% of the sentences read · ' + plural(t.notes.spans, 'span') + ' of source text sent with them' + (t.notes.omitted ? ' · ' + t.notes.omitted + ' lower-ranked notes held back' : '')) : '', hasNotesLine: !!t.notes, hasRd: !!(t.reading && t.reading.lines && t.reading.lines.length), rdLines: ((t.reading && t.reading.lines) || []).map(l => ({ t: l.text, onClick: () => A.names[l.name] ? this.openProfile(l.name) : null })), hasComp: !!C, compHead: C ? C.head : '', compLines: C ? C.lines.map(l => ({ l })) : [], compSaid: C ? C.said : '', onComp: () => this.setState({ view: 'records', readDoc: null, dbT: C && C.type, dbAskDraft: C && C.q, dbRes: null }, () => C && this.dbRun(C.q)),
         rec: 'On record · turn ' + t.n + ' · ' + recBits.join(' · '), fold: t.foldLine, meter: 'Sent ' + t.sentChars.toLocaleString() + ' characters in place of a ' + t.transcriptChars.toLocaleString() + '-character transcript', meta: t.model + (t.tokens && t.tokens.secs ? ' · ' + t.tokens.secs.toFixed(1) + ' s' : '') + (t.refresh && !t.refresh.ok && t.refresh.why ? ' · summary kept: ' + short(t.refresh.why, 120) : ''),
-        canGen: gen, onGen: () => this.askToDraft(t) }; });
+        canGen: gen, onGen: () => this.askToDraft(t),
+        i, onRun: e => { let q = t.question; try { const cell = e && e.target && e.target.closest ? e.target.closest('[data-cell]') : null; const ta = cell && cell.querySelector('textarea'); if (ta && String(ta.value).trim()) q = ta.value; } catch (er) {} this.askSend(String(q).trim()); } }; });
     const sm = conv.summary || {};
     const M = this._askM; let nextChars = 0; try { if (M) nextChars = M.FOLD.charCount(M.FOLD.buildTurnMessages({ basePrompt: 'x'.repeat(290), summary: sm, history: conv.history, question: '' })); } catch (e) {}
     const trChars = conv.history.reduce((n, m) => n + (m.content || '').length, 0);
@@ -3372,6 +3423,17 @@ class Component extends DCLogic {
       ixLine: this._ix ? plural(this._ix.chunks.length, 'passage') + ' from ' + plural(Object.keys(this._ix.texts).length, 'source') : 'Indexing passages…',
       turns, hasTurns: turns.length > 0, noTurns: turns.length === 0 && !S.akPending,
       nextN: String(conv.turns.length ? parseInt(conv.turns[conv.turns.length - 1].n) + 1 : 1),
+      modes: (() => { const akMode = S.akMode || 'chat'; const seg = on => ({ bg: on ? 'var(--sel)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)' });
+        return [['chat', 'Chat'], ['generate', 'Generate'], ['notebook', 'Notebook']].map(([k, l]) => ({ label: l, ...seg(akMode === k), onClick: () => this.setState({ akMode: k }) })); })(),
+      mChat: (S.akMode || 'chat') === 'chat', mGen: S.akMode === 'generate', mNb: S.akMode === 'notebook', showCells: S.akMode !== 'generate',
+      modeNote: S.akMode === 'generate' ? 'Build a sourced document — the answers you ask for, laid out by kind.' : S.akMode === 'notebook' ? 'Every cell can be edited and re-run; the output of each run stays below its cell.' : 'The conversation — every answer checked against its passages.',
+      gKinds: [['brief', 'Brief'], ['timeline', 'Timeline']].map(([k, l]) => { const on = (S.gKind || 'brief') === k; return { label: l, bg: on ? 'var(--sel)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)', onClick: () => this.setState({ gKind: k }) }; }),
+      gModes: [['mech', 'Quotes'], ['model', 'Model']].map(([k, l]) => { const on = (S.gMode || 'mech') === k; return { label: l, bg: on ? 'var(--sel)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)', onClick: () => this.setState({ gMode: k }) }; }),
+      gSubj: S.gSubj != null ? S.gSubj : '', onGSubj: e => this.setState({ gSubj: e.target.value }),
+      gOp: S.gen ? 0.6 : 1, gRunLabel: S.gen ? 'Working…' : 'Fill the document', gHasNote: !!S.gNote, gNote: S.gNote || '',
+      gOpen: () => this.setState({ view: 'draft', readDoc: null, sel: null, f: {} }),
+      gFill: async () => { if (S.gen) return; const before = this.pinData().claims.length; this.setState({ gNote: '' }); await this.generate(); const after = this.pinData().claims.length; const n = after - before;
+        this.setState({ gNote: n > 0 ? 'Filled ' + plural(n, 'claim') + ' into the Draft — open it to see the document.' : 'Nothing in the sources matched that subject. Try another name, or check the workspace holds the material.' }); },
       busy: !!S.akBusy, stage: stageL[S.akBusy] || '', pendingQ: S.akPending || '', hasPending: !!S.akPending, stream: S.akStream || '', hasStream: !!S.akStream,
       pendComp: S.akComputed ? S.akComputed.head : '', hasPendComp: !!S.akComputed,
       err: S.akErr || '', hasErr: !!S.akErr, q: S.akQ || '', onQ: e => this.setState({ akQ: e.target.value }), onKey: e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.askSend(); } }, send: () => this.askSend(), canSend: this.llmOk() && !S.akBusy, stop: () => { if (this._akAbort) this._akAbort.abort(); },
