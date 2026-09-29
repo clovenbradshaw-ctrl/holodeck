@@ -124,6 +124,8 @@ function antsForName(A, ix, n, o, ctx) {
   const sig = x => x.split(' ').filter(t => !/^[A-Z]\.?$/.test(t)), mine = sig(n), sub = (a, b) => { let i = 0; for (const t of b) { if (t === a[i]) i++; else if (!FN.has(t.toLowerCase())) return false; } return i === a.length; }; // may skip only initials and function words
   const fuller = mine.length >= 2 ? Object.keys(A.names).find(m => m !== n && A.names[m].sts.length > N.sts.length && sig(m).length > mine.length && sub(mine, sig(m))) : null;
   out.push(fuller ? { ant: 'variant', verdict: 'real', why: 'a shortened form of ' + qt(fuller) + ', which is written ' + A.names[fuller].sts.length + ' times' } : { ant: 'variant', verdict: 'silent', why: 'not a shortened form of a better-attested name' });
+  { const dd = A.docs.find(x => x.id === o.doc); if (dd && dd.eng) { const k = n.toLowerCase(), hit = dd.eng.referents.find(r => r.surfaces.some(x => x.toLowerCase() === k));
+    out.push(hit ? { ant: 'engine', verdict: 'real', why: 'the engine’s own reader also admitted it (' + hit.routes.join(' + ') + (hit.grain ? ', existence grain ' + hit.grain : '') + ')' } : { ant: 'engine', verdict: 'silent', why: 'the engine’s reader did not admit it; that reader also misses real names, so this is no vote' }); } }
   out.push(docNullAnt(o.doc, ctx));
   return out;
 }

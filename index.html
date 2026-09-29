@@ -2326,6 +2326,41 @@ let HD_TR = null;
 function hdTraceStart(label) { if (HD_TR) return HD_TR; HD_TR = { schema: 'HolodeckIngestTrace@1', label, startedAt: new Date().toISOString(), t0: performance.now(), ev: [], focus: new Set(), docs: [] }; hdT('bytes', 'start', 'Ingest started: ' + label); return HD_TR; }
 function hdT(stage, kind, msg, data) { const T = HD_TR; if (T) T.ev.push({ t: performance.now() - T.t0, stage, kind, msg, ...(data || {}) }); }
 const hdF = doc => !!HD_TR && HD_TR.focus.has(doc);
+
+// The engine: eoreader7's POST /v1/read reads each added document through the session reader (model-free). The Holodeck
+// draws what comes back and treats its surfaces as a witness beside its own finder; it never lets them replace it.
+const HD_ENG = { url: null, downAt: 0 };
+function hdEngineHosts() { let u = null; try { u = localStorage.getItem('hd:engine'); } catch (e) {} return [u, 'http://127.0.0.1:11436', 'http://127.0.0.1:11476'].filter((x, i, a) => x && a.indexOf(x) === i); }
+async function hdEngineRead(name, text) {
+  if (!HD_ENG.url && Date.now() - HD_ENG.downAt < 60000) return null;
+  for (const host of HD_ENG.url ? [HD_ENG.url] : hdEngineHosts()) {
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 120000);
+    try {
+      const r = await fetch(host + '/v1/read', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name, text: text.slice(0, 60000) }), signal: ctl.signal });
+      const j = await r.json(); if (!r.ok || j.schema !== 'EORead@1') { if (HD_ENG.url === host) HD_ENG.url = null; continue; }
+      HD_ENG.url = host; return { host, read: j };
+    } catch (e) { if (HD_ENG.url === host) HD_ENG.url = null; } finally { clearTimeout(timer); }
+  }
+  HD_ENG.downAt = Date.now(); return null;
+}
+const hdEngineCompact = (host, r) => ({ host, ms: Math.round(r.ms), basis: r.basis || null, sentences: r.sentences.length, relations: r.relations.length, referents: r.referents.map(x => ({ surfaces: x.surfaces, routes: x.routes, grain: x.grain || null })).concat(r.descriptorBeings.map(b => ({ surfaces: b.surfaces, routes: ['descriptor'], grain: null }))) });
+const HD_ENGM = new WeakMap();
+function hdEngineMap(eng) { let m = HD_ENGM.get(eng); if (m) return m; m = new Map(); eng.referents.forEach(r => r.surfaces.forEach(sf => { const k = sf.toLowerCase(); if (!m.has(k)) m.set(k, { surface: sf, routes: r.routes, grain: r.grain }); })); HD_ENGM.set(eng, m); return m; }
+function hdEngineMerge(t, ns, eng, hy) {
+  if (!eng || !hy) return ns;
+  const m = hdEngineMap(eng), have = new Set(ns.map(n => n.name.toLowerCase())), out = ns.slice();
+  ns.forEach(n => { const r = m.get(n.name.toLowerCase()); if (r) n.engine = r.routes.join('+'); });
+  m.forEach((r, k) => {
+    if (have.has(k)) return;
+    const words = k.split(/\s+/), desc = r.routes.includes('descriptor'), body = desc ? words.slice(1) : words;
+    if (!body.length || body.some(w => MONTHS.has(w[0].toUpperCase() + w.slice(1)))) return;
+    if (hy.functionOnly(body[0]) || hy.functionOnly(body[body.length - 1])) return;
+    if (!desc && body.length === 1 && hy.commonOnly(body[0])) return;
+    const re = new RegExp('(?<![\\p{L}\\p{N}])' + k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+') + '(?![\\p{L}\\p{N}])', 'giu'); let x;
+    while ((x = re.exec(t))) { const s0 = x.index, e0 = s0 + x[0].length; if (out.some(n => s0 < n.e && n.s < e0)) continue; out.push({ name: r.surface, s: s0, e: e0, engine: r.routes.join('+') + (r.grain ? ' · ' + r.grain : ''), engineAdded: true }); }
+  });
+  return out.sort((a, b) => a.s - b.s);
+}
 // read-only handle for tests: the real functions, so a harness can recompute what a trace claims happened
 setTimeout(() => { try { window.__holodeck = Object.freeze({ analyze, holoKit, paradigms, splitSentences, findNames, isJunk, readAny, hdHygiene, hdPos: w => hdPos(w) }); } catch (e) {} }, 0);
 const hdCut = (t, n) => { t = String(t || '').replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
@@ -2547,11 +2582,11 @@ function analyze(corpus, htmlMap) {
     return x; });
   const sts = []; const found = []; const alias = {}; const info = {}; const HY = hdHygiene(docs);
   docs.forEach(d => { const on = hdF(d.id); const ss = splitSentences(d.text, on ? (a, b, c, x) => hdT(a, b, c, { doc: d.id, ...x }) : null); if (on) hdT('sentences', 'split', 'Split into ' + ss.length + ' statements', { doc: d.id, n: ss.length }); const hy = HY ? HY.forDoc(d, on ? (k, what, why) => hdT('names', 'hygiene', why + ' (' + qW(what) + ')', { doc: d.id }) : null) : null; ss.forEach((se, i) => {
-    const ns = findNames(se.t, hy);
+    const ns = hdEngineMerge(se.t, findNames(se.t, hy), d.eng, hy);
     ns.forEach(n => { if (n.alias) alias[n.alias] = n.name; });
     const st0 = { id: d.id + ':' + i, doc: d.id, s: se.s, e: se.e, text: se.t, rawNames: ns, figs: findFigures(se.t), dates: findDates(se.t), frame: frameOf(se.t) }; sts.push(st0);
     if (on) { const D = { doc: d.id, id: st0.id }; hdT('sentences', 'statement', 'Statement ' + (i + 1) + ': \u201c' + hdCut(se.t, 90) + '\u201d', { ...D, s: se.s, e: se.e });
-      ns.forEach(n => hdT('names', 'name', 'Name \u201c' + n.name + '\u201d' + (n.title ? ' after the title ' + n.title : '') + (n.alias ? ', short form (' + n.alias + ')' : '') + (n.saidAfter ? ', followed by a reporting verb' : '') + (n.acr ? ', an acronym' : ''), { ...D, name: n.name, s: se.s + n.s, e: se.s + n.e }));
+      ns.forEach(n => hdT('names', 'name', 'Name \u201c' + n.name + '\u201d' + (n.title ? ' after the title ' + n.title : '') + (n.alias ? ', short form (' + n.alias + ')' : '') + (n.saidAfter ? ', followed by a reporting verb' : '') + (n.acr ? ', an acronym' : '') + (n.engineAdded ? ', found by the engine (' + n.engine + ')' : n.engine ? ', the engine read it too' : ''), { ...D, name: n.name, s: se.s + n.s, e: se.s + n.e }));
       st0.figs.forEach(g => hdT('figures', 'figure', 'Figure \u201c' + g.raw + '\u201d = ' + g.value.toLocaleString() + ' ' + g.label, { ...D, s: se.s + g.s, e: se.s + g.e }));
       st0.dates.forEach(g => hdT('dates', 'date', 'Date \u201c' + g.raw + '\u201d' + (g.year ? ' (year ' + g.year + ')' : ''), { ...D, s: se.s + g.s, e: se.s + g.e }));
       hdT('frame', 'frame', 'Frame: ' + st0.frame + ({ uncertain: ' (a hedge word)', attributed: ' (a reporting verb)', plan: ' (a future or intent word)', fact: ' (no hedge, report or plan word)' })[st0.frame], { ...D, frame: st0.frame }); }
@@ -4115,7 +4150,7 @@ class Component extends DCLogic {
     (window.__hdTraces = window.__hdTraces || []).push(T); if (window.__hdTraces.length > 8) window.__hdTraces.shift();
     import(new URL('holodeck-ingest-player.js', location.href).href).then(M => M.open(T)).catch(e => console.warn('ingest player', e));
   }
-  addDocs(list, aopt) {
+  async addDocs(list, aopt) {
     if (!list.length) { HD_TR = null; this.setState({ busy: '' }); return; }
     const T = hdTraceStart(list.length === 1 ? (list[0].title || 'Untitled') : plural(list.length, 'item'));
     const id = this.corpusId(); const prev = this.analysis();
@@ -4124,6 +4159,13 @@ class Component extends DCLogic {
     nd.forEach(d => { d.status = aopt && aopt.open ? 'seen' : 'source'; });
     T.focus = new Set(nd.map(d => d.id)); nd.forEach(d => hdT('store', 'mint', 'Stored \u201c' + hdCut(d.title, 60) + '\u201d as ' + d.id + (list[nd.indexOf(d)].html ? ' \u00b7 full page kept; ' + d.text.length.toLocaleString() + ' characters indexed for search' + (d.text.length >= 60000 ? ' (the cap; the reading below uses the whole page)' : '') : ' \u00b7 ' + d.text.length.toLocaleString() + ' characters kept'), { doc: d.id }));
     nd.forEach((d, i) => { const x = list[i]; if (x.html) { this._html[d.id] = x.html; idbPut('html:' + d.id, x.html).catch(() => {}); } if (x.pdf) idbPut('pdf:' + d.id, x.pdf).catch(() => {}); });
+    let engNote = null; { const live = nd.filter(d => d.text && !d.measured); let ok = 0, miss = 0;
+      if (live.length) this.setState({ busy: 'Reading ' + (live.length === 1 ? 'it' : live.length + ' sources') + ' with the engine…' });
+      for (const d of live) { const t0 = HD_TR ? performance.now() - HD_TR.t0 : 0, got = await hdEngineRead(d.title, d.text);
+        if (!got) { miss++; continue; } ok++; d.eng = hdEngineCompact(got.host, got.read);
+        if (HD_TR) got.read.events.forEach(ev => HD_TR.ev.push({ ...ev, stage: 'engine', kind: 'eng-' + ev.stage + '-' + ev.kind, es: ev.stage, t: t0 + ev.t, doc: d.id, config: undefined }));
+        hdT('engine', 'eng-read', 'The engine read “' + hdCut(d.title, 50) + '”: ' + d.eng.referents.length + ' beings, ' + d.eng.relations + ' relations, ' + d.eng.ms + ' ms (' + got.host.replace(/^https?:\/\//, '') + ')', { doc: d.id }); }
+      if (miss) { engNote = 'The engine (eoreader7 proxy) was not reachable, so ' + (ok ? miss + ' of ' + live.length + ' sources were' : live.length === 1 ? 'this source was' : 'these sources were') + ' read with the Holodeck’s own reader only. Start the proxy, or set its address with localStorage hd:engine.'; hdT('engine', 'eng-skip', engNote); } }
     const added = { ...this.state.added, [id]: [...(this.state.added[id] || []), ...nd] };
     this.saveAdded(added);
     hdT('store', 'analyze', 'Re-reading the whole workspace (' + (this.baseDocs(id).length + added[id].length) + ' sources) so the new material is linked to everything already there');
@@ -4131,7 +4173,7 @@ class Component extends DCLogic {
     const ids = nd.map(d => d.id); try { this.hdFinish(T, A, prev, ids); } catch (e) { console.warn('ingest trace', e); HD_TR = null; } const odd = (T && T.odd) || []; const sts = A.sts.filter(s => ids.includes(s.doc));
     const nm = [...new Set(sts.flatMap(s => s.names))];
     const echoN = sts.filter(s => (A.echoes[s.id] || []).some(e => !ids.includes(A.byId[e.id].doc))).length;
-    this.setState({ added, just: { ids, title: nd.length === 1 ? nd[0].title : plural(nd.length, 'item'), n: sts.length, linked: nm.filter(n => prev.names[n]), fresh: nm.filter(n => !prev.names[n]), echoN, odd, notes: list.map(x => x.note).filter(Boolean), first: nd[0].id }, view: aopt && aopt.open ? 'reader' : 'summary', sel: aopt && aopt.open ? { type: 'doc', id: nd[0].id } : null, f: {}, q: '', readDoc: aopt && aopt.open ? nd[0].id : null, readMode: 'original', draftTitle: '', draftYear: '', draftText: '', showAdd: false, busy: '', note: '' });
+    this.setState({ added, just: { ids, title: nd.length === 1 ? nd[0].title : plural(nd.length, 'item'), n: sts.length, linked: nm.filter(n => prev.names[n]), fresh: nm.filter(n => !prev.names[n]), echoN, odd, notes: list.map(x => x.note).concat(engNote).filter(Boolean), first: nd[0].id }, view: aopt && aopt.open ? 'reader' : 'summary', sel: aopt && aopt.open ? { type: 'doc', id: nd[0].id } : null, f: {}, q: '', readDoc: aopt && aopt.open ? nd[0].id : null, readMode: 'original', draftTitle: '', draftYear: '', draftText: '', showAdd: false, busy: '', note: '' });
   }
 
   // The time strip: how the statements every OTHER filter leaves are spread over time, on the chosen clock.
