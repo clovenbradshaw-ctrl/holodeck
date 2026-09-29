@@ -3507,13 +3507,49 @@ class Component extends DCLogic {
   // ---------- Records: the workspace as a relational database, its schema read off the data (bare-metal fold.js + DataChat) ----------
   recMod() { if (!this._recP) this._recP = import(new URL('holodeck-records.js', location.href).href); return this._recP; }
   dataChat() { if (window.DataChat) return Promise.resolve(window.DataChat); if (!this._dcP) this._dcP = new Promise((res, rej) => { const el = document.createElement('script'); el.src = new URL('vendor/bare-metal/public/data-chat.js', location.href).href; el.onload = () => res(window.DataChat); el.onerror = () => rej(new Error('DataChat did not load')); document.head.appendChild(el); }); return this._dcP; }
+  // Filter tuple → operator log: one DEF/EVA frame per active filter. matched is
+  // computed with match(st, A, key) so each filter is judged alone; relevance is
+  // the share of its matched statements touching its for-whom's question terms.
+  filterFramesFor(A) {
+    const f = this.state.f || {}, fw = this.state.fw || {};
+    const all = (A.sts || []).filter(st => !st.ref);
+    const qTerms = q => [...new Set(String(q || '').toLowerCase().match(/[\p{L}\p{N}’']{3,}/gu) ?? [])]
+      .filter(w => !['the', 'and', 'for', 'with', 'what', 'does', 'show', 'this'].includes(w));
+    const frame = (key, label, value) => {
+      const w = fw[key] || { giver: 'the reader', question: (this.state.q || '').trim() || 'what does this selection show?' };
+      const matched = key === 'q' ? all.filter(st => this.match(st, A)).length : all.filter(st => this.match(st, A, key)).length;
+      const terms = qTerms(w.question);
+      let rel = 0;
+      if (matched && terms.length) {
+        const pool = key === 'q' ? all.filter(st => this.match(st, A)) : all.filter(st => this.match(st, A, key));
+        const hit = pool.filter(st => { const t = String(st.text || '').toLowerCase(); return terms.some(x => t.includes(x)); }).length;
+        rel = Math.round(hit / matched * 100) / 100;
+      }
+      return { key, label, value: String(value == null ? '' : (value.label || value.key || value)), giver: w.giver, question: w.question, matched, total: all.length, relevance: rel };
+    };
+    const out = [];
+    if (f.name) out.push(frame('name', 'Mentions ' + f.name, f.name));
+    if (f.doc) out.push(frame('doc', 'Source ' + f.doc, f.doc));
+    if (f.topic) out.push(frame('topic', 'Topic ' + f.topic, f.topic));
+    if (f.frame) out.push(frame('frame', 'Framing ' + f.frame, f.frame));
+    if (f.type) out.push(frame('type', 'Mentions ' + f.type, f.type));
+    if (f.unit) out.push(frame('unit', 'Figures in ' + f.unit, f.unit));
+    if (f.kind) out.push(frame('kind', 'Kind ' + f.kind, f.kind));
+    if (f.medium) out.push(frame('medium', 'Medium ' + f.medium, f.medium));
+    if (f.standing) out.push(frame('standing', 'Standing ' + f.standing, f.standing));
+    if (f.year) out.push(frame('year', 'Dated up to ' + f.year, String(f.year)));
+    if (f.range) out.push(frame('range', 'Dated range', f.range.from + '–' + f.range.to));
+    if (f.period) out.push(frame('period', 'Period ' + f.period.key, f.period.key));
+    if ((this.state.q || '').trim()) out.push(frame('q', 'Search ' + this.state.q.trim(), this.state.q.trim()));
+    return out;
+  }
   ensureDb(A) {
     const key = this._key + ':' + (this._rix ? 'r' : '');
     if (this._db && this._db.key === key) return this._db;
     if (!this._rix && !this._rixTried) { this._rixTried = true; opfsRead('ohs-custody/reading-refresh25.index.json').then(b => { if (b && !this._rix) { this._rix = JSON.parse(new TextDecoder().decode(b)); this.forceUpdate(); } }).catch(() => {}); }
     if (this._dbBuilding !== key) { this._dbBuilding = key;
       Promise.all([this.recMod(), this.dataChat().catch(() => null)]).then(([M]) => setTimeout(() => { if (this._dbBuilding !== key) return;
-        try { const db = M.buildDatabase(A, this._rix, { counted: d => this.counted(d) }); db.key = key; const out = new Map(), inn = new Map(), byType = new Map();
+        try { const db = M.buildDatabase(A, this._rix, { counted: d => this.counted(d), filterFrames: this.filterFramesFor(A), savedFolds: this.myFolds() }); db.key = key; const out = new Map(), inn = new Map(), byType = new Map();
           for (const c of db.state.connections) { (out.get(c.source) || out.set(c.source, []).get(c.source)).push({ rel: c.type, a: c.target }); (inn.get(c.target) || inn.set(c.target, []).get(c.target)).push({ rel: c.type, a: c.source }); }
           for (const e of Object.values(db.state.entities)) (byType.get(e._type) || byType.set(e._type, []).get(e._type)).push(e);
           db.out = out; db.inn = inn; db.byType = byType; this._db = db; this._dbErr = ''; } catch (e) { this._dbErr = String(e && e.message || e); }
