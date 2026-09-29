@@ -41,8 +41,7 @@ select option{background:var(--s1);color:var(--ink)}
         </sc-for>
       </select>
       <button onClick="{{ openAdd }}" style="width:100%;box-sizing:border-box;background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:8px 10px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Add source</button>
-      <button onClick="{{ openNewWs }}" style="width:100%;box-sizing:border-box;background:none;border:1px solid var(--line2);border-radius:8px;padding:7px 10px;cursor:pointer;font:600 13px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">+ New workspace</button>
-      <button onClick="{{ repo.open }}" title="{{ repo.title }}" style="width:100%;box-sizing:border-box;display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)"><span style="width:8px;height:8px;border-radius:50%;background:{{ repo.dot }}"></span>Data</button>
+
     </div>
     <nav style="display:flex;flex-direction:column;gap:2px">
       <div style="display:flex;flex-direction:column;gap:1px;padding:10px 0 12px;border-top:1px solid var(--line)">
@@ -105,8 +104,8 @@ select option{background:var(--s1);color:var(--ink)}
   </div>
   <div style="flex:1 1 0;min-width:0;box-sizing:border-box;{{ colPad }}">
 
-  <header style="position:sticky;top:0;z-index:20;background:var(--hdr);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)">
-    <div style="max-width:1230px;padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+  <header ref="{{ hdrRef }}" style="position:sticky;top:0;z-index:20;background:var(--hdr);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)">
+    <div style="max-width:1230px;padding:8px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
       <div style="flex:1 1 320px;min-width:220px;display:flex;align-items:center;border:1px solid var(--line2);border-radius:8px;background:var(--s1)">
         <input defaultValue="{{ omniVal }}" ref="{{ omniRef }}" onChange="{{ onOmni }}" onKeyDown="{{ onOmniKey }}" placeholder="Search, ask a question, or paste a link — then Enter" style="flex:1;min-width:0;background:transparent;border:0;color:var(--ink);font:400 14px 'Hanken Grotesk';padding:8px 12px;outline:none">
         <sc-if value="{{ omniPending }}" hint-placeholder-val="{{ false }}"><button onClick="{{ omniGo }}" style="margin:3px;border:0;background:var(--acc2);color:#fff;border-radius:6px;padding:4px 12px;cursor:pointer;font:600 13px 'Hanken Grotesk';white-space:nowrap">Search ↵</button></sc-if>
@@ -171,7 +170,18 @@ select option{background:var(--s1);color:var(--ink)}
       <sc-if value="{{ hdrShow }}" hint-placeholder-val="{{ true }}">
         <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
           <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:4px">
-            <h1 style="margin:0;font:500 30px/1.2 'Newsreader',serif;color:var(--ink);text-wrap:pretty">{{ hdr.title }}</h1>
+            <sc-if value="{{ hasAnc }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font:500 12px 'JetBrains Mono';color:var(--dim)">
+                <sc-for list="{{ crumbAnc }}" as="c" hint-placeholder-count="2">
+                  <span style="display:flex;align-items:center;gap:6px;min-width:0">
+                    <sc-if value="{{ c.hasOn }}" hint-placeholder-val="{{ false }}"><button onClick="{{ c.onClick }}" title="{{ c.title }}" style="all:unset;cursor:pointer;color:var(--mut);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" style-hover="color:var(--acc)">{{ c.label }}</button></sc-if>
+                    <sc-if value="{{ c.noOn }}" hint-placeholder-val="{{ true }}"><span style="color:var(--ink2);font-weight:600;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.label }}</span></sc-if>
+                    <sc-if value="{{ c.hasSep }}" hint-placeholder-val="{{ false }}"><span style="color:var(--dim)">›</span></sc-if>
+                  </span>
+                </sc-for>
+              </div>
+            </sc-if>
+            <h1 style="margin:0;font:500 30px/1.2 'Newsreader',serif;color:var(--ink);text-wrap:pretty">{{ crumbLast.label }}</h1>
             <p style="margin:0;color:var(--mut);font-size:15px;text-wrap:pretty">{{ hdr.sub }}{{ sr.sub }}</p>
             <sc-if value="{{ sr.hasOthers }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap;margin-top:4px">
@@ -228,6 +238,17 @@ select option{background:var(--s1);color:var(--ink)}
           </sc-if>
           <sc-if value="{{ ts.empty }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px 'Hanken Grotesk';color:var(--dim)">{{ ts.empty }}</span></sc-if>
         </div>
+        <sc-if value="{{ hasFilters }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap;margin-top:6px;padding:8px 10px;background:var(--sel);border:1px solid #8b5cf6;border-radius:10px">
+            <span style="font:600 14px 'Hanken Grotesk';color:var(--ink);white-space:nowrap">{{ filterCount }}</span>
+            <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">narrowed to</span>
+            <sc-for list="{{ chips }}" as="ch" hint-placeholder-count="1">
+              <button onClick="{{ ch.onClear }}" title="Remove" style="display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid #8b5cf6;color:var(--ink);border-radius:999px;padding:3px 5px 3px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk'"><span style="color:var(--mut)">{{ ch.k }}</span><b style="font-weight:600">{{ ch.v }}</b><span style="width:18px;height:18px;border-radius:50%;background:var(--line2);display:flex;align-items:center;justify-content:center;font-size:10px">✕</span></button>
+            </sc-for>
+            <sc-if value="{{ addAsFold.show }}" hint-placeholder-val="{{ false }}"><button onClick="{{ addAsFold.onClick }}" style="margin-left:auto;background:none;border:1px solid #8b5cf6;border-radius:999px;color:var(--acc);cursor:pointer;font:500 13px 'Hanken Grotesk';padding:3px 10px;white-space:nowrap">{{ addAsFold.label }}</button></sc-if>
+            <button onClick="{{ clearAll }}" style="margin-left:auto;background:none;border:0;color:var(--acc);cursor:pointer;font:500 14px 'Hanken Grotesk';white-space:nowrap">Show everything</button>
+          </div>
+        </sc-if>
       </sc-if>
 
       <sc-if value="{{ v.summary }}" hint-placeholder-val="{{ true }}">
@@ -518,75 +539,121 @@ select option{background:var(--s1);color:var(--ink)}
                 <button onClick="{{ ak.retry }}" style="align-self:flex-start;background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Look for Ollama</button>
               </div>
             </sc-if>
-            <div style="display:flex;flex-direction:column;gap:8px;background:var(--s1);border:1px solid var(--line2);border-radius:12px;padding:10px 12px">
-              <textarea value="{{ ak.q }}" onChange="{{ ak.onQ }}" onKeyDown="{{ ak.onKey }}" rows="2" placeholder="Ask about the sources in this workspace" style="background:transparent;border:0;outline:none;resize:vertical;color:var(--ink);font:400 16px/1.5 'Hanken Grotesk';min-height:48px"></textarea>
-              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                <sc-if value="{{ ak.noTurns }}" hint-placeholder-val="{{ true }}"><sc-for list="{{ ak.examples }}" as="x" hint-placeholder-count="3"><button onClick="{{ x.onClick }}" style="background:var(--s2);border:1px solid var(--line2);border-radius:999px;padding:3px 10px;cursor:pointer;font:400 13px 'Hanken Grotesk';color:var(--ink2);white-space:normal;text-align:left" style-hover="border-color:var(--acc)">{{ x.t }}</button></sc-for></sc-if>
-                <div style="margin-left:auto;display:flex;gap:8px">
-                  <sc-if value="{{ ak.busy }}" hint-placeholder-val="{{ false }}"><button onClick="{{ ak.stop }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)">Stop</button></sc-if>
-                  <button onClick="{{ ak.send }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 16px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Ask ↵</button>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden">
+                <sc-for list="{{ ak.modes }}" as="m" hint-placeholder-count="3"><button onClick="{{ m.onClick }}" style="border:0;background:{{ m.bg }};color:{{ m.col }};padding:5px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';white-space:nowrap">{{ m.label }}</button></sc-for>
+              </div>
+              <span style="font:400 12px 'JetBrains Mono';color:var(--dim)">{{ ak.modeNote }}</span>
+            </div>
+            <sc-if value="{{ ak.mGen }}" hint-placeholder-val="{{ false }}">
+              <div style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+                <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Generate a document from this workspace</span>
+                <div style="display:flex;gap:10px 14px;flex-wrap:wrap;align-items:center">
+                  <span style="font:500 14px 'Hanken Grotesk';color:var(--mut)">Kind</span>
+                  <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden">
+                    <sc-for list="{{ ak.gKinds }}" as="k" hint-placeholder-count="2"><button onClick="{{ k.onClick }}" style="border:0;background:{{ k.bg }};color:{{ k.col }};padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';white-space:nowrap">{{ k.label }}</button></sc-for>
+                  </div>
+                  <span style="font:500 14px 'Hanken Grotesk';color:var(--mut)">Sentences</span>
+                  <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden">
+                    <sc-for list="{{ ak.gModes }}" as="k" hint-placeholder-count="2"><button onClick="{{ k.onClick }}" style="border:0;background:{{ k.bg }};color:{{ k.col }};padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';white-space:nowrap">{{ k.label }}</button></sc-for>
+                  </div>
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                  <label style="display:flex;gap:8px;align-items:center;flex:1 1 260px;min-width:0;font:500 14px 'Hanken Grotesk';color:var(--mut)">about<input value="{{ ak.gSubj }}" onChange="{{ ak.onGSubj }}" placeholder="a person, office or topic" style="flex:1;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font:500 14px 'Hanken Grotesk';color:var(--ink);outline:none"></input></label>
+                  <button onClick="{{ ak.gFill }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:7px 16px;cursor:pointer;font:600 14px 'Hanken Grotesk';opacity:{{ ak.gOp }}" style-hover="background:#7c3aed">{{ ak.gRunLabel }}</button>
+                  <button onClick="{{ ak.gOpen }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Open the Draft →</button>
+                </div>
+                <sc-if value="{{ ak.gHasNote }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px/1.5 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">{{ ak.gNote }}</span></sc-if>
+              </div>
+            </sc-if>
+            <sc-if value="{{ ak.showCells }}" hint-placeholder-val="{{ true }}">
+            <sc-for list="{{ ak.turns }}" as="t" hint-placeholder-count="0">
+              <div style="display:flex;flex-direction:column" data-cell="{{ t.i }}">
+                <div style="display:flex;gap:10px;align-items:baseline;background:var(--s2);border:1px solid var(--line);border-bottom:0;border-radius:12px 12px 0 0;padding:9px 16px;flex-wrap:wrap">
+                  <span style="font:600 11px 'JetBrains Mono';color:var(--acc);white-space:nowrap">In [{{ t.n }}]</span>
+                  <sc-if value="{{ ak.mChat }}" hint-placeholder-val="{{ true }}"><span style="font:500 18px/1.35 'Newsreader',serif;color:var(--ink);text-wrap:pretty;min-width:0;flex:1">{{ t.q }}</span></sc-if>
+                  <sc-if value="{{ ak.mNb }}" hint-placeholder-val="{{ false }}">
+                    <textarea defaultValue="{{ t.q }}" rows="1" title="Edit, then Run to re-ask with this text" style="flex:1;min-width:0;background:var(--s1);border:1px solid var(--line2);border-radius:6px;resize:vertical;font:400 14px/1.4 'JetBrains Mono';color:var(--ink);outline:none;padding:4px 8px"></textarea>
+                    <button onClick="{{ t.onRun }}" title="Run this cell — re-asks with the text above" style="flex:none;background:#8b5cf6;border:0;color:#fff;border-radius:6px;padding:4px 12px;cursor:pointer;font:600 13px 'Hanken Grotesk'">Run</button>
+                  </sc-if>
+                </div>
+                <section style="background:var(--s1);border:1px solid var(--line);border-radius:0 0 14px 14px;padding:14px 18px 16px;display:flex;flex-direction:column;gap:12px">
+                  <sc-if value="{{ t.hasRes }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ t.resLines }}" as="x" hint-placeholder-count="0"><span style="font:500 12px 'JetBrains Mono';color:{{ x.col }}">{{ x.t }}</span></sc-for></sc-if>
+                  <sc-if value="{{ t.hasNotesLine }}" hint-placeholder-val="{{ false }}">
+                    <details style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:8px 12px">
+                      <summary style="cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2)"><span style="font:600 11px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc);margin-right:8px">What the model was given</span>{{ t.notesLine }}</summary>
+                      <sc-if value="{{ t.hasNotes }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:2px;padding-top:8px"><sc-for list="{{ t.notesLines }}" as="x" hint-placeholder-count="0"><span style="font:400 13px/1.5 'JetBrains Mono';color:var(--ink2)">{{ x.l }}</span></sc-for></div></sc-if>
+                    </details>
+                  </sc-if>
+                  <sc-if value="{{ t.hasRd }}" hint-placeholder-val="{{ false }}">
+                    <div style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">
+                      <span style="font:600 11px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">From the reader’s pass over the corpus, not the model</span>
+                      <sc-for list="{{ t.rdLines }}" as="x" hint-placeholder-count="0"><button onClick="{{ x.onClick }}" style="all:unset;cursor:pointer;font:400 14px/1.45 'Hanken Grotesk';color:var(--ink2)" style-hover="color:var(--acc)">{{ x.t }}</button></sc-for>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ t.hasComp }}" hint-placeholder-val="{{ false }}">
+                    <div style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">
+                      <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><span style="font:600 11px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">Counted from Records, not by the model</span><button onClick="{{ t.onComp }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="text-decoration:underline">Open in Records →</button></div>
+                      <span style="font:600 14px 'Hanken Grotesk';color:var(--ink)">{{ t.compHead }}</span>
+                      <sc-for list="{{ t.compLines }}" as="x" hint-placeholder-count="0"><span style="font:400 13px 'JetBrains Mono';color:var(--ink2)">{{ x.l }}</span></sc-for>
+                      <span style="font:400 12px 'Hanken Grotesk';color:var(--dim)">{{ t.compSaid }}</span>
+                    </div>
+                  </sc-if>
+                  <p style="margin:0;font:400 17px/1.65 'Newsreader',serif;color:var(--ink);text-wrap:pretty"><sc-for list="{{ t.sents }}" as="x" hint-placeholder-count="3"><span style="text-decoration:{{ x.deco }};text-underline-offset:4px;text-decoration-thickness:1px">{{ x.t }}</span><sc-if value="{{ x.hasSrc }}" hint-placeholder-val="{{ false }}"><button onClick="{{ x.onSrc }}" title="Read the passage this sentence matches" style="all:unset;cursor:pointer;vertical-align:super;font:600 11px 'JetBrains Mono';color:var(--acc);margin:0 4px 0 -2px" style-hover="text-decoration:underline">{{ x.n }}</button></sc-if></sc-for></p>
+                  <sc-if value="{{ t.hasBad }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px 'Hanken Grotesk';color:var(--amber)">Not in the material: {{ t.bad }}</span></sc-if>
+                  <sc-if value="{{ t.noMaterial }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px 'Hanken Grotesk';color:var(--mut)">No passage shared a word with the question, so the model answered without material. Nothing here carries an address.</span></sc-if>
+                  <sc-if value="{{ t.hasSrcs }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column">
+                      <sc-for list="{{ t.srcs }}" as="x" hint-placeholder-count="2">
+                        <div style="display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px 10px;border-top:1px solid var(--line);padding:10px 0">
+                          <span style="font:600 12px 'JetBrains Mono';color:var(--acc)">{{ x.n }}</span>
+                          <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+                            <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline"><span style="font:600 14px/1.35 'Hanken Grotesk';color:var(--ink);min-width:0">{{ x.title }}</span><span style="font:500 12px 'JetBrains Mono';color:var(--mut);white-space:nowrap">{{ x.date }}</span></div>
+                            <span style="font:400 15px/1.5 'Newsreader',serif;color:var(--ink2);text-wrap:pretty">{{ x.text }}</span>
+                            <div style="display:flex;gap:14px"><sc-if value="{{ x.canPin }}" hint-placeholder-val="{{ false }}"><button onClick="{{ x.onPin }}" style="all:unset;cursor:pointer;font:600 13px 'Hanken Grotesk';color:{{ x.pinColor }}" style-hover="text-decoration:underline">{{ x.pinLabel }}</button></sc-if><button onClick="{{ x.onRead }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="text-decoration:underline">Read in context →</button></div>
+                          </div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                  <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px">
+                    <span style="font:500 12px 'JetBrains Mono';color:var(--ink2);flex:1;min-width:0">{{ t.rec }}</span>
+                    <sc-if value="{{ t.canGen }}" hint-placeholder-val="{{ false }}"><button onClick="{{ t.onGen }}" title="Turn this answer’s cited passages into a Draft document" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="border-color:var(--acc)">Generate a document →</button></sc-if>
+                  </div>
+                  <span style="font:400 12px 'JetBrains Mono';color:var(--dim)">Folded to: {{ t.fold }}</span>
+                  <span style="font:400 12px 'JetBrains Mono';color:var(--dim)">{{ t.meter }} · {{ t.meta }}</span>
+                </section>
+              </div>
+            </sc-for>
+            <sc-if value="{{ ak.hasPending }}" hint-placeholder-val="{{ false }}">
+              <div data-cell="pending" style="display:flex;flex-direction:column">
+                <div style="display:flex;gap:10px;align-items:baseline;background:var(--s2);border:1px solid #8b5cf6;border-bottom:0;border-radius:12px 12px 0 0;padding:9px 16px;flex-wrap:wrap">
+                  <span style="font:600 11px 'JetBrains Mono';color:var(--acc);white-space:nowrap">In [{{ ak.nextN }}]</span>
+                  <span style="font:500 18px/1.35 'Newsreader',serif;color:var(--ink);text-wrap:pretty;min-width:0;flex:1">{{ ak.pendingQ }}</span>
+                </div>
+                <section style="background:var(--s1);border:1px solid #8b5cf6;border-radius:0 0 14px 14px;padding:14px 18px 16px;display:flex;flex-direction:column;gap:10px">
+                  <sc-if value="{{ ak.hasPendComp }}" hint-placeholder-val="{{ false }}"><span style="font:500 13px 'JetBrains Mono';color:var(--acc)">Counted from Records · {{ ak.pendComp }}</span></sc-if>
+                  <sc-if value="{{ ak.hasStream }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font:400 17px/1.6 'Newsreader',serif;color:var(--ink2);white-space:pre-wrap;text-wrap:pretty">{{ ak.stream }}</p></sc-if>
+                  <span style="font:500 13px 'Hanken Grotesk';color:var(--mut)">{{ ak.stage }}</span>
+                </section>
+              </div>
+            </sc-if>
+            <sc-if value="{{ ak.hasErr }}" hint-placeholder-val="{{ false }}"><span style="font:400 14px 'Hanken Grotesk';color:var(--bad)">{{ ak.err }}</span></sc-if>
+            <div id="ak-composer" style="position:sticky;bottom:0;z-index:12;background:var(--hdr);backdrop-filter:blur(8px);padding:10px 0 2px;border-top:1px solid var(--line)">
+              <div style="display:flex;flex-direction:column;gap:8px;background:var(--s1);border:1px solid var(--line2);border-radius:12px;padding:10px 12px">
+                <textarea value="{{ ak.q }}" onChange="{{ ak.onQ }}" onKeyDown="{{ ak.onKey }}" rows="2" placeholder="Ask about the sources in this workspace — Enter to ask, Shift+Enter for a new line" style="background:transparent;border:0;outline:none;resize:vertical;color:var(--ink);font:400 16px/1.5 'Hanken Grotesk';min-height:48px"></textarea>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                  <sc-if value="{{ ak.noTurns }}" hint-placeholder-val="{{ true }}"><sc-for list="{{ ak.examples }}" as="x" hint-placeholder-count="3"><button onClick="{{ x.onClick }}" style="background:var(--s2);border:1px solid var(--line2);border-radius:999px;padding:3px 10px;cursor:pointer;font:400 13px 'Hanken Grotesk';color:var(--ink2);white-space:normal;text-align:left" style-hover="border-color:var(--acc)">{{ x.t }}</button></sc-for></sc-if>
+                  <div style="margin-left:auto;display:flex;gap:8px">
+                    <sc-if value="{{ ak.busy }}" hint-placeholder-val="{{ false }}"><button onClick="{{ ak.stop }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)">Stop</button></sc-if>
+                    <button onClick="{{ ak.send }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 16px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Ask ↵</button>
+                  </div>
                 </div>
               </div>
             </div>
-            <sc-if value="{{ ak.hasErr }}" hint-placeholder-val="{{ false }}"><span style="font:400 14px 'Hanken Grotesk';color:var(--bad)">{{ ak.err }}</span></sc-if>
-            <sc-if value="{{ ak.hasPending }}" hint-placeholder-val="{{ false }}">
-              <section style="background:var(--s1);border:1px solid #8b5cf6;border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
-                <span style="font:500 20px/1.3 'Newsreader',serif;color:var(--ink)">{{ ak.pendingQ }}</span>
-                <sc-if value="{{ ak.hasPendComp }}" hint-placeholder-val="{{ false }}"><span style="font:500 13px 'JetBrains Mono';color:var(--acc)">Counted from Records · {{ ak.pendComp }}</span></sc-if>
-                <sc-if value="{{ ak.hasStream }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font:400 17px/1.6 'Newsreader',serif;color:var(--ink2);white-space:pre-wrap;text-wrap:pretty">{{ ak.stream }}</p></sc-if>
-                <span style="font:500 13px 'Hanken Grotesk';color:var(--mut)">{{ ak.stage }}</span>
-              </section>
             </sc-if>
-            <sc-for list="{{ ak.turns }}" as="t" hint-placeholder-count="0">
-              <section style="background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:12px">
-                <div style="display:flex;gap:10px;align-items:baseline"><span style="font:600 12px 'JetBrains Mono';color:var(--dim)">{{ t.n }}</span><span style="font:500 20px/1.3 'Newsreader',serif;color:var(--ink);text-wrap:pretty">{{ t.q }}</span></div>
-                <sc-if value="{{ t.hasRes }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ t.resLines }}" as="x" hint-placeholder-count="0"><span style="font:500 12px 'JetBrains Mono';color:{{ x.col }}">{{ x.t }}</span></sc-for></sc-if>
-                <sc-if value="{{ t.hasNotesLine }}" hint-placeholder-val="{{ false }}">
-                  <details style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:8px 12px">
-                    <summary style="cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2)"><span style="font:600 11px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc);margin-right:8px">What the model was given</span>{{ t.notesLine }}</summary>
-                    <sc-if value="{{ t.hasNotes }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:2px;padding-top:8px"><sc-for list="{{ t.notesLines }}" as="x" hint-placeholder-count="0"><span style="font:400 13px/1.5 'JetBrains Mono';color:var(--ink2)">{{ x.l }}</span></sc-for></div></sc-if>
-                  </details>
-                </sc-if>
-                <sc-if value="{{ t.hasRd }}" hint-placeholder-val="{{ false }}">
-                  <div style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">
-                    <span style="font:600 11px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">From the reader’s pass over the corpus, not the model</span>
-                    <sc-for list="{{ t.rdLines }}" as="x" hint-placeholder-count="0"><button onClick="{{ x.onClick }}" style="all:unset;cursor:pointer;font:400 14px/1.45 'Hanken Grotesk';color:var(--ink2)" style-hover="color:var(--acc)">{{ x.t }}</button></sc-for>
-                  </div>
-                </sc-if>
-                <sc-if value="{{ t.hasComp }}" hint-placeholder-val="{{ false }}">
-                  <div style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">
-                    <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><span style="font:600 11px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">Counted from Records, not by the model</span><button onClick="{{ t.onComp }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="text-decoration:underline">Open in Records →</button></div>
-                    <span style="font:600 14px 'Hanken Grotesk';color:var(--ink)">{{ t.compHead }}</span>
-                    <sc-for list="{{ t.compLines }}" as="x" hint-placeholder-count="0"><span style="font:400 13px 'JetBrains Mono';color:var(--ink2)">{{ x.l }}</span></sc-for>
-                    <span style="font:400 12px 'Hanken Grotesk';color:var(--dim)">{{ t.compSaid }}</span>
-                  </div>
-                </sc-if>
-                <p style="margin:0;font:400 17px/1.65 'Newsreader',serif;color:var(--ink);text-wrap:pretty"><sc-for list="{{ t.sents }}" as="x" hint-placeholder-count="3"><span style="text-decoration:{{ x.deco }};text-underline-offset:4px;text-decoration-thickness:1px">{{ x.t }}</span><sc-if value="{{ x.hasSrc }}" hint-placeholder-val="{{ false }}"><button onClick="{{ x.onSrc }}" title="Read the passage this sentence matches" style="all:unset;cursor:pointer;vertical-align:super;font:600 11px 'JetBrains Mono';color:var(--acc);margin:0 4px 0 -2px" style-hover="text-decoration:underline">{{ x.n }}</button></sc-if></sc-for></p>
-                <sc-if value="{{ t.hasBad }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px 'Hanken Grotesk';color:var(--amber)">Not in the material: {{ t.bad }}</span></sc-if>
-                <sc-if value="{{ t.noMaterial }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px 'Hanken Grotesk';color:var(--mut)">No passage shared a word with the question, so the model answered without material. Nothing here carries an address.</span></sc-if>
-                <sc-if value="{{ t.hasSrcs }}" hint-placeholder-val="{{ false }}">
-                  <div style="display:flex;flex-direction:column">
-                    <sc-for list="{{ t.srcs }}" as="x" hint-placeholder-count="2">
-                      <div style="display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px 10px;border-top:1px solid var(--line);padding:10px 0">
-                        <span style="font:600 12px 'JetBrains Mono';color:var(--acc)">{{ x.n }}</span>
-                        <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
-                          <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline"><span style="font:600 14px/1.35 'Hanken Grotesk';color:var(--ink);min-width:0">{{ x.title }}</span><span style="font:500 12px 'JetBrains Mono';color:var(--mut);white-space:nowrap">{{ x.date }}</span></div>
-                          <span style="font:400 15px/1.5 'Newsreader',serif;color:var(--ink2);text-wrap:pretty">{{ x.text }}</span>
-                          <div style="display:flex;gap:14px"><sc-if value="{{ x.canPin }}" hint-placeholder-val="{{ false }}"><button onClick="{{ x.onPin }}" style="all:unset;cursor:pointer;font:600 13px 'Hanken Grotesk';color:{{ x.pinColor }}" style-hover="text-decoration:underline">{{ x.pinLabel }}</button></sc-if><button onClick="{{ x.onRead }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="text-decoration:underline">Read in context →</button></div>
-                        </div>
-                      </div>
-                    </sc-for>
-                  </div>
-                </sc-if>
-                <div style="display:flex;flex-direction:column;gap:3px;border-top:1px solid var(--line);padding-top:10px">
-                  <span style="font:500 12px 'JetBrains Mono';color:var(--ink2)">{{ t.rec }}</span>
-                  <span style="font:400 12px 'JetBrains Mono';color:var(--dim)">Folded to: {{ t.fold }}</span>
-                  <span style="font:400 12px 'JetBrains Mono';color:var(--dim)">{{ t.meter }} · {{ t.meta }}</span>
-                </div>
-              </section>
-            </sc-for>
           </div>
-          <aside style="flex:0 1 290px;min-width:250px;position:sticky;top:76px;display:flex;flex-direction:column;gap:12px">
+          <aside style="flex:0 1 290px;min-width:250px;position:sticky;top:calc(var(--hdr-h, 84px) + 12px);display:flex;flex-direction:column;gap:12px">
             <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
               <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">What the model carries</span>
               <span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--mut)">A paraphrase of the conversation so far. It can’t support a claim, and the model is told so.</span>
@@ -885,7 +952,7 @@ select option{background:var(--s1);color:var(--ink)}
               </div>
             </sc-if>
           </section>
-          <aside style="flex:0 1 360px;min-width:280px;position:sticky;top:84px;max-height:calc(100vh - 104px);overflow:auto;display:flex;flex-direction:column;gap:10px">
+          <aside style="flex:0 1 360px;min-width:280px;position:sticky;top:calc(var(--hdr-h, 84px) + 20px);max-height:calc(100vh - 104px);overflow:auto;display:flex;flex-direction:column;gap:10px">
             <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Pins · {{ dr.pinCount }}</span>
             <sc-if value="{{ dr.noPins }}" hint-placeholder-val="{{ false }}">
               <div style="border:1px dashed var(--line2);border-radius:12px;padding:16px;font:400 14px/1.5 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">Select any passage in a source, or press Pin on a search answer or a profile mention.</div>
@@ -1725,7 +1792,7 @@ select option{background:var(--s1);color:var(--ink)}
           </div>
         </sc-if>
         <div style="background:var(--s1);border:1px solid var(--line);border-radius:14px">
-          <div style="position:sticky;top:61px;z-index:15;background:var(--s1);border-radius:14px 14px 0 0;overflow:hidden">
+          <div style="position:sticky;top:var(--hdr-h, 61px);z-index:15;background:var(--s1);border-radius:14px 14px 0 0;overflow:hidden">
           <div style="display:flex;gap:14px;align-items:flex-start;padding:16px 18px 14px;flex-wrap:wrap">
             <button onClick="{{ closeReader }}" title="Back" style="flex:none;width:36px;height:36px;border-radius:10px;border:1px solid var(--line2);background:var(--s2);color:var(--ink);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center" style-hover="border-color:var(--acc)">←</button>
             <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:3px">
@@ -1782,14 +1849,56 @@ select option{background:var(--s1);color:var(--ink)}
           </sc-if>
           <sc-if value="{{ rdMedia.has }}" hint-placeholder-val="{{ false }}">
             <div style="border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));align-items:start">
-              <div style="position:sticky;top:61px;min-width:0;padding:18px 20px 18px 24px;display:flex;flex-direction:column;gap:10px;background:var(--s1);z-index:2">
-                <iframe id="fx-yt" src="{{ rdMedia.src }}" title="{{ rdMedia.title }}" referrerPolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="{{ true }}" style="width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000"></iframe>
+              <div style="position:sticky;top:var(--hdr-h, 61px);min-width:0;padding:18px 20px 18px 24px;display:flex;flex-direction:column;gap:10px;background:var(--s1);z-index:2">
+                <sc-if value="{{ rdMedia.isLocal }}" hint-placeholder-val="{{ false }}">
+                  <sc-if value="{{ rdMedia.hasSrc }}" hint-placeholder-val="{{ false }}">
+                    <sc-if value="{{ rdMedia.isAudio }}" hint-placeholder-val="{{ true }}">
+                      <audio id="fx-local" controls preload="metadata" src="{{ rdMedia.src }}" style="width:100%"></audio>
+                    </sc-if>
+                    <sc-if value="{{ rdMedia.noAudio }}" hint-placeholder-val="{{ false }}">
+                      <video id="fx-local" controls preload="metadata" src="{{ rdMedia.src }}" style="width:100%;max-height:56vh;border:0;border-radius:10px;background:#000"></video>
+                    </sc-if>
+                  </sc-if>
+                  <sc-if value="{{ rdMedia.noSrc }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--amber);text-wrap:pretty">The recording's bytes are kept in this browser's file store — opening…</span></sc-if>
+                </sc-if>
+                <sc-if value="{{ rdMedia.ytOnly }}" hint-placeholder-val="{{ false }}">
+                  <iframe id="fx-yt" src="{{ rdMedia.src }}" title="{{ rdMedia.title }}" referrerPolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="{{ true }}" style="width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000"></iframe>
+                </sc-if>
                 <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><span id="fx-yt-now" style="font:600 13px 'JetBrains Mono';color:var(--acc);white-space:nowrap"></span><span style="font:500 13px 'Hanken Grotesk';color:var(--ink2)">{{ rdMedia.kindLine }}</span></div>
                 <span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">{{ rdMedia.note }}</span>
                 <sc-if value="{{ rdMedia.timed }}" hint-placeholder-val="{{ false }}"><label style="display:flex;gap:8px;align-items:center;font:500 13px 'Hanken Grotesk';color:var(--ink2);cursor:pointer"><input type="checkbox" checked="{{ rdMedia.follow }}" onChange="{{ rdMedia.onFollow }}"></input>Follow the video in the transcript</label></sc-if>
-                <a href="{{ rdMedia.url }}" target="_blank" rel="noopener" style="font:500 13px 'Hanken Grotesk';color:var(--acc);text-decoration:none">Open on YouTube ↗</a>
+                <sc-if value="{{ rdMedia.canAsk }}" hint-placeholder-val="{{ false }}">
+                  <sc-if value="{{ rdMedia.ask }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:10px;border:1px solid #8b5cf6;background:var(--sel);border-radius:12px;padding:12px 14px">
+                      <span style="font:600 13px 'Hanken Grotesk';color:var(--ink)">Which priors should the transcriber listen with?</span>
+                      <span style="font:400 12.5px/1.45 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">{{ rdMedia.priorNote }}</span>
+                      <div style="display:flex;flex-direction:column;gap:6px">
+                        <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)"><input type="radio" name="fx-prior" checked="{{ rdMedia.pw }}" onChange="{{ rdMedia.onPriorW }}">The names this workspace already knows</label>
+                        <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)"><input type="radio" name="fx-prior" checked="{{ rdMedia.pn }}" onChange="{{ rdMedia.onPriorN }}">Plain English — no vocabulary prior</label>
+                        <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)"><input type="radio" name="fx-prior" checked="{{ rdMedia.pm }}" onChange="{{ rdMedia.onPriorM }}">My own terms</label>
+                        <sc-if value="{{ rdMedia.pm }}" hint-placeholder-val="{{ false }}"><input onChange="{{ rdMedia.onTerms }}" placeholder="names, places, jargon, separated by commas" style="font:400 13px 'Hanken Grotesk';color:var(--ink);background:var(--s1);border:1px solid var(--line2);border-radius:6px;padding:6px 9px;outline:none"></sc-if>
+                      </div>
+                      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                        <label style="display:flex;gap:6px;align-items:center;font:500 13px 'Hanken Grotesk';color:var(--ink2)">Language<select onChange="{{ rdMedia.onLang }}" value="{{ rdMedia.lang }}" style="font:400 13px 'Hanken Grotesk';color:var(--ink);background:var(--s1);border:1px solid var(--line2);border-radius:6px;padding:4px 6px"><sc-for list="{{ rdMedia.langs }}" as="l" hint-placeholder-count="2"><option value="{{ l.v }}">{{ l.l }}</option></sc-for></select></label>
+                        <label style="display:flex;gap:6px;align-items:center;font:500 13px 'Hanken Grotesk';color:var(--ink2)">Recognizer<select onChange="{{ rdMedia.onModel }}" value="{{ rdMedia.model }}" style="font:400 13px 'Hanken Grotesk';color:var(--ink);background:var(--s1);border:1px solid var(--line2);border-radius:6px;padding:4px 6px"><sc-for list="{{ rdMedia.models }}" as="m" hint-placeholder-count="2"><option value="{{ m.v }}">{{ m.l }}</option></sc-for></select></label>
+                      </div>
+                      <div style="display:flex;gap:8px;align-items:center">
+                        <button onClick="{{ rdMedia.onTx }}" style="border:0;background:var(--acc2);color:#fff;border-radius:8px;padding:7px 14px;cursor:pointer;font:600 13px 'Hanken Grotesk'">Transcribe with these priors</button>
+                        <button onClick="{{ rdMedia.onCancelAsk }}" style="border:1px solid var(--line2);background:transparent;color:var(--mut);border-radius:8px;padding:7px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk'">Cancel</button>
+                      </div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ rdMedia.noAsk }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                      <button onClick="{{ rdMedia.onAsk }}" style="border:0;background:var(--acc2);color:#fff;border-radius:8px;padding:7px 14px;cursor:pointer;font:600 13px 'Hanken Grotesk'">Transcribe it (Whisper, in this browser)</button>
+                      <span style="font:400 12.5px 'Hanken Grotesk';color:var(--mut)">You'll be asked which priors it should listen with.</span>
+                    </div>
+                  </sc-if>
+                </sc-if>
+                <sc-if value="{{ rdMedia.busy }}" hint-placeholder-val="{{ false }}"><span style="font:500 13px 'JetBrains Mono';color:var(--acc)">{{ rdMedia.prog }}</span></sc-if>
+                <sc-if value="{{ rdMedia.hasUrl }}" hint-placeholder-val="{{ false }}"><a href="{{ rdMedia.url }}" target="_blank" rel="noopener" style="font:500 13px 'Hanken Grotesk';color:var(--acc);text-decoration:none">Open on YouTube ↗</a></sc-if>
               </div>
-              <div id="fx-tx" style="min-width:0;overflow-x:hidden;overflow-wrap:anywhere;border-left:1px solid var(--line);padding:18px 28px 40px;font:400 17px/1.65 'Newsreader',serif;color:var(--ink);max-height:calc(100vh - 80px);overflow:auto;position:sticky;top:61px">
+              <div id="fx-tx" style="min-width:0;overflow-x:hidden;overflow-wrap:anywhere;border-left:1px solid var(--line);padding:18px 28px 40px;font:400 17px/1.65 'Newsreader',serif;color:var(--ink);max-height:calc(100vh - 80px);overflow:auto;position:sticky;top:var(--hdr-h, 61px)">
                 <span style="display:block;font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-bottom:10px">{{ rdMedia.txTitle }}</span>
                 <div ref="{{ readerRef }}"></div>
               </div>
@@ -1993,30 +2102,6 @@ select option{background:var(--s1);color:var(--ink)}
 
   </div>
 </div>
-  <sc-if value="{{ repo.show }}" hint-placeholder-val="{{ false }}">
-    <div onClick="{{ repo.closeBg }}" style="position:fixed;inset:0;z-index:50;background:rgba(6,5,12,.75);display:flex;align-items:center;justify-content:center;padding:20px">
-      <div style="width:100%;max-width:620px;background:var(--s1);border:1px solid var(--line2);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:14px">
-        <div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0;font:500 24px 'Newsreader',serif">Where this data comes from</h2><button onClick="{{ repo.close }}" style="background:none;border:0;color:var(--mut);cursor:pointer;font-size:16px">✕</button></div>
-        <div style="display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--line);padding-top:10px">
-          <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">holodeck/corpus.json</span>
-          <span style="font:400 14px/1.45 'Hanken Grotesk';color:var(--ink)">{{ repo.corpusLine }}</span>
-          <span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--mut)">If present, Holodeck loads the processed corpus from this file; otherwise it reads the captures directly.</span>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--line);padding-top:10px">
-          <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">holodeck/workspace.json</span>
-          <span style="font:400 14px/1.45 'Hanken Grotesk';color:var(--ink)">{{ repo.wsLine }}</span>
-          <span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--mut)">If present, read on open and merged under anything in this browser.</span>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px">
-          <span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--mut)">This view only reads the shared source store. Nothing here writes to it; those files are produced upstream. What you do here (added sources, decisions, reading order) stays in this browser.</span>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button onClick="{{ repo.rebuild }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:8px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Reload</button>
-          </div>
-          <sc-if value="{{ repo.hasMsg }}" hint-placeholder-val="{{ false }}"><span style="font:500 14px/1.45 'Hanken Grotesk';color:var(--ink)">{{ repo.msg }}</span></sc-if>
-        </div>
-      </div>
-    </div>
-  </sc-if>
   <sc-if value="{{ showAdd }}" hint-placeholder-val="{{ false }}">
     <div onClick="{{ closeAddBg }}" style="position:fixed;inset:0;z-index:50;background:rgba(6,5,12,.75);display:flex;align-items:center;justify-content:center;padding:20px">
       <div style="width:100%;max-width:620px;background:var(--s1);border:1px solid var(--line2);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:12px">
@@ -2031,6 +2116,10 @@ select option{background:var(--s1);color:var(--ink)}
         </div>
         <textarea value="{{ draftText }}" onChange="{{ onDraftText }}" placeholder="Paste text here…" rows="9" style="background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:10px 12px;outline:none;font:400 15px/1.5 'Newsreader',serif;resize:vertical"></textarea>
         <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--mut)">or upload text files <input type="file" multiple="{{ true }}" onChange="{{ onFiles }}" style="color:var(--mut)"></label>
+        <div style="display:flex;gap:10px;align-items:center;border-top:1px solid var(--line);padding-top:10px">
+          <input value="{{ repoVal }}" onChange="{{ onRepoVal }}" placeholder="…or a GitHub repo: owner/repo" style="flex:1 1 260px;min-width:0;background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:9px 12px;outline:none;font:400 13px 'JetBrains Mono'"></input>
+          <button onClick="{{ addRepo }}" style="flex:none;background:none;border:1px solid var(--line2);border-radius:8px;padding:9px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Pull from repo</button>
+        </div>
         <div style="display:flex;gap:10px;align-items:center">
           <button onClick="{{ addDraft }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:9px 18px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Add</button>
           <span style="flex:1;font-size:13px;color:var(--mut)">{{ customNote }}</span>
@@ -2052,24 +2141,11 @@ select option{background:var(--s1);color:var(--ink)}
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;defaultCorpus&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;ohs&quot;,&quot;keybridge&quot;,&quot;bridge&quot;,&quot;transit&quot;,&quot;kitchen&quot;,&quot;custom&quot;],&quot;default&quot;:&quot;ohs&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Content&quot;},&quot;showTerrainNames&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Display&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;showTerrainNames&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Display&quot;}}">
 function digammaH(x) { let r = 0; while (x < 6) { r -= 1 / x; x += 1; } const f = 1 / (x * x); return r + Math.log(x) - 0.5 / x - f * (1 / 12 - f * (1 / 120 - f * (1 / 252 - f * (1 / 240 - f / 132)))); }
 const klAdmitH = (bv, B) => Math.max(0, Math.log(B) - Math.log(bv) + digammaH(bv + 1) - digammaH(B + 1));
-const LP_RAW = 'https://raw.githubusercontent.com/clovenbradshaw-ctrl/live_priors/main/';
-const LP_SETS = {
-  gov: { label: 'Government & legal', desc: 'US Code and UK Acts from live_priors (06-government-legal)', paths: ['USC-T1-S1', 'USC-T12-S1', 'USC-T13-S3', 'USC-T15-S1', 'USC-T15-S3', 'USC-T18-S1', 'USC-T19-S1', 'USC-T19-S2', 'USC-T26-S1', 'USC-T26-S2', 'USC-T28-S1', 'USC-T29-S2', 'USC-T3-S1', 'USC-T30-S1', 'USC-T33-S1', 'USC-T35-S1', 'USC-T35-S2', 'USC-T4-S1', 'USC-T7-S1', 'USC-T7-S2'].map(x => '06-government-legal/world-legislation/us/' + x + '.md').concat(['ukpga-2015-1', 'ukpga-2017-1', 'asp-2017-1', 'asp-2020-1', 'asp-2021-1', 'nia-2016-1', 'asc-2020-1'].map(x => '06-government-legal/world-legislation/uk/' + x + '.md')) },
-  ency: { label: 'Encyclopedic', desc: 'Wikipedia articles from live_priors (02-encyclopedic)', paths: ['Aristotle', 'Byzantine_Empire', 'Chemistry', 'Christianity', 'Cold_War', 'Confucianism', 'DNA', 'Drama', 'Entropy', 'Evolution', 'Epistemology', 'Ethics', 'Friedrich_Nietzsche', 'General_relativity', 'Hinduism', 'Homer', 'Immanuel_Kant', 'Industrial_Revolution', 'Islam', 'Judaism', 'Leo_Tolstoy', 'Logic', 'Mathematics', 'Ming_dynasty', 'Mongol_Empire', 'Neuroscience', 'Novel', 'Plato', 'Poetry', 'Quantum_mechanics', 'Renaissance'].map(x => '02-encyclopedic/wikipedia/' + x + '.txt') },
-  lit: { label: 'Books', desc: 'English books from live_priors (01-literature-books/gutenberg)', paths: ['pg1342_Pride_and_Prejudice', 'pg1661_The_Adventures_of_Tom_Sawyer', 'pg174_The_Picture_of_Dorian_Gray', 'pg345_Dracula', 'pg768_The_Adventures_of_Sherlock_Holmes', 'pg62168_The_Origin_of_Species_by_Darwin', 'pg59129_Leviathan_by_Hobbes', 'pg11_Alice_s_Adventures_in_Wonderland'].map(x => '01-literature-books/gutenberg/' + x + '.txt') },
-};
-LP_SETS.general = { label: 'General English', desc: 'books, encyclopedia articles, and US/UK law from live_priors', paths: LP_SETS.lit.paths.concat(LP_SETS.ency.paths, LP_SETS.gov.paths) };
-const _lpCache = {};
 const holoTokens = t => [...new Set((clean(t).toLowerCase().replace(/[\u2019']/g, '').match(/[a-z][a-z-]{2,}/g) || []).filter(w => !STOP.has(w) && !/^-|-$/.test(w)))];
-async function loadBaseline(id, onProgress) {
-  if (_lpCache[id]) return _lpCache[id];
-  const set = LP_SETS[id]; const counts = new Map(); let N = 0, done = 0, words = 0;
-  await ohsPool(set.paths, 6, async p => { try { const r = await fetch(LP_RAW + p); if (r.ok) { let t = await r.text(); t = t.replace(/^---[\s\S]*?\n---\n/, ''); const ws = (t.toLowerCase().replace(/[\u2019']/g, '').match(/[a-z][a-z-]{2,}/g) || []); ws.forEach(w => { if (STOP.has(w)) return; counts.set(w, (counts.get(w) || 0) + 1); N++; }); words += ws.length; } } catch (e) {} onProgress && onProgress(++done, set.paths.length); });
-  return (_lpCache[id] = { id, label: set.label, desc: set.desc, files: set.paths.length, counts, N, V: counts.size, words });
-}
+const VIEW_LABEL = { summary: 'Overview', search: 'Search', sources: 'Sources', names: 'Names', types: 'Types', figures: 'Figures', statements: 'Statements', connections: 'Connections', framing: 'Framing', views: 'Views', patterns: 'Patterns', surprise: 'Surprise', reader: 'Sources', profile: 'Names', draft: 'Draft', records: 'Records', ask: 'Ask the Fold', ingest: 'Add & publish' };
 const SU_CURSORS = [
   { id: 'loo', label: 'Everything else', desc: 'Each statement against normal text plus everything the other sources in this view say, regardless of date: what this source says that nothing else in view, and nothing normal, prepares you for.' },
   { id: 'pub', label: 'When published', desc: 'Sources in the order they were published: what a reader following the story would have learned, and when.' },
@@ -2151,77 +2227,22 @@ const inferRole = d => { const u = (d.url || '').toLowerCase(), t = (d.type || '
   if (/record|register|court|contract|invoice|log\b/i.test(t)) return 'Primary record';
   return 'Unsorted'; };
 const loadMeta = () => { try { return JSON.parse(localStorage.getItem('fold-explorer-srcmeta') || '{}'); } catch (e) { return {}; } };
-const OHS_REPO = 'clovenbradshaw-ctrl/ohs-custody', OHS_RAW = 'https://raw.githubusercontent.com/' + OHS_REPO + '/main/';
 // The side panel is fixed full-height at the right edge; it's used whenever the reader column keeps at least the panel's own width (250 nav + 40 padding + panel + reader >= panel), else a bottom sheet.
 const SIDE_PANEL_W = 360;
 const SIDE_PANEL_MIN_VW = 250 + 40 + SIDE_PANEL_W + SIDE_PANEL_W;
-const OHS_DERIVED = ['AUD-CTTE-BYLAWS', 'AUD-CTTE-DEC9', 'AUD-CTTE-SEP23-AGENDA', 'AUD-CTTE-SEP23-MINUTES', 'AUD-HID-2023', 'AUD-HID-FOLLOWUP-2025', 'LEG-AMD1', 'LEG-AMD2', 'MHRC-ED-DETERMINATION', 'MHRC-STAFF-INVESTIGATIVE-REPORT', 'MUNI-263040.rendered', 'WELSCH-AUDIT-REQUEST-LETTER'];
-const OHS_TIER = { 'primary-record': 'Primary record', 'secondary-quoting-primary': 'Article quoting the record', 'secondary': 'Article', 'own-publication': 'Commentary', 'commentary': 'Commentary' };
-const OHS_STATUS = { captured: 'captured and independently archived', 'bytes-held': 'bytes held, not yet archived', 'local-only': 'held locally only, no independent archive', 'anchor-missing': 'anchor not found in the captured bytes', 'no-text-layer': 'PDF has no text layer', 'not-located': 'no URL located yet', 'fetch-failed': 'could not be fetched', unverified: 'not yet attempted' };
-const OHS_JUNK = 'script,style,noscript,template,svg,iframe,nav,header,footer,aside,button,select,input,figure figcaption,[role=navigation],[role=banner],[role=contentinfo],[aria-hidden=true],.share,.social,.newsletter,.related,.advertisement,.ad,#comments';
-const OHS_BLOCK = 'h1,h2,h3,h4,h5,p,li,blockquote,pre,td,th,dt,dd,label,span[id]';
-const OHS_MON = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ');
-function ohsDateLabel(v) { const m = String(v || '').match(/((?:19|20)\d\d)-(\d\d)(?:-(\d\d))?/); if (m) return (m[3] ? +m[3] + ' ' : '') + OHS_MON[+m[2] - 1] + ' ' + m[1]; const t = Date.parse(v); if (!isNaN(t)) { const d = new Date(t); return d.getUTCDate() + ' ' + OHS_MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); } return ''; }
-function ohsMeta(d) {
-  const mc = sel => { for (const q of sel.split('|')) { const el = d.querySelector(q); const v = el && (el.getAttribute('content') || el.getAttribute('datetime') || el.textContent); if (v && v.trim()) return v.trim(); } return ''; };
-  const ld = []; d.querySelectorAll('script[type="application/ld+json"]').forEach(sc => { try { const j = JSON.parse(sc.textContent); (Array.isArray(j) ? j : j['@graph'] || [j]).forEach(x => ld.push(x)); } catch (e) {} });
-  const art = ld.find(x => /Article|Posting|Report|NewsArticle|WebPage/.test([].concat(x['@type'] || []).join(' ')) && (x.author || x.datePublished)) || {};
-  let authors = [];
-  const pushA = v => { if (!v) return; if (Array.isArray(v)) return v.forEach(pushA); if (typeof v === 'object') return pushA(v.name); String(v).replace(/^\s*by\s+/i, '').split(/\s*(?:,|\band\b|&|\|)\s*/).forEach(x => { x = x.replace(/\s+/g, ' ').trim(); if (x && x.length < 50 && !/^https?:|@|\d{3}/.test(x) && /[A-Za-z]/.test(x) && x.split(' ').length <= 5) authors.push(x); }); };
-  pushA(art.author);
-  if (!authors.length) pushA(mc('meta[name="author"]|meta[name="parsely-author"]|meta[name="sailthru.author"]|meta[property="article:author"]|meta[name="byl"]|meta[name="dc.creator"]'));
-  if (!authors.length) { const el = d.querySelector('[rel="author"], [itemprop="author"] [itemprop="name"], [itemprop="author"], .byline a, .byline__name, .author-name, .c-byline__author, .tnt-byline, [class*="byline"] [class*="author"], [class*="byline"]'); if (el) pushA(el.textContent); }
-  authors = [...new Set(authors)].filter(a => !/^(staff|admin|editor|news|the)$/i.test(a));
-  const pub = art.datePublished || mc('meta[property="article:published_time"]|meta[name="pubdate"]|meta[name="publish-date"]|meta[name="parsely-pub-date"]|meta[itemprop="datePublished"]|meta[name="dc.date"]|meta[name="date"]|time[pubdate]|time[datetime]');
-  const publisher = (mc('meta[property="og:site_name"]|meta[name="application-name"]|meta[name="publisher"]') || (art.publisher && art.publisher.name) || '').replace(/\s+/g, ' ').trim();
-  return { authors, published: pub || '', pubLabel: ohsDateLabel(pub), publisher };
-}
-function ohsHtmlText(html) {
-  const d = new DOMParser().parseFromString(html, 'text/html');
-  const meta = ohsMeta(d);
-  const title = (d.querySelector('meta[property="og:title"]')?.content || d.querySelector('h1')?.textContent || d.title || '').replace(/\s+/g, ' ').trim();
-  d.querySelectorAll(OHS_JUNK).forEach(n => n.remove());
-  const score = new Map();
-  d.querySelectorAll('p').forEach(p => { const n = p.textContent.replace(/\s+/g, ' ').trim().length; if (n < 40) return; let el = p.parentElement, w = 1; for (let i = 0; el && i < 3; i++, el = el.parentElement, w /= 2) score.set(el, (score.get(el) || 0) + n * w); });
-  let root = null, best = 0; score.forEach((v, el) => { if (v > best) { best = v; root = el; } });
-  if (root) { let r = root; while (r.parentElement && r.parentElement !== d.body) { const h = r.parentElement.querySelector('h1'); if (h && !r.contains(h) && r.parentElement.textContent.length < r.textContent.length * 1.6) { r = r.parentElement; break; } if (r.parentElement.textContent.length > r.textContent.length * 1.25) break; r = r.parentElement; } root = r; }
-  const st = t => TAG_STYLE[t] ? ' style="' + TAG_STYLE[t] + '"' : '';
-  const collect = r => { const seen = new Set(), out = []; let inList = false;
-    r.querySelectorAll(OHS_BLOCK).forEach(el => { if (el.querySelector(OHS_BLOCK)) return; const t = el.textContent.replace(/\s+/g, ' ').trim(); if (!t || seen.has(t)) return;
-      const tg = el.tagName, isH = /^H[1-6]$/.test(tg); if (!isH && t.split(' ').length < 3) return; seen.add(t);
-      const tag = isH ? tg : tg === 'LI' ? 'LI' : tg === 'BLOCKQUOTE' ? 'BLOCKQUOTE' : tg === 'PRE' ? 'PRE' : 'P';
-      if (tag === 'LI' && !inList) { out.push('<ul' + st('UL') + '>'); inList = true; } if (tag !== 'LI' && inList) { out.push('</ul>'); inList = false; }
-      const lo = tag.toLowerCase(); out.push('<' + lo + st(tag) + '>' + esc(t) + '</' + lo + '>'); });
-    if (inList) out.push('</ul>'); return out; };
-  let parts = root && best > 400 ? collect(root) : [];
-  if (parts.join('').length < 500) parts = collect(d.body || d.documentElement);
-  let body = parts.join('\n');
-  if (title && !/<h1[ >]/.test(body)) body = '<h1' + st('H1') + '>' + esc(title) + '</h1>\n' + body;
-  const by = [meta.authors.length ? 'By ' + meta.authors.join(', ') : '', meta.pubLabel ? 'Published ' + meta.pubLabel : ''].filter(Boolean).join(' · ');
-  if (by) { const line = '<p style="font:500 15px \'Hanken Grotesk\',sans-serif;color:var(--mut);margin:0 0 18px">' + esc(by) + '.</p>'; body = /<\/h1>/.test(body) ? body.replace(/<\/h1>/, '</h1>\n' + line) : line + '\n' + body; }
-  return { html: body, text: htmlToText(body), meta };
-}
-async function ohsPool(items, n, f) { const out = new Array(items.length); let i = 0; await Promise.all(Array.from({ length: n }, async () => { while (i < items.length) { const k = i++; out[k] = await f(items[k], k); } })); return out; }
-const SRC_KIND = {
-  'audit-pdf': 'Audit or report', 'report-pdf': 'Audit or report', 'legislative-file': 'Legislation', 'amendment-pdf': 'Legislation', 'municipal-code': 'Legislation',
-  'minutes-pdf': 'Meeting record', 'agenda-pdf': 'Meeting record', 'bylaws-pdf': 'Meeting record', 'letter-pdf': 'Letter', 'gov-page': 'Government page',
-  'transcript-derived': 'Meeting recording', 'podcast': 'Podcast', 'news': 'News', 'blog': 'Blog', 'own-article': 'Own article', 'org-page': 'Organisation page', 'not-yet-located': 'Not yet located'
-};
-const KIND_ORDER = ['Audit or report', 'Contract', 'Legislation', 'Meeting record', 'Meeting recording', 'Letter', 'Government page', 'News', 'Podcast', 'Blog', 'Own article', 'Organisation page', 'Not yet located', 'Source'];
+const KIND_ORDER = ['Audit or report', 'Contract', 'Legislation', 'Meeting record', 'Meeting recording', 'Recording', 'Letter', 'Government page', 'News', 'Podcast', 'Blog', 'Own article', 'Organisation page', 'Not yet located', 'Source'];
 const KIND_DESC = {
   'Audit or report': 'Formal findings, with their own figures and risk ratings.', 'Legislation': 'Bills, amendments and code as filed, with their action history.',
   'Meeting record': 'Agendas, minutes and bylaws: what a body said it would do and what it recorded doing.', 'Meeting recording': 'What was said aloud, read from a machine transcript and linked to the moment in the recording.',
-  'Letter': 'Correspondence in the sender’s own words.', 'Government page': 'Official web pages as captured, which can change without notice.',
+  'Recording': 'Audio or video kept in this browser, playable here; read only when transcribed.', 'Letter': 'Correspondence in the sender’s own words.', 'Government page': 'Official web pages as captured, which can change without notice.',
   'News': 'Reporting; check whether it quotes the record or only characterises it.', 'Podcast': 'Audio; page text only unless transcribed.', 'Blog': 'Independent writing and commentary.',
   'Own article': 'Pieces by the author of this project.', 'Organisation page': 'What an organisation says about itself.', 'Not yet located': 'Cited, but no copy has been found yet.'
 };
-const MEDIUM_OF = dt => /pdf$/.test(dt || '') ? 'PDF' : dt === 'transcript-derived' ? 'Video' : dt === 'podcast' ? 'Audio' : dt === 'not-yet-located' ? 'Missing' : 'Web page';
 const MEDIUM_C = { PDF: 'var(--pink)', Video: 'var(--date)', Audio: 'var(--date)', 'Web page': 'var(--blue)', Missing: 'var(--bad)', Text: 'var(--mut)' };
 const STANDING_C = { 'Primary record': 'var(--green)', 'Article quoting the record': 'var(--blue)', 'Article': 'var(--mut)', 'Commentary': 'var(--amber)', 'Source': 'var(--mut)' };
 const fmtT = t => { t = Math.max(0, Math.floor(t)); const h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, x = t % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(x).padStart(2, '0'); };
 const OHS_PUB = [[/legistar\.com/, 'Metro Council (Legistar)'], [/nashville\.gov/, 'Metro Nashville Government'], [/library\.municode|municode/, 'Metro Code'], [/nashvillescene/, 'Nashville Scene'], [/nashvillebanner/, 'Nashville Banner'], [/tennessean/, 'The Tennessean'], [/wkrn/, 'WKRN'], [/fox17/, 'FOX 17'], [/newschannel5/, 'NewsChannel 5'], [/thecontributor/, 'The Contributor'], [/axios/, 'Axios'], [/forbes/, 'Forbes'], [/citycast/, 'City Cast Nashville'], [/youtube/, 'Metro Nashville Network (YouTube)'], [/substack|ratiotempered|ratio/, 'Newsletter']];
 const ohsPublisher = u => { const h = String(u || ''); for (const [re, n] of OHS_PUB) if (re.test(h)) return n; try { return new URL(h).hostname.replace(/^www\./, ''); } catch (e) { return ''; } };
-const OHS_MEDIA = { 'SEPT23-MEETING-TRANSCRIPT': 'transcripts/sept23-audit-committee' };
 function ohsSegmentsHtml(segs, title) {
   const paras = []; let cur = null;
   segs.forEach(g => { const t = (g.text || '').trim(); if (!t) return; const gap = cur ? g.start - cur.end : 0;
@@ -2229,144 +2250,10 @@ function ohsSegmentsHtml(segs, title) {
   const P = TAG_STYLE.P ? ' style="' + TAG_STYLE.P + '"' : '';
   return '<h1' + (TAG_STYLE.H1 ? ' style="' + TAG_STYLE.H1 + '"' : '') + '>' + esc(title) + '</h1>\n' + paras.map(p => '<p data-t="' + Math.floor(p.t) + '"' + P + '>' + esc(p.txt) + '</p>').join('\n');
 }
-const HOLO_CORPUS = 'holodeck/corpus.json', HOLO_WS = 'holodeck/workspace.json';
-async function ohsExtraTranscripts(get, known, listNames, lazy) {
-  let names = []; if (listNames) names = listNames; else try { const r = await fetch('https://api.github.com/repos/' + OHS_REPO + '/contents/readings'); if (r.ok) names = (await r.json()).map(f => f.name).filter(n => /\.json$/.test(n)).map(n => n.replace(/\.json$/, '')); } catch (e) {}
-  const src = await get('sources.json', true).catch(() => null); const SE = {}; ((src && (src.entries || src.sources || (Array.isArray(src) ? src : []))) || []).forEach(x => { if (x && x.id) SE[x.id] = x; });
-  const ids = [...new Set([...names, ...Object.keys(SE)])].filter(id => !known.has(id));
-  const rd = await ohsPool(ids, 8, async id => { if (!names.includes(id) && !/transcript|meeting/i.test(id + ' ' + ((SE[id] || {}).label || ''))) return null; try { return await get('readings/' + id + '.json', true); } catch (e) { return null; } });
-  const out = await ohsPool(ids, 6, async (id, i) => { const R = rd[i] || {}; const S = SE[id] || {}; const path = R.path || S.path || ''; if (!/^transcripts\//.test(path) && !/transcript|meeting/i.test(id + ' ' + (S.label || ''))) return null;
-    const base = path.replace(/\.(txt|json)$/, '').replace(/\.segments$/, ''); let text = '', html = '', segN = 0, model = '', from = '';
-    if (lazy && base) { text = ' '; segN = -1; from = base + '.segments.json'; }
-    else if (base) { try { const sg = await get(base + '.segments.json', true); html = ohsSegmentsHtml(sg.segments || [], S.label || id); text = htmlToText(html); segN = (sg.segments || []).length; model = sg.model || ''; from = base + '.segments.json'; } catch (e) {} }
-    if (!text && path) { try { text = await get(path); from = path; } catch (e) {} } if (!lazy && (!text || text.trim().length < 200)) return null;
-    const url = R.source_url || S.url || S.source_url || ''; const yt = (String(url).match(/[?&]v=([\w-]{6,})|youtu\.be\/([\w-]{6,})/) || []); const ytid = yt[1] || yt[2];
-    const lab = S.label || S.title || id.replace(/-/g, ' '); const dm = (lab + ' ' + id + ' ' + path).match(/\b((?:19|20)\d\d)[-_]?(\d\d)[-_]?(\d\d)\b/) || (lab.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sept?|Oct|Nov|Dec)[a-z]*\.?\s+(\d{1,2}),?\s+((?:19|20)\d\d)\b/i));
-    let published = '', pubLabel = ''; if (dm) { if (/^\d{4}$/.test(dm[1])) { published = dm[1] + '-' + dm[2] + '-' + dm[3]; } else { const mo = 'jan feb mar apr may jun jul aug sep oct nov dec'.split(' ').indexOf(dm[1].slice(0, 3).toLowerCase()); published = dm[3] + '-' + String(mo + 1).padStart(2, '0') + '-' + String(+dm[2]).padStart(2, '0'); } pubLabel = ohsDateLabel(published); }
-    const audioOnly = !ytid; const note = 'Custody: machine transcript' + (R.sha256 ? ' · sha256 ' + R.sha256.slice(0, 12) : '') + ' · text from ' + from + '. ' + (audioOnly ? 'Audio-only local recording; there is no video to link.' : segN ? 'Timed transcript of the meeting video.' : 'Transcript of the meeting video (no timings, so the player can’t jump to a line).') + (S.anchor ? ' Cited for: “' + S.anchor + '”' + (R.spans && R.spans[0] && R.spans[0].byte_offset != null ? ' at byte ' + R.spans[0].byte_offset + '.' : '.') : '') + (R.derivation_note ? ' ' + R.derivation_note : '');
-    return { id: 'ohs-' + id, ohsId: id, title: lab, published, pubLabel, year: published ? +published.slice(0, 4) : null, authors: [], doctype: 'transcript-derived', kind: 'Meeting recording', medium: audioOnly ? 'Audio' : 'Video', standing: 'Transcript of the record', custody: 'derived transcript', custodyStatus: 'derived',
-      recordings: [], bodyBase: lazy ? base : undefined, bodyPath: lazy ? path : undefined, media: ytid ? { kind: 'youtube', id: ytid, url, segN, model } : null, anchor: S.anchor || undefined, anchorClaim: (R.spans && R.spans[0] && R.spans[0].claim) || S.claim || '', transcribed: true, type: 'Meeting transcript', url: url || undefined, publisher: S.publisher || (ytid ? 'Metro Nashville Network (YouTube)' : 'Local recording'), text: text.replace(/\r/g, ''), format: html ? 'html' : undefined, html: html || undefined, note, aboutOnly: false }; });
-  return out.filter(Boolean);
-}
-async function ohsVideos(docs) {
-  const YT = /(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:[^"'\s<>]*&)?v=|embed\/|live\/|shorts\/)|youtu\.be\/)([\w-]{11})/g; const found = new Map();
-  const strip = s => String(s || '').replace(/<[^>]+>/g, ' ').replace(/&[a-z#0-9]+;/gi, ' ').replace(/\s+/g, ' ').trim();
-  await ohsPool(docs.filter(d => d.binPath || d.html), 8, async d => { let raw = d.html || ''; if (d.binPath) { try { raw = await (await fetch(OHS_RAW + d.binPath)).text(); } catch (e) {} } if (!raw) return; let m; YT.lastIndex = 0;
-    while ((m = YT.exec(raw))) { const id = m[1]; const around = raw.slice(Math.max(0, m.index - 600), m.index + 400); const a = around.match(/<a[^>]*>([\s\S]{0,200}?)<\/a>/g); const ttl = (around.match(/title="([^"]{6,160})"/) || [])[1];
-      const ctx = strip(ttl || (a ? a.map(strip).filter(t => t.length > 8).slice(-1)[0] : '') || strip(around).slice(0, 180));
-      const e = found.get(id) || { id, url: 'https://www.youtube.com/watch?v=' + id, from: [], ctx: '' }; if (!e.from.some(x => x.id === d.id)) e.from.push({ id: d.id, title: d.title, pubLabel: d.pubLabel, published: d.published, year: d.year }); if (!e.ctx && ctx) e.ctx = ctx; found.set(id, e); } });
-  const vids = [...found.values()];
-  await ohsPool(vids, 6, async v => { try { const r = await fetch('https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent(v.url)); if (r.ok) { const j = await r.json(); v.title = j.title; v.channel = j.author_name; } } catch (e) {} });
-  return vids.filter(v => !/^(MetroNashville|axios)$/i.test(v.id)).map(v => { const src = v.from[0]; const title = v.title || (v.ctx && v.ctx.length < 140 ? v.ctx : 'YouTube video linked from ' + src.title);
-    const meet = /\b(meeting|council|committee|board|hearing|commission|session|planning council|coc|hpc|budget|symposium|forum|town hall|briefing)\b/i.test(title + ' ' + (v.ctx || '')) || /^\d{2}\/\d{2}\/\d{2}\b/.test(title);
-    const dm = title.match(/^(\d{2})\/(\d{2})\/(\d{2})\b/); const own = dm ? '20' + dm[3] + '-' + dm[1] + '-' + dm[2] : '';
-    const text = title + '. ' + (v.channel ? 'Published on YouTube by ' + v.channel + '. ' : '') + 'Linked from ' + v.from.map(f => '“' + f.title + '”' + (f.pubLabel ? ' (' + f.pubLabel + ')' : '')).join(', ') + '.' + (v.ctx && v.ctx !== title ? ' Context on the page: ' + v.ctx + '.' : '') + ' Not transcribed yet.';
-    return { id: 'yt-' + v.id, ohsId: 'yt-' + v.id, title, published: own || src.published || '', pubLabel: own ? ohsDateLabel(own) : src.pubLabel || '', year: own ? +own.slice(0, 4) : src.year || null, authors: v.channel ? [v.channel] : [], doctype: 'video', kind: meet ? 'Meeting recording' : 'Video', medium: 'Video', standing: 'Linked video', custody: 'link only, video not captured', custodyStatus: 'linked',
-      recordings: [], media: { kind: 'youtube', id: v.id, url: v.url, segN: 0 }, transcribed: false, type: 'YouTube video', url: v.url, publisher: v.channel || 'YouTube', text, note: 'Found as a YouTube link inside ' + plural(v.from.length, 'captured source') + '. The video itself is not captured or transcribed.', aboutOnly: true, linkedFrom: v.from.map(f => f.id) }; });
-}
 async function opfsDir(path) { const root = await navigator.storage.getDirectory(); let d = root; for (const p of path.split('/').filter(Boolean)) d = await d.getDirectoryHandle(p, { create: true }); return d; }
 async function opfsRead(path) { try { const parts = path.split('/'); const name = parts.pop(); const d = await opfsDir(parts.join('/')); const fh = await d.getFileHandle(name); return await (await fh.getFile()).arrayBuffer(); } catch (e) { return null; } }
 async function opfsWrite(path, buf) { try { const parts = path.split('/'); const name = parts.pop(); const d = await opfsDir(parts.join('/')); const fh = await d.getFileHandle(name, { create: true }); const w = await fh.createWritable(); await w.write(buf); await w.close(); return true; } catch (e) { return false; } }
-async function ohsBodyBytes(rel) { const key = 'ohs-custody/' + rel; const hit = await opfsRead(key); if (hit) return { buf: hit, from: 'opfs' };
-  for (const u of [OHS_RAW + rel]) { try { const r = await fetch(u, { cache: 'no-cache' }); if (!r.ok) continue; const buf = await r.arrayBuffer(); opfsWrite(key, buf); return { buf, from: u.startsWith('ohs-local') ? 'local copy' : 'GitHub' }; } catch (e) {} } return null; }
-const OHS_TX = id => /TRANSCRIPT$/.test(id || '');
-const ohsTxBase = id => id === 'SEPT23-MEETING-TRANSCRIPT' ? 'transcripts/sept23-audit-committee' : 'transcripts/' + String(id).toLowerCase().replace(/-transcript$/, '');
-function ohsSameBytes(docs, meta) {
-  const shaOf = d => { const id = d.ohsId || String(d.id).replace(/^ohs-/, ''); const e = (meta && meta[id]) || {}; return (e.evidence && e.evidence.sha256) || ((String(d.note || '').match(/sha256 ([0-9a-f]{12,})/) || [])[1]) || null; };
-  const first = new Map(); const out = docs.map(d => { if (d.lazy && d.bodyBase) return d; const h = shaOf(d); if (!h) return d; const k = h.slice(0, 12); const f = first.get(k); if (!f) { first.set(k, d); return d; }
-    const id = d.ohsId || String(d.id).replace(/^ohs-/, ''); const e = (meta && meta[id]) || {};
-    return { ...d, sameAs: f.id, sameAsTitle: f.title, text: [d.title + '.', e.anchor || e.claim || ''].filter(Boolean).join(' '), html: undefined, format: undefined, binPath: undefined, note: (d.note || '') + ' Byte-identical to “' + f.title + '” (sha256 ' + k + '); its text is read once, from that source, so it isn’t counted twice.' }; });
-  return out; }
-function ohsLazify(docs, meta) { return docs.map(d => { const id = d.ohsId || String(d.id).replace(/^ohs-/, ''); if (!OHS_TX(id)) { if ((d.text || '').length > 60000 && !d.lazy) return { ...d, lazy: true, bodyPath: 'derived/' + id + '.txt', text: d.text.slice(0, 1500), html: undefined, format: d.format === 'pdf' ? 'pdf' : undefined, fullLen: d.text.length }; return d; } const e = (meta && meta[id]) || {};
-  const url = d.url || e.url || ''; const yt = (String(url).match(/[?&]v=([\w-]{6,})|youtu\.be\/([\w-]{6,})/) || []); const ytid = yt[1] || yt[2];
-  const dm = id.match(/^((?:19|20)\d\d)-(\d\d)-(\d\d)/); const published = d.published || (dm ? dm[1] + '-' + dm[2] + '-' + dm[3] : ''); const claim = e.claim || e.anchor || d.anchor || '';
-  return { ...d, id: d.id || 'ohs-' + id, ohsId: id, title: d.title || e.label || id, published, pubLabel: d.pubLabel || (published ? ohsDateLabel(published) : ''), year: published ? +published.slice(0, 4) : d.year,
-    kind: 'Meeting recording', doctype: 'transcript-derived', medium: ytid ? 'Video' : 'Audio', transcribed: true, standing: 'Transcript of the record',
-    media: ytid ? { kind: 'youtube', id: ytid, url, segN: -1 } : null, lazy: true, bodyBase: ohsTxBase(id), bodyPath: ohsTxBase(id) + '.txt',
-    text: [(d.title || e.label || id) + '.', claim].filter(Boolean).join(' '), html: undefined, format: undefined, binPath: undefined, aboutOnly: false,
-    note: (ytid ? 'Transcript of the meeting video; opens beside the player.' : 'Audio-only recording; there is no video to link.') + (e.anchor ? ' Cited for: “' + e.anchor + '”.' : '') }; }); }
-async function loadOhs(onProgress, opts) {
-  const get = async (p, json) => { const r = await fetch(OHS_RAW + p, { cache: 'no-cache' }); if (!r.ok) throw new Error(p + ' ' + r.status); return json ? r.json() : r.text(); };
-  if (!(opts && opts.rebuild)) { try {
-    const m0 = await get('sources.structured.json', true).catch(() => null); const stamp = m0 && (m0.generated_at || String((m0.entries || []).length));
-    if (stamp) { const buf = await opfsRead('ohs-custody/corpus-cache.json'); if (buf) { const c0 = JSON.parse(new TextDecoder().decode(buf)); if (c0 && c0.stamp === stamp && Array.isArray(c0.docs)) { const MM0 = {}; ((m0 && m0.entries) || []).forEach(x => { MM0[x.id] = x; }); return { ...c0, docs: ohsSameBytes(c0.docs, MM0), from: 'opfs-cache' }; } } }
-  } catch (e) {} }
-  if (!(opts && opts.rebuild)) { try {
-    const [c, m] = await Promise.all([get(HOLO_CORPUS, true), get('sources.structured.json', true).catch(() => null)]);
-    if (c && c.schema === 'holodeck-corpus@1' && Array.isArray(c.docs)) { const stale = !!(m && m.generated_at && c.manifestAt && m.generated_at !== c.manifestAt);
-      const known = new Set(c.docs.map(d => d.ohsId || String(d.id).replace(/^ohs-/, ''))); const extra = await ohsExtraTranscripts(get, known).catch(() => []);
-      const MM = {}; ((m && m.entries) || []).forEach(x => { MM[x.id] = x; });
-      return { name: c.name || 'OHS source custody · GitHub', docs: ohsSameBytes(ohsLazify([...c.docs, ...extra], MM), MM).map(d => d.pdfSrc || d.format === 'pdf' || !(d.medium === 'PDF' || /pdf/i.test(String(d.doctype || ''))) ? d : { ...d, pdfSrc: OHS_RAW + 'bytes/' + d.id + '.bin' }), transcript: c.demoText || '', from: 'repo', builtAt: c.builtAt, manifestAt: c.manifestAt, stale }; }
-  } catch (e) {} }
-  let derived = OHS_DERIVED;
-  try { const r = await fetch('https://api.github.com/repos/' + OHS_REPO + '/contents/derived'); if (r.ok) { const l = (await r.json()).map(f => f.name).filter(n => /\.txt$/.test(n)).map(n => n.replace(/\.txt$/, '')); if (l.length) derived = l; } } catch (e) {}
-  const [man, texts, transcript, enr] = await Promise.all([
-    get('sources.structured.json', true),
-    Promise.all(derived.filter(k => !OHS_TX(k) && !/(hpc-meeting|committee|symposium|special-called|transcript)/i.test(k)).map(k => get('derived/' + k + '.txt').then(t => [k.replace(/\.rendered$/, ''), t]).catch(() => [k, null]))),
-    get('research/opioid-settlement-audit/extracted-text.txt').catch(() => ''),
-    get('sources.enriched.json', true).catch(() => null)
-  ]);
-  const DT = {}; ((enr && enr.entries) || []).forEach(x => { DT[x.id] = x; });
-  const T = Object.fromEntries(texts.filter(x => x[1]));
-  const entries = man.entries || [];
-  let done = 0;
-  const bodies = await ohsPool(entries, 8, async e => {
-    let out = null; if (OHS_TX(e.id)) { onProgress && onProgress(++done, entries.length); return { text: (e.label || e.id) + '. ' + (e.claim || ''), from: 'lazy' }; }
-    if (OHS_MEDIA[e.id]) { try { const sg = await get(OHS_MEDIA[e.id] + '.segments.json', true); const html = ohsSegmentsHtml(sg.segments || [], e.label || e.id); out = { text: htmlToText(html), html, from: OHS_MEDIA[e.id] + '.segments.json', segN: (sg.segments || []).length, model: sg.model }; } catch (x) {} }
-    if (out) {}
-    else if (T[e.id]) { const tx = T[e.id]; if (tx.length > 60000) { opfsWrite('ohs-custody/derived/' + e.id + '.txt', new TextEncoder().encode(tx)); out = { text: tx.slice(0, 1500), from: 'derived/' + e.id + '.txt', lazyPath: 'derived/' + e.id + '.txt', fullLen: tx.length }; } else out = { text: tx, from: 'derived/' + e.id + '.txt' }; }
-    else { const ev = e.evidence || {}, ct = String(ev.content_type || '');
-      if (ct && !/pdf/i.test(ct)) {
-        const ts = ev.archive && ev.archive.timestamp, names = [];
-        if (ts && ev.archive.tier === 'wayback-historical') names.push(e.id + '.historical-' + ts + '.bin');
-        names.push(e.id + '.bin');
-        for (const nm of names) { try { const raw = await get('bytes/' + nm); if (raw.length > 1500000) { opfsWrite('ohs-custody/bytes/' + nm, new TextEncoder().encode(raw)); out = { text: (e.claim || e.label || e.id), from: 'bytes/' + nm, lazyPath: 'bytes/' + nm, lazyHtml: true, fullLen: raw.length }; break; } const isH = /html/i.test(ct) || /^\s*</.test(raw); const r = isH ? ohsHtmlText(raw) : { text: raw }; if (r.text && r.text.trim().length > 200) { out = { text: r.text, html: r.html, meta: r.meta, binPath: isH ? 'bytes/' + nm : null, from: 'bytes/' + nm }; break; } } catch (x) {} }
-      } }
-    onProgress && onProgress(++done, entries.length); await new Promise(r => setTimeout(r, 0));
-    return out;
-  });
-  const yearOf = (...xs) => { for (const x of xs) { const m = String(x || '').match(/\b(19|20)\d\d\b/g); if (m) return +m[m.length - 1]; } return null; };
-  const docs = entries.map((e, i) => { const body = bodies[i]; const ev = e.evidence || {};
-    const custody = 'Custody: ' + (OHS_STATUS[e.status] || e.status || 'unknown') + (ev.sha256 ? ' · sha256 ' + ev.sha256.slice(0, 12) : '') + (ev.fetched_at ? ' · fetched ' + ev.fetched_at.slice(0, 10) : '') + (body ? ' · text from ' + body.from : '') + '.';
-    const text = body ? body.text.replace(/\r/g, '') : e.claim || '';
-    const aboutOnly = !body;
-    const mt = { ...((body && body.meta) || {}) };
-    if (!mt.pubLabel) { const L = String(e.label || ''); const MO = 'jan feb mar apr may jun jul aug sep oct nov dec'.split(' ');
-      let m = L.match(/\b(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sept?|Oct|Nov|Dec)[a-z]*\.?\s+((?:19|20)\d\d)\b/i), y, mo, dd;
-      if (m) { dd = +m[1]; mo = MO.indexOf(m[2].slice(0, 3).toLowerCase()); y = +m[3]; }
-      else if ((m = L.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sept?|Oct|Nov|Dec)[a-z]*\.?\s+(\d{1,2}),?\s+((?:19|20)\d\d)\b/i))) { mo = MO.indexOf(m[1].slice(0, 3).toLowerCase()); dd = +m[2]; y = +m[3]; }
-      if (y && mo >= 0) { mt.published = y + '-' + String(mo + 1).padStart(2, '0') + '-' + String(dd).padStart(2, '0'); mt.pubLabel = dd + ' ' + OHS_MON[mo] + ' ' + y; mt.dateFrom = 'label'; } } const py = (String(mt.published || '').match(/\b(19|20)\d\d\b/) || [])[0];
-    const ts = ev.archive && ev.archive.timestamp; const capturedAt = ts && /^\d{8}/.test(ts) ? ts.slice(0, 4) + '-' + ts.slice(4, 6) + '-' + ts.slice(6, 8) + 'T' + (ts.slice(8, 10) || '00') + ':' + (ts.slice(10, 12) || '00') + ':00Z' : (ev.fetched_at || '');
-    return { id: 'ohs-' + e.id, ohsId: e.id, capturedAt, authors: mt.authors || [], published: mt.published || '', pubLabel: mt.pubLabel || '', title: e.label || e.id, year: py ? +py : yearOf(e.label, e.url, body && body.text.slice(0, 600)), ...(() => { const dt = (DT[e.id] || {}).doctype || ''; const kind = SRC_KIND[dt] || (/contract/i.test(dt + ' ' + e.id) ? 'Contract' : 'Source'); const medium = MEDIUM_OF(dt); const yt = (String(e.url || '').match(/[?&]v=([\w-]{6,})/) || [])[1];
-      const recs = [...new Set((String(e.note || '') + ' ' + String(e.claim || '')).match(/https?:\/\/\S*Video\.aspx\S*/g) || [])].map(u => ({ url: u.replace(/[).,]+$/, ''), label: 'Video of this reading', transcribed: false }));
-      return { doctype: dt, kind, medium, standing: OHS_TIER[e.tier] || 'Source', custody: OHS_STATUS[e.status] || e.status || '', custodyStatus: e.status || '', recordings: recs, media: yt && body && body.segN ? { kind: 'youtube', id: yt, url: e.url, segN: body.segN, model: body.model } : null,
-        transcribed: medium === 'Video' || medium === 'Audio' ? !!(body && body.segN) : null, type: kind + (body ? '' : ' · citation note') }; })(), binPath: (body && body.binPath) || undefined, ...(body && body.lazyPath ? { lazy: true, bodyPath: body.lazyPath, bodyHtml: !!body.lazyHtml, fullLen: body.fullLen } : {}), pdfSrc: /pdf/i.test(String((e.evidence || {}).content_type || '')) ? OHS_RAW + 'bytes/' + e.id + '.bin' : undefined, url: e.url || undefined, publisher: mt.publisher || ohsPublisher(e.url), text, aboutOnly, format: body && body.html ? 'html' : undefined, html: body && body.html || undefined, note: body ? custody : custody + ' No readable capture in the repo (PDF without a text layer, or nothing fetched), so this shows the claim it is cited for.', anchor: e.anchor };
-  }).filter(d => d.text && d.text.trim());
-  const MM = {}; entries.forEach(x => { MM[x.id] = x; }); const lz = ohsSameBytes(ohsLazify(docs, MM), MM); docs.length = 0; docs.push(...lz);
-  const out = { name: (man.case_label || 'OHS source custody') + ' · GitHub', docs, transcript, from: 'live', manifestAt: man.generated_at || '', builtAt: new Date().toISOString() };
-  try { const stamp = man.generated_at || String(entries.length); opfsWrite('ohs-custody/corpus-cache.json', new TextEncoder().encode(JSON.stringify({ ...out, stamp }))); } catch (e) {}
-  return out;
-}
-const SAMPLES = {
-  ohs: { name: 'OHS source custody · GitHub', docs: [] },
-  keybridge: { name: 'Key Bridge collapse · Wikipedia', docs: [
-    { id: 'kb1', title: 'Francis Scott Key Bridge collapse', year: 2024, type: 'Wikipedia article', wiki: 'Francis_Scott_Key_Bridge_collapse', url: 'https://en.wikipedia.org/wiki/Francis_Scott_Key_Bridge_collapse', text: "On March 26, 2024, the main spans and the three nearest northeast approach spans of the Francis Scott Key Bridge across the Patapsco River in the Baltimore metropolitan area of Maryland, United States, collapsed after one of the bridge piers was struck by the container ship Dali, which had suffered catastrophic power outages that impaired its control systems. Six members of a maintenance crew working on the roadway were killed, one was rescued from the river, and an inspector was rescued from the remaining structure.\n\nThe collapse blocked most shipping to and from the Port of Baltimore for 11 weeks. Maryland Governor Wes Moore called the event a \"global crisis\" that affected more than 8,000 jobs. The economic impact of the closure of the waterway was estimated at $15 million per day.\n\nMV Dali is a container ship registered in Singapore, and at the time of the collision was operated by Synergy Marine Group and owned by Grace Ocean Private Ltd, both based in Singapore. Danish shipping company Maersk chartered Dali upon its delivery.\n\nOn November 18, 2025, the NTSB released its final report, detailing its findings. It determined the probable cause of the accident to be a loose signal wire in the ship's electrical control center's terminal block 381, which caused a circuit breaker to open that led to both blackouts on the night of the incident. The preliminary National Transportation Safety Board (NTSB) report noted that inspections conducted in March 2021 and May 2023 found the bridge in satisfactory condition.\n\nOn April 1, Grace Ocean Private and Synergy Marine Group filed a joint petition in the Maryland U.S. District Court to limit their liability to about $43.6 million under the Limitation of Liability Act of 1851. Dun & Bradstreet estimated the weekly cost of the supply chain disruptions caused by the port closure to be $1.7 billion." },
-    { id: 'kb2', title: 'Francis Scott Key Bridge replacement', year: 2026, type: 'Wikipedia article', wiki: 'Francis_Scott_Key_Bridge_replacement', url: 'https://en.wikipedia.org/wiki/Francis_Scott_Key_Bridge_replacement', text: "The Francis Scott Key Bridge replacement is a project to replace the Francis Scott Key Bridge in greater Baltimore, Maryland, United States.\n\nSix weeks after the collapse, officials at the Maryland Department of Transportation announced plans to replace the bridge by October 2028 at an estimated cost of $1.7 billion to $1.9 billion. The cost will be borne by the federal government under a December 2024 bill signed by President Joe Biden. In November 2025, Maryland officials announced that the projected cost had more than doubled, to an estimated $4.3 billion to $5.2 billion, and that the anticipated opening date had been delayed two years to late 2030. In April 2026, the state abruptly cut ties with the design contractor Kiewit.\n\nOn August 29, 2024, the Maryland Transportation Authority awarded a $73 million contract to Kiewit for pre-construction and design work. On February 4, 2025, the Maryland Transportation Authority unveiled a preliminary design for a cable-stayed bridge, Maryland's first. Its clearance over the shipping channel will be at least 230 feet, 45 feet higher than the old bridge's 185 feet." }
-  ]},
-  bridge: { name: 'Harbor bridge coverage', docs: [
-    { id: 'b1', title: 'Council approves bridge repair', year: 2023, type: 'Article', text: 'The Harbor City Council approved $4.2 million for repairs to the Linden Bridge. Mayor Ana Ruiz said work should begin in March. The bridge carries 18,000 vehicles a day.' },
-    { id: 'b2', title: 'Engineers question repair budget', year: 2024, type: 'Article', text: 'Engineers at Coastline Structural estimated the repair at $6.1 million. Ana Ruiz said the council may revisit the budget. The Linden Bridge was last inspected in 2019.' },
-    { id: 'b3', title: 'Bridge closes for inspection', year: 2025, type: 'Notice', text: 'The Linden Bridge will close for two weeks for inspection. Traffic on Harbor Avenue is expected to rise by 30 percent. Coastline Structural will publish its findings in June.' }
-  ]},
-  transit: { name: 'City transit plans', docs: [
-    { id: 'a', title: 'Grove Plan', year: 2024, type: 'Plan', text: 'The Grove Transit Authority (GTA) will build 12 miles of busway.\nThe GTA will coordinate with East Bank development.\n' },
-    { id: 'b', title: 'Metro Line Study', year: 2025, type: 'Study', text: 'The new Metro Line will run 8 miles of track through the corridor.\n' }
-  ]},
-  kitchen: { name: 'Kitchen supplier notes', docs: [
-    { id: 'k1', title: 'Supplier review', year: 2024, type: 'Note', text: 'Green Valley Farms delivers 40 kg of tomatoes every Tuesday. Chef Omar Haddad reported 3 kg spoiled in the last delivery. Prices may rise 10 percent in spring.' },
-    { id: 'k2', title: 'Dairy switch', year: 2025, type: 'Note', text: 'Northside Dairy replaced Green Valley Farms for cream in 2024. Omar Haddad wants a second supplier for tomatoes. Northside Dairy delivers 12 litres of cream daily.' }
-  ]}
-};
+const SAMPLES = {};
 const W = s => new Set(s.split(' '));
 const STOP = W('the a an and or of to in on for with at by from as is are was were be been being will would should could may might can this that these those it its their his her they them we our you your i not no new every per than then also into over under about after before during each which who whom what when where while there here has have had do does did said says last first next more most some any all other such only just very since until because through across between within without upon a day week daily');
 const ART = W('The A An This That These Those Our Their Its His Her');
@@ -2831,6 +2718,29 @@ const short = (t, n) => { t = clean(t); return t.length > n ? t.slice(0, n - 1) 
 function loadAdded() {
   try { const a = JSON.parse(localStorage.getItem('fold-explorer-added') || 'null'); if (a) return a; const c = JSON.parse(localStorage.getItem('fold-explorer-custom') || 'null'); return { custom: c ? c.docs : [] }; } catch (e) { return {}; }
 }
+const LEGACY_CORPORA = ['ohs', 'keybridge', 'bridge', 'transit', 'kitchen'];
+function purgeLegacyHistory() {
+  if (typeof localStorage === 'undefined') return;
+  try { if (localStorage.getItem('holodeck-purged-legacy') === '1') return; } catch (e) {}
+  try {
+    const prune = (key, fn) => { try { const raw = localStorage.getItem(key); if (!raw) return; const v = JSON.parse(raw); const nv = fn(v); if (nv !== v) localStorage.setItem(key, JSON.stringify(nv)); } catch (e) {} };
+    prune('fold-explorer-added', v => { const n = {}; Object.keys(v).forEach(k => { if (LEGACY_CORPORA.includes(k)) return; const docs = (v[k] || []).filter(d => !d.ohsId && !/^(ohs-|yt-)/.test(d.id || '')); if (docs.length) n[k] = docs; }); return n; });
+    prune('fold-explorer-srcmeta', v => { const n = {}; Object.keys(v).forEach(k => { if (LEGACY_CORPORA.includes(k)) return; const docs = {}; Object.keys(v[k] || {}).forEach(id => { if (!/^(ohs-|yt-)/.test(id)) docs[id] = v[k][id]; }); if (Object.keys(docs).length) n[k] = docs; }); return n; });
+    prune('fold-explorer-readlog', v => { const n = {}; Object.keys(v).forEach(k => { if (!LEGACY_CORPORA.includes(k)) n[k] = v[k]; }); return n; });
+    prune('fold-explorer-pins', v => { const n = {}; Object.keys(v).forEach(k => { if (!LEGACY_CORPORA.includes(k)) n[k] = v[k]; }); return n; });
+    prune('fold-explorer-workspaces', v => { const n = {}; Object.keys(v).forEach(k => { if (!LEGACY_CORPORA.includes(k)) n[k] = v[k]; }); return n; });
+    prune('fold-ws-rooms', v => { const n = {}; Object.keys(v).forEach(k => { if (!LEGACY_CORPORA.includes(k)) n[k] = v[k]; }); return n; });
+    try { localStorage.removeItem('fold-explorer-custom'); } catch (e) {}
+    try { Object.keys(localStorage).forEach(k => { if (k.startsWith('holodeck-fold:')) { const cid = k.slice('holodeck-fold:'.length); if (LEGACY_CORPORA.includes(cid)) localStorage.removeItem(k); } }); } catch (e) {}
+    try { localStorage.setItem('holodeck-purged-legacy', '1'); } catch (e) {}
+  } catch (e) {}
+  try { if (navigator.storage && navigator.storage.getDirectory) navigator.storage.getDirectory().then(async root => { try { await root.removeEntry('ohs-custody', { recursive: true }); } catch (e) {} }).catch(() => {}); } catch (e) {}
+  try {
+    const r = indexedDB.open('fold-explorer', 1);
+    r.onsuccess = () => { try { const db = r.result; const tx = db.transaction('blobs', 'readwrite'); const st = tx.objectStore('blobs'); const keys = st.getAllKeys(); keys.onsuccess = () => { (keys.result || []).forEach(k => { const s = String(k); if (s === 'meet:ohs' || s.startsWith('html:ohs-') || s.startsWith('pdf:ohs-') || s.startsWith('wiki5:kb')) { try { st.delete(k); } catch (e) {} } }); }; } catch (e) {} };
+  } catch (e) {}
+}
+purgeLegacyHistory();
 function loadTheme() { try { return localStorage.getItem('fold-explorer-theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'); } catch (e) { return 'dark'; } }
 function loadRailOpen() { try { const v = localStorage.getItem('fold-explorer-rail'); return v === null ? true : v === '1'; } catch (e) { return true; } }
 function loadSegOpen() { try { return localStorage.getItem('fold-explorer-segopen') === '1'; } catch (e) { return false; } }
@@ -2855,13 +2765,8 @@ function parseCorrection(text, contextTarget) {
   return { target, kind, claimed: typeM ? typeM[1].toLowerCase() : null };
 }
 const DEMOS = {
-  bridge: { title: 'Inspection findings', year: 2025, text: "Coastline Structural found corrosion on 14 of the Linden Bridge's 40 cables. Ruiz said the Harbor City Council will meet in July. Repairs are now estimated at $7.5 million." },
-  transit: { title: 'Council minutes', year: 2025, text: 'The GTA confirmed the busway will reach East Bank by 2027. Metro Line construction may begin in 2026. The GTA estimated 9,000 riders a day.' },
-  kitchen: { title: 'Delivery log', year: 2025, text: 'Green Valley Farms delivered 35 kg of tomatoes on Tuesday. Chef Haddad rejected 5 kg as spoiled. Northside Dairy will raise cream prices by 8 percent.' }
+  custom: { title: 'A note on reading', year: 2026, text: "Reading is not the same as believing. A source can state a figure plainly, attribute it to someone, plan for it, or guess at it, and the same words in a different frame carry a different weight. When a record is read this way, what is said, by whom, and how firmly becomes the material, not the gloss. Pin the passages that matter and the Draft keeps their source." }
 };
-DEMOS.custom = DEMOS.bridge;
-DEMOS.ohs = { title: 'Opioid settlement audit, extracted text', year: 2025, text: '' };
-DEMOS.keybridge = { title: 'MV Dali', year: 2024, url: 'https://en.wikipedia.org/wiki/MV_Dali', text: "MV Dali is a Neopanamax container ship built by Hyundai Heavy Industries. On 26 March 2024, she caused the collapse of the Francis Scott Key Bridge in Baltimore when she lost power and collided with one of its supports.\n\nDali was sold by Stellar Marine to Grace Ocean, a Singaporean company, in October 2016; she was placed under the management of Synergy Marine and reflagged as Singaporean. A faulty fuel pressure gauge was detected at the port of San Antonio, Chile, in June 2023; the gauge was replaced and no faults were detected at a further check three months later.\n\nThe ship has been chartered to the Danish shipping and logistics company Maersk since it was delivered in 2015. The National Transportation Safety Board released its findings on 18 November 2025, tracing the ship's two power outages to an improperly labeled signal wire for terminal block 381 in the electrical control room, which came loose." };
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const BLOCK_RE = /^(P|DIV|H[1-6]|LI|TR|TABLE|UL|OL|DL|DT|DD|BLOCKQUOTE|PRE|SECTION|ARTICLE|HEADER|FOOTER|FIGURE|FIGCAPTION|CAPTION|HR|MAIN|ASIDE|TBODY|THEAD)$/;
 function walkText(root, fn) {
@@ -3066,7 +2971,14 @@ async function readText(file, M) {
       const url = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(file); });
       return { title, year, type: 'Image', format: 'html', html: '<figure style="' + TAG_STYLE.FIGURE + '"><img src="' + url + '" alt="' + esc(title) + '" style="' + TAG_STYLE.IMG + '"></figure>', note: title + ' is an image — it’s shown in the reader, but has no text to link.' };
     } else if (/^(audio|video)\//.test(file.type)) {
-      const k = file.type.split('/')[0]; return { title, year, type: k[0].toUpperCase() + k.slice(1), text: '', note: title + ' is an ' + k + ' file — it’s listed under Sources, but has no readable text to link.' };
+      const k = file.type.split('/')[0]; const kind = k[0].toUpperCase() + k.slice(1);
+      const buf = await file.arrayBuffer(); let dur = null, meta = '';
+      try {
+        if (k === 'audio') { const AC = window.OfflineAudioContext || window.webkitOfflineAudioContext; if (AC) { const ab = await new AC(1, 1, 44100).decodeAudioData(buf.slice(0)); dur = ab.duration; meta = fmtT(dur) + ' of sound at ' + ab.sampleRate + ' Hz'; } }
+        else { const u = URL.createObjectURL(new Blob([buf], { type: file.type })); dur = await new Promise(r => { const v = document.createElement('video'); v.preload = 'metadata'; const done = d => { URL.revokeObjectURL(u); r(d); }; v.onloadedmetadata = () => done(isFinite(v.duration) ? v.duration : null); v.onerror = () => done(null); v.src = u; setTimeout(() => done(null), 8000); }); if (dur != null) meta = fmtT(dur) + ' of video'; }
+      } catch (e) {}
+      const extra = { media: { kind: 'local', name, mime: file.type, size: buf.byteLength, dur }, kind: 'Recording', medium: kind, transcribed: false };
+      return { title, year, type: kind, buf, extra, note: title + ' is a ' + k + ' file' + (meta ? ' (' + meta + ')' : '') + ' — play it here, or transcribe it in this browser. Nothing in it has been read until it is transcribed, and a transcript is a machine interpretation, not the recording.' };
     } else {
       const raw = await file.text();
       if (ext === 'json') { html = textToHtml(jsonText(raw)); type = 'Data'; }
@@ -3130,14 +3042,14 @@ const whenOf = (st, d) => d.pubLabel || (d.year ? String(d.year) : 'Undated');
 const assertLine = (st, A) => { const d = A.docById[st.doc]; const w = whoSays(st, A); return (w ? w.who + (w.how === 'quoted' ? ' (quoted)' : w.how === 'publisher' ? '' : ' (' + w.how + ')') + ' · ' : '') + d.title + ' · ' + whenOf(st, d); };
 
 class Component extends DCLogic {
-  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, fw: {}, q: '', readDoc: null, showPos: false, showAdd: false, draftTitle: '', draftYear: '', draftText: '', note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, ground: { on: true, names: true, figures: true, dates: true, sentences: true } };
+  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, draftTitle: '', draftYear: '', draftText: '', fw: {}, repoVal: '', note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true } };
   _html = {};
 
   componentDidMount() {
-    HD_POS_P.then(ok => { if (ok) { this._key = null; this.setState(st => ({ htmlVer: st.htmlVer + 1 })); } });
-    hdLoadReference().then(ok => { if (ok) { this._key = null; this.setState(st => ({ htmlVer: st.htmlVer + 1 })); } }).catch(() => {}); // re-read names once the received normal is in // names are re-read once the POS prior is in, so results never depend on load timing
-    this.applyTheme(); this._c = 0; import(new URL('holodeck-match.js', location.href).href).then(M => { this._mt = M; this._qc = null; this.forceUpdate(); }).catch(() => {}); this.loadHtml(); this.restoreMeet(); if (typeof location !== 'undefined' && /fx-share=/.test(location.hash)) { this.netInit(); this.setState({ view: 'draft' }); }
-    this._onRz = () => { if ((window.innerWidth < SIDE_PANEL_MIN_VW) !== this._narrow) this.forceUpdate(); }; window.addEventListener('resize', this._onRz);
+    setTimeout(() => this.measureHdr(), 400);
+    this.applyTheme(); this._c = 0; import(new URL('holodeck-match.js', location.href).href).then(M => { this._mt = M; this._qc = null; this.forceUpdate(); }).catch(() => {}); this.loadHtml(); if (typeof location !== 'undefined' && /fx-share=/.test(location.hash)) { this.netInit(); this.setState({ view: 'draft' }); }
+    this._onRz = () => { this.measureHdr(); if ((window.innerWidth < SIDE_PANEL_MIN_VW) !== this._narrow) this.forceUpdate(); }; window.addEventListener('resize', this._onRz);
+
     this._onSelCh = () => { cancelAnimationFrame(this._selRaf); this._selRaf = requestAnimationFrame(() => this.updatePinPop()); };
     document.addEventListener('selectionchange', this._onSelCh); window.addEventListener('scroll', this._onSelCh, true);
     this._seenIn = {};
@@ -3156,7 +3068,32 @@ class Component extends DCLogic {
     window.addEventListener('dragenter', this._h.enter); window.addEventListener('dragleave', this._h.leave); window.addEventListener('dragover', this._h.over); window.addEventListener('drop', this._h.drop); window.addEventListener('paste', this._h.paste);
   }
   componentWillUnmount() { window.removeEventListener('resize', this._onRz); if (this._pdfRo) { try { this._pdfRo.disconnect(); } catch (e) {} } window.removeEventListener('message', this._onYt); document.removeEventListener('selectionchange', this._onSelCh); window.removeEventListener('scroll', this._onSelCh, true); window.removeEventListener('message', this._onMsg); const h = this._h; window.removeEventListener('dragenter', h.enter); window.removeEventListener('dragleave', h.leave); window.removeEventListener('dragover', h.over); window.removeEventListener('drop', h.drop); window.removeEventListener('paste', h.paste); }
-  componentDidUpdate() { this.applyTheme(); if (this._prevCorpus !== this.state.corpus || this._prevAdded !== this.state.added) { this._prevCorpus = this.state.corpus; this._prevAdded = this.state.added; this.loadHtml(); } this.syncReader(); this.ytHook(); this.syncOmni(); }
+  componentDidUpdate() { this.applyTheme(); this.measureHdr(); if (this._prevCorpus !== this.state.corpus || this._prevAdded !== this.state.added) { this._prevCorpus = this.state.corpus; this._prevAdded = this.state.added; this.loadHtml(); } const rd0 = this.state.readDoc && this.analysis().docById[this.state.readDoc]; if (rd0 && rd0.media && rd0.media.kind === 'local') { this.ensureMediaUrl(rd0); } this.hookLocal(); this.syncReader(); this.ytHook(); this.syncOmni();
+    const S = this.state;
+    const askEl = document.getElementById('ak-composer');
+    if (S.view === 'ask' && askEl) {
+      const n = (S.akPending ? 1 : 0) + (this._conv ? this._conv.turns.length : 0);
+      const settled = this._akWasPend && !S.akPending;
+      this._akWasPend = !!S.akPending;
+      if ((n !== this._akN || settled) && n > 0) {
+        this._akN = n;
+        try {
+          const scrollToBottom = () => {
+            const comp = (document.getElementById('ak-composer') || { getBoundingClientRect: () => ({ height: 110 }) }).getBoundingClientRect().height || 110;
+            const cells = document.querySelectorAll('[data-cell]');
+            const tgt = cells[cells.length - 1];
+            if (tgt && tgt.getBoundingClientRect && tgt.getBoundingClientRect().bottom > window.innerHeight - comp - 8) {
+              window.scrollBy(0, tgt.getBoundingClientRect().bottom - (window.innerHeight - comp - 8));
+            }
+          };
+          scrollToBottom();
+          setTimeout(scrollToBottom, 150);
+          setTimeout(scrollToBottom, 500);
+          setTimeout(scrollToBottom, 1200);
+        } catch (e) {}
+      }
+    } else { this._akN = undefined; this._akWasPend = false; } }
+  askEl() { return document.getElementById('ak-composer'); }
   applyTheme() { document.documentElement.dataset.theme = this.state.theme; }
   async ingest(dt) {
     if (!dt) return;
@@ -3190,27 +3127,42 @@ class Component extends DCLogic {
       else this.addDocs([{ title: url, year: new Date().getFullYear(), type: 'Link', text: '', url, note: 'That site doesn’t let its page be read from here — open it, then drag or paste its text instead.' }]);
     }
   }
-  async loadRepoWorkspace() {
-    try { const r = await fetch(OHS_RAW + HOLO_WS, { cache: 'no-cache' }); if (!r.ok) { this._wsInfo = { found: false }; return; } const w = await r.json(); if (w.schema !== 'holodeck-workspace@1') return;
-      const cid = 'ohs'; const loc = this.state.added[cid] || []; const have = new Set(loc.map(d => d.id)); const add = (w.added || []).filter(d => !have.has(d.id));
-      add.forEach(d => { if (d.html) { this._html[d.id] = d.html; idbPut('html:' + d.id, d.html).catch(() => {}); } });
-      const added = { ...this.state.added, [cid]: [...loc, ...add.map(d => { const x = { ...d }; delete x.html; if (d.html) x.hasHtml = true; return x; })] };
-      const meta = { ...this.metaAll() }; meta[cid] = { ...(w.meta || {}), ...(meta[cid] || {}) }; this._meta = meta; try { localStorage.setItem('fold-explorer-srcmeta', JSON.stringify(meta)); } catch (e) {}
-      this.readLog(); this._rlog[cid] = { ...(w.readlog || {}), ...(this._rlog[cid] || {}) }; try { localStorage.setItem('fold-explorer-readlog', JSON.stringify(this._rlog)); } catch (e) {}
-      this.saveAdded(added); this.state.added = added; this._wsInfo = { found: true, savedAt: w.savedAt, n: (w.added || []).length, merged: add.length };
-    } catch (e) { this._wsInfo = { found: false, err: e.message }; }
-  }
-  rebuildLive() { this._rebuild = true; this._ohsP = null; SAMPLES.ohs.docs = []; this._key = null; this.setState(s => ({ htmlVer: s.htmlVer + 1 })); this.loadHtml(); }
-  async loadOhsCorpus() {
-    if (this._ohsP) return this._ohsP;
-    this.setState({ busy: 'Loading OHS source custody…' });
-    this._ohsP = loadOhs((n, t) => this.setState({ busy: 'Reading captured sources… ' + n + ' / ' + t }), { rebuild: this._rebuild }).then(async r => {       try { const have = new Set(r.docs.map(d => d.media && d.media.id).filter(Boolean)); const vids = (await ohsVideos(r.docs)).filter(v => !have.has(v.media.id)); r.docs = [...r.docs, ...vids]; } catch (e) {} SAMPLES.ohs.name = r.name; SAMPLES.ohs.docs = r.docs; DEMOS.ohs.text = r.transcript || 'Transcript not available.'; this._corpusInfo = { from: r.from, builtAt: r.builtAt, manifestAt: r.manifestAt, stale: !!r.stale, n: r.docs.length }; this._rebuild = false;
-        await this.loadRepoWorkspace(); this._key = null; this.setState(s => ({ htmlVer: s.htmlVer + 1, busy: '', ohsErr: '' })); })
-      .catch(e => { this._ohsP = null; this.setState({ busy: '', note: 'Couldn’t load OHS source custody — ' + e.message }); });
-    return this._ohsP;
+  async addRepo() {
+    const v = (this.state.repoVal || '').trim();
+    const m = v.match(/^https?:\/\/(?:www\.)?github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?(?:\/|$)/) || v.match(/^([\w.-]+)\/([\w.-]+)$/);
+    if (!m) { this.setState({ note: 'Give it as owner/repo or a github.com URL.' }); return; }
+    const owner = m[1], repo = m[2];
+    const api = 'https://api.github.com/repos/' + encodeURIComponent(owner) + '/' + encodeURIComponent(repo);
+    let tree = [];
+    try {
+      const r = await fetch(api + '/git/trees/HEAD?recursive=1', { headers: { Accept: 'application/vnd.github+json' } });
+      if (!r.ok) throw new Error(r.status === 403 ? 'GitHub rate limit — wait a minute and try again.' : 'GitHub said ' + r.status);
+      tree = (await r.json()).tree || [];
+    } catch (e) { this.setState({ note: 'Couldn’t list that repo: ' + e.message }); return; }
+    const textRe = /\.(md|markdown|mdown|txt|text|json|jsonl|ndjson|csv|tsv|html?|xml|yaml|yml|org|rst|adoc|log|ini|conf|cfg|toml|py|js|ts|rb|go|rs|java|c|h|cpp|hpp|sh|sql|r|jl|ipynb)$/i;
+    const skipDir = /(^|\/)(node_modules|vendor|dist|build|\.git|coverage|target|\.venv|venv|__pycache__|\.next|\.cache)(\/|$)/i;
+    const files = tree.filter(x => x.type === 'blob' && textRe.test(x.path) && !skipDir.test(x.path)).slice(0, 400);
+    if (!files.length) { this.setState({ note: 'No text files found in that repo.' }); return; }
+    this.setState({ busy: 'Pulling ' + owner + '/' + repo + '…' });
+    const rawBase = 'https://raw.githubusercontent.com/' + owner + '/' + repo + '/HEAD/';
+    const docs = [];
+    for (let i = 0; i < files.length; i++) {
+      try {
+        const r = await fetch(rawBase + files[i].path, { cache: 'no-cache' });
+        if (!r.ok) continue;
+        const t = await r.text();
+        if (t.length < 40 || t.length > 2000000) continue;
+        const parts = files[i].path.split('/');
+        const title = parts.length > 1 ? parts.slice(-2).join('/') : parts[0].replace(/\.[^.]+$/, '');
+        docs.push({ title, year: null, type: 'Repo file', text: t, url: 'https://github.com/' + owner + '/' + repo + '/blob/HEAD/' + files[i].path, note: 'From ' + owner + '/' + repo + ' · ' + files[i].path });
+      } catch (e) {}
+      if ((i + 1) % 10 === 0) this.setState({ busy: 'Pulling ' + owner + '/' + repo + ' · ' + (i + 1) + ' / ' + files.length + ' files…' });
+    }
+    if (!docs.length) { this.setState({ busy: '', note: 'Nothing readable came back from that repo.' }); return; }
+    this.addDocs(docs);
+    this.setState({ repoVal: '', note: 'Pulled ' + plural(docs.length, 'file') + ' from ' + owner + '/' + repo + ' into this workspace.' });
   }
   async loadHtml() {
-    if (this.corpusId() === 'ohs' && !SAMPLES.ohs.docs.length) await this.loadOhsCorpus();
     const id = this.corpusId(); const docs = this.baseDocs(id).concat(this.state.added[id] || []);
     this._loading = this._loading || {}; const todo = docs.filter(d => (d.wiki || d.hasHtml) && this._html[d.id] === undefined && !this._loading[d.id]);
     if (!todo.length) return;
@@ -3229,6 +3181,12 @@ class Component extends DCLogic {
   }
   plainRef = el => { this._plainEl = el; };
   omniRef = el => { this._omniEl = el; };
+  hdrRef = el => { this._hdrEl = el; this.measureHdr(); };
+  measureHdr() {
+    const el = this._hdrEl; if (!el) return;
+    const h = Math.round(el.getBoundingClientRect().height);
+    if (h && h !== this._hdrH) { this._hdrH = h; try { document.documentElement.style.setProperty('--hdr-h', h + 'px'); } catch (e) {} }
+  }
   // the search box is uncontrolled so typing never waits on a render; write it only when the query changes from elsewhere (Escape, a narrow-to button, a corpus switch)
   syncOmni() { const S = this.state; const v = S.qDraft !== undefined ? S.qDraft : S.q || ''; if (this._omniLast === undefined) { this._omniLast = v; return; } if (v === this._omniLast) return; this._omniLast = v; if (this._omniEl && this._omniEl.value !== v) this._omniEl.value = v; }
   capL(key, arr, n) { const step = Math.max(n, 20); const lim = Math.max(n, (this.state.caps || {})[key] || n); const all = arr.length; const set = v => this.setState(s => ({ caps: { ...(s.caps || {}), [key]: v } }));
@@ -3334,7 +3292,7 @@ class Component extends DCLogic {
       else { const v = +m[5].replace(/,/g, ''); if (v >= 1900 && v <= 2100 && !/,/.test(m[5])) continue; const n = m[6].toLowerCase().replace(/(ies)$/, 'y').replace(/s$/, ''); if (/^(of|and|or|to|in|on|at|the|for|by|per|a|an|am|pm|years?|months?|days?|weeks?|hours?|minutes?)$/.test(n)) continue; out.push({ u: 'n:' + n, v, raw: m[0].trim() }); } }
     return out; }
   ytPost(func, args) { const f = document.getElementById('fx-yt'); if (f && f.contentWindow) f.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args: args || [] }), '*'); }
-  ytSeek(t) { this._ytUser = 0; this.ytPost('seekTo', [t, true]); this.ytPost('playVideo'); this.ytMark(t, true); }
+  ytSeek(t) { this._ytUser = 0; const lp = document.getElementById('fx-local'); if (lp) { lp.currentTime = t; lp.play(); this.ytMark(t, true); return; } this.ytPost('seekTo', [t, true]); this.ytPost('playVideo'); this.ytMark(t, true); }
   ytMark(t, force) { const root = this._rRoot; if (!root) return; const ps = [...root.querySelectorAll('[data-t]')]; if (!ps.length) return; let cur = null; for (const p of ps) { if (+p.getAttribute('data-t') <= t + 0.3) cur = p; else break; }
     const now = document.getElementById('fx-yt-now'); if (now) now.textContent = fmtT(Math.floor(t));
     if (cur === this._ytCur && !force) return; if (this._ytCur) { this._ytCur.style.background = ''; this._ytCur.style.boxShadow = ''; } this._ytCur = cur; if (!cur) return;
@@ -3519,6 +3477,81 @@ class Component extends DCLogic {
     this.addDocs([{ title: title + (forDoc ? '' : ''), html, format: 'html', text: htmlToText(html), url: forDoc ? forDoc.url : null, extra }]); this.ilog('Transcribed ' + plural(r.segments.length, 'segment') + ' in this browser (' + r.model.split('/').pop() + ').');
     const bytes = JSON.stringify({ source: r.source, model: r.model, video_id: forDoc && forDoc.media ? forDoc.media.id : null, segments: r.segments });
     if (this._net.s && !this._net.s.guest && this.wsRooms().pub) await this.publish({ bytes, meta: { kind: 'transcript', title, url: forDoc ? forDoc.url : null, ytid: forDoc && forDoc.media ? forDoc.media.id : null, mime: 'application/json', filename: (title || 'transcript').replace(/[^\w-]+/g, '-').slice(0, 60) + '.segments.json' } }); }); }
+  async transcribeLocal(d0) {
+    const A = this.analysis(); const prior = this.state.txPrior || 'workspace';
+    const buf = await idbGet('media:' + d0.id).catch(() => null);
+    if (!buf) { this.setState({ txBusy: false, txAsk: null, txProg: '', note: 'The recording’s bytes aren’t stored in this browser.' }); return; }
+    let prompt = null, priorNote = 'no vocabulary prior';
+    if (prior !== 'none') {
+      const names = [...new Set(A.sts.flatMap(s => s.names).filter(n => { const r = A.names[n]; return r && (r.type === 'person' || r.type === 'organisation' || r.type === 'place') && n.length <= 40; }))]
+        .map(n => [n, A.names[n].sts.length]).sort((a, b) => b[1] - a[1]).slice(0, 80).map(x => x[0]);
+      if (names.length) { prompt = names.join(', '); priorNote = 'the ' + names.length + ' names this workspace already knows'; }
+    }
+    const terms = (this._txTerms || '').trim();
+    if (terms) { prompt = prompt ? prompt + ', ' + terms : terms; priorNote = priorNote === 'no vocabulary prior' ? 'the terms you typed' : priorNote + ' and the terms you typed'; }
+    const lang = this.state.txLang || 'en';
+    const model = this.state.txModel === 'small' ? 'onnx-community/whisper-small' : this.state.txModel === 'smallen' ? 'onnx-community/whisper-small.en' : 'onnx-community/whisper-base';
+    this.setState({ txBusy: true, txProg: 'loading the recognizer…', txAsk: null });
+    try {
+      const N = await this.net();
+      const r = await N.transcribe(buf, p => this.setState({ txProg: p.stage + (p.pct != null ? ' ' + p.pct + '%' : '') }), model, { prompt, language: lang });
+      const html = ohsSegmentsHtml(r.segments, d0.title);
+      const media = { ...d0.media, segN: r.segments.length, model: r.model, priors: r.priors || { prompt: prompt ? priorNote : 'none', language: lang } };
+      this._html[d0.id] = html; idbPut('html:' + d0.id, html).catch(() => {});
+      this.replaceAddedDoc(d0.id, { format: 'html', html, text: htmlToText(html), media, transcribed: true });
+      this.ilog('Transcribed ' + plural(r.segments.length, 'segment') + ' in this browser (' + r.model.split('/').pop() + '), listening with ' + priorNote + '.');
+      this.setState({ txBusy: false, txProg: '' });
+      const bytes = JSON.stringify({ source: r.source, model: r.model, segments: r.segments, priors: r.priors || { prompt: prompt ? priorNote : 'none', language: lang } });
+      if (this._net && this._net.s && !this._net.s.guest && this.wsRooms().pub) this.publish({ bytes, meta: { kind: 'transcript', title: d0.title, url: null, mime: 'application/json', filename: d0.title.replace(/[^\w-]+/g, '-').slice(0, 60) + '.segments.json' } }).catch(() => {});
+    } catch (e) { this.setState({ txBusy: false, txProg: '', note: 'Transcription failed: ' + (e && e.message || e) }); }
+  }
+  pickYtFile(d0) {
+    const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'audio/*,video/*';
+    inp.onchange = () => { const f = inp.files && inp.files[0]; if (f) this.transcribeYt(d0, f); };
+    inp.click();
+  }
+  async transcribeYt(d0, file) {
+    const A = this.analysis(); const prior = this.state.txPrior || 'workspace';
+    let prompt = null, priorNote = 'no vocabulary prior';
+    if (prior !== 'none') {
+      const names = [...new Set(A.sts.flatMap(s => s.names).filter(n => { const r = A.names[n]; return r && (r.type === 'person' || r.type === 'organisation' || r.type === 'place') && n.length <= 40; }))]
+        .map(n => [n, A.names[n].sts.length]).sort((a, b) => b[1] - a[1]).slice(0, 80).map(x => x[0]);
+      if (names.length) { prompt = names.join(', '); priorNote = 'the ' + names.length + ' names this workspace already knows'; }
+    }
+    const terms = (this._txTerms || '').trim();
+    if (terms) { prompt = prompt ? prompt + ', ' + terms : terms; priorNote = priorNote === 'no vocabulary prior' ? 'the terms you typed' : priorNote + ' and the terms you typed'; }
+    const lang = this.state.txLang || 'en';
+    const model = this.state.txModel === 'small' ? 'onnx-community/whisper-small' : this.state.txModel === 'smallen' ? 'onnx-community/whisper-small.en' : 'onnx-community/whisper-base';
+    this.setState({ txBusy: true, txProg: 'loading the recognizer…', txAsk: null });
+    try {
+      const N = await this.net();
+      const r = await N.transcribe(file, p => this.setState({ txProg: p.stage + (p.pct != null ? ' ' + p.pct + '%' : '') }), model, { prompt, language: lang });
+      const title = d0.title; const html = ohsSegmentsHtml(r.segments, title);
+      const extra = { format: 'html', media: { ...d0.media, segN: r.segments.length, model: r.model, priors: r.priors || { prompt: prompt ? priorNote : 'none', language: lang } }, kind: 'Meeting recording', medium: 'Video', transcribed: true };
+      this.addDocs([{ title, html, format: 'html', text: htmlToText(html), url: d0.url, extra }], { open: true });
+      this.ilog('Transcribed ' + plural(r.segments.length, 'segment') + ' in this browser (' + r.model.split('/').pop() + '), listening with ' + priorNote + '.');
+      this.setState({ txBusy: false, txProg: '' });
+      const bytes = JSON.stringify({ source: r.source, model: r.model, video_id: d0.media.id, segments: r.segments, priors: r.priors || { prompt: prompt ? priorNote : 'none', language: lang } });
+      if (this._net && this._net.s && !this._net.s.guest && this.wsRooms().pub) this.publish({ bytes, meta: { kind: 'transcript', title, url: d0.url, ytid: d0.media.id, mime: 'application/json', filename: title.replace(/[^\w-]+/g, '-').slice(0, 60) + '.segments.json' } }).catch(() => {});
+    } catch (e) { this.setState({ txBusy: false, txProg: '', note: 'Transcription failed: ' + (e && e.message || e) }); }
+  }
+  replaceAddedDoc(id, patch) {
+    const cid = this.corpusId();
+    const added = { ...this.state.added, [cid]: (this.state.added[cid] || []).map(d => d.id === id ? { ...d, ...patch } : d) };
+    this.saveAdded(added);
+    this.setState({ added, htmlVer: this.state.htmlVer + 1 });
+  }
+  async ensureMediaUrl(d) {
+    if (!d || !d.media || d.media.kind !== 'local' || (this._mediaUrl || {})[d.id] !== undefined) return;
+    this._mediaUrl = this._mediaUrl || {};
+    const buf = await idbGet('media:' + d.id).catch(() => null);
+    this._mediaUrl[d.id] = buf ? URL.createObjectURL(new Blob([buf], { type: d.media.mime || 'application/octet-stream' })) : null;
+    this.setState({});
+  }
+  hookLocal() {
+    const el = document.getElementById('fx-local'); if (!el || el === this._fxLocal) return; this._fxLocal = el;
+    el.addEventListener('timeupdate', () => { if (this.state.ytFollow !== false) this.ytMark(el.currentTime); });
+  }
   async loadFromRoom() { return this.netDo('Load from room', async N => { await this.refreshRoom(); const s = this._net.s; const A = this.analysis(); const known = this.knownIds(A); const list = [];
     for (const b of this._net.chain || []) { const m = b.meta || {}; const k = m.ytid || (m.url || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''); if (k && known.has(k) && m.kind !== 'transcript') continue;
       if (m.kind === 'transcript') { const buf = await N.download(s, b.mxc); const h = await N.sha256(buf); if (h !== b.sha256) { this.ilog('Block ' + b.block.slice(0, 12) + ': bytes don\u2019t match their sha256, skipped', 'bad'); continue; } const j = JSON.parse(new TextDecoder().decode(buf)); const html = ohsSegmentsHtml(j.segments || [], m.title); list.push({ title: m.title, html, format: 'html', text: htmlToText(html), url: m.url, extra: { media: m.ytid ? { kind: 'youtube', id: m.ytid, url: m.url, segN: (j.segments || []).length, model: j.model } : null, kind: 'Meeting recording', medium: m.ytid ? 'Video' : 'Audio', transcribed: true, chain: b.block } }); }
@@ -3704,6 +3737,31 @@ class Component extends DCLogic {
       this._conv = r.conv; this._lastMsgs = r.turn.messages; this.saveConv(); this.setState({ akBusy: '', akStream: '', akPending: '', akComputed: null });
     } catch (e) { this.setState({ akBusy: '', akStream: '', akPending: '', akComputed: null, akErr: ac.signal.aborted ? 'Stopped before the answer finished.' : String(e && e.message || e), akQ: q }); }
   }
+  askToDraft(t) {
+    const A = this.analysis();
+    const docOfName = n => this._ix && this._ix.docOf[n];
+    const claims = []; const seen = new Set();
+    (t.attr || []).forEach(x => {
+      if (!x.ref || seen.has(x.ref)) return; seen.add(x.ref);
+      const m = String(x.ref).match(/^(.*)#(\d+)-(\d+)$/); if (!m) return;
+      const id = docOfName(m[1]); const d = id && A.docById[id]; if (!d) return;
+      const st = (A.stsByDoc[id] || []).find(y => y.e > +m[2] && y.s < +m[3]) || null; if (!st) return;
+      const u = (t.used || []).find(z => z.ref === x.ref);
+      claims.push({ text: short(clean(x.text), 300), st, src: (u && u.text) || clean(st.text), date: this.dateOf(A, st).iso });
+    });
+    if (!claims.length) { this.toast('That answer has no cited passages to generate from.'); return; }
+    this.setPinData(D => {
+      claims.forEach(c => {
+        const pin = this.ensurePin(D, A, c.st);
+        const cl = { id: 'claim-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text: c.text, pins: [pin], fixed: [pin], q: c.src, by: 'ask', g: { verdict: 'source', why: 'From the Ask the Fold answer, quoted from its own passage.', at: Date.now() } };
+        if (c.date) cl.date = c.date;
+        D.claims.push(cl);
+      });
+      return D;
+    });
+    this.setState({ view: 'draft', readDoc: null, sel: null, f: {} });
+    this.toast('Generated ' + plural(claims.length, 'claim') + ' into the Draft from that answer.');
+  }
   askVals(A, view) {
     if (view !== 'ask') return { ak: { on: false } };
     const S = this.state; const cid = this.corpusId();
@@ -3715,7 +3773,7 @@ class Component extends DCLogic {
     const model = this.akModel(); const ms = this.akModels(); const MM = this._askM; const isWL = model.startsWith('webllm:'); const gpu = !!(MM && MM.webgpu()); const loaded = !!(MM && isWL && MM.webllmLoaded(model.slice(7))); const mInfo = ms.find(m => m.v === model) || { name: model, size: '' }; const LD = S.akLoad;
     const docOfName = n => this._ix && this._ix.docOf[n];
     const refInfo = ref => { const m = String(ref).match(/^(.*)#(\d+)-(\d+)$/); if (!m) return null; const id = docOfName(m[1]); const d = id && A.docById[id]; if (!d) return null; const a = +m[2], b = +m[3]; const st = (A.stsByDoc[id] || []).find(x => x.e > a && x.s < b) || null; return { id, d, st, a, b }; };
-    const turns = conv.turns.map(t => {
+    const turns = conv.turns.map((t, i) => {
       const num = new Map(); (t.attr || []).forEach(x => { if (x.ref && !num.has(x.ref)) num.set(x.ref, num.size + 1); });
       const bad = (t.findings || []).filter(f => !f.echoesQuestion);
       const sents = (t.attr && t.attr.length ? t.attr : [{ text: t.answer, ref: null }]).map(x => { const flag = bad.some(f => f.text && x.text.includes(f.text)); const info = x.ref ? refInfo(x.ref) : null;
@@ -3724,9 +3782,12 @@ class Component extends DCLogic {
         return { n: String(n), title: info.d.title, date: info.d.pubLabel || (info.d.year ? String(info.d.year) : ''), text: short(clean(u ? u.text : ''), 320), onRead: () => this.read(info.id, info.st && info.st.id), ...(info.st ? this.pinF(info.st) : { onPin: null, pinLabel: '', pinColor: 'var(--dim)' }), canPin: !!info.st }; }).filter(Boolean);
       const r = t.record || {}; const recBits = [plural((r.refs || []).length, 'address', 'addresses') + ' checked', (r.unsupported || []).length ? (r.unsupported || []).length + ' not in the material' : 'nothing unsupported', ...(r.open || [])];
       const C = t.computed;
+      const gen = t.attr && t.attr.some(x => x.ref && this._ix && this._ix.docOf[(String(x.ref).match(/^(.*)#/) || [])[1]]);
       return { n: String(t.n), q: t.question, sents, srcs, hasSrcs: srcs.length > 0, bad: bad.map(f => f.text).join(' · '), hasBad: bad.length > 0, noMaterial: !(t.offered || []).length,
         hasRes: !!(t.resolved && t.resolved.length), resLines: (t.resolved || []).map(r => ({ t: r.mode === 'nearmiss' ? 'Read “' + r.from + '” as ' + r.to + ': one letter off it, and off no other name.' : 'Did not guess who “' + r.from + '” is: ' + r.why + '.', col: r.mode === 'nearmiss' ? 'var(--acc)' : 'var(--amber)' })), hasNotes: !!(t.notes && t.notes.lines && t.notes.lines.length), notesLines: ((t.notes && t.notes.lines) || []).map(l => ({ l })), notesLine: t.notes ? (t.notes.empty ? 'The reader made no notes on these passages, and the model was told so.' : plural(t.notes.lines.length, 'note') + ' from ' + t.notes.coverage + '% of the sentences read · ' + plural(t.notes.spans, 'span') + ' of source text sent with them' + (t.notes.omitted ? ' · ' + t.notes.omitted + ' lower-ranked notes held back' : '')) : '', hasNotesLine: !!t.notes, hasRd: !!(t.reading && t.reading.lines && t.reading.lines.length), rdLines: ((t.reading && t.reading.lines) || []).map(l => ({ t: l.text, onClick: () => A.names[l.name] ? this.openProfile(l.name) : null })), hasComp: !!C, compHead: C ? C.head : '', compLines: C ? C.lines.map(l => ({ l })) : [], compSaid: C ? C.said : '', onComp: () => this.setState({ view: 'records', readDoc: null, dbT: C && C.type, dbAskDraft: C && C.q, dbRes: null }, () => C && this.dbRun(C.q)),
-        rec: 'On record · turn ' + t.n + ' · ' + recBits.join(' · '), fold: t.foldLine, meter: 'Sent ' + t.sentChars.toLocaleString() + ' characters in place of a ' + t.transcriptChars.toLocaleString() + '-character transcript', meta: t.model + (t.tokens && t.tokens.secs ? ' · ' + t.tokens.secs.toFixed(1) + ' s' : '') + (t.refresh && !t.refresh.ok && t.refresh.why ? ' · summary kept: ' + short(t.refresh.why, 120) : '') }; }).reverse();
+        rec: 'On record · turn ' + t.n + ' · ' + recBits.join(' · '), fold: t.foldLine, meter: 'Sent ' + t.sentChars.toLocaleString() + ' characters in place of a ' + t.transcriptChars.toLocaleString() + '-character transcript', meta: t.model + (t.tokens && t.tokens.secs ? ' · ' + t.tokens.secs.toFixed(1) + ' s' : '') + (t.refresh && !t.refresh.ok && t.refresh.why ? ' · summary kept: ' + short(t.refresh.why, 120) : ''),
+        canGen: gen, onGen: () => this.askToDraft(t),
+        i, onRun: e => { let q = t.question; try { const cell = e && e.target && e.target.closest ? e.target.closest('[data-cell]') : null; const ta = cell && cell.querySelector('textarea'); if (ta && String(ta.value).trim()) q = ta.value; } catch (er) {} this.askSend(String(q).trim()); } }; });
     const sm = conv.summary || {};
     const M = this._askM; let nextChars = 0; try { if (M) nextChars = M.FOLD.charCount(M.FOLD.buildTurnMessages({ basePrompt: 'x'.repeat(290), summary: sm, history: conv.history, question: '' })); } catch (e) {}
     const trChars = conv.history.reduce((n, m) => n + (m.content || '').length, 0);
@@ -3738,6 +3799,18 @@ class Component extends DCLogic {
       models: ms.map(m => ({ v: m.v, label: m.label })), hasModels: ms.length > 1, model, onModel: e => this.setState({ akModel: e.target.value }), retry: () => this.akProbe(),
       ixLine: this._ix ? plural(this._ix.chunks.length, 'passage') + ' from ' + plural(Object.keys(this._ix.texts).length, 'source') : 'Indexing passages…',
       turns, hasTurns: turns.length > 0, noTurns: turns.length === 0 && !S.akPending,
+      nextN: String(conv.turns.length ? parseInt(conv.turns[conv.turns.length - 1].n) + 1 : 1),
+      modes: (() => { const akMode = S.akMode || 'chat'; const seg = on => ({ bg: on ? 'var(--sel)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)' });
+        return [['chat', 'Chat'], ['generate', 'Generate'], ['notebook', 'Notebook']].map(([k, l]) => ({ label: l, ...seg(akMode === k), onClick: () => this.setState({ akMode: k }) })); })(),
+      mChat: (S.akMode || 'chat') === 'chat', mGen: S.akMode === 'generate', mNb: S.akMode === 'notebook', showCells: S.akMode !== 'generate',
+      modeNote: S.akMode === 'generate' ? 'Build a sourced document — the answers you ask for, laid out by kind.' : S.akMode === 'notebook' ? 'Every cell can be edited and re-run; the output of each run stays below its cell.' : 'The conversation — every answer checked against its passages.',
+      gKinds: [['brief', 'Brief'], ['timeline', 'Timeline']].map(([k, l]) => { const on = (S.gKind || 'brief') === k; return { label: l, bg: on ? 'var(--sel)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)', onClick: () => this.setState({ gKind: k }) }; }),
+      gModes: [['mech', 'Quotes'], ['model', 'Model']].map(([k, l]) => { const on = (S.gMode || 'mech') === k; return { label: l, bg: on ? 'var(--sel)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)', onClick: () => this.setState({ gMode: k }) }; }),
+      gSubj: S.gSubj != null ? S.gSubj : '', onGSubj: e => this.setState({ gSubj: e.target.value }),
+      gOp: S.gen ? 0.6 : 1, gRunLabel: S.gen ? 'Working…' : 'Fill the document', gHasNote: !!S.gNote, gNote: S.gNote || '',
+      gOpen: () => this.setState({ view: 'draft', readDoc: null, sel: null, f: {} }),
+      gFill: async () => { if (S.gen) return; const before = this.pinData().claims.length; this.setState({ gNote: '' }); await this.generate(); const after = this.pinData().claims.length; const n = after - before;
+        this.setState({ gNote: n > 0 ? 'Filled ' + plural(n, 'claim') + ' into the Draft — open it to see the document.' : 'Nothing in the sources matched that subject. Try another name, or check the workspace holds the material.' }); },
       busy: !!S.akBusy, stage: stageL[S.akBusy] || '', pendingQ: S.akPending || '', hasPending: !!S.akPending, stream: S.akStream || '', hasStream: !!S.akStream,
       pendComp: S.akComputed ? S.akComputed.head : '', hasPendComp: !!S.akComputed,
       err: S.akErr || '', hasErr: !!S.akErr, q: S.akQ || '', onQ: e => this.setState({ akQ: e.target.value }), onKey: e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.askSend(); } }, send: () => this.askSend(), canSend: this.llmOk() && !S.akBusy, stop: () => { if (this._akAbort) this._akAbort.abort(); },
@@ -3775,9 +3848,8 @@ class Component extends DCLogic {
       cast: castRows, load: load.slice(0, 40), back: back.slice(0, 20), backN: String(back.length), loadN: String(load.length), churn, srcRows, built: 'Built ' + new Date(X.builtAt).toLocaleString() + ' in ' + (X.ms / 1000).toFixed(1) + ' s from ' + String(X.from).split('/').pop(), onRebuild: () => { this._rix = null; this.loadReading(true); this.forceUpdate(); } } };
   }
   async sourceBytes(d) {
-    const N = await this.net(); const rel = d.bodyBase ? d.bodyBase + '.segments.json' : d.bodyPath || d.binPath || ((String(d.note || '').match(/text from ((?:derived|bytes|transcripts)\/\S+?)(?:\.|\s|$)/) || [])[1]) || null;
-    if (rel) { const b = await ohsBodyBytes(rel); if (b) return { buf: b.buf, rel, mime: /\.json$/.test(rel) ? 'application/json' : /\.txt$/.test(rel) ? 'text/plain' : 'application/octet-stream' }; }
-    if (d.pdfSrc) { try { const r = await fetch(d.pdfSrc); if (r.ok) return { buf: await r.arrayBuffer(), rel: d.pdfSrc.replace(OHS_RAW, ''), mime: 'application/pdf' }; } catch (e) {} }
+    await this.net();
+    if (d.pdfSrc) { try { const r = await fetch(d.pdfSrc); if (r.ok) return { buf: await r.arrayBuffer(), rel: (d.pdfSrc || '').split('/').pop(), mime: 'application/pdf' }; } catch (e) {} }
     return { buf: new TextEncoder().encode(d.text || '').buffer, rel: null, mime: 'text/plain' };
   }
   async publishAll() {
@@ -3788,7 +3860,7 @@ class Component extends DCLogic {
       const A = this.analysis(); const docs = A.docs.filter(d => this.counted(d)); run.total = docs.length;
       for (const d of docs) { if (run.stop) break; const key = d.ohsId || d.id; if (have.has(key) || (d.url && have.has(d.url))) { run.skipped++; this.forceUpdate(); continue; }
         try { const src = await this.sourceBytes(d); const ext = src.mime === 'application/pdf' ? '.pdf' : src.mime === 'application/json' ? '.json' : src.mime === 'text/plain' ? '.txt' : '.bin';
-          await this.publish({ bytes: src.buf, meta: { kind: d.media ? (d.bodyBase ? 'transcript' : 'video-link') : 'source', srcId: key, title: d.title, url: d.url || null, ytid: d.media && d.media.id || null, published: d.published || null, docKind: d.kind || null, from: src.rel ? 'ohs-custody/' + src.rel : 'workspace text', mime: src.mime, filename: key.replace(/[^\w-]+/g, '-').slice(0, 80) + ext } }, true);
+          await this.publish({ bytes: src.buf, meta: { kind: d.media ? (d.bodyBase ? 'transcript' : 'video-link') : 'source', srcId: key, title: d.title, url: d.url || null, ytid: d.media && d.media.id || null, published: d.published || null, docKind: d.kind || null, from: 'workspace text', mime: src.mime, filename: key.replace(/[^\w-]+/g, '-').slice(0, 80) + ext } }, true);
           if (d.url && !d.media) (await this.net()).saveToArchive(d.url); run.done++; }
         catch (e) { run.failed++; this.ilog('Could not publish ' + short(d.title, 50) + ': ' + e.message, 'bad'); if (e.status === 429) await new Promise(r => setTimeout(r, 5000)); }
         this.forceUpdate(); await new Promise(r => setTimeout(r, 250)); }
@@ -4019,7 +4091,7 @@ class Component extends DCLogic {
   }
   async renderFaithful(el, d, R, A, key, q) {
     this._faith = this._faith || {}; let page = d.faithful || this._faith[d.id];
-    if (!page) { el.innerHTML = '<p style="color:var(--mut);font:400 14px Hanken Grotesk;padding:24px">Loading the captured page…</p>'; try { const r = await fetch(OHS_RAW + d.binPath); if (!r.ok) throw new Error('HTTP ' + r.status); page = this._faith[d.id] = faithfulHtml(await r.text(), d.url || ''); } catch (e) { if (this._rKey === key) el.innerHTML = '<p style="color:var(--bad);padding:24px">Couldn’t load the capture (' + esc(e.message) + '). Switch to Reading.</p>'; return; } if (this._rKey !== key) return; }
+    if (!page) { el.innerHTML = '<p style="color:var(--bad);padding:24px">No captured bytes for this source in this browser.</p>'; return; }
     el.innerHTML = ''; const f = document.createElement('iframe');
     f.setAttribute('sandbox', 'allow-same-origin allow-popups allow-popups-to-escape-sandbox');
     f.style.cssText = 'width:100%;border:0;display:block;min-height:640px;background:#fff'; f.title = d.title;
@@ -4106,12 +4178,7 @@ class Component extends DCLogic {
     }
     return frag;
   }
-  async loadLazyBody(d) { this._lazy = this._lazy || {}; if (this._lazy[d.id]) return; this._lazy[d.id] = { loading: true };
-    let html = '', segN = 0, model = '', from = '';
-    const seg = d.bodyBase ? await ohsBodyBytes(d.bodyBase + '.segments.json') : null; if (seg) { try { const j = JSON.parse(new TextDecoder().decode(seg.buf)); const S = j.segments || []; html = ohsSegmentsHtml(S, d.title); segN = S.length; model = j.model || (j.source === 'youtube-caption-track' ? 'YouTube ' + (j.kind || 'caption track') : ''); from = seg.from; } catch (e) {} }
-    if (!html && d.bodyPath) { const tx = await ohsBodyBytes(d.bodyPath); if (tx) { const s = new TextDecoder().decode(tx.buf); if (d.bodyHtml) { const r = ohsHtmlText(s); html = r.html || textToHtml(r.text || ''); } else html = textToHtml(s); from = tx.from; } }
-    this._lazy[d.id] = { html: html || '<p>Transcript file not found in the local copy or on GitHub.</p>', segN, model, from, bytes: seg ? seg.buf.byteLength : 0 };
-    this._rKey = null; this.forceUpdate(); }
+  async loadLazyBody(d) { this._lazy = this._lazy || {}; if (this._lazy[d.id]) return; this._lazy[d.id] = { html: '<p>No body stored for this source in this browser.</p>', segN: 0, model: '', from: '', bytes: 0 }; this._rKey = null; this.forceUpdate(); }
   syncReader() {
     const el = this._rEl; const S = this.state; if (!el || S.view !== 'reader' || !S.readDoc || S.readMode === 'plain' || S.readMode === 'restated') return;
     const A = this.analysis(); const d = A.docById[S.readDoc]; if (!d) return;
@@ -4227,21 +4294,8 @@ class Component extends DCLogic {
       this._selKey = null; this.applySel(el); this.forceUpdate();
     } catch (e) { if (this._rKey === key) el.innerHTML = '<p style="color:var(--bad);padding:24px">Couldn’t render the captured PDF (' + esc(e.message) + '). Switch to Reading.</p>'; }
   }
-  corpusId() { return this.state.corpus || this.props.defaultCorpus || 'ohs'; }
-  baseDocs(id) { if (!SAMPLES[id]) return []; const b = SAMPLES[id].docs; if (id !== 'ohs' || !this._meet || !this._meet.length) return b; const have = new Set(b.map(d => d.ohsId || d.id)); return b.concat(this._meet.filter(d => !have.has(d.ohsId))); }
-  async loadMeetFolder(fileList) {
-    const files = [...(fileList || [])]; if (!files.length) return; this.setState({ busy: 'Reading ' + plural(files.length, 'file') + '…' });
-    const byPath = new Map(); files.forEach(f => { const p = (f.webkitRelativePath || f.name).replace(/\\/g, '/'); const i = p.search(/(^|\/)(readings|transcripts)\//); byPath.set(i >= 0 ? p.slice(p.indexOf(p.match(/(readings|transcripts)\//)[0])) : p.split('/').slice(-1)[0], f); });
-    const get = async (p, json) => { const f = byPath.get(p) || byPath.get(p.split('/').pop()); if (!f) throw new Error('missing ' + p); const t = await f.text(); return json ? JSON.parse(t) : t; };
-    const names = [...byPath.keys()].filter(p => /^readings\/[^/]+\.json$/.test(p)).map(p => p.replace(/^readings\//, '').replace(/\.json$/, ''));
-    const known = new Set(SAMPLES.ohs.docs.map(d => d.ohsId || String(d.id).replace(/^ohs-/, '')));
-    let docs = []; try { docs = await ohsExtraTranscripts(get, known, names); } catch (e) { this.setState({ busy: '', note: 'Couldn’t read that folder: ' + e.message }); return; }
-    if (!docs.length) { this.setState({ busy: '', note: 'No new meeting transcripts found. The folder needs readings/*.json with a transcripts/ path (and those transcript files), or sources.json.' }); return; }
-    this._meet = [...(this._meet || []).filter(d => !docs.some(x => x.ohsId === d.ohsId)), ...docs]; try { await idbPut('meet:ohs', this._meet); } catch (e) {}
-    this._key = null; this.setState(s => ({ htmlVer: s.htmlVer + 1, busy: '', note: 'Added ' + plural(docs.length, 'meeting transcript') + ' from your folder (' + docs.filter(d => d.media).length + ' with video). Kept in this browser until they’re pushed to the repo.' }));
-  }
-  async restoreMeet() { try { const m = await idbGet('meet:ohs'); if (Array.isArray(m) && m.length) { this._meet = m; this._key = null; this.setState(s => ({ htmlVer: s.htmlVer + 1 })); } } catch (e) {} }
-  clearMeet() { this._meet = []; idbPut('meet:ohs', []).catch(() => {}); this._key = null; this.setState(s => ({ htmlVer: s.htmlVer + 1 })); }
+  corpusId() { return this.state.corpus || 'custom'; }
+  baseDocs(id) { return SAMPLES[id] ? SAMPLES[id].docs : []; }
   analysis() {
     const id = this.corpusId(); const seenU = new Set(); const docs = this.baseDocs(id).concat(this.state.added[id] || []).filter(d => { const u = d.url && d.url.replace(/^https?:\/\/(www\.)?/, '').replace(/[#?].*$/, '').replace(/\/$/, '').toLowerCase(); if (!u || d.ohsId) { if (u) seenU.add(u); return true; } if (seenU.has(u)) return false; seenU.add(u); return true; });
     const key = id + ':' + docs.map(d => d.id).join(',') + ':' + this.state.htmlVer + ':' + this.corrKey(id);
@@ -4414,7 +4468,7 @@ class Component extends DCLogic {
     const nd = list.map(x => ({ id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: x.title || 'Untitled', year: x.year || null, type: x.type || 'Text', format: x.format || 'text', hasHtml: !!x.html, url: x.url || null, pages: x.pages || null, ...(x.extra || {}), measured: !!x.measured, text: x.format === 'pdf' ? (x.text || '') : x.html ? pageText(x.html, x.format).slice(0, 60000) : (x.text || '') }));
     nd.forEach(d => { d.status = aopt && aopt.open ? 'seen' : 'source'; });
     T.focus = new Set(nd.map(d => d.id)); nd.forEach(d => hdT('store', 'mint', 'Stored \u201c' + hdCut(d.title, 60) + '\u201d as ' + d.id + (list[nd.indexOf(d)].html ? ' \u00b7 full page kept; ' + d.text.length.toLocaleString() + ' characters indexed for search' + (d.text.length >= 60000 ? ' (the cap; the reading below uses the whole page)' : '') : ' \u00b7 ' + d.text.length.toLocaleString() + ' characters kept'), { doc: d.id }));
-    nd.forEach((d, i) => { const x = list[i]; if (x.html) { this._html[d.id] = x.html; idbPut('html:' + d.id, x.html).catch(() => {}); } if (x.pdf) idbPut('pdf:' + d.id, x.pdf).catch(() => {}); });
+    nd.forEach((d, i) => { const x = list[i]; if (x.html) { this._html[d.id] = x.html; idbPut('html:' + d.id, x.html).catch(() => {}); } if (x.pdf) idbPut('pdf:' + d.id, x.pdf).catch(() => {}); if (x.buf) idbPut('media:' + d.id, x.buf).catch(() => {}); });
     let engNote = null; { const live = nd.filter(d => d.text && !d.measured); let ok = 0, miss = 0;
       if (live.length) this.setState({ busy: 'Reading ' + (live.length === 1 ? 'it' : live.length + ' sources') + ' with the engine…' });
       for (const d of live) { const t0 = HD_TR ? performance.now() - HD_TR.t0 : 0, got = await hdEngineRead(d.title, d.text);
@@ -4807,11 +4861,10 @@ class Component extends DCLogic {
       ...(seenDocs.length ? [{ label: 'Seen, not kept', n: String(seenDocs.length), desc: 'Opened, but not counted.', items: seenDocs.map(cardOf) }] : []),
       ...(hasKinds ? Object.entries(kmap).sort((a, b) => KIND_ORDER.indexOf(a[0]) - KIND_ORDER.indexOf(b[0])).map(([k, ds]) => ({ label: k, n: String(ds.length), desc: KIND_DESC[k] || '', items: ds.slice().sort((x, y) => pubMsD(x) - pubMsD(y)).map(cardOf) })) : Object.entries(gmap).sort((x, y) => (x[0] === '_') - (y[0] === '_') || y[1].docs.length - x[1].docs.length).map(([k, g]) => ({ label: g.label, n: String(g.docs.length), desc: k === '_' ? (Object.keys(distinctOf).length ? 'No difference from the rest is large enough to matter.' : keptDocs.length < 2 ? '' : 'No difference between them is large enough to matter yet.') : '', items: g.docs.map(cardOf) }))),
     ];
-    const meetVals = { isOhs: this.corpusId() === 'ohs', meetN: (this._meet || []).length, hasMeet: !!(this._meet || []).length, meetLabel: plural((this._meet || []).length, 'meeting transcript') + ' loaded from your folder, not yet in the repo', onMeetPick: e => { this.loadMeetFolder(e.target.files); e.target.value = ''; }, onMeetClear: () => this.clearMeet() };
     const svMode = S.svMode || 'cards', svGroup = 'tabs'; const allSrcItems = srcGroups.flatMap(g => g.items.map(it => ({ it, g: g.label })));
     const docOfCard = it => A.docs.find(d => d.title === it.title) || null;
     const isVid = it => { const d = docByTitle.get(it.title); return !!(d && (d.medium === 'Video' || d.medium === 'Audio' || d.media)); }; const vidItems = allSrcItems.filter(x => isVid(x.it));
-    const FAM = k => /^(Audit or report|Legislation|Letter|Meeting record|Contract)$/.test(k) ? 'Documents' : /^(Meeting recording|Video|Podcast)$/.test(k) ? 'Video & audio' : /^(Government page|Organisation page)$/.test(k) ? 'Official pages' : /^(News|Blog|Own article)$/.test(k) ? 'Press and commentary' : 'Other';
+    const FAM = k => /^(Audit or report|Legislation|Letter|Meeting record|Contract)$/.test(k) ? 'Documents' : /^(Meeting recording|Video|Podcast|Recording)$/.test(k) ? 'Video & audio' : /^(Government page|Organisation page)$/.test(k) ? 'Official pages' : /^(News|Blog|Own article)$/.test(k) ? 'Press and commentary' : 'Other';
     const FAMS = ['Documents', 'Video & audio', 'Official pages', 'Press and commentary', 'Other'];
     const famN = {}; srcGroups.forEach(g => { const f = FAM(g.label); famN[f] = (famN[f] || 0) + g.items.length; });
     const tabs = [{ label: 'All', n: String(allSrcItems.length), id: '__all' }, ...FAMS.filter(f => famN[f]).map(f => ({ label: f, n: String(famN[f]), id: f }))];
@@ -5004,9 +5057,42 @@ class Component extends DCLogic {
     const srcTuple = { being: 'documents', on: this._cnt ? this._cnt.size : 0, off: A.docs.length - (this._cnt ? this._cnt.size : A.docs.length), total: A.docs.length };
     const addAsFold = { show: chips.length > 0 && view !== 'search', label: 'Save as a fold', onClick: () => { const label = chips.map(c => c.k.toLowerCase() + ' ' + c.v).join(' · '); if (!label) return; this.addFoldFromFilter(label, { ...f }, S.q, new Set(F.map(st => st.doc)).size); } };
 
+    // breadcrumbs: workspace › surface › (narrows) › the content you're in — every level above the last is a way back
+    const crumbs = (() => {
+      const out = [];
+      const push = (label, onClick) => out.push({ label, onClick });
+      if (view === 'summary') {
+        if (this._topicStr) push('Topic: ' + this._topicStr, () => this.setMeta('__topic', ''));
+        push(this.corpusName(), () => this.go('summary'));
+      } else {
+        out.push({ label: this.corpusName(), onClick: () => this.go('summary') });
+        push(VIEW_LABEL[view] || 'Overview', () => this.go(view));
+      }
+      chips.forEach(c => { if (c.k !== 'Search') push(c.k.toLowerCase() + ': ' + c.v, c.onClear); });
+      const rd = view === 'reader' && S.readDoc ? A.docById[S.readDoc] : null;
+      const selSt = S.sel && S.sel.type === 'statement' ? A.byId[S.sel.id] : null;
+      const selNm = S.sel && S.sel.type === 'name' ? S.sel.id : null;
+      if (view === 'profile' && selNm) push(selNm, null);
+      else if (rd) {
+        push(rd.title, () => this.read(rd.id));
+        if (selSt) push(short(clean(selSt.text), 70), null);
+        else if (selNm) push(selNm, null);
+      }
+      else if (view === 'records' && S.dbT) push(S.dbT, null);
+      else if (view === 'search' && S.q.trim()) push('“' + S.q.trim() + '”', null);
+      else if (selSt) push(short(clean(selSt.text), 70), null);
+      else if (S.sel && S.sel.type === 'doc' && A.docById[S.sel.id]) push(A.docById[S.sel.id].title, () => this.read(S.sel.id));
+      else if (selNm) push(selNm, null);
+      const last = out[out.length - 1];
+      return out.map((c, i) => ({ label: c.label, title: c.label, hasOn: !!c.onClick && c !== last, noOn: !c.onClick || c === last, hasSep: i < out.length - 1, onClick: c !== last && c.onClick ? c.onClick : null }));
+    })();
+    const crumbLast = crumbs[crumbs.length - 1];
+    const crumbAnc = crumbs.slice(0, -1);
+    const hasAnc = crumbAnc.length > 0;
+
     const addN = k => (S.added[k] || []).length;
     const wsNames = loadWorkspaceNames();
-    const opts = ['ohs', 'keybridge', 'bridge', 'transit', 'kitchen'].map(k => ({ id: k, name: SAMPLES[k].name + (addN(k) ? ' + ' + addN(k) + ' added' : '') })).concat([{ id: 'custom', name: 'Your content' + (addN('custom') ? ' (' + addN('custom') + ')' : '') }])
+    const opts = [{ id: 'custom', name: 'Your content' + (addN('custom') ? ' (' + addN('custom') + ')' : '') }]
       .concat(Object.keys(S.added).filter(k => wsNames[k]).map(k => ({ id: k, name: wsNames[k] + ' (' + addN(k) + ')' })));
     const cid = this.corpusId(); const J = S.just; const demo = DEMOS[cid] || DEMOS.custom;
     // segmenting: the same paradigms computed once, driving both the left-rail quick segment switcher
@@ -5063,11 +5149,11 @@ class Component extends DCLogic {
       ['connections', 'See who is connected', 'Names that appear in the same statements.'],
     ];
     const gHi = on => ({ bg: on ? 'var(--sel)' : 'transparent', bd: on ? '#8b5cf6' : 'transparent', weight: on ? 600 : 500 });
-    const goalNav = [{ id: 'summary', label: 'Start here', count: '' }, { id: 'draft', label: 'Draft', count: this.activePins().length ? String(this.activePins().length) : '' }, { id: 'reading', label: 'The reading', count: this._rix ? String(this._rix.castTotal) : '' }, { id: 'ask', label: 'Ask the Fold', count: this._conv && this._conv.turns && this._conv.turns.length ? String(this._conv.turns.length) : '' }, { id: 'records', label: 'Records', count: this._db ? String(this._db.schema.tables.length) : '' }, { id: 'ingest', label: 'Ingest & publish', count: (this._net && this._net.chain && this._net.chain.length) ? String(this._net.chain.length) : '' }, ...GOALS.map(g => ({ id: g[0], label: g[1], count: counts[g[0]] }))].map(g => ({ ...g, ...gHi(view === g.id), onClick: () => this.go(g.id) }));
-    const NAVG = [['', [['summary', 'Start here'], ['ask', 'Ask the Fold']]], ['Read', [['sources', 'Sources'], ['names', 'Names'], ['records', 'Assertions']]], ['Explore', [['reading', 'The reading'], ['connections', 'Connections']]], ['Your work', [['draft', 'Draft'], ['ingest', 'Add & publish']]]];
+    const goalNav = [{ id: 'summary', label: 'Start here', count: '' }, { id: 'draft', label: 'Draft', count: this.activePins().length ? String(this.activePins().length) : '' }, { id: 'ask', label: 'Ask the Fold', count: this._conv && this._conv.turns && this._conv.turns.length ? String(this._conv.turns.length) : '' }, { id: 'records', label: 'Records', count: this._db ? String(this._db.schema.tables.length) : '' }, { id: 'ingest', label: 'Ingest & publish', count: (this._net && this._net.chain && this._net.chain.length) ? String(this._net.chain.length) : '' }, ...GOALS.map(g => ({ id: g[0], label: g[1], count: counts[g[0]] }))].map(g => ({ ...g, ...gHi(view === g.id), onClick: () => this.go(g.id) }));
+    const NAVG = [['', [['summary', 'Start here'], ['ask', 'Ask the Fold']]], ['Read', [['sources', 'Sources'], ['names', 'Names'], ['records', 'Assertions']]], ['Explore', [['connections', 'Connections']]], ['Your work', [['draft', 'Draft'], ['ingest', 'Add & publish']]]];
     const countFor = id => ({
       sources: String(A.docs.filter(d => this.counted(d)).length), names: String(D.nameList.length), records: String(F.length),
-      reading: this._rix ? String(this._rix.castTotal) : '', connections: String(D.edgeList.length),
+      connections: String(D.edgeList.length),
       draft: this.activePins().length ? String(this.activePins().length) : '',
       ingest: (this._net && this._net.chain && this._net.chain.length) ? String(this._net.chain.length) : '',
       ask: (this._conv && this._conv.turns && this._conv.turns.length) ? String(this._conv.turns.length) : '',
@@ -5153,12 +5239,8 @@ class Component extends DCLogic {
         const months = {}; A.docs.filter(d => this._cnt.has(d.id)).forEach(d => { const m = String(d.published || '').slice(0, 7); if (/^\d{4}-\d{2}$/.test(m)) months[m] = (months[m] || 0) + 1; }); const topM = Object.entries(months).sort((a, b) => b[1] - a[1]).slice(0, 4).map(x => x[0]).sort();
         const lensOpts = [{ k: 'fin', label: 'Financials' }, { k: 'audit', label: 'Audit' }, ...topNames.map(n => ({ k: 'name', v: n.name, label: n.name })), ...topM.map(m => ({ k: 'time', v: m, label: this.lensLabel({ k: 'time', v: m }) }))]
           .map(o => ({ ...o, ...pill(onL(o.k, o.v)), onClick: () => setL(o.v === undefined ? { k: o.k } : { k: o.k, v: o.v }) }));
-        const bid = S.suBase || 'general';
-        const baseOpts = [['general', 'General English'], ['gov', 'Government & legal'], ['ency', 'Encyclopedic'], ['lit', 'Books'], ['none', 'None (this content only)']].map(([id, label]) => ({ label, ...pill(bid === id), onClick: () => this.setState({ suBase: id, suN: 30 }) }));
-        const bl = bid !== 'none' && _lpCache[bid];
         const lg = (lab, ks) => ({ label: lab, items: lensOpts.filter(o => ks.includes(o.k)) });
-        return { suLensOpts: lensOpts, suLensGroups: [lg('Topic', ['fin', 'audit']), lg('Name', ['name']), lg('Month', ['time'])].filter(g => g.items.length), suBaseOpts: baseOpts, suNeedLens: !L, suHasLens: !!L, suLensText: S.suLensText || '', onSuLensText: e => this.setState({ suLensText: e.target.value }), onSuLensKey: e => { if (e.key === 'Enter' && e.target.value.trim()) setL({ k: 'text', v: e.target.value.trim() }); },
-          suBaseNote: bid === 'none' ? 'No outside baseline: expectations come only from this content, so anything new to the record looks surprising.' : bl ? 'Normal = ' + bl.desc + ': ' + plural(bl.files, 'document') + ', ' + bl.N.toLocaleString() + ' content words. A word common there moves little; one rare there moves a lot the first time this view meets it.' : 'Loading ' + LP_SETS[bid].desc + '…',
+        return { suLensOpts: lensOpts, suLensGroups: [lg('Topic', ['fin', 'audit']), lg('Name', ['name']), lg('Month', ['time'])].filter(g => g.items.length), suNeedLens: !L, suHasLens: !!L, suLensText: S.suLensText || '', onSuLensText: e => this.setState({ suLensText: e.target.value }), onSuLensKey: e => { if (e.key === 'Enter' && e.target.value.trim()) setL({ k: 'text', v: e.target.value.trim() }); },
           suViewLine: L ? 'Looking from ' + this.lensLabel(L) + (SU && SU.n ? ': ' + plural(SU.n, 'statement') + ' in view' : '') : '' }; })(),
       suCursors: SU_CURSORS.map(c => { const on = SU && SU.cur === c.id; return { label: c.label, desc: c.desc, bg: on ? 'var(--sel)' : 'var(--s1)', bd: on ? '#8b5cf6' : 'var(--line2)', fw: on ? 600 : 500, onClick: () => this.setState({ cursor: c.id, suN: 30 }) }; }),
       suReadingEmpty: !!(SU && SU.cur === 'reading' && SU.n === 0),
@@ -5218,20 +5300,43 @@ class Component extends DCLogic {
       docCards, gaps, nameGroups, nameTable, corr: this.corrVals(), typeBlocks, measures, noMeasures: !measures.length, ...(() => { const c = this.capL('stg', stGroups, 8); return { stGroups: c.items.map(g => ({ ...g, ...this.capL('stg:' + g.title, g.items, 4) })), stgMore: c }; })(),
       graphEl, timeInfo, ...orbX, ...(() => { const c = this.capL('pairs', pairs, 12); return { pairs: c.items, pairsMore: c }; })(), noPairs: !pairs.length, frameCols: frameCols.map(c => ({ ...c, ...this.capL('fr:' + c.label, c.items, 5) })), timeBars, ...(() => { const c = this.capL('topics', topicChips, 24); return { topicChips: c.items, topicMore: c }; })(), ...(() => { const c = this.capL('srcbars', [...sourceBars].sort((a, b) => +b.n - +a.n), 12); return { sourceBars: c.items, srcBarMore: c }; })(), shapes, noShapes: !shapes.length, hasRoutine: (this._routineN || 0) > 0, routineLine: plural(this._routineN || 0, 'routine agreement') + ' hidden: repeated by several sources, but about names and words that appear together in most sources anyway.', holds, breaks, noBreaks: !breaks.length,
       hdrShow: !isEmpty && view !== 'reader' && view !== 'profile',
+      crumbLast, crumbAnc, hasAnc, yearOn: !isEmpty && (view === 'views' || view === 'surprise'),
       ...(() => { const d0 = S.readDoc && A.docById[S.readDoc]; if (!d0) return { rd: { eyebrow: '', title: '', meta: '' } }; const dsts = A.stsByDoc[d0.id] || []; const nm = new Set(dsts.flatMap(s => s.names)); const host = d0.url ? (/wikipedia\.org/.test(d0.url) ? 'Wikipedia' : d0.url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]) : 'Your content'; return { rd: { eyebrow: [host, d0.type, d0.year].filter(Boolean).join(' · '), title: d0.title, meta: [d0.authors && d0.authors.length ? 'By ' + d0.authors.join(', ') : '', d0.pubLabel ? 'Published ' + d0.pubLabel : ''].filter(Boolean).map(x => x + ' · ').join('') + plural(dsts.length, 'statement') + ' · ' + plural(nm.size, 'name') + ' · ' + plural(dsts.reduce((a, s) => a + s.figs.length, 0), 'figure') } }; })(),
       gsw: { track: S.ground.on ? 'var(--acc2)' : 'var(--line2)', left: S.ground.on ? '16px' : '2px' },
       toggleGround: () => this.setState(s => ({ ground: { ...s.ground, on: !s.ground.on } })),
       layers: [['names', 'Names', 'var(--acc)', 'People, organisations and places'], ['figures', 'Figures', 'var(--amber)', 'Numbers and amounts'], ['dates', 'Dates', 'var(--date)', 'Years, months and times'], ['sentences', 'Sentences', 'var(--sel2)', 'Make every sentence clickable']].map(([k, label, color, title]) => { const on = S.ground.on && S.ground[k]; return { label, title, color, op: S.ground.on ? (on ? 1 : 0.5) : 0.35, bd: on ? 'var(--line2)' : 'transparent', bg: on ? 'var(--s1)' : 'transparent', onClick: () => this.setState(s => ({ ground: { ...s.ground, on: true, [k]: s.ground.on ? !s.ground[k] : true } })) }; }),
       readerHint: S.ground.on ? 'Click a name or sentence to inspect · links open here · Shift-click a link to inspect it' : 'Grounding off — the page as published. Links still open here.',
       readerPad: S.readDoc && A.docById[S.readDoc] && (A.docById[S.readDoc].format === 'page' || ((A.docById[S.readDoc].faithful || A.docById[S.readDoc].binPath) && S.readMode === 'original')) ? '0' : A.docById[S.readDoc] && A.docById[S.readDoc].pdfSrc && S.readMode === 'original' ? '24px 16px' : '28px 34px', readerMax: S.readDoc && A.docById[S.readDoc] && (A.docById[S.readDoc].format === 'page' || ((A.docById[S.readDoc].faithful || A.docById[S.readDoc].binPath) && S.readMode === 'original')) ? 'none' : '900px',
-      rdMedia: (() => { const d0 = S.readDoc && A.docById[S.readDoc]; const m = d0 && d0.media; if (!m || m.kind !== 'youtube') return { has: false }; const LZ = d0.lazy ? (this._lazy || {})[d0.id] : null; const segN = LZ && !LZ.loading ? LZ.segN : m.segN; const timed = segN > 0 || segN === -1;
-        const org = typeof location !== 'undefined' ? encodeURIComponent(location.origin) : '';
-        return { has: true, title: d0.title, url: m.url || 'https://www.youtube.com/watch?v=' + m.id, timed, follow: S.ytFollow !== false, onFollow: e => this.setState({ ytFollow: e.target.checked }),
-          src: 'https://www.youtube.com/embed/' + m.id + '?rel=0&enablejsapi=1&playsinline=1' + (org ? '&origin=' + org : ''),
-          kindLine: d0.aboutOnly ? 'Linked video, not transcribed' : segN === -1 ? 'Loading transcript…' : timed ? plural(segN, 'timed segment') + (LZ && LZ.from ? ' · read from ' + (LZ.from === 'opfs' ? 'this browser’s file store' : LZ.from) : '') : 'Transcript without timings',
-          txTitle: d0.aboutOnly ? 'About this video' : timed ? 'Transcript · click a timecode to play from there' : 'Transcript',
-          note: d0.aboutOnly ? 'Only the link was captured. No transcript exists in the record yet.' : timed ? 'Machine transcript (' + ((LZ && LZ.model) || m.model || 'Whisper').split('/').pop() + '), not checked by a person. Use it to find moments; quote from the recording, not the transcript.' : 'Auto-caption or machine transcript with no timestamps, so the transcript can’t follow the video. Quote from the recording, not the transcript.' }; })(),
-      isOriginalFlat: S.readMode !== 'plain' && S.readMode !== 'restated' && !(S.readDoc && A.docById[S.readDoc] && A.docById[S.readDoc].media && A.docById[S.readDoc].media.kind === 'youtube'),
+      rdMedia: (() => { const d0 = S.readDoc && A.docById[S.readDoc]; const m = d0 && d0.media; if (!m) return { has: false };
+        if (m.kind === 'youtube') { const LZ = d0.lazy ? (this._lazy || {})[d0.id] : null; const segN = LZ && !LZ.loading ? LZ.segN : m.segN; const timed = segN > 0 || segN === -1;
+          const org = typeof location !== 'undefined' ? encodeURIComponent(location.origin) : '';
+          const prior = S.txPrior || 'workspace';
+          return { has: true, isLocal: false, ytOnly: true, noAudio: true, hasUrl: true, title: d0.title, url: m.url || 'https://www.youtube.com/watch?v=' + m.id, timed, follow: S.ytFollow !== false, onFollow: e => this.setState({ ytFollow: e.target.checked }),
+            src: 'https://www.youtube.com/embed/' + m.id + '?rel=0&enablejsapi=1&playsinline=1' + (org ? '&origin=' + org : ''),
+            kindLine: d0.aboutOnly ? 'Linked video, not transcribed' : segN === -1 ? 'Loading transcript…' : timed ? plural(segN, 'timed segment') + (LZ && LZ.from ? ' · read from ' + (LZ.from === 'opfs' ? 'this browser’s file store' : LZ.from) : '') : 'Transcript without timings',
+            txTitle: d0.aboutOnly ? 'About this video' : timed ? 'Transcript · click a timecode to play from there' : 'Transcript',
+            note: d0.aboutOnly ? 'Only the link was captured. No transcript exists in the record yet.' : timed ? 'Machine transcript (' + ((LZ && LZ.model) || m.model || 'Whisper').split('/').pop() + '), not checked by a person. Use it to find moments; quote from the recording, not the transcript.' : 'Auto-caption or machine transcript with no timestamps, so the transcript can’t follow the video. Quote from the recording, not the transcript.',
+            canAsk: !timed && !d0.aboutOnly, ask: S.txAsk === d0.id, noAsk: !timed && !d0.aboutOnly && S.txAsk !== d0.id,
+            onAsk: () => this.setState({ txAsk: d0.id }), onCancelAsk: () => this.setState({ txAsk: null }),
+            prior: prior, pw: prior === 'workspace', pn: prior === 'none', pm: prior === 'mine', onPriorW: () => this.setState({ txPrior: 'workspace' }), onPriorN: () => this.setState({ txPrior: 'none' }), onPriorM: () => this.setState({ txPrior: 'mine' }),
+            lang: S.txLang || 'en', onLang: e => this.setState({ txLang: e.target.value }), langs: [['en', 'English'], ['es', 'Spanish'], ['fr', 'French'], ['de', 'German'], ['pt', 'Portuguese'], ['it', 'Italian'], ['nl', 'Dutch'], ['pl', 'Polish'], ['ru', 'Russian'], ['uk', 'Ukrainian'], ['ar', 'Arabic'], ['hi', 'Hindi'], ['zh', 'Chinese'], ['ja', 'Japanese'], ['ko', 'Korean']].map(([v, l]) => ({ v, l })),
+            model: S.txModel || 'base', onModel: e => this.setState({ txModel: e.target.value }), models: [['base', 'whisper-base · fast, multilingual'], ['small', 'whisper-small · slower, more accurate, multilingual'], ['smallen', 'whisper-small.en · English only, most accurate for English']].map(([v, l]) => ({ v, l })),
+            onTerms: e => { this._txTerms = e.target.value; }, busy: !!S.txBusy, prog: S.txProg || '', onTx: () => this.pickYtFile(d0), priorNote: 'Choose the file you downloaded from YouTube — Whisper reads it locally here, so it never leaves this machine. A transcript is a machine interpretation; the prior changes what it hears, and the choice stays on the record.' }; }
+        const timed = m.segN > 0;
+        const prior = S.txPrior || 'workspace';
+        const PRIOR_LABEL = { workspace: 'the names this workspace already knows', none: 'no vocabulary prior', mine: 'the terms you typed' };
+        return { has: true, isLocal: true, ytOnly: false, hasUrl: false, title: d0.title, url: null, timed, follow: S.ytFollow !== false, onFollow: e => this.setState({ ytFollow: e.target.checked }),
+          isAudio: (m.mime || '').indexOf('audio') === 0, noAudio: (m.mime || '').indexOf('audio') !== 0, hasSrc: !!(this._mediaUrl && this._mediaUrl[d0.id]), noSrc: !(this._mediaUrl && this._mediaUrl[d0.id]), src: (this._mediaUrl || {})[d0.id] || '',
+          kindLine: timed ? plural(m.segN, 'timed segment') + ' · ' + (m.model || 'Whisper').split('/').pop() : (m.dur != null ? fmtT(m.dur) : '') + (m.mime ? ' · ' + m.mime.split('/')[0] + (m.size ? ' · ' + Math.max(1, Math.round(m.size / 1e6)) + ' MB' : '') : ''),
+          txTitle: timed ? 'Transcript · click a timecode to play from there' : 'Transcript',
+          note: timed ? 'Machine transcript (' + (m.model || 'Whisper').split('/').pop() + '), not checked by a person' + (m.priors ? ' · transcribed with the prior: ' + (PRIOR_LABEL[m.priors.prompt] || m.priors.prompt || 'none') + ', language ' + (m.priors.language || 'auto') : '') + '. Quote from the recording, not the transcript.' : 'The recording is kept in this browser; nothing in it has been read until it is transcribed. A transcript is a machine interpretation — the priors you choose (what it should listen for, and in which language) change what it hears, and they stay on the record.',
+          canAsk: !timed, ask: S.txAsk === d0.id, noAsk: !timed && S.txAsk !== d0.id,
+          onAsk: () => this.setState({ txAsk: d0.id }), onCancelAsk: () => this.setState({ txAsk: null }),
+          prior: prior, pw: prior === 'workspace', pn: prior === 'none', pm: prior === 'mine', onPriorW: () => this.setState({ txPrior: 'workspace' }), onPriorN: () => this.setState({ txPrior: 'none' }), onPriorM: () => this.setState({ txPrior: 'mine' }),
+          lang: S.txLang || 'en', onLang: e => this.setState({ txLang: e.target.value }), langs: [['en', 'English'], ['es', 'Spanish'], ['fr', 'French'], ['de', 'German'], ['pt', 'Portuguese'], ['it', 'Italian'], ['nl', 'Dutch'], ['pl', 'Polish'], ['ru', 'Russian'], ['uk', 'Ukrainian'], ['ar', 'Arabic'], ['hi', 'Hindi'], ['zh', 'Chinese'], ['ja', 'Japanese'], ['ko', 'Korean']].map(([v, l]) => ({ v, l })),
+          model: S.txModel || 'base', onModel: e => this.setState({ txModel: e.target.value }), models: [['base', 'whisper-base · fast, multilingual'], ['small', 'whisper-small · slower, more accurate, multilingual'], ['smallen', 'whisper-small.en · English only, most accurate for English']].map(([v, l]) => ({ v, l })),
+          onTerms: e => { this._txTerms = e.target.value; }, busy: !!S.txBusy, prog: S.txProg || '', onTx: () => this.transcribeLocal(d0), priorNote: 'Whisper runs locally here; the recording never leaves this machine. A transcript is a machine interpretation — the prior changes what it hears, and the choice stays on the record.' }; })(),
+      isOriginalFlat: S.readMode !== 'plain' && S.readMode !== 'restated' && !(S.readDoc && A.docById[S.readDoc] && A.docById[S.readDoc].media),
       isOriginal: S.readMode !== 'plain' && S.readMode !== 'restated', isRestated: S.readMode === 'restated', rs: S.readMode === 'restated' && S.readDoc && A.docById[S.readDoc] ? this.restatedVals(A.docById[S.readDoc], A) : { note: '', sections: [], hasCover: false, cover: { pairs: [] } }, isPlain: S.readMode === 'plain', readerRef: this.readerRef,
       ...(() => { const d0 = S.readDoc && A.docById[S.readDoc]; const hf = !!(d0 && (d0.faithful || d0.binPath || d0.pdfSrc)); const onO = S.readMode === 'original' || (!hf && S.readMode === 'reading'), onR = hf && S.readMode === 'reading'; const pill = on => ({ bg: on ? 'var(--sel)' : 'transparent', color: on ? 'var(--ink)' : 'var(--mut)' });
         return { hasFaithful: hf, modeR: pill(onR), modeReading: () => this.setState({ readMode: 'reading' }), faithOn: hf && S.readMode === 'original',
@@ -5253,6 +5358,7 @@ class Component extends DCLogic {
         return pf.has || view === 'draft' || view === 'profile' ? { ...det, ...side, hasSel: false, noSel: true, pf } : { ...det, ...side, pf }; })(),
       showAdd: S.showAdd, draftTitle: S.draftTitle, draftYear: S.draftYear, draftText: S.draftText,
       onDraftTitle: e => this.setState({ draftTitle: e.target.value }), onDraftYear: e => this.setState({ draftYear: e.target.value }), onDraftText: e => this.setState({ draftText: e.target.value }),
+      repoVal: S.repoVal, onRepoVal: e => this.setState({ repoVal: e.target.value }), addRepo: () => this.addRepo(),
       addDraft: () => { const t = S.draftText.trim(); if (!t) { this.setState({ note: 'Paste some text first.' }); return; } this.addDocs([{ title: S.draftTitle.trim(), year: parseInt(S.draftYear) || null, text: t }]); },
       onFiles: e => this.ingest({ files: e.target.files, getData: () => '' }),
       customNote: S.note || (addN(cid) ? plural(addN(cid), 'item') + ' added here' : ''),
@@ -5346,7 +5452,7 @@ class Component extends DCLogic {
   markRead(docId) { const rl = this.readLog(); if (rl[docId]) return; this._rlog[this.corpusId()] = { ...rl, [docId]: Date.now() }; try { localStorage.setItem('fold-explorer-readlog', JSON.stringify(this._rlog)); } catch (e) {} }
   surprise(A) {
     const cur = SU_CURSORS.some(c => c.id === this.state.cursor) ? this.state.cursor : 'pub';
-    const lens = this.state.suLens; const bid = this.state.suBase || 'general'; const base = bid === 'none' ? null : _lpCache[bid];
+    const lens = this.state.suLens; const base = null;
     if (!lens) return { none: true, needLens: true, list: [], by: {}, n: 0 };
     const lensFn = this.lensFn(lens, A);
     const rl = this.readLog();
@@ -5527,7 +5633,6 @@ class Component extends DCLogic {
     this._rs = { key, v }; return v;
   }
   restatedVals(d, A) { const v = this.restate(d, A); return v.ok ? v : { note: v.note, sections: [], hasCover: false, cover: { pairs: [] } }; }
-  ensureBaseline(id) { if (this._lpLoading === id) return; this._lpLoading = id; loadBaseline(id, (n, t) => this.setState({ busy: 'Loading the ' + LP_SETS[id].label.toLowerCase() + ' baseline from live_priors… ' + n + ' / ' + t })).then(() => { this._lpLoading = null; this._su = null; this.setState({ busy: '', suVer: (this.state.suVer || 0) + 1 }); }); }
   lensFn(L, A) {
     const MON = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
     if (L.k === 'fin') { const re = /\b(budget|budgets|fund|funds|funding|funded|grant|grants|contract|contracts|spend|spending|spent|cost|costs|revenue|revenues|million|billion|dollars?|appropriat\w*|fiscal|payment|payments|paid|salary|salaries|invoice\w*)\b/i; return st => re.test(st.text) || st.figs.some(g => /dollar|percent/.test(g.unit)); }
@@ -5546,7 +5651,7 @@ class Component extends DCLogic {
     [...x.det].sort((a, b) => b.b - a.b).slice(0, 3).forEach(o => {
       const isF = o.w.startsWith('f:'); const isN = o.w.startsWith('n:'); const nm = isN ? o.w.slice(2) : isF ? o.w.slice(2).replace(/:([\d.e+]+)$/, (m, v) => ' ' + Number(v).toLocaleString()) : o.w;
       const rest = o.c ? plural(o.c, 'other mention') + ' in view' + (su.cur === 'loo' ? ' outside this source' : su.cur === 'source' ? ' earlier in this source' : ' before this, in other sources') : (su.cur === 'loo' ? 'nowhere else in view' : su.cur === 'source' ? 'first time in this source' : 'first time in view');
-      const norm = isN ? 'a name' : isF ? 'a figure' : base ? (base.counts.get(nm) ? 'about 1 in ' + Math.round(1 / o.p).toLocaleString() + ' words of normal text' : 'never in normal text') : '';
+      const norm = isN ? 'a name' : isF ? 'a figure' : '';
       out.push({ text: (isN || isF ? nm : '“' + nm + '”') + ' — ' + [norm, rest].filter(Boolean).join('; '), name: isN ? nm : null }); });
     return out;
   }

@@ -20,7 +20,9 @@ python3 -m http.server 8000
 
 ## Content
 
-A fixed set of named sample corpora are fetched live from their own GitHub repos (e.g. `ohs`, from `clovenbradshaw-ctrl/ohs-custody`) — nothing here holds their data at rest. Anything you paste, upload, or link locally lands in a browser-local "Your content" workspace; nothing you add here is sent anywhere. Genuinely unrelated content you bring in can be split into its own workspace with "Fork" once it's recognized as a separate topic, rather than staying mixed in with everything else.
+The workspace starts empty — there are no built-in sample corpora. Add anything: paste text, drop files, point the omni bar at any URL, or give the Add panel a GitHub repo (`owner/repo` or a `github.com` URL) and its text files are pulled in and read. Everything you add lives in a browser-local "Your content" workspace; nothing you add here is sent anywhere except the repo files you explicitly fetch. Genuinely unrelated content you bring in can be split into its own workspace with "Fork" once it's recognized as a separate topic, rather than staying mixed in with everything else.
+
+The first time the page opens, it deletes the persisted history of the old fixed sample corpora (localStorage, the file store, and IndexedDB) — one-time cleanup, so no trace of those links remains in this browser.
 
 ## Watching it read, and Archon Fort
 
