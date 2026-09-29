@@ -103,25 +103,12 @@ select option{background:var(--s1);color:var(--ink)}
   <div style="flex:1 1 0;min-width:0;box-sizing:border-box;{{ colPad }}">
 
   <header ref="{{ hdrRef }}" style="position:sticky;top:0;z-index:20;background:var(--hdr);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)">
-    <div style="max-width:1230px;padding:12px 20px 10px;display:flex;flex-direction:column;gap:8px">
-      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-        <div style="flex:1 1 320px;min-width:220px;display:flex;align-items:center;border:1px solid var(--line2);border-radius:8px;background:var(--s1)">
-          <input defaultValue="{{ omniVal }}" ref="{{ omniRef }}" onChange="{{ onOmni }}" onKeyDown="{{ onOmniKey }}" placeholder="Search, ask a question, or paste a link — then Enter" style="flex:1;min-width:0;background:transparent;border:0;color:var(--ink);font:400 14px 'Hanken Grotesk';padding:8px 12px;outline:none">
-          <sc-if value="{{ omniPending }}" hint-placeholder-val="{{ false }}"><button onClick="{{ omniGo }}" style="margin:3px;border:0;background:var(--acc2);color:#fff;border-radius:6px;padding:4px 12px;cursor:pointer;font:600 13px 'Hanken Grotesk';white-space:nowrap">Search ↵</button></sc-if>
-          <sc-if value="{{ omniUrl }}" hint-placeholder-val="{{ false }}"><button onClick="{{ omniOpen }}" style="margin:3px;border:0;background:var(--acc2);color:#fff;border-radius:6px;padding:4px 12px;cursor:pointer;font:600 14px 'Hanken Grotesk'">Open page ↵</button></sc-if>
-        </div>
+    <div style="max-width:1230px;padding:8px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div style="flex:1 1 320px;min-width:220px;display:flex;align-items:center;border:1px solid var(--line2);border-radius:8px;background:var(--s1)">
+        <input defaultValue="{{ omniVal }}" ref="{{ omniRef }}" onChange="{{ onOmni }}" onKeyDown="{{ onOmniKey }}" placeholder="Search, ask a question, or paste a link — then Enter" style="flex:1;min-width:0;background:transparent;border:0;color:var(--ink);font:400 14px 'Hanken Grotesk';padding:8px 12px;outline:none">
+        <sc-if value="{{ omniPending }}" hint-placeholder-val="{{ false }}"><button onClick="{{ omniGo }}" style="margin:3px;border:0;background:var(--acc2);color:#fff;border-radius:6px;padding:4px 12px;cursor:pointer;font:600 13px 'Hanken Grotesk';white-space:nowrap">Search ↵</button></sc-if>
+        <sc-if value="{{ omniUrl }}" hint-placeholder-val="{{ false }}"><button onClick="{{ omniOpen }}" style="margin:3px;border:0;background:var(--acc2);color:#fff;border-radius:6px;padding:4px 12px;cursor:pointer;font:600 14px 'Hanken Grotesk'">Open page ↵</button></sc-if>
       </div>
-      <sc-if value="{{ hasCrumbs }}" hint-placeholder-val="{{ false }}">
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font:500 12px 'JetBrains Mono';color:var(--dim)">
-          <sc-for list="{{ crumbs }}" as="c" hint-placeholder-count="3">
-            <span style="display:flex;align-items:center;gap:6px;min-width:0">
-              <sc-if value="{{ c.hasOn }}" hint-placeholder-val="{{ false }}"><button onClick="{{ c.onClick }}" title="{{ c.title }}" style="all:unset;cursor:pointer;color:var(--mut);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" style-hover="color:var(--acc)">{{ c.label }}</button></sc-if>
-              <sc-if value="{{ c.noOn }}" hint-placeholder-val="{{ true }}"><span style="color:var(--ink2);font-weight:600;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.label }}</span></sc-if>
-              <sc-if value="{{ c.hasSep }}" hint-placeholder-val="{{ false }}"><span style="color:var(--dim)">›</span></sc-if>
-            </span>
-          </sc-for>
-        </div>
-      </sc-if>
     </div>
   </header>
 
@@ -184,34 +171,39 @@ select option{background:var(--s1);color:var(--ink)}
       <sc-if value="{{ hdrShow }}" hint-placeholder-val="{{ true }}">
         <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
           <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:4px">
-            <h1 style="margin:0;font:500 30px/1.2 'Newsreader',serif;color:var(--ink);text-wrap:pretty">{{ hdr.title }}</h1>
+            <sc-if value="{{ hasAnc }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font:500 12px 'JetBrains Mono';color:var(--dim)">
+                <sc-for list="{{ crumbAnc }}" as="c" hint-placeholder-count="2">
+                  <span style="display:flex;align-items:center;gap:6px;min-width:0">
+                    <sc-if value="{{ c.hasOn }}" hint-placeholder-val="{{ false }}"><button onClick="{{ c.onClick }}" title="{{ c.title }}" style="all:unset;cursor:pointer;color:var(--mut);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" style-hover="color:var(--acc)">{{ c.label }}</button></sc-if>
+                    <sc-if value="{{ c.noOn }}" hint-placeholder-val="{{ true }}"><span style="color:var(--ink2);font-weight:600;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.label }}</span></sc-if>
+                    <sc-if value="{{ c.hasSep }}" hint-placeholder-val="{{ false }}"><span style="color:var(--dim)">›</span></sc-if>
+                  </span>
+                </sc-for>
+              </div>
+            </sc-if>
+            <h1 style="margin:0;font:500 30px/1.2 'Newsreader',serif;color:var(--ink);text-wrap:pretty">{{ crumbLast.label }}</h1>
             <p style="margin:0;color:var(--mut);font-size:15px;text-wrap:pretty">{{ hdr.sub }}{{ sr.sub }}</p>
-            <sc-if value="{{ sr.hasOthers }}" hint-placeholder-val="{{ false }}">
-              <div style="display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap;margin-top:4px">
-                <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">Also narrowed to</span>
-                <sc-for list="{{ sr.others }}" as="ch" hint-placeholder-count="1">
-                  <button onClick="{{ ch.onClear }}" title="Remove" style="display:flex;align-items:center;gap:8px;background:var(--sel);border:1px solid #8b5cf6;color:var(--ink);border-radius:999px;padding:2px 5px 2px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk'"><span style="color:var(--mut)">{{ ch.k }}</span><b style="font-weight:600">{{ ch.v }}</b><span style="width:16px;height:16px;border-radius:50%;background:var(--line2);display:flex;align-items:center;justify-content:center;font-size:9px">✕</span></button>
-                </sc-for>
-              </div>
-            </sc-if>
-            <sc-if value="{{ hasFilters }}" hint-placeholder-val="{{ false }}">
-              <div style="display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap;margin-top:6px;padding:8px 10px;background:var(--sel);border:1px solid #8b5cf6;border-radius:10px">
-                <span style="font:600 14px 'Hanken Grotesk';color:var(--ink);white-space:nowrap">{{ filterCount }}</span>
-                <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">narrowed to</span>
-                <sc-for list="{{ chips }}" as="ch" hint-placeholder-count="1">
-                  <button onClick="{{ ch.onClear }}" title="Remove" style="display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid #8b5cf6;color:var(--ink);border-radius:999px;padding:3px 5px 3px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk'"><span style="color:var(--mut)">{{ ch.k }}</span><b style="font-weight:600">{{ ch.v }}</b><span style="width:18px;height:18px;border-radius:50%;background:var(--line2);display:flex;align-items:center;justify-content:center;font-size:10px">✕</span></button>
-                </sc-for>
-                <sc-if value="{{ addAsFold.show }}" hint-placeholder-val="{{ false }}"><button onClick="{{ addAsFold.onClick }}" style="margin-left:auto;background:none;border:1px solid #8b5cf6;border-radius:999px;color:var(--acc);cursor:pointer;font:500 13px 'Hanken Grotesk';padding:3px 10px;white-space:nowrap">{{ addAsFold.label }}</button></sc-if>
-                <button onClick="{{ clearAll }}" style="margin-left:auto;background:none;border:0;color:var(--acc);cursor:pointer;font:500 14px 'Hanken Grotesk';white-space:nowrap">Show everything</button>
-              </div>
-            </sc-if>
           </div>
-          <label style="display:flex;align-items:center;gap:8px;font:400 14px 'Hanken Grotesk';color:var(--mut);white-space:nowrap">As of
-            <select value="{{ yearVal }}" onChange="{{ onYear }}" style="background:var(--s1);border:1px solid var(--line2);border-radius:8px;color:var(--ink);font:500 14px 'Hanken Grotesk';padding:6px 8px;cursor:pointer;outline:none">
-              <sc-for list="{{ yearOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.label }}</option></sc-for>
-            </select>
-          </label>
+          <sc-if value="{{ yearOn }}" hint-placeholder-val="{{ false }}">
+            <label style="display:flex;align-items:center;gap:8px;font:400 14px 'Hanken Grotesk';color:var(--mut);white-space:nowrap">As of
+              <select value="{{ yearVal }}" onChange="{{ onYear }}" style="background:var(--s1);border:1px solid var(--line2);border-radius:8px;color:var(--ink);font:500 14px 'Hanken Grotesk';padding:6px 8px;cursor:pointer;outline:none">
+                <sc-for list="{{ yearOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.label }}</option></sc-for>
+              </select>
+            </label>
+          </sc-if>
         </div>
+        <sc-if value="{{ hasFilters }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap;margin-top:6px;padding:8px 10px;background:var(--sel);border:1px solid #8b5cf6;border-radius:10px">
+            <span style="font:600 14px 'Hanken Grotesk';color:var(--ink);white-space:nowrap">{{ filterCount }}</span>
+            <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">narrowed to</span>
+            <sc-for list="{{ chips }}" as="ch" hint-placeholder-count="1">
+              <button onClick="{{ ch.onClear }}" title="Remove" style="display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid #8b5cf6;color:var(--ink);border-radius:999px;padding:3px 5px 3px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk'"><span style="color:var(--mut)">{{ ch.k }}</span><b style="font-weight:600">{{ ch.v }}</b><span style="width:18px;height:18px;border-radius:50%;background:var(--line2);display:flex;align-items:center;justify-content:center;font-size:10px">✕</span></button>
+            </sc-for>
+            <sc-if value="{{ addAsFold.show }}" hint-placeholder-val="{{ false }}"><button onClick="{{ addAsFold.onClick }}" style="margin-left:auto;background:none;border:1px solid #8b5cf6;border-radius:999px;color:var(--acc);cursor:pointer;font:500 13px 'Hanken Grotesk';padding:3px 10px;white-space:nowrap">{{ addAsFold.label }}</button></sc-if>
+            <button onClick="{{ clearAll }}" style="margin-left:auto;background:none;border:0;color:var(--acc);cursor:pointer;font:500 14px 'Hanken Grotesk';white-space:nowrap">Show everything</button>
+          </div>
+        </sc-if>
       </sc-if>
 
       <sc-if value="{{ v.summary }}" hint-placeholder-val="{{ true }}">
@@ -1726,11 +1718,53 @@ select option{background:var(--s1);color:var(--ink)}
           <sc-if value="{{ rdMedia.has }}" hint-placeholder-val="{{ false }}">
             <div style="border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));align-items:start">
               <div style="position:sticky;top:var(--hdr-h, 61px);min-width:0;padding:18px 20px 18px 24px;display:flex;flex-direction:column;gap:10px;background:var(--s1);z-index:2">
-                <iframe id="fx-yt" src="{{ rdMedia.src }}" title="{{ rdMedia.title }}" referrerPolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="{{ true }}" style="width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000"></iframe>
+                <sc-if value="{{ rdMedia.isLocal }}" hint-placeholder-val="{{ false }}">
+                  <sc-if value="{{ rdMedia.hasSrc }}" hint-placeholder-val="{{ false }}">
+                    <sc-if value="{{ rdMedia.isAudio }}" hint-placeholder-val="{{ true }}">
+                      <audio id="fx-local" controls preload="metadata" src="{{ rdMedia.src }}" style="width:100%"></audio>
+                    </sc-if>
+                    <sc-if value="{{ rdMedia.noAudio }}" hint-placeholder-val="{{ false }}">
+                      <video id="fx-local" controls preload="metadata" src="{{ rdMedia.src }}" style="width:100%;max-height:56vh;border:0;border-radius:10px;background:#000"></video>
+                    </sc-if>
+                  </sc-if>
+                  <sc-if value="{{ rdMedia.noSrc }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--amber);text-wrap:pretty">The recording's bytes are kept in this browser's file store — opening…</span></sc-if>
+                </sc-if>
+                <sc-if value="{{ rdMedia.ytOnly }}" hint-placeholder-val="{{ false }}">
+                  <iframe id="fx-yt" src="{{ rdMedia.src }}" title="{{ rdMedia.title }}" referrerPolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="{{ true }}" style="width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000"></iframe>
+                </sc-if>
                 <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><span id="fx-yt-now" style="font:600 13px 'JetBrains Mono';color:var(--acc);white-space:nowrap"></span><span style="font:500 13px 'Hanken Grotesk';color:var(--ink2)">{{ rdMedia.kindLine }}</span></div>
                 <span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">{{ rdMedia.note }}</span>
                 <sc-if value="{{ rdMedia.timed }}" hint-placeholder-val="{{ false }}"><label style="display:flex;gap:8px;align-items:center;font:500 13px 'Hanken Grotesk';color:var(--ink2);cursor:pointer"><input type="checkbox" checked="{{ rdMedia.follow }}" onChange="{{ rdMedia.onFollow }}"></input>Follow the video in the transcript</label></sc-if>
-                <a href="{{ rdMedia.url }}" target="_blank" rel="noopener" style="font:500 13px 'Hanken Grotesk';color:var(--acc);text-decoration:none">Open on YouTube ↗</a>
+                <sc-if value="{{ rdMedia.canAsk }}" hint-placeholder-val="{{ false }}">
+                  <sc-if value="{{ rdMedia.ask }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:10px;border:1px solid #8b5cf6;background:var(--sel);border-radius:12px;padding:12px 14px">
+                      <span style="font:600 13px 'Hanken Grotesk';color:var(--ink)">Which priors should the transcriber listen with?</span>
+                      <span style="font:400 12.5px/1.45 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">Whisper runs locally here; the recording never leaves this machine. A transcript is a machine interpretation — the prior changes what it hears, and the choice stays on the record.</span>
+                      <div style="display:flex;flex-direction:column;gap:6px">
+                        <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)"><input type="radio" name="fx-prior" checked="{{ rdMedia.pw }}" onChange="{{ rdMedia.onPriorW }}">The names this workspace already knows</label>
+                        <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)"><input type="radio" name="fx-prior" checked="{{ rdMedia.pn }}" onChange="{{ rdMedia.onPriorN }}">Plain English — no vocabulary prior</label>
+                        <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)"><input type="radio" name="fx-prior" checked="{{ rdMedia.pm }}" onChange="{{ rdMedia.onPriorM }}">My own terms</label>
+                        <sc-if value="{{ rdMedia.pm }}" hint-placeholder-val="{{ false }}"><input onChange="{{ rdMedia.onTerms }}" placeholder="names, places, jargon, separated by commas" style="font:400 13px 'Hanken Grotesk';color:var(--ink);background:var(--s1);border:1px solid var(--line2);border-radius:6px;padding:6px 9px;outline:none"></sc-if>
+                      </div>
+                      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                        <label style="display:flex;gap:6px;align-items:center;font:500 13px 'Hanken Grotesk';color:var(--ink2)">Language<select onChange="{{ rdMedia.onLang }}" value="{{ rdMedia.lang }}" style="font:400 13px 'Hanken Grotesk';color:var(--ink);background:var(--s1);border:1px solid var(--line2);border-radius:6px;padding:4px 6px"><sc-for list="{{ rdMedia.langs }}" as="l" hint-placeholder-count="2"><option value="{{ l.v }}">{{ l.l }}</option></sc-for></select></label>
+                        <label style="display:flex;gap:6px;align-items:center;font:500 13px 'Hanken Grotesk';color:var(--ink2)">Recognizer<select onChange="{{ rdMedia.onModel }}" value="{{ rdMedia.model }}" style="font:400 13px 'Hanken Grotesk';color:var(--ink);background:var(--s1);border:1px solid var(--line2);border-radius:6px;padding:4px 6px"><sc-for list="{{ rdMedia.models }}" as="m" hint-placeholder-count="2"><option value="{{ m.v }}">{{ m.l }}</option></sc-for></select></label>
+                      </div>
+                      <div style="display:flex;gap:8px;align-items:center">
+                        <button onClick="{{ rdMedia.onTx }}" style="border:0;background:var(--acc2);color:#fff;border-radius:8px;padding:7px 14px;cursor:pointer;font:600 13px 'Hanken Grotesk'">Transcribe with these priors</button>
+                        <button onClick="{{ rdMedia.onCancelAsk }}" style="border:1px solid var(--line2);background:transparent;color:var(--mut);border-radius:8px;padding:7px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk'">Cancel</button>
+                      </div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ rdMedia.noAsk }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                      <button onClick="{{ rdMedia.onAsk }}" style="border:0;background:var(--acc2);color:#fff;border-radius:8px;padding:7px 14px;cursor:pointer;font:600 13px 'Hanken Grotesk'">Transcribe it (Whisper, in this browser)</button>
+                      <span style="font:400 12.5px 'Hanken Grotesk';color:var(--mut)">You'll be asked which priors it should listen with.</span>
+                    </div>
+                  </sc-if>
+                </sc-if>
+                <sc-if value="{{ rdMedia.busy }}" hint-placeholder-val="{{ false }}"><span style="font:500 13px 'JetBrains Mono';color:var(--acc)">{{ rdMedia.prog }}</span></sc-if>
+                <sc-if value="{{ rdMedia.hasUrl }}" hint-placeholder-val="{{ false }}"><a href="{{ rdMedia.url }}" target="_blank" rel="noopener" style="font:500 13px 'Hanken Grotesk';color:var(--acc);text-decoration:none">Open on YouTube ↗</a></sc-if>
               </div>
               <div id="fx-tx" style="min-width:0;overflow-x:hidden;overflow-wrap:anywhere;border-left:1px solid var(--line);padding:18px 28px 40px;font:400 17px/1.65 'Newsreader',serif;color:var(--ink);max-height:calc(100vh - 80px);overflow:auto;position:sticky;top:var(--hdr-h, 61px)">
                 <span style="display:block;font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-bottom:10px">{{ rdMedia.txTitle }}</span>
@@ -2568,7 +2602,14 @@ async function readAny(file) {
       const url = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(file); });
       return { title, year, type: 'Image', format: 'html', html: '<figure style="' + TAG_STYLE.FIGURE + '"><img src="' + url + '" alt="' + esc(title) + '" style="' + TAG_STYLE.IMG + '"></figure>', note: title + ' is an image — it’s shown in the reader, but has no text to link.' };
     } else if (/^(audio|video)\//.test(file.type)) {
-      const k = file.type.split('/')[0]; return { title, year, type: k[0].toUpperCase() + k.slice(1), text: '', note: title + ' is an ' + k + ' file — it’s listed under Sources, but has no readable text to link.' };
+      const k = file.type.split('/')[0]; const kind = k[0].toUpperCase() + k.slice(1);
+      const buf = await file.arrayBuffer(); let dur = null, meta = '';
+      try {
+        if (k === 'audio') { const AC = window.OfflineAudioContext || window.webkitOfflineAudioContext; if (AC) { const ab = await new AC(1, 1, 44100).decodeAudioData(buf.slice(0)); dur = ab.duration; meta = fmtT(dur) + ' of sound at ' + ab.sampleRate + ' Hz'; } }
+        else { const u = URL.createObjectURL(new Blob([buf], { type: file.type })); dur = await new Promise(r => { const v = document.createElement('video'); v.preload = 'metadata'; const done = d => { URL.revokeObjectURL(u); r(d); }; v.onloadedmetadata = () => done(isFinite(v.duration) ? v.duration : null); v.onerror = () => done(null); v.src = u; setTimeout(() => done(null), 8000); }); if (dur != null) meta = fmtT(dur) + ' of video'; }
+      } catch (e) {}
+      const extra = { media: { kind: 'local', name, mime: file.type, size: buf.byteLength, dur }, kind: 'Recording', medium: kind, transcribed: false };
+      return { title, year, type: kind, buf, extra, note: title + ' is a ' + k + ' file' + (meta ? ' (' + meta + ')' : '') + ' — play it here, or transcribe it in this browser. Nothing in it has been read until it is transcribed, and a transcript is a machine interpretation, not the recording.' };
     } else {
       const raw = await file.text();
       if (ext === 'json') { html = textToHtml(jsonText(raw)); type = 'Data'; }
@@ -3747,7 +3788,7 @@ class Component extends DCLogic {
     { const nu = u => (u || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '').toLowerCase(); const have = {}; prev.docs.forEach(d => { if (d.url) have[nu(d.url)] = d; }); const dup = list.filter(x => x.url && have[nu(x.url)]); if (dup.length) { list = list.filter(x => !(x.url && have[nu(x.url)])); if (!list.length) { this.setState({ busy: '', view: 'reader', readDoc: have[nu(dup[0].url)].id, note: 'Already in this workspace — opened it.' }); return; } } }
     const nd = list.map(x => ({ id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: x.title || 'Untitled', year: x.year || null, type: x.type || 'Text', format: x.format || 'text', hasHtml: !!x.html, url: x.url || null, pages: x.pages || null, ...(x.extra || {}), text: x.format === 'pdf' ? (x.text || '') : x.html ? pageText(x.html, x.format).slice(0, 60000) : (x.text || '') }));
     nd.forEach(d => { d.status = aopt && aopt.open ? 'seen' : 'source'; });
-    nd.forEach((d, i) => { const x = list[i]; if (x.html) { this._html[d.id] = x.html; idbPut('html:' + d.id, x.html).catch(() => {}); } if (x.pdf) idbPut('pdf:' + d.id, x.pdf).catch(() => {}); });
+    nd.forEach((d, i) => { const x = list[i]; if (x.html) { this._html[d.id] = x.html; idbPut('html:' + d.id, x.html).catch(() => {}); } if (x.pdf) idbPut('pdf:' + d.id, x.pdf).catch(() => {}); if (x.buf) idbPut('media:' + d.id, x.buf).catch(() => {}); });
     const added = { ...this.state.added, [id]: [...(this.state.added[id] || []), ...nd] };
     this.saveAdded(added);
     const A = analyze({ docs: this.baseDocs(id).concat(added[id]) }, this._html);
@@ -4277,9 +4318,15 @@ class Component extends DCLogic {
 
     // breadcrumbs: workspace › surface › (narrows) › the content you're in — every level above the last is a way back
     const crumbs = (() => {
-      const out = [{ label: this.corpusName(), onClick: () => this.go('summary') }];
+      const out = [];
       const push = (label, onClick) => out.push({ label, onClick });
-      push(VIEW_LABEL[view] || 'Overview', () => this.go(view));
+      if (view === 'summary') {
+        if (this._topicStr) push('Topic: ' + this._topicStr, () => this.setMeta('__topic', ''));
+        push(this.corpusName(), () => this.go('summary'));
+      } else {
+        out.push({ label: this.corpusName(), onClick: () => this.go('summary') });
+        push(VIEW_LABEL[view] || 'Overview', () => this.go(view));
+      }
       chips.forEach(c => { if (c.k !== 'Search') push(c.k.toLowerCase() + ': ' + c.v, c.onClear); });
       const rd = view === 'reader' && S.readDoc ? A.docById[S.readDoc] : null;
       const selSt = S.sel && S.sel.type === 'statement' ? A.byId[S.sel.id] : null;
@@ -4292,13 +4339,15 @@ class Component extends DCLogic {
       }
       else if (view === 'records' && S.dbT) push(S.dbT, null);
       else if (view === 'search' && S.q.trim()) push('“' + S.q.trim() + '”', null);
-      else if (view === 'summary' && this._topicStr) push('Topic: ' + this._topicStr, () => this.setMeta('__topic', ''));
       else if (selSt) push(short(clean(selSt.text), 70), null);
       else if (S.sel && S.sel.type === 'doc' && A.docById[S.sel.id]) push(A.docById[S.sel.id].title, () => this.read(S.sel.id));
       else if (selNm) push(selNm, null);
       const last = out[out.length - 1];
       return out.map((c, i) => ({ label: c.label, title: c.label, hasOn: !!c.onClick && c !== last, noOn: !c.onClick || c === last, hasSep: i < out.length - 1, onClick: c !== last && c.onClick ? c.onClick : null }));
     })();
+    const crumbLast = crumbs[crumbs.length - 1];
+    const crumbAnc = crumbs.slice(0, -1);
+    const hasAnc = crumbAnc.length > 0;
 
     const addN = k => (S.added[k] || []).length;
     const wsNames = loadWorkspaceNames();
@@ -4492,7 +4541,7 @@ class Component extends DCLogic {
       docCards, gaps, nameGroups, nameTable, typeBlocks, measures, noMeasures: !measures.length, ...(() => { const c = this.capL('stg', stGroups, 8); return { stGroups: c.items.map(g => ({ ...g, ...this.capL('stg:' + g.title, g.items, 4) })), stgMore: c }; })(),
       graphEl, timeInfo, ...orbX, ...(() => { const c = this.capL('pairs', pairs, 12); return { pairs: c.items, pairsMore: c }; })(), noPairs: !pairs.length, frameCols: frameCols.map(c => ({ ...c, ...this.capL('fr:' + c.label, c.items, 5) })), timeBars, ...(() => { const c = this.capL('topics', topicChips, 24); return { topicChips: c.items, topicMore: c }; })(), ...(() => { const c = this.capL('srcbars', [...sourceBars].sort((a, b) => +b.n - +a.n), 12); return { sourceBars: c.items, srcBarMore: c }; })(), shapes, noShapes: !shapes.length, hasRoutine: (this._routineN || 0) > 0, routineLine: plural(this._routineN || 0, 'routine agreement') + ' hidden: repeated by several sources, but about names and words that appear together in most sources anyway.', holds, breaks, noBreaks: !breaks.length,
       hdrShow: !isEmpty && view !== 'reader' && view !== 'profile',
-      crumbs, hasCrumbs: crumbs.length > 1,
+      crumbLast, crumbAnc, hasAnc, yearOn: !isEmpty && (view === 'views' || view === 'surprise'),
       ...(() => { const d0 = S.readDoc && A.docById[S.readDoc]; if (!d0) return { rd: { eyebrow: '', title: '', meta: '' } }; const dsts = A.stsByDoc[d0.id] || []; const nm = new Set(dsts.flatMap(s => s.names)); const host = d0.url ? (/wikipedia\.org/.test(d0.url) ? 'Wikipedia' : d0.url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]) : 'Your content'; return { rd: { eyebrow: [host, d0.type, d0.year].filter(Boolean).join(' · '), title: d0.title, meta: [d0.authors && d0.authors.length ? 'By ' + d0.authors.join(', ') : '', d0.pubLabel ? 'Published ' + d0.pubLabel : ''].filter(Boolean).map(x => x + ' · ').join('') + plural(dsts.length, 'statement') + ' · ' + plural(nm.size, 'name') + ' · ' + plural(dsts.reduce((a, s) => a + s.figs.length, 0), 'figure') } }; })(),
       gsw: { track: S.ground.on ? 'var(--acc2)' : 'var(--line2)', left: S.ground.on ? '16px' : '2px' },
       toggleGround: () => this.setState(s => ({ ground: { ...s.ground, on: !s.ground.on } })),
@@ -4501,7 +4550,7 @@ class Component extends DCLogic {
       readerPad: S.readDoc && A.docById[S.readDoc] && (A.docById[S.readDoc].format === 'page' || ((A.docById[S.readDoc].faithful || A.docById[S.readDoc].binPath) && S.readMode === 'original')) ? '0' : A.docById[S.readDoc] && A.docById[S.readDoc].pdfSrc && S.readMode === 'original' ? '24px 16px' : '28px 34px', readerMax: S.readDoc && A.docById[S.readDoc] && (A.docById[S.readDoc].format === 'page' || ((A.docById[S.readDoc].faithful || A.docById[S.readDoc].binPath) && S.readMode === 'original')) ? 'none' : '900px',
       rdMedia: (() => { const d0 = S.readDoc && A.docById[S.readDoc]; const m = d0 && d0.media; if (!m || m.kind !== 'youtube') return { has: false }; const LZ = d0.lazy ? (this._lazy || {})[d0.id] : null; const segN = LZ && !LZ.loading ? LZ.segN : m.segN; const timed = segN > 0 || segN === -1;
         const org = typeof location !== 'undefined' ? encodeURIComponent(location.origin) : '';
-        return { has: true, title: d0.title, url: m.url || 'https://www.youtube.com/watch?v=' + m.id, timed, follow: S.ytFollow !== false, onFollow: e => this.setState({ ytFollow: e.target.checked }),
+        return { has: true, isLocal: false, ytOnly: true, noAudio: true, hasUrl: true, title: d0.title, url: m.url || 'https://www.youtube.com/watch?v=' + m.id, timed, follow: S.ytFollow !== false, onFollow: e => this.setState({ ytFollow: e.target.checked }),
           src: 'https://www.youtube.com/embed/' + m.id + '?rel=0&enablejsapi=1&playsinline=1' + (org ? '&origin=' + org : ''),
           kindLine: d0.aboutOnly ? 'Linked video, not transcribed' : segN === -1 ? 'Loading transcript…' : timed ? plural(segN, 'timed segment') + (LZ && LZ.from ? ' · read from ' + (LZ.from === 'opfs' ? 'this browser’s file store' : LZ.from) : '') : 'Transcript without timings',
           txTitle: d0.aboutOnly ? 'About this video' : timed ? 'Transcript · click a timecode to play from there' : 'Transcript',
