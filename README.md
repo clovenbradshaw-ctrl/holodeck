@@ -39,6 +39,14 @@ Measured against three blind graders (90–95% agreement) on 150 held-out OHS na
 
 Known misses: generic headings made of ordinary words, OCR slips outside its confusion table, and run-togethers where one side is a single word.
 
+## What counts as normal
+
+Whether something is unusual depends on where it is. A capitalised "Contractor" is normal in a contract that defines it; "Label:" lines are a form's furniture. `holodeck-region.js` answers "is this normal here?" against the smallest region that can be told apart from its surroundings. The ladder runs from the document, to documents of the same kind, to the workspace, to **General English** from `live_priors` (8 books, 31 encyclopedia articles and 27 statutes, received with their file list and cached in the browser), and finally to eoreader7's English part-of-speech prior. At each step the region is compared against 199 same-size draws from the next region out. It sets the normal only when it falls outside every draw; otherwise the question moves outward. The workspace can override General English only where it measurably differs, so a corpus full of junk can't declare its junk normal.
+
+The name finder uses this ground. It drops a sentence-opening word that is normally lowercase ("Developer Adam Rosenberg" → "Adam Rosenberg"), unless that word and the next are written capitalised mid-sentence elsewhere ("Open Table Nashville"). It also strips words that have no noun or name reading ("Whether OHS" → "OHS"), drops runs that are clauses or headlines, and drops form labels. Every change is logged in the ingest replay with the region that decided it.
+
+In a blind three-grader panel on 100 random multi-word names from the OHS workspace (graders agreed 87–98%), the share judged junk fell from 71% (95% interval 62–80%) to 50% (40–60%). What remains is mostly truncated fragments, form labels, OCR slips, headlines and generic headings.
+
 ## Status
 
 This is the live, ongoing home for this surface — active development happens here going forward, not in a local-only copy.

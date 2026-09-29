@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
+<script src="./holodeck-region.js"></script>
 </head>
 <body>
 <x-dc>
@@ -2303,7 +2304,7 @@ function hdTraceStart(label) { if (HD_TR) return HD_TR; HD_TR = { schema: 'Holod
 function hdT(stage, kind, msg, data) { const T = HD_TR; if (T) T.ev.push({ t: performance.now() - T.t0, stage, kind, msg, ...(data || {}) }); }
 const hdF = doc => !!HD_TR && HD_TR.focus.has(doc);
 // read-only handle for tests: the real functions, so a harness can recompute what a trace claims happened
-setTimeout(() => { try { window.__holodeck = Object.freeze({ analyze, holoKit, paradigms, splitSentences, findNames, isJunk, readAny }); } catch (e) {} }, 0);
+setTimeout(() => { try { window.__holodeck = Object.freeze({ analyze, holoKit, paradigms, splitSentences, findNames, isJunk, readAny, hdHygiene, hdPos: w => hdPos(w) }); } catch (e) {} }, 0);
 const hdCut = (t, n) => { t = String(t || '').replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
 function splitSentences(text, tr) {
   const out = []; const re = /[^\n]+?(?:[.!?]+(?=\s|$)|(?=\n)|$)/g; let m;
@@ -2325,7 +2326,68 @@ function splitSentences(text, tr) {
   }
   return out.filter(x => x.t.length >= 3);
 }
-function findNames(t) {
+// Name hygiene: what a capitalised run is NOT, decided by two grounds that are not this workspace's guesses.
+// (1) eoreader7's English part-of-speech prior (received from treebanks): a word with no noun, name, adjective or
+//     number reading at all cannot open, end, or sit inside a name. Every rule requires "no such reading AT ALL", so
+//     "Will Smith", "May Day" and "US" survive; the clause rule also needs the word's MAIN reading to be a clause word,
+//     because the treebank gives "of" and "The" stray adverb and pronoun counts. Short all-caps words are acronyms.
+//     A sentence opener is kept whenever it and the next word are written capitalised mid-sentence anywhere ("Open Table").
+// (2) The regional null (holodeck-region.js): whether a sentence-opening word is normally lowercase is measured in the
+//     smallest region that differs from its surroundings (this document, its kind, the workspace, the prior), so a
+//     contract's capitalised defined terms stay names there. Without the prior loaded, none of this runs.
+let HD_POS = null;
+const HD_POS_P = (typeof fetch === 'function' ? fetch(new URL('vendor/eoreader7/native/priors/pos-eng.json', location.href)).then(r => r.ok ? r.json() : null).then(j => { HD_POS = (j && j.forms) || null; return !!HD_POS; }).catch(() => false) : Promise.resolve(false));
+const HD_NOM = ['NOUN', 'PROPN', 'ADJ', 'NUM', 'X', 'SYM'];
+const hdPos = w => { if (!HD_POS || (/^[A-Z]{1,3}$/.test(w))) return null; return HD_POS[String(w).toLowerCase().replace(/['’]s$/, '').replace(/[.,;:!?)"”]+$/, '')] || null; };
+// The RECEIVED ground for "normal": live_priors' General English set (books, encyclopedia articles, US/UK law), the same
+// baseline the surprise view uses, read for how often each word is capitalised mid-sentence. It is independent of the
+// material being judged, so a workspace full of junk cannot talk itself into calling its junk normal. Fetched once,
+// kept in IndexedDB with its provenance (source URL and file list).
+let HD_REF = null;
+async function hdLoadReference() {
+  if (HD_REF) return true; const set = LP_SETS.general, key = 'ref:casing:v1:' + set.paths.length;
+  try { const hit = await idbGet(key); if (hit && hit.words) { HD_REF = { ...hit, casing: new Map(hit.words) }; return true; } } catch (e) {}
+  const M = new Map(); let files = 0, tokens = 0;
+  await ohsPool(set.paths, 6, async p => { try { const r = await fetch(LP_RAW + p); if (!r.ok) return; const t = (await r.text()).replace(/^---[\s\S]*?\n---\n/, ''); files++; const re = /[A-Za-z][A-Za-z'’]*/g; let m;
+    while ((m = re.exec(t))) { tokens++; if (!m.index || /[.!?:\n"“(•]\s*$/.test(t.slice(Math.max(0, m.index - 3), m.index))) continue; const w = m[0]; if (/^[A-Z]+$/.test(w) && w.length > 1) continue; const k = w.toLowerCase(); let e = M.get(k); if (!e) M.set(k, e = [0, 0]); e[1]++; if (w !== k) e[0]++; } } catch (e) {} });
+  if (!files) return false;
+  const rec = { giver: LP_RAW, label: set.label, files, paths: set.paths, tokens, words: [...M.entries()] };
+  try { await idbPut(key, rec); } catch (e) {}
+  HD_REF = { ...rec, casing: M }; return true;
+}
+function hdHygiene(docs) {
+  if (!HD_POS || typeof HDRegion === 'undefined') return null;
+  const kindOf = d => d.kind || d.type || d.medium || 'Source';
+  const per = new Map(), kind = new Map(), ws = new Map(), midPairs = new Set(); // midPairs: capitalised word pairs written mid-sentence (name-level evidence)
+  const bump = (M, k, cap) => { let e = M.get(k); if (!e) M.set(k, e = [0, 0]); e[1]++; if (cap) e[0]++; };
+  docs.forEach(d => { const t = d.text || '', re = /[A-Za-z][A-Za-z'’]*/g, P = new Map(); let K = kind.get(kindOf(d)); if (!K) kind.set(kindOf(d), K = new Map()); let m;
+    while ((m = re.exec(t))) { if (!m.index || /[.!?:\n"“(•]\s*$/.test(t.slice(Math.max(0, m.index - 3), m.index))) continue; const w = m[0]; if (/^[A-Z]+$/.test(w) && w.length > 1) continue; // all-caps says nothing about casing
+      const k = w.toLowerCase(), cap = w !== k; bump(P, k, cap); bump(K, k, cap); bump(ws, k, cap);
+      if (cap) { const nx = t.slice(m.index + w.length).match(/^ +([A-Z][A-Za-z'\u2019]*)/); if (nx) midPairs.add(w + ' ' + nx[1]); } }
+    per.set(d.id, P); });
+  const kindRes = new Map();
+  return { forDoc(d, note) {
+    const P = per.get(d.id) || new Map(), K = kind.get(kindOf(d)) || new Map(), mine = new Map(), kn = kindOf(d);
+    const hy = { note: note || (() => {}), lastWhy: '',
+      nonNominal: w => { const c = hdPos(w); if (!c || Object.keys(c).some(x => HD_NOM.includes(x))) return false; return !(/(ed|en|ing)$/i.test(w) && Object.keys(c).every(x => x === 'VERB' || x === 'AUX')); }, // a participle (Written Standards) modifies; a bare imperative (Provide Guest House) does not
+      functionOnly: w => { const c = hdPos(w); return !!c && Object.keys(c).every(x => ['ADP', 'CCONJ', 'SCONJ', 'DET', 'AUX', 'PART', 'PRON'].includes(x)); },
+      // dominant reading, not any reading: the treebank gives "of" and "The" stray ADV/PRON counts
+      clause: w => { if (/(ing|ed)$/i.test(w)) return false; const c = hdPos(w); if (!c || Object.keys(c).some(x => HD_NOM.includes(x))) return false; const top = Object.entries(c).sort((a, b) => b[1] - a[1])[0][0]; return ['AUX', 'PRON', 'ADV', 'SCONJ', 'PART', 'VERB', 'INTJ'].includes(top); },
+      commonOnly: w => { const c = hdPos(w); if (!c) return false; return Object.entries(c).sort((a, b) => b[1] - a[1])[0][0] !== 'PROPN'; },
+      namePair: (a, b) => midPairs.has(a + ' ' + b),
+      ordinaryOpener: w => { if (/^[A-Z]+$/.test(w)) return false; const k = w.toLowerCase(); let r = mine.get(k);
+        if (!r) { const e = P.get(k) || [0, 0], ek = K.get(k) || [0, 0], ew = ws.get(k) || [0, 0], c = HD_POS[k]; const pr = c ? [c.PROPN || 0, Object.values(c).reduce((a, b) => a + b, 0)] : [0, 0]; const rf = (HD_REF && HD_REF.casing.get(k)) || [0, 0];
+          const L = [{ name: 'this document', k: e[0], n: e[1] }, { name: kn + ' documents', k: ek[0], n: ek[1] }, { name: 'the workspace', k: ew[0], n: ew[1] }, { name: 'General English (live_priors)', k: rf[0], n: rf[1] }, { name: 'the treebank prior', k: pr[0], n: pr[1] }];
+          // the outer walk (kind -> workspace -> prior) is the same for every document of this kind: computed once
+          const kk = kn + '|' + k; let outer = kindRes.get(kk); if (!outer) kindRes.set(kk, outer = HDRegion.normalRate(L.slice(1), { key: kk }));
+          const inner = e[1] ? HDRegion.normalRate([L[0], L.find((x, i) => i > 0 && x.n > e[1]) || L[0]], { key: d.id + '|' + k }) : null;
+          r = inner && inner.hop === 'this document' && inner.walk[0].verdict.startsWith('its own') ? inner : outer; mine.set(k, r); }
+        hy.lastWhy = r.rate == null ? 'no region has seen ' + qW(w) + ' mid-sentence' : 'normal for ' + qW(w) + ' is set by ' + r.hop + ', where it is capitalised mid-sentence ' + Math.round(r.rate * 100) + '% of the time';
+        return r.rate != null && r.rate < 0.5; } };
+    return hy; } };
+}
+const qW = w => '“' + w + '”';
+function findNames(t, hy) {
   const out = [];
   // a hyphen only continues the same capitalized word when what follows it is ALSO capitalized
   // (Winston-Salem, Coca-Cola) -- a lowercase continuation (Atlanta-based) is a modifier, not part of the name
@@ -2336,14 +2398,19 @@ function findNames(t) {
     if (oi > 0) { let j2 = idx; for (let i = 0; i <= oi; i++) j2 = next(j2, words[i]); push(words.slice(0, oi + 1), idx, title, m, ' ' + words[oi + 1]); push(words.slice(oi + 1), j2, null, m, after); return; }
     const ji = words.findIndex((w, i) => i > 0 && i < words.length - 1 && /^(and|&)$/.test(w) && (/^[A-Z]{2,}['\u2019]?s?$/.test(words[i - 1]) || /^[A-Z]{2,}$/.test(words[i + 1])));
     if (ji > 0) { let j2 = idx; for (let i = 0; i <= ji; i++) j2 = next(j2, words[i]); push(words.slice(0, ji), idx, title, m, ' ' + words[ji]); push(words.slice(ji + 1), j2, null, m, after); return; }
-    while (words.length && (ART.has(words[0]) || LEAD_WORDS.has(words[0]) || /^(of|and|&)$/.test(words[0]))) { idx = next(idx, words[0]); words.shift(); }
+    for (;;) { if (!words.length) break; const w0 = words[0]; let why = null;
+      if (ART.has(w0) || LEAD_WORDS.has(w0) || /^(of|and|&)$/.test(w0)) why = '';
+      else if (hy && words.length > 1) { if (hy.nonNominal(w0)) why = qW(w0) + ' has no noun or name reading'; else if (words.length > 2 && /(^|[;:]\s*)[\s"'(]*$/.test(t.slice(0, idx)) && (() => { const cw = (after.match(/\b[A-Za-z]{4,}\b/g) || []); return cw.filter(x => x === x.toLowerCase()).length > cw.filter(x => x !== x.toLowerCase()).length; })() && !hy.namePair(w0, words[1]) && hy.ordinaryOpener(w0)) why = hy.lastWhy + ', this sentence is prose, not a title line, and ' + qW(w0 + ' ' + words[1]) + ' is never written capitalised mid-sentence'; }
+      if (why === null) break; if (why) hy.note('lead', words.join(' '), 'dropped the opening ' + qW(w0) + ': ' + why); idx = next(idx, w0); words.shift(); }
     if (words.some(w => /^(Getty|Stockphoto|iStock|Courtesy|Transcript|Sponsor|Shutterstock|Images)$/.test(w))) return;
-    while (words.length && /^(of|and|&)$/.test(words[words.length - 1])) words.pop();
+    while (words.length && (/^(of|and|&)$/.test(words[words.length - 1]) || (hy && words.length > 1 && hy.functionOnly(words[words.length - 1])))) { const wl = words.pop(); if (hy && !/^(of|and|&)$/.test(wl)) hy.note('tail', words.join(' ') + ' ' + wl, 'dropped the dangling ' + qW(wl) + ': it is only ever a function word'); }
     if (!words.length) return;
     words[words.length - 1] = words[words.length - 1].replace(/[.,]+$/, '').replace(/['\u2019]s?$/, '');
     if (words.length === 1 && /^(I|We|You|They|He|She|It|That|There|What|Let|Don|Won|Can|Isn|Didn|Doesn)['\u2019](ve|m|re|ll|d|s|t)$/i.test(words[0])) return;
     if (!words[words.length - 1]) return;
+    if (hy) { const cw = words.find(w => hy.clause(w)); if (cw) { hy.note('drop', words.join(' '), 'not a name: ' + qW(cw) + ' has no noun or name reading, so this is a clause or headline'); return; } }
     const atStart = /(^|[;:]\s*)[\s"'(]*$/.test(t.slice(0, idx));
+    if (hy && atStart && /^\s*:/.test(after) && words.every(w => hy.commonOnly(w))) { hy.note('label', words.join(' '), 'not a name: a line-opening run of common words followed by a colon is a form label'); return; }
     const acr = /^[A-Z]{2,}$/.test(words[0]);
     if (atStart && words.length === 1 && !title && !acr) return;
     if (words.every(w => MONTHS.has(w) || NOT_NAMES.has(w) || TITLES.has(w.replace(/\.$/, '')) || /^(Vice|Deputy|Assistant|Acting|Interim|Senior|Chief)$/.test(w))) return;
@@ -2455,9 +2522,9 @@ function analyze(corpus, htmlMap) {
     }
     if (hdF(x.id)) { HD_TR.docs.push({ id: x.id, title: x.title, type: x.type, text: x.text }); hdT('text', 'walk', x.format === 'pdf' ? 'Took ' + x.text.length + ' characters from the PDF text layer' : 'Walked the page tree: ' + x.text.length + ' characters of text, ' + x.heads.length + ' headings, ' + x.blocks.length + ' blocks, ' + (x.links || []).length + ' links', { doc: x.id, chars: x.text.length }); }
     return x; });
-  const sts = []; const found = []; const alias = {}; const info = {};
-  docs.forEach(d => { const on = hdF(d.id); const ss = splitSentences(d.text, on ? (a, b, c, x) => hdT(a, b, c, { doc: d.id, ...x }) : null); if (on) hdT('sentences', 'split', 'Split into ' + ss.length + ' statements', { doc: d.id, n: ss.length }); ss.forEach((se, i) => {
-    const ns = findNames(se.t);
+  const sts = []; const found = []; const alias = {}; const info = {}; const HY = hdHygiene(docs);
+  docs.forEach(d => { const on = hdF(d.id); const ss = splitSentences(d.text, on ? (a, b, c, x) => hdT(a, b, c, { doc: d.id, ...x }) : null); if (on) hdT('sentences', 'split', 'Split into ' + ss.length + ' statements', { doc: d.id, n: ss.length }); const hy = HY ? HY.forDoc(d, on ? (k, what, why) => hdT('names', 'hygiene', why + ' (' + qW(what) + ')', { doc: d.id }) : null) : null; ss.forEach((se, i) => {
+    const ns = findNames(se.t, hy);
     ns.forEach(n => { if (n.alias) alias[n.alias] = n.name; });
     const st0 = { id: d.id + ':' + i, doc: d.id, s: se.s, e: se.e, text: se.t, rawNames: ns, figs: findFigures(se.t), dates: findDates(se.t), frame: frameOf(se.t) }; sts.push(st0);
     if (on) { const D = { doc: d.id, id: st0.id }; hdT('sentences', 'statement', 'Statement ' + (i + 1) + ': \u201c' + hdCut(se.t, 90) + '\u201d', { ...D, s: se.s, e: se.e });
@@ -2898,6 +2965,8 @@ class Component extends DCLogic {
   _html = {};
 
   componentDidMount() {
+    HD_POS_P.then(ok => { if (ok) { this._key = null; this.setState(st => ({ htmlVer: st.htmlVer + 1 })); } });
+    hdLoadReference().then(ok => { if (ok) { this._key = null; this.setState(st => ({ htmlVer: st.htmlVer + 1 })); } }).catch(() => {}); // re-read names once the received normal is in // names are re-read once the POS prior is in, so results never depend on load timing
     this.applyTheme(); this._c = 0; import(new URL('holodeck-match.js', location.href).href).then(M => { this._mt = M; this._qc = null; this.forceUpdate(); }).catch(() => {}); this.loadHtml(); this.restoreMeet(); if (typeof location !== 'undefined' && /fx-share=/.test(location.hash)) { this.netInit(); this.setState({ view: 'draft' }); }
     this._onRz = () => { if ((window.innerWidth < SIDE_PANEL_MIN_VW) !== this._narrow) this.forceUpdate(); }; window.addEventListener('resize', this._onRz);
     this._onSelCh = () => { cancelAnimationFrame(this._selRaf); this._selRaf = requestAnimationFrame(() => this.updatePinPop()); };
@@ -3999,7 +4068,7 @@ class Component extends DCLogic {
       hdT('null', real > hi ? 'above' : 'chance', 'Null: share of name mentions that are repeats of a name used in another statement. The same words shuffled 5 times give ' + R.map(x => x + '%').join(', ') + '; this text gives ' + real + '%' + (real > hi ? '. Its names recur more than its own words by chance.' : '. No more recurring names than its own words shuffled, so names folded from it may be accidents of capitalisation.'), { doc: d.id, real, shuffled: R, mean }); });
     // Archon Fort: raise what is odd, then let its swarm of ants try to falsify each oddity (holodeck-fort.js).
     if (_hdFort) { const merges = T.ev.filter(e => e.kind === 'merge' && fresh.has(e.doc)).map(e => ({ from: e.from, to: e.to, doc: e.doc, id: e.id }));
-      const { oddities, ctx } = _hdFort.fortScan(A, { focus: fresh, nullByDoc, merges });
+      const { oddities, ctx } = _hdFort.fortScan(A, { focus: fresh, nullByDoc, merges, hygiene: hdHygiene(A.docs) });
       hdT('fort', 'scan', 'Archon Fort read what you added: ' + (oddities.length ? oddities.length + ' odd thing' + (oddities.length === 1 ? '' : 's') + ' raised' : 'nothing odd raised') + ' · its floor comes from ' + ctx.sample + ' statements already here (1st percentile: ' + Math.round(ctx.floor * 100) + '% of word pairs seen elsewhere)', { n: oddities.length });
       const SAY = { stands: 'Stands: every ant that spoke says artifact. A person should look at this.', falsified: 'Falsified: the ants show it is real.', contested: 'Contested: the ants disagree; both sides are kept.', unexamined: 'Unexamined: no ant had ground to speak.' };
       T.odd = []; oddities.forEach(o => { const at = T.ev.length; hdT('fort', 'raise', 'Fort raises “' + o.subject + '”: ' + o.why, { doc: o.doc, id: o.id, name: o.subject, kinds: o.kinds });

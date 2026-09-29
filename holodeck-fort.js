@@ -45,7 +45,7 @@ const NOMINAL = ['NOUN', 'PROPN', 'ADJ', 'NUM', 'X', 'SYM'];
 const posOf = w => (POS && POS[String(w).toLowerCase().replace(/[.,;:]+$/, '')]) || null;
 const onlyIn = (w, classes) => { const c = posOf(w); if (!c) return null; const k = Object.keys(c); return k.length && k.every(x => classes.includes(x)) ? c : null; };
 const clauseOnly = w => { const c = posOf(w); if (!c || /(ing|ed)$/i.test(w)) return null; // participles modify names (Assisted Living, Purchasing Card)
-   const k = Object.keys(c); return k.length && !k.some(x => NOMINAL.includes(x)) && k.some(x => ['AUX', 'PRON', 'ADV', 'SCONJ', 'PART', 'VERB'].includes(x)) ? c : null; };
+  const k = Object.keys(c); if (!k.length || k.some(x => NOMINAL.includes(x))) return null; const top = Object.entries(c).sort((a, b) => b[1] - a[1])[0][0]; return ['AUX', 'PRON', 'ADV', 'SCONJ', 'PART', 'VERB'].includes(top) ? c : null; }; // dominant reading: "of"/"The" carry stray ADV/PRON counts
 const show = c => Object.entries(c).sort((a, b) => b[1] - a[1]).map(([k, v]) => k + ' ' + v).join(', ');
 
 // ---------- corpus index (cached per corpus) ----------
@@ -106,8 +106,8 @@ function antsForName(A, ix, n, o, ctx) {
   // attestation: each adjacent word pair must be written INSIDE another name, not merely next to each other in prose
   const nw = fold(n).split(' '), inner = nw.slice(1).map((x, i) => nw[i] + ' ' + x), dead = inner.filter(p => !(ix.runs.get(p) || []).some(m => m.name !== fold(n) && !own.has(m.doc)));
   out.push(inner.length && !dead.length ? { ant: 'attestation', verdict: 'real', why: 'every word pair in it (' + inner.map(qt).join(', ') + ') is written inside other names elsewhere' } : { ant: 'attestation', verdict: 'silent', why: inner.length ? dead.map(qt).join(', ') + ' is written nowhere else; ordinary for a name from one source' : 'no word pairs to check' });
-  const st = A.byId[o.id]; const r = st ? rarity(ix, st.text, new Set([st.doc])) : null;
-  out.push(r == null ? { ant: 'sentence', verdict: 'silent', why: 'no sentence to measure' } : r < ctx.floor ? { ant: 'sentence', verdict: 'artifact', why: 'its sentence has ' + Math.round(r * 100) + '% of word pairs seen elsewhere; the corpus’s own 1st percentile is ' + Math.round(ctx.floor * 100) + '%' } : { ant: 'sentence', verdict: 'silent', why: 'its sentence reads within the corpus’s range' });
+  const st = A.byId[o.id]; const r = st ? rarity(ix, st.text, new Set([st.doc])) : null; const FL = ctx.floorFor(o.doc);
+  out.push(r == null ? { ant: 'sentence', verdict: 'silent', why: 'no sentence to measure' } : r < FL.floor ? { ant: 'sentence', verdict: 'artifact', why: 'its sentence has ' + Math.round(r * 100) + '% of word pairs seen elsewhere; normal here (' + FL.hop + ') has a 1st percentile of ' + Math.round(FL.floor * 100) + '%' } : { ant: 'sentence', verdict: 'silent', why: 'its sentence reads within its region\u2019s range (' + FL.hop + ')' });
   // bound piece: a leading piece that, everywhere else it is written, continues into ONE name, followed here by something else
   if (o.splice) { const torn = o.splice.map(x => { const occ = (ix.runs.get(fold(x.c)) || []).filter(m => !own.has(m.doc) && m.name !== fold(n)); if (occ.length < 2) return null; const names = new Set(occ.map(m => m.name)); if (names.size !== 1) return null; const top = [...names][0];
       if (!top.startsWith(fold(x.c) + ' ')) return null; const tw = top.split(' '), pw = fold(x.c).split(' '), nw = fold(n).split(' '); const at = nw.findIndex((_, i) => nw.slice(i, i + pw.length).join(' ') === fold(x.c)); const after = nw[at + pw.length], expect = tw[pw.length]; return after && after !== expect ? { piece: x.c, top, of: occ.length, after, expect } : null; }).filter(Boolean);
@@ -130,7 +130,7 @@ function antsForName(A, ix, n, o, ctx) {
 
 const SHORT = { splice: o => 'glued from ' + [...new Set(o.splice.map(x => x.from))].slice(0, 3).join(' + '), repeat: () => 'a word repeated inside one name', 'inner-article': () => qt('The') + ' in the middle of a name', 'sentence-start': () => 'its first word only opens the sentence', label: () => 'a form label, not a name', 'run-together': () => 'two names run together', dangling: () => 'cut off mid-phrase', 'clause-word': () => 'a sentence or headline, not a name', ocr: o => 'looks like a scanner misreading of ' + qt(o.ocr) };
 
-export function fortScan(A, { focus, nullByDoc = {}, merges = [] } = {}) {
+export function fortScan(A, { focus, nullByDoc = {}, merges = [], hygiene = null } = {}) {
   const ix = indexOf(A), F = new Set(focus || []), out = [];
   const measured = new Set(A.docs.filter(d => d.measured).map(d => d.id));
   // the null: pair-rarity of statements from OTHER documents, each measured against everything but its own document
@@ -138,7 +138,14 @@ export function fortScan(A, { focus, nullByDoc = {}, merges = [] } = {}) {
   const step = Math.max(1, Math.floor(pool.length / 600)), base = [], fbase = [];
   for (let i = 0; i < pool.length; i += step) { const own = new Set([pool[i].doc]); const r = rarity(ix, pool[i].text, own); if (r != null && pairs(pool[i].text).length >= 6) base.push(r); const f = fnRarity(ix, pool[i].text, own); if (f != null) fbase.push(f); }
   const ctx = { floor: q(base, 0.01), ffloor: q(fbase, 0.01), nullByDoc, sample: base.length, pos: !!POS };
-  const seen = new Set();
+  // the regional null (holodeck-region.js): a statement is judged against the floor of the smallest region around it that
+  // differs from its surroundings and can state a 1st percentile: this document, then its kind, then the workspace
+  const R = globalThis.HDRegion, kindOf = d => d.kind || d.type || d.medium || 'Source', floors = new Map(), byKind = new Map(), byDoc = new Map();
+  if (R) A.sts.forEach(s => { if (s.ref || pairs(s.text).length < 6) return; const d = A.docById[s.doc] || {}; const r = rarity(ix, s.text, new Set([s.doc])); if (r == null) return; (byDoc.get(s.doc) || byDoc.set(s.doc, []).get(s.doc)).push(r); const k = kindOf(d); (byKind.get(k) || byKind.set(k, []).get(k)).push(r); });
+  ctx.floorFor = doc => { if (!R) return { floor: ctx.floor, hop: 'the workspace' }; let f = floors.get(doc); if (!f) { const d = A.docById[doc] || {}, k = kindOf(d);
+      f = R.normalQuantile([{ name: 'this document', values: byDoc.get(doc) || [] }, { name: k + ' documents', values: byKind.get(k) || [] }, { name: 'the workspace', values: base }], 0.01, { key: 'floor|' + doc });
+      if (f.floor == null) f = { floor: ctx.floor, hop: 'the workspace' }; floors.set(doc, f); } return f; };
+  const seen = new Set(), hyByDoc = new Map();
   A.sts.forEach(st => { if (!F.has(st.doc) || st.ref) return;
     st.names.forEach(n => { if (seen.has(n) || !/\s/.test(n)) return; seen.add(n); const w = n.split(' '), raised = []; let pos = null, ocr = null, sp = null;
       const rep = w.filter((x, i) => !FN.has(x.toLowerCase()) && w.findIndex(y => y.toLowerCase() === x.toLowerCase()) !== i); if (rep.length) raised.push({ kind: 'repeat', why: qt(rep[0]) + ' appears twice inside one name' });
@@ -146,7 +153,8 @@ export function fortScan(A, { focus, nullByDoc = {}, merges = [] } = {}) {
       sp = spliceOf(ix, n, A, F); if (sp) { const joins = []; for (let k = 1; k < sp.length; k++) { const a = sp[k - 1].c.split(' ').pop(), b = sp[k].c.split(' ')[0]; if (elsewhere(ix, (a + ' ' + b).toLowerCase(), (A.names[n] || {}).docs || new Set()) === 0) joins.push(a + ' ' + b); }
         if (joins.length) raised.push({ kind: 'splice', why: 'pieced from ' + sp.map(x => qt(x.c) + ' (as in ' + x.from + ')').join(' + ') + ', joined at ' + qt(joins[0]) + ', which no source writes' }); else sp = null; }
       const r0 = st.rawNames.find(r => r.name === n), before = r0 ? st.text.slice(0, r0.s) : 'x', after = r0 ? st.text.slice(r0.e) : '', w0 = w[0].toLowerCase();
-      if (r0 && /^[\s"'“(]*$/.test(before) && (ix.lower.get(w0) || 0) > (ix.capMid.get(w0) || 0)) raised.push({ kind: 'sentence-start', why: qt(w[0]) + ' opens the sentence, and elsewhere it is written lowercase ' + (ix.lower.get(w0) || 0) + ' times but capitalised mid-sentence only ' + (ix.capMid.get(w0) || 0) });
+      const hyD = hygiene ? (hyByDoc.get(st.doc) || hyByDoc.set(st.doc, hygiene.forDoc(A.docById[st.doc] || { id: st.doc })).get(st.doc)) : null;
+      if (r0 && /^[\s"'\u201c(]*$/.test(before) && (hyD ? hyD.ordinaryOpener(w[0]) : (ix.lower.get(w0) || 0) > (ix.capMid.get(w0) || 0))) raised.push({ kind: 'sentence-start', why: qt(w[0]) + ' opens the sentence, and ' + (hyD ? hyD.lastWhy : 'elsewhere it is written lowercase ' + (ix.lower.get(w0) || 0) + ' times but capitalised mid-sentence only ' + (ix.capMid.get(w0) || 0)) });
       if (r0 && /^[\s"'“(•*\-\d.)]*$/.test(before) && /^\s*:/.test(after)) raised.push({ kind: 'label', why: 'it opens the line and is followed by a colon, the shape of a form field' });
       const last = onlyIn(w[w.length - 1], ['ADP', 'CCONJ', 'SCONJ', 'DET', 'AUX', 'PART', 'PRON']); if (last) { raised.push({ kind: 'dangling', why: 'it ends on ' + qt(w[w.length - 1]) + ', which is only ever ' + show(last) + ' in the English prior' }); pos = qt(w[w.length - 1]) + ' is only ever ' + show(last) + ' in eoreader7’s English part-of-speech prior'; }
       const cw = w.map(x => [x, clauseOnly(x)]).filter(([x, c]) => c && !FN.has(x.toLowerCase())); if (cw.length) { raised.push({ kind: 'clause-word', why: cw.map(([x, c]) => qt(x) + ' is ' + show(c)).join('; ') + ' and never a noun or name' }); pos = (pos ? pos + '; ' : '') + cw.map(([x, c]) => qt(x) + ' has no noun, name or adjective reading (' + show(c) + ')').join('; '); }
@@ -156,11 +164,11 @@ export function fortScan(A, { focus, nullByDoc = {}, merges = [] } = {}) {
       const o = { subject: n, doc: st.doc, id: st.id, kinds: raised.map(r => r.kind), why: raised.map(r => r.why).join('; '), splice: sp, pos, ocr };
       o.short = (SHORT[o.kinds[0]] || (() => o.why))(o);
       o.ants = antsForName(A, ix, n, o, ctx); o.standing = standingOf(o.ants); delete o.splice; delete o.pos; out.push(o); });
-    if (!measured.has(st.doc)) { const own = new Set([st.doc]); const r = rarity(ix, st.text, own); if (r != null && pairs(st.text).length >= 6 && r < ctx.floor) {
+    if (!measured.has(st.doc)) { const own = new Set([st.doc]); const r = rarity(ix, st.text, own); const FL = ctx.floorFor(st.doc); if (r != null && pairs(st.text).length >= 6 && r < FL.floor) {
       const f = fnRarity(ix, st.text, own), odd = out.filter(x => x.id === st.id && x.standing !== 'falsified');
       const ants = [f == null ? { ant: 'function-words', verdict: 'silent', why: 'too few function-word pairs to judge grammar' } : f < ctx.ffloor ? { ant: 'function-words', verdict: 'artifact', why: 'even its function-word pairs (' + qt('of the') + ', ' + qt('in a') + ') are unusual: ' + Math.round(f * 100) + '% seen elsewhere vs a floor of ' + Math.round(ctx.ffloor * 100) + '%' } : { ant: 'function-words', verdict: 'real', why: 'its grammar words pair normally (' + Math.round(f * 100) + '%); only its subject is new' },
         odd.length ? { ant: 'names', verdict: 'artifact', why: 'it holds ' + odd.map(x => qt(x.subject)).join(', ') + ', already odd' } : { ant: 'names', verdict: 'silent', why: 'no odd names in it' }, docNullAnt(st.doc, ctx)];
-      out.push({ subject: st.text.length > 90 ? st.text.slice(0, 89) + '…' : st.text, doc: st.doc, id: st.id, kinds: ['salad'], short: 'a sentence whose word pairs appear nowhere else', why: 'only ' + Math.round(r * 100) + '% of its word pairs occur anywhere else; the corpus’s own 1st percentile is ' + Math.round(ctx.floor * 100) + '%', ants, standing: standingOf(ants) }); } } });
+      out.push({ subject: st.text.length > 90 ? st.text.slice(0, 89) + '…' : st.text, doc: st.doc, id: st.id, kinds: ['salad'], short: 'a sentence whose word pairs appear nowhere else', why: 'only ' + Math.round(r * 100) + '% of its word pairs occur anywhere else; normal here (' + FL.hop + ') has a 1st percentile of ' + Math.round(FL.floor * 100) + '%', ants, standing: standingOf(ants) }); } } });
   merges.forEach(m => { if (!F.has(m.doc) || !/ (and|&) /i.test(m.to)) return; const sides = m.to.split(/ (?:and|&) /i).map(s => s.trim()); const known = sides.filter(s => A.names[s] || [...(ix.chunks.get(s) || [])].some(x => x !== m.to));
     const ants = [known.length >= 2 ? { ant: 'both-sides', verdict: 'artifact', why: 'both ' + qt(sides[0]) + ' and ' + qt(sides[sides.length - 1]) + ' stand as names on their own' } : { ant: 'both-sides', verdict: 'silent', why: 'only one side is a known name' }];
     out.push({ subject: m.from + ' → ' + m.to, doc: m.doc, id: m.id, kinds: ['composite'], short: 'read as the same thing as a list of names', why: qt(m.from) + ' was read as the same thing as a list of names', ants, standing: standingOf(ants) }); });
