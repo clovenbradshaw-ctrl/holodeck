@@ -735,19 +735,35 @@ select option{background:var(--s1);color:var(--ink)}
             <div style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px">
               <div style="display:flex;gap:10px 14px;flex-wrap:wrap;align-items:center">
                 <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Generate</span>
-                <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden">
-                  <sc-for list="{{ gen.kinds }}" as="k" hint-placeholder-count="2"><button onClick="{{ k.onClick }}" style="border:0;background:{{ k.bg }};color:{{ k.col }};padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';white-space:nowrap">{{ k.label }}</button></sc-for>
-                </div>
-                <label style="display:flex;gap:8px;align-items:center;flex:1 1 220px;min-width:0;font:500 14px 'Hanken Grotesk';color:var(--mut)">about<input defaultValue="{{ gen.subject }}" onChange="{{ gen.onSubject }}" placeholder="a person, office or topic" style="flex:1;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font:500 14px 'Hanken Grotesk';color:var(--ink);outline:none"></input></label>
-              </div>
-              <div style="display:flex;gap:10px 14px;flex-wrap:wrap;align-items:center">
-                <span style="font:500 14px 'Hanken Grotesk';color:var(--mut)">Sentences</span>
+                <span style="font:400 13px 'Hanken Grotesk';color:var(--dim)">chat on the left, the folded output on the right — every run is a new fold</span>
+                <span style="flex:1"></span>
                 <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden">
                   <sc-for list="{{ gen.modes }}" as="k" hint-placeholder-count="2"><button onClick="{{ k.onClick }}" style="border:0;background:{{ k.bg }};color:{{ k.col }};padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';white-space:nowrap">{{ k.label }}</button></sc-for>
                 </div>
-                <span style="flex:1"></span>
+              </div>
+              <sc-if value="{{ gen.hasThread }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:8px;max-height:260px;overflow:auto">
+                  <sc-for list="{{ gen.thread }}" as="m" hint-placeholder-count="0">
+                    <div style="display:flex;flex-direction:column;gap:2px;background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:8px 12px">
+                      <span style="font:600 11px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">{{ m.who }}</span>
+                      <span style="font:400 14px/1.5 'Hanken Grotesk';color:var(--ink)">{{ m.text }}</span>
+                      <sc-if value="{{ m.hasNote }}" hint-placeholder-val="{{ false }}"><span style="font:400 12px 'JetBrains Mono';color:var(--dim)">{{ m.note }}</span></sc-if>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <div style="display:flex;gap:8px;align-items:flex-end">
+                <textarea value="{{ gen.prompt }}" onChange="{{ gen.onPrompt }}" onKeyDown="{{ gen.onKey }}" rows="2" placeholder="Describe anything to generate — a brief, a timeline, a summary, a list, a comparison…" style="flex:1;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:8px 12px;font:400 14px/1.5 'Hanken Grotesk';color:var(--ink);outline:none;resize:vertical"></textarea>
                 <button onClick="{{ gen.onRun }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:7px 16px;cursor:pointer;font:600 14px 'Hanken Grotesk';white-space:nowrap;opacity:{{ gen.op }}">{{ gen.runLabel }}</button>
               </div>
+              <sc-if value="{{ gen.hasFolds }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px">
+                  <button onClick="{{ gen.onFoldPrev }}" style="background:none;border:1px solid var(--line2);border-radius:6px;padding:3px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2)">‹</button>
+                  <span style="font:500 13px 'JetBrains Mono';color:var(--ink2)">{{ gen.foldLabel }}</span>
+                  <button onClick="{{ gen.onFoldNext }}" style="background:none;border:1px solid var(--line2);border-radius:6px;padding:3px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2)">›</button>
+                  <span style="font:400 12px 'Hanken Grotesk';color:var(--dim)">{{ gen.foldNote }}</span>
+                </div>
+              </sc-if>
               <sc-if value="{{ gen.isModel }}" hint-placeholder-val="{{ false }}">
                 <div style="display:flex;gap:8px 10px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--line);padding-top:10px">
                   <input defaultValue="{{ gen.llmUrl }}" onChange="{{ gen.onLlmUrl }}" placeholder="http://localhost:11434" style="flex:1 1 200px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:5px 10px;font:500 13px 'JetBrains Mono';color:var(--ink);outline:none"></input>
@@ -843,6 +859,14 @@ select option{background:var(--s1);color:var(--ink)}
                   <span style="flex:1 1 240px;font:500 14px/1.45 'Hanken Grotesk';color:{{ out.statusColor }}">{{ out.status }}</span>
                   <sc-if value="{{ out.canGroundAll }}" hint-placeholder-val="{{ false }}"><button onClick="{{ out.onGroundAll }}" style="all:unset;cursor:pointer;font:600 14px 'Hanken Grotesk';color:var(--acc);white-space:nowrap">{{ out.groundAllLabel }}</button></sc-if>
                 </div>
+                <sc-if value="{{ out.hasFoldCursor }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                    <button onClick="{{ out.onFoldPrev }}" style="background:none;border:1px solid var(--line2);border-radius:6px;padding:3px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2)">‹</button>
+                    <span style="font:500 13px 'JetBrains Mono';color:var(--ink2)">{{ out.foldLabel }}</span>
+                    <button onClick="{{ out.onFoldNext }}" style="background:none;border:1px solid var(--line2);border-radius:6px;padding:3px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2)">›</button>
+                    <span style="font:400 12px 'Hanken Grotesk';color:var(--dim)">the fold at this cursor is what exports</span>
+                  </div>
+                </sc-if>
                 <div style="background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:22px 26px;display:flex;flex-direction:column;gap:12px">
                   <h2 style="margin:0;font:500 26px/1.2 'Newsreader',serif;color:var(--ink);text-wrap:balance">{{ out.title }}</h2>
                   <sc-for list="{{ out.items }}" as="b" hint-placeholder-count="3">
@@ -3865,6 +3889,17 @@ class Component extends DCLogic {
       return { title: d.title || 'Untitled document', meta: plural(n, 'claim'), bg: on ? 'var(--sel)' : 'transparent', bd: on ? '#8b5cf6' : 'var(--line)', col: on ? 'var(--ink)' : 'var(--ink2)',
         onClick: () => { if (!on) { this.setDocs(X => ({ ...X, cur: d.id })); this.setState({ dFocus: null, dDel: null }); } } }; });
     const curDoc = P.doc || { title: '' };
+    // ---- generate folds: one append-only log per document, a cursor over it ----
+    // Every generate run appends a version ({id, at, prompt, kind, mode, claimIds})
+    // and stamps its claims with the version id. The cursor only moves the VIEW:
+    // claims and the export below read through it, so any fold is exportable.
+    // Claims with no version tag predate folds and always stay visible.
+    const genLog = (curDoc && Array.isArray(curDoc.genLog)) ? curDoc.genLog : [];
+    const genHead = Math.max(1, genLog.length);
+    const genCursor = Math.min(Math.max(1, (curDoc && curDoc.genCursor) || genHead), genHead);
+    const visGenIds = new Set(genLog.slice(0, genCursor).map(g => g.id));
+    const inFold = c => !c.gen || visGenIds.has(c.gen);
+    const setGenCursor = n => { const id = P.cur; const nx = Math.min(Math.max(1, n), Math.max(1, genLog.length)); this.setDocs(X => ({ ...X, docs: X.docs.map(d => d.id === id ? { ...d, genCursor: nx } : d) })); };
     const docBar = { tabs: docTabs, title: curDoc.title || '', docKey: String(P.cur || 'none'), onTitle: e => { const v = e.target.value; const id = P.cur; this.later('title', () => this.setDocs(X => ({ ...X, docs: X.docs.map(d => d.id === id ? { ...d, title: v } : d) }))); },
       onNew: () => newDoc('Untitled document'), onDup: () => newDoc((curDoc.title || 'Untitled document') + ' (copy)', (curDoc.claims || []).map(c => ({ ...c, id: 'claim-' + Math.random().toString(36).slice(2, 9), pins: [...c.pins] }))),
       askDel: !!S.dDel, noAskDel: !S.dDel, onDel: () => this.setState({ dDel: true }), onDelNo: () => this.setState({ dDel: null }),
@@ -3893,7 +3928,7 @@ class Component extends DCLogic {
     const dLabel = iso => { if (!iso) return ''; const m = String(iso).match(/^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?/); if (!m) return iso; return (m[3] ? +m[3] + ' ' : '') + (m[2] ? MON_N[+m[2]] + ' ' : '') + m[1]; };
     const claimDate = c => c.date || (() => { const p = (c.pins || []).map(pid => byId[pid]).find(Boolean); const d = p && A.docById[p.docId]; return d ? (d.published || (d.year ? String(d.year) : '')) : ''; })();
     let ci = 0;
-    const claims = P.claims.map(c => { const isHead = c.kind === 'heading'; if (!isHead) ci++; const st = statusOf(c); const ev = (c.pins || []).map(pid => byId[pid]).filter(Boolean);
+    const claims = P.claims.filter(inFold).map(c => { const isHead = c.kind === 'heading'; if (!isHead) ci++; const st = statusOf(c); const ev = (c.pins || []).map(pid => byId[pid]).filter(Boolean);
       const cl = st && st.v === 'author' && st.g && st.g.closest ? A.byId[st.g.closest] : null;
       const why = !st ? '' : st.v === 'fail' ? st.k.hard.join(' · ') : st.v === 'untried' ? 'Press Ground: it is checked against the picture for every source that holds it and every source that holds it otherwise.' : st.v === 'author' ? ((st.g ? st.g.why : '') + ' It will be marked as your own claim.') : (st.g ? st.g.why : 'Backed by the excerpts you attached. Press Ground to test it against every source.');
       const conL = st && st.g && st.g.con ? st.g.con.map(id => A.byId[id]).filter(Boolean).map(o => ({ text: short(o.text, 280), src: this.srcShort(A, o) + (this.dateOf(A, o).label ? ', ' + this.dateOf(A, o).label : ''), why: (st.g.conWhy || {})[o.id] || '', onOpen: () => this.read(o.doc, o.id) })) : [];
@@ -3913,7 +3948,7 @@ class Component extends DCLogic {
           onDetach: () => this.setPinData(D => { const x = D.claims.find(y => y.id === c.id); if (x) x.pins = x.pins.filter(q => q !== p.id); return D; }) })) }; });
     // ---- output
     const docTitle = (P.doc && P.doc.title) || 'Untitled document';
-    let blocks = P.claims.filter(c => (c.text || '').trim()); if (isTL) blocks = blocks.filter(c => c.kind !== 'heading').map((c, i) => ({ c, i, d: claimDate(c) })).sort((a, b) => (a.d || '9999').localeCompare(b.d || '9999') || a.i - b.i).map(x => x.c);
+    let blocks = P.claims.filter(c => (c.text || '').trim() && inFold(c)); if (isTL) blocks = blocks.filter(c => c.kind !== 'heading').map((c, i) => ({ c, i, d: claimDate(c) })).sort((a, b) => (a.d || '9999').localeCompare(b.d || '9999') || a.i - b.i).map(x => x.c);
     const notes = []; const noteKey = {}; const noteN = (key, text, url) => { if (!noteKey[key]) { notes.push({ text, url }); noteKey[key] = notes.length; } return noteKey[key]; };
     const AUTH = 'The writer’s own claim. The sources were searched and hold nothing that supports it.';
     let nFail = 0, nUntried = 0, nAuthor = 0, nSrc = 0, nCont = 0;
