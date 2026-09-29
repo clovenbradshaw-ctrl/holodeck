@@ -181,22 +181,44 @@ select option{background:var(--s1);color:var(--ink)}
               </div>
             </sc-if>
             <sc-if value="{{ hasFilters }}" hint-placeholder-val="{{ false }}">
-              <div style="display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap;margin-top:6px;padding:8px 10px;background:var(--sel);border:1px solid #8b5cf6;border-radius:10px">
+              <div style="display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;margin-top:8px">
                 <span style="font:600 14px 'Hanken Grotesk';color:var(--ink);white-space:nowrap">{{ filterCount }}</span>
-                <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">narrowed to</span>
+                <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">·</span>
                 <sc-for list="{{ chips }}" as="ch" hint-placeholder-count="1">
                   <button onClick="{{ ch.onClear }}" title="Remove" style="display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid #8b5cf6;color:var(--ink);border-radius:999px;padding:3px 5px 3px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk'"><span style="color:var(--mut)">{{ ch.k }}</span><b style="font-weight:600">{{ ch.v }}</b><span style="width:18px;height:18px;border-radius:50%;background:var(--line2);display:flex;align-items:center;justify-content:center;font-size:10px">✕</span></button>
                 </sc-for>
                 <sc-if value="{{ addAsFold.show }}" hint-placeholder-val="{{ false }}"><button onClick="{{ addAsFold.onClick }}" style="margin-left:auto;background:none;border:1px solid #8b5cf6;border-radius:999px;color:var(--acc);cursor:pointer;font:500 13px 'Hanken Grotesk';padding:3px 10px;white-space:nowrap">{{ addAsFold.label }}</button></sc-if>
-                <button onClick="{{ clearAll }}" style="margin-left:auto;background:none;border:0;color:var(--acc);cursor:pointer;font:500 14px 'Hanken Grotesk';white-space:nowrap">Show everything</button>
+                <button onClick="{{ clearAll }}" style="background:none;border:0;color:var(--mut);cursor:pointer;font:500 14px 'Hanken Grotesk';white-space:nowrap" style-hover="color:var(--ink)">Clear all</button>
               </div>
             </sc-if>
           </div>
-          <label style="display:flex;align-items:center;gap:8px;font:400 14px 'Hanken Grotesk';color:var(--mut);white-space:nowrap">As of
-            <select value="{{ yearVal }}" onChange="{{ onYear }}" style="background:var(--s1);border:1px solid var(--line2);border-radius:8px;color:var(--ink);font:500 14px 'Hanken Grotesk';padding:6px 8px;cursor:pointer;outline:none">
-              <sc-for list="{{ yearOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.label }}</option></sc-for>
-            </select>
-          </label>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)">
+          <div style="display:flex;align-items:center;gap:6px 14px;flex-wrap:wrap">
+            <span style="font:600 11px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--dim)">Time</span>
+            <div style="display:inline-flex;gap:2px">
+              <sc-for list="{{ ts.modes }}" as="m" hint-placeholder-count="3"><button onClick="{{ m.onClick }}" style="all:unset;cursor:pointer;padding:3px 9px;border-radius:6px;background:{{ m.bg }};color:{{ m.col }};font:500 13px 'Hanken Grotesk'" style-hover="color:var(--ink)">{{ m.label }}</button></sc-for>
+            </div>
+            <sc-if value="{{ ts.has }}" hint-placeholder-val="{{ true }}"><div style="display:inline-flex;gap:2px;margin-left:auto">
+              <sc-for list="{{ ts.presets }}" as="p" hint-placeholder-count="3"><button onClick="{{ p.onClick }}" style="all:unset;cursor:pointer;padding:3px 9px;border-radius:6px;background:{{ p.bg }};color:{{ p.col }};font:500 13px 'Hanken Grotesk'" style-hover="color:var(--ink)">{{ p.label }}</button></sc-for>
+            </div></sc-if>
+          </div>
+          <sc-if value="{{ ts.has }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;gap:1px;align-items:flex-end;height:40px;user-select:none;cursor:crosshair">
+              <sc-for list="{{ ts.bars }}" as="t" hint-placeholder-count="12">
+                <div onMouseDown="{{ t.onDown }}" onMouseEnter="{{ t.onEnter }}" onMouseUp="{{ t.onUp }}" title="{{ t.title }}" style="flex:1 1 0;min-width:0;height:100%;display:flex;align-items:flex-end"><span style="display:block;width:100%;height:{{ t.h }};background:{{ t.color }};border-radius:2px 2px 0 0"></span></div>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:1px">
+              <sc-for list="{{ ts.bars }}" as="t" hint-placeholder-count="12"><span style="flex:1 1 0;min-width:0;font:500 11px 'JetBrains Mono';color:var(--dim);white-space:nowrap;overflow:visible">{{ t.lab }}</span></sc-for>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px 14px;flex-wrap:wrap;font:400 13px 'Hanken Grotesk';color:var(--mut)">
+              <span>{{ ts.summary }}</span>
+              <sc-if value="{{ ts.hasUndated }}" hint-placeholder-val="{{ false }}"><button onClick="{{ ts.undated.onClick }}" style="all:unset;cursor:pointer;color:var(--acc);font:500 13px 'Hanken Grotesk'" style-hover="color:var(--ink)">{{ ts.undated.label }}</button></sc-if>
+              <sc-if value="{{ ts.hasNotes }}" hint-placeholder-val="{{ false }}"><span style="color:var(--dim)">{{ ts.notes }}</span></sc-if>
+            </div>
+          </sc-if>
+          <sc-if value="{{ ts.empty }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px 'Hanken Grotesk';color:var(--dim)">{{ ts.empty }}</span></sc-if>
         </div>
       </sc-if>
 
@@ -873,6 +895,7 @@ select option{background:var(--s1);color:var(--ink)}
             <span style="flex:1"></span>
             <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;margin:4px 0"><sc-for list="{{ svModes }}" as="k" hint-placeholder-count="2"><button onClick="{{ k.onClick }}" style="border:0;background:{{ k.bg }};color:{{ k.col }};padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';white-space:nowrap">{{ k.label }}</button></sc-for></div>
           </div>
+          <sc-if value="{{ srcHiddenNote }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px 'Hanken Grotesk';color:var(--dim);margin-top:6px">{{ srcHiddenNote }}</span></sc-if>
         </sc-if>
         <sc-if value="{{ svTable }}" hint-placeholder-val="{{ false }}">
           <sc-for list="{{ svTables }}" as="tb" hint-placeholder-count="1">
@@ -2668,8 +2691,16 @@ const timeKey = (st, d, mode) => { st._tk = st._tk || {}; if (st._tk[mode] !== u
   const pub = () => { const p = String((d && d.published) || ''); const m = p.match(/^((?:19|20)\d{2})(?:-(\d{2}))?/); return m ? (m[2] ? m[1] + '-' + m[2] : m[1]) : (d && d.year ? String(d.year) : ''); };
   let k = '';
   if (mode === 'happened') { const m = String(st.text || '').match(TIME_RE); if (m) k = m[2] ? m[2] + '-' + String(MON_I[m[1].toLowerCase().slice(0, m[1].toLowerCase().startsWith('sept') ? 4 : 3)] || MON_I[m[1].toLowerCase().slice(0, 3)]).padStart(2, '0') : m[3] ? m[3] + '-' + m[4] : m[5]; if (!k) k = pub(); }
+  else if (mode === 'captured') { const m = String((d && d.capturedAt) || '').match(/^((?:19|20)\d{2})(?:-(\d{2}))?/); k = m ? (m[2] ? m[1] + '-' + m[2] : m[1]) : ''; }
   else k = pub();
   return (st._tk[mode] = k); };
+// A time range over any clock: keys are 'YYYY' or 'YYYY-MM'. A year-only key covers the whole year, so it is in a
+// month range when the two overlap (a statement dated only "2024" is shown for "Mar 2024 - Jun 2024", not hidden).
+const keySpan = k => /^\d{4}$/.test(k) ? [k + '-01', k + '-12'] : [k, k];
+const inTimeRange = (k, from, to) => { const [a, b] = keySpan(k); return b >= keySpan(from)[0] && a <= keySpan(to)[1]; };
+const rangeLabel = r => r.from === r.to ? periodLabel(r.from) : periodLabel(r.from) + ' \u2013 ' + periodLabel(r.to);
+const CLOCK_L = { happened: 'Happened', published: 'Published', captured: 'Captured' };
+const monthsBack = (k, n) => { let y = +k.slice(0, 4), m = +k.slice(5, 7) - n; while (m < 1) { m += 12; y--; } return y + '-' + String(m).padStart(2, '0'); };
 const periodLabel = k => /^\d{4}-\d{2}$/.test(k) ? MON_N[+k.slice(5)] + ' ' + k.slice(0, 4) : k;
 const FRAG = st => { const t = clean(st.text); return /^[a-z(,;–—-]/.test(t) || /\b(the|of|to|with|and|or|a|an|for|in|on|by|that|from|at)$/i.test(t) || (!/[.!?”"')]$/.test(t) && t.split(/\s+/).length < 8); };
 const plural = (n, a, b) => n + ' ' + (n === 1 ? a : (b || a + 's'));
@@ -2975,6 +3006,7 @@ class Component extends DCLogic {
     this._onYt = e => { if (!/youtube/.test(e.origin || '')) return; let d = e.data; if (typeof d === 'string') { try { d = JSON.parse(d); } catch (x) { return; } } const t = d && d.info && typeof d.info.currentTime === 'number' ? d.info.currentTime : null; if (t != null) this.ytMark(t); }; window.addEventListener('message', this._onYt);
     this._onMsg = e => { const d = e.data; if (!d || d.type !== 'fold-ingest' || !d.html) return; try { e.source && e.source.postMessage({ type: 'fold-ack' }, '*'); } catch (x) {} const k = d.url + '|' + d.t; if (this._seenIn[k]) return; this._seenIn[k] = 1; const page = faithfulHtml(d.html, d.url); this.addDocs([{ title: (d.title || d.url || 'Web page').trim(), year: new Date().getFullYear(), type: 'Web page', format: 'page', html: page, url: d.url, note: pageText(page, 'page').trim() ? null : 'That page had no readable text.' }], { open: true }); };
     window.addEventListener('message', this._onMsg);
+    this._onBrUp = () => { if (this._br) this.commitBrush(); }; window.addEventListener('mouseup', this._onBrUp);
     try { if (window.opener && /#ingest/.test(location.hash)) window.opener.postMessage({ type: 'fold-ready' }, '*'); } catch (x) {}
     this._h = {
       enter: e => { this._c++; if (!this.state.dragging) this.setState({ dragging: true }); },
@@ -4102,6 +4134,46 @@ class Component extends DCLogic {
     this.setState({ added, just: { ids, title: nd.length === 1 ? nd[0].title : plural(nd.length, 'item'), n: sts.length, linked: nm.filter(n => prev.names[n]), fresh: nm.filter(n => !prev.names[n]), echoN, odd, notes: list.map(x => x.note).filter(Boolean), first: nd[0].id }, view: aopt && aopt.open ? 'reader' : 'summary', sel: aopt && aopt.open ? { type: 'doc', id: nd[0].id } : null, f: {}, q: '', readDoc: aopt && aopt.open ? nd[0].id : null, readMode: 'original', draftTitle: '', draftYear: '', draftText: '', showAdd: false, busy: '', note: '' });
   }
 
+  // The time strip: how the statements every OTHER filter leaves are spread over time, on the chosen clock.
+  // Drag across bars to pick a range, click one bar for one period, click the same selection again to clear.
+  timeStrip(A, F) {
+    const S = this.state, f = S.f || {}; const mode = (f.range && f.range.mode) || S.tsMode || 'happened';
+    const key = [this._key, A.sts.length, JSON.stringify({ ...f, range: null }), S.q, mode, [...(this._cnt || [])].join(','), JSON.stringify(S.offDocs || {}), S.tMax || '', (this._fold || []).join(','), !!S.showOutside].join('|'); // everything match() reads besides the range
+    let base = this._tsBase && this._tsBase.key === key ? this._tsBase : null;
+    if (!base) { const cnt = {}; let undated = 0, dated = 0, monthN = 0; const years = [];
+      A.sts.forEach(st => { if (st.ref || !this.match(st, A, 'range')) return; const k = timeKey(st, A.docById[st.doc], mode); if (!k) { undated++; return; } dated++; if (/-\d{2}$/.test(k)) monthN++; years.push(+k.slice(0, 4)); cnt[k] = (cnt[k] || 0) + 1; });
+      base = this._tsBase = { key, cnt, undated, dated, monthN, years: years.sort((a, b) => a - b) }; }
+    const { cnt, undated, dated, monthN, years } = base;
+    const modes = ['happened', 'published', 'captured'].map(m => ({ label: { happened: 'When it happened', published: 'When published', captured: 'When captured' }[m], on: m === mode, bg: m === mode ? 'var(--sel2)' : 'transparent', col: m === mode ? 'var(--ink)' : 'var(--mut)',
+      onClick: () => { if (f.range) this.setF('range', { ...f.range, mode: m }); else this.setState({ tsMode: m }); } }));
+    if (!dated) return { has: false, modes, empty: 'No statement here carries a ' + { happened: 'date of its own or a source date', published: 'publication date', captured: 'capture date' }[mode] + '.' };
+    const lo = years[Math.floor(years.length * 0.02)], hi = years[Math.ceil(years.length * 0.98) - 1];
+    const gran = hi - lo <= 4 && monthN >= dated * 0.4 ? 'month' : 'year';
+    const bucket = k => gran === 'month' ? (/-\d{2}$/.test(k) ? k : null) : k.slice(0, 4);
+    const bc = {}; let yearOnly = 0, outside = 0;
+    Object.entries(cnt).forEach(([k, n]) => { const y = +k.slice(0, 4); if (y < lo || y > hi) { outside += n; return; } const b = bucket(k); if (!b) { yearOnly += n; return; } bc[b] = (bc[b] || 0) + n; });
+    const all = []; if (gran === 'month') { for (let y = lo; y <= hi; y++) for (let m = 1; m <= 12; m++) all.push(y + '-' + String(m).padStart(2, '0')); } else for (let y = lo; y <= hi; y++) all.push(String(y));
+    let a = 0, b = all.length - 1; while (a < b && !bc[all[a]]) a++; while (b > a && !bc[all[b]]) b--; const span = all.slice(a, b + 1);
+    const mx = Math.max(1, ...span.map(k => bc[k] || 0)), every = Math.max(1, Math.ceil(span.length / 8));
+    const br = this._br && this._br.mode === mode ? this._br : null; const selFrom = br ? (br.a < br.b ? br.a : br.b) : f.range && f.range.mode === mode ? f.range.from : null, selTo = br ? (br.a < br.b ? br.b : br.a) : f.range && f.range.mode === mode ? f.range.to : null;
+    const isSel = k => selFrom && inTimeRange(k, selFrom, selTo);
+    const bars = span.map((k, i) => { const n = bc[k] || 0, on = isSel(k);
+      return { key: k, h: (n ? Math.max(3, n / mx * 36) : 0) + 'px', color: on ? 'var(--acc)' : selFrom ? 'var(--line2)' : 'var(--blue)', title: periodLabel(k) + ': ' + plural(n, 'statement') + ' · drag to pick a range, click for this ' + (gran === 'month' ? 'month' : 'year'),
+        lab: i === 0 || i === span.length - 1 || (i % every === 0 && span.length - 1 - i >= Math.ceil(every / 2)) ? (gran === 'month' ? periodLabel(k) : k) : '', // never crowd the last label
+        onDown: e => { e.preventDefault(); this._br = { a: k, b: k, mode }; this.forceUpdate(); }, onEnter: () => { if (this._br) { this._br.b = k; this.forceUpdate(); } }, onUp: () => this.commitBrush() }; });
+    const last = span[span.length - 1], lastY = last.slice(0, 4);
+    const presets = [{ label: 'All time', on: !f.range, onClick: () => this.setF('range', null) },
+      { label: lastY, on: !!(f.range && f.range.from === lastY && f.range.to === lastY), onClick: () => this.setF('range', { mode, from: lastY, to: lastY, undated: false }) },
+      ...(gran === 'month' ? [{ label: 'Last 12 months', on: !!(f.range && f.range.to === last && f.range.from === monthsBack(last, 11)), onClick: () => this.setF('range', { mode, from: monthsBack(last, 11), to: last, undated: false }) }] : []),
+      ...(years.length && lo !== +lastY ? [{ label: 'Before ' + lastY, on: !!(f.range && f.range.from === String(years[0]) && f.range.to === String(+lastY - 1)), onClick: () => this.setF('range', { mode, from: String(years[0]), to: String(+lastY - 1), undated: false }) }] : [])]
+      .map(p => ({ ...p, bg: p.on ? 'var(--sel2)' : 'transparent', col: p.on ? 'var(--ink)' : 'var(--mut)' }));
+    const notes = [yearOnly && gran === 'month' ? yearOnly.toLocaleString() + ' dated to a year only' : '', outside ? outside.toLocaleString() + ' far outside this span' : ''].filter(Boolean).join(' · ');
+    return { has: true, modes, bars, presets, notes, hasNotes: !!notes,
+      summary: f.range ? CLOCK_L[f.range.mode] + ' ' + rangeLabel(f.range) + ' · ' + plural(F.length, 'statement') : dated.toLocaleString() + ' dated statements' + (undated ? ', ' + undated.toLocaleString() + ' undated' : '') + ' · drag across the bars to narrow',
+      undated: f.range && undated ? { label: (f.range.undated ? 'Hide' : 'Include') + ' the ' + undated.toLocaleString() + ' undated', onClick: () => this.setF('range', { ...f.range, undated: !f.range.undated }) } : null, hasUndated: !!(f.range && undated) };
+  }
+  commitBrush() { const br = this._br; this._br = null; if (!br) return; const f = this.state.f || {}; const from = br.a < br.b ? br.a : br.b, to = br.a < br.b ? br.b : br.a;
+    if (f.range && f.range.mode === br.mode && f.range.from === from && f.range.to === to) this.setF('range', null); else this.setF('range', { mode: br.mode, from, to, undated: !!(f.range && f.range.undated) }); }
   match(st, A, skip) {
     const f = this.state.f, q = this.state.q.trim().toLowerCase(), A2 = A;
     if (this._cnt && !this._cnt.has(st.doc) && f.doc !== st.doc) return false;
@@ -4119,6 +4191,7 @@ class Component extends DCLogic {
     if (f.medium && skip !== 'medium' && (A2.docById[st.doc].medium || 'Text') !== f.medium) return false;
     if (f.standing && skip !== 'standing' && (A2.docById[st.doc].standing || 'Source') !== f.standing) return false;
     if (f.year && skip !== 'year' && st.year && st.year > f.year) return false;
+    if (f.range && skip !== 'range') { const k = timeKey(st, A2.docById[st.doc], f.range.mode); if (!k ? !f.range.undated : !inTimeRange(k, f.range.from, f.range.to)) return false; }
     if (f.period && skip !== 'period') { const k = timeKey(st, A2.docById[st.doc], f.period.mode); if (!k || (k !== f.period.key && !k.startsWith(f.period.key + '-'))) return false; }
     if (q && !IS_Q(this.state.q) && !PARSE_REL(this.state.q) && !this.qScore(st, A2)) return false;
     return true;
@@ -4382,13 +4455,14 @@ class Component extends DCLogic {
 
     _m('summary'); // sources
     const FbyDoc = {}; F.forEach(s => { (FbyDoc[s.doc] = FbyDoc[s.doc] || []).push(s); }); const docIdx = new Map(A.docs.map((d, i) => [d, i])); const docByTitle = new Map(A.docs.map(d => [d.title, d]));
-    const docCards = A.docs.map(d => { const n = D.perDoc[d.id] || 0; const nm = new Set((FbyDoc[d.id] || []).flatMap(s => s.names)); const h = hi(isSel('doc', d.id)); return { isNew: !!(S.just && S.just.ids.includes(d.id)), title: d.title, meta: docMeta(d), stats: plural(n, 'statement') + ' · ' + plural(nm.size, 'name') + ' · ' + d.text.length.toLocaleString() + ' characters', bd: h.bd, op: n ? 1 : 0.4, onSelect: () => this.sel('doc', d.id), onRead: () => this.read(d.id), onFocus: () => this.setF('doc', d.id) }; });
+    const narrowed = F.length < A.sts.reduce((c, st) => c + (st.ref ? 0 : 1), 0); // the selection is smaller than everything
+    const docCards = A.docs.map(d => { const n = D.perDoc[d.id] || 0; const inSel = (FbyDoc[d.id] || []).length; const nm = new Set((FbyDoc[d.id] || []).flatMap(s => s.names)); const h = hi(isSel('doc', d.id)); return { isNew: !!(S.just && S.just.ids.includes(d.id)), title: d.title, meta: docMeta(d), stats: (narrowed ? inSel.toLocaleString() + ' of ' + plural(n, 'statement') + ' in this selection' : plural(n, 'statement')) + ' · ' + plural(nm.size, 'name') + ' · ' + d.text.length.toLocaleString() + ' characters', bd: h.bd, op: n ? 1 : 0.4, onSelect: () => this.sel('doc', d.id), onRead: () => this.read(d.id), onFocus: () => this.setF('doc', d.id) }; });
     const drawOpts = [{ v: '', label: 'Independent' }, ...A.docs.filter(o => this.mOf(o).status !== 'seen').map(o => ({ v: o.id, label: 'Draws on ' + short(o.title, 34) }))];
     const cardOf = d => { const c = docCards[docIdx.get(d)]; const m = this.mOf(d); const all = A.stsByDoc[d.id] || []; const nm = new Set(all.flatMap(s => s.names));
       const dd = distinctOf[d.id]; const inF = this._fold.length ? all.filter(s => this.inFold(s)).length : 0;
       const badges = [...(d.medium ? [{ label: d.medium === 'Video' || d.medium === 'Audio' ? d.medium + (d.transcribed ? ' · machine transcript' : ' · not transcribed') : d.medium, color: MEDIUM_C[d.medium] || 'var(--mut)' }] : []), ...(d.standing ? [{ label: d.standing, color: STANDING_C[d.standing] || 'var(--mut)' }] : []), ...((d.recordings || []).map(r => ({ label: 'Video linked · not transcribed', color: 'var(--date)' }))), ...(d.sameAs ? [{ label: 'Same bytes as ' + short(d.sameAsTitle || '', 36), color: 'var(--amber)' }] : []), ...(d.custodyStatus && d.custodyStatus !== 'captured' ? [{ label: d.custody, color: /missing|failed|not-located|no-text/.test(d.custodyStatus) ? 'var(--bad)' : 'var(--amber)' }] : [])];
       const vid = !!(d.media && d.media.kind === 'youtube');
-      return { ...c, op: 1, isVid: vid, noVid: !vid, thumbBg: vid ? 'url(https://i.ytimg.com/vi/' + d.media.id + '/hqdefault.jpg)' : 'none', readLabel: 'View', ...(vid ? { onSelect: () => this.read(d.id) } : {}), badges, hasBadges: badges.length > 0, hasDistinct: !!dd, distinct: dd ? dd.label + ' · ' + pct(dd.a) + ' of its statements vs ' + pct(dd.b) + ' elsewhere' : '', hasFold: this._fold.length > 0, fold: inF + ' of ' + all.length + ' statements touch the topic', stats: plural(all.length, 'statement') + ' · ' + plural(nm.size, 'name'), isSeen: m.status === 'seen', isKept: m.status !== 'seen', canUnkeep: m.status !== 'seen' && !this.baseDocs(this.corpusId()).some(x => x.id === d.id),
+      return { ...c, op: 1, isVid: vid, noVid: !vid, thumbBg: vid ? 'url(https://i.ytimg.com/vi/' + d.media.id + '/hqdefault.jpg)' : 'none', readLabel: 'View', ...(vid ? { onSelect: () => this.read(d.id) } : {}), badges, hasBadges: badges.length > 0, hasDistinct: !!dd, distinct: dd ? dd.label + ' · ' + pct(dd.a) + ' of its statements vs ' + pct(dd.b) + ' elsewhere' : '', hasFold: this._fold.length > 0, fold: inF + ' of ' + all.length + ' statements touch the topic', stats: (narrowed ? ((FbyDoc[d.id] || []).length).toLocaleString() + ' of ' + plural(all.length, 'statement') + ' in this selection' : plural(all.length, 'statement')) + ' · ' + plural(nm.size, 'name'), isSeen: m.status === 'seen', isKept: m.status !== 'seen', canUnkeep: m.status !== 'seen' && !this.baseDocs(this.corpusId()).some(x => x.id === d.id),
         ...(() => { const on = this._inf[d.id] || null;
           return { originText: on ? on.why + ' ' + short(A.docById[on.of].title, 40) : 'Independent · shares no claims or outlet with another source', originDep: !!on, originCol: on ? 'var(--amber)' : 'var(--mut)' }; })(),
         drawsX: 0, drawOptions: drawOpts,
@@ -4418,11 +4492,16 @@ class Component extends DCLogic {
       keptDocs.forEach(d => { const mine = stsOf(d); if (mine.length < 2) return; const mineC = inCnt(d) ? mine.length : 0; const restN = pool.length - mineC; if (!restN) return;
       let best = null; FEAT.forEach(([k, fn, hiL, loL], fi) => { const ma = mine.filter(fn).length; const a = ma / mine.length, b = (TOT[fi] - (inCnt(d) ? ma : 0)) / restN; const df = a - b; if (Math.abs(df) >= 0.3 && (!best || Math.abs(df) > Math.abs(best.df))) best = { key: k + (df > 0 ? '+' : '-'), label: df > 0 ? hiL : loL, df, a, b }; });
       if (best) distinctOf[d.id] = best; }); }
-    const gmap = {}; keptDocs.forEach(d => { const b = distinctOf[d.id]; const k = b ? b.key : '_'; (gmap[k] = gmap[k] || { label: b ? b.label : (Object.keys(distinctOf).length ? 'Nothing sets these apart' : 'Sources'), docs: [] }).docs.push(d); });
+    // a statement-level filter (a name, a time range, a topic, a search) narrows the SOURCES too: while one is on,
+    // only sources holding at least one matching statement are listed, and the count of the hidden ones is said
+    const stFilterOn = !!(f.name || f.range || f.topic || f.frame || f.type || f.unit || f.year || f.period || (S.q || '').trim());
+    const hasMatch = d => !stFilterOn || (FbyDoc[d.id] || []).length > 0; 
+    const gmap = {}; keptDocs.filter(hasMatch).forEach(d => { const b = distinctOf[d.id]; const k = b ? b.key : '_'; (gmap[k] = gmap[k] || { label: b ? b.label : (Object.keys(distinctOf).length ? 'Nothing sets these apart' : 'Sources'), docs: [] }).docs.push(d); });
     const hasKinds = keptDocs.some(d => d.kind);
     const fDoc = d => (!f.kind || (d.kind || 'Source') === f.kind) && (!f.medium || (d.medium || 'Text') === f.medium) && (!f.standing || (d.standing || 'Source') === f.standing);
     const pubMsD = d => { const t = Date.parse(d.published || ''); return !isNaN(t) ? t : d.year ? Date.UTC(d.year, 0, 1) : 9e15; };
-    const kmap = {}; keptDocs.filter(fDoc).forEach(d => { (kmap[d.kind || 'Source'] = kmap[d.kind || 'Source'] || []).push(d); });
+    this._srcHidden = stFilterOn ? keptDocs.filter(d => fDoc(d) && !hasMatch(d)).length : 0;
+    const kmap = {}; keptDocs.filter(fDoc).filter(hasMatch).forEach(d => { (kmap[d.kind || 'Source'] = kmap[d.kind || 'Source'] || []).push(d); });
     const facet = (key, label, get, colors) => { const c = {}; keptDocs.forEach(d => { const v = get(d); c[v] = (c[v] || 0) + 1; }); const opts = Object.entries(c).sort((a, b) => b[1] - a[1]);
       return { label, opts: opts.map(([v, n]) => { const on = f[key] === v; return { label: v, n: String(n), color: (colors && colors[v]) || 'var(--mut)', bg: on ? 'var(--sel)' : 'var(--s1)', bd: on ? '#8b5cf6' : 'var(--line2)', onClick: () => this.setF(key, on ? null : v) }; }) }; };
     const srcFacets = hasKinds ? [facet('kind', 'Kind', d => d.kind || 'Source'), facet('medium', 'Medium', d => d.medium || 'Text', MEDIUM_C), facet('standing', 'Standing', d => d.standing || 'Source', STANDING_C)] : [];
@@ -4451,7 +4530,7 @@ class Component extends DCLogic {
       : svGroup === 'tabs' ? [{ label: '', hasLabel: false, rows: mkRows(rowsAll.filter(r => svTab === '__all' || FAM(r.group) === svTab)) }]
       : srcGroups.map(g => ({ label: g.label + ' · ' + g.n, hasLabel: true, rows: mkRows(rowsAll.filter(r => r.group === g.label)) }));
     const seg = on => ({ bg: on ? 'var(--sel2)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)' });
-    const svVals = { ...meetVals, svCards: svMode === 'cards', svTable: svMode === 'table', svTabsOn: svGroup === 'tabs',
+    const svVals = { ...meetVals, srcHiddenNote: this._srcHidden ? plural(this._srcHidden, 'other source') + ' with nothing in this selection ' + (this._srcHidden === 1 ? 'is' : 'are') + ' hidden' : '', svCards: svMode === 'cards', svTable: svMode === 'table', svTabsOn: svGroup === 'tabs',
       svModes: [['cards', 'Cards'], ['table', 'Table']].map(([k, l]) => ({ label: l, ...seg(svMode === k), onClick: () => this.setState({ svMode: k }) })),
       svGroups: [['tabs', 'Tabs by kind'], ['sections', 'Sections by kind'], ['one', 'One list']].map(([k, l]) => ({ label: l, ...seg(svGroup === k), onClick: () => this.setState({ svGroup: k }) })),
       svTabs: tabs.map(t => ({ label: t.label, n: t.n, bd: t.id === svTab ? '#8b5cf6' : 'transparent', col: t.id === svTab ? 'var(--ink)' : 'var(--mut)', onClick: () => this.setState({ svTab: t.id }) })),
@@ -4616,6 +4695,7 @@ class Component extends DCLogic {
     if (f.medium) chips.push({ k: 'Medium', v: f.medium, onClear: () => this.setF('medium', null) });
     if (f.standing) chips.push({ k: 'Standing', v: f.standing, onClear: () => this.setF('standing', null) });
     if (f.year) chips.push({ k: 'Dated up to', v: String(f.year), onClear: () => this.setF('year', null) });
+    if (f.range) chips.push({ k: CLOCK_L[f.range.mode] || 'Dated', v: rangeLabel(f.range) + (f.range.undated ? ', plus undated' : ''), onClear: () => this.setF('range', null) });
     if (f.period) chips.push({ k: f.period.mode === 'happened' ? 'Happened in' : 'Published in', v: periodLabel(f.period.key), onClear: () => this.setF('period', null) });
     if (S.q.trim() && !IS_Q(S.q) && !PARSE_REL(S.q)) chips.push({ k: 'Search', v: '“' + S.q.trim() + '”', onClear: () => this.setState(s => ({ q: '', ...(s.view === 'search' ? { view: s.prevView || 'summary' } : {}) })) });
     this._chips = chips;
@@ -4819,7 +4899,8 @@ class Component extends DCLogic {
       onYear: e => this.setF('year', e.target.value ? +e.target.value : null),
       hasFilters: chips.length > 0 && view !== 'search', chips, clearAll: () => this.setState(s => ({ f: {}, q: '', ...(s.view === 'search' ? { view: s.prevView || 'summary' } : {}) })),
       filterNote: plural(F.length, 'statement') + ' of ' + A.sts.length + ' — every terrain now reflects only these.',
-      filterCount: F.length.toLocaleString() + ' of ' + plural(A.sts.length, 'statement'),
+      filterCount: F.length.toLocaleString() + ' of ' + A.sts.length.toLocaleString() + ' statements',
+      ts: this.timeStrip(A, F),
       repo: (() => { const ci = this._corpusInfo || {}, wi = this._wsInfo || {}; const d8 = x => x ? String(x).slice(0, 16).replace('T', ' ') : '';
         const corpusLine = !ci.from ? 'Loading…' : ci.from === 'repo' ? 'Loaded from the shared store · built ' + d8(ci.builtAt) + ' · ' + plural(ci.n || 0, 'source') + (ci.stale ? ' · the custody manifest is newer than this file' : '') + '.' : 'Not in the store — read directly from ' + plural(ci.n || 0, 'capture') + '.';
         const locN = (S.added.ohs || []).length; const wsLine = (wi.found ? 'In the store · saved ' + d8(wi.savedAt) + (wi.merged ? ' · ' + plural(wi.merged, 'source') + ' merged in' : '') + '. ' : 'Not in the store. ') + 'This browser holds ' + plural(locN, 'added source') + ', ' + plural(Object.keys(this.metaAll().ohs || {}).length, 'decision') + ', ' + plural(Object.keys(this.readLog()).length, 'opened source') + '.';
