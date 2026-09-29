@@ -502,73 +502,86 @@ select option{background:var(--s1);color:var(--ink)}
                 <button onClick="{{ ak.retry }}" style="align-self:flex-start;background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Look for Ollama</button>
               </div>
             </sc-if>
-            <div style="display:flex;flex-direction:column;gap:8px;background:var(--s1);border:1px solid var(--line2);border-radius:12px;padding:10px 12px">
-              <textarea value="{{ ak.q }}" onChange="{{ ak.onQ }}" onKeyDown="{{ ak.onKey }}" rows="2" placeholder="Ask about the sources in this workspace" style="background:transparent;border:0;outline:none;resize:vertical;color:var(--ink);font:400 16px/1.5 'Hanken Grotesk';min-height:48px"></textarea>
-              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                <sc-if value="{{ ak.noTurns }}" hint-placeholder-val="{{ true }}"><sc-for list="{{ ak.examples }}" as="x" hint-placeholder-count="3"><button onClick="{{ x.onClick }}" style="background:var(--s2);border:1px solid var(--line2);border-radius:999px;padding:3px 10px;cursor:pointer;font:400 13px 'Hanken Grotesk';color:var(--ink2);white-space:normal;text-align:left" style-hover="border-color:var(--acc)">{{ x.t }}</button></sc-for></sc-if>
-                <div style="margin-left:auto;display:flex;gap:8px">
-                  <sc-if value="{{ ak.busy }}" hint-placeholder-val="{{ false }}"><button onClick="{{ ak.stop }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)">Stop</button></sc-if>
-                  <button onClick="{{ ak.send }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 16px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Ask ↵</button>
+            <sc-for list="{{ ak.turns }}" as="t" hint-placeholder-count="0">
+              <div style="display:flex;flex-direction:column">
+                <div style="display:flex;gap:10px;align-items:baseline;background:var(--s2);border:1px solid var(--line);border-bottom:0;border-radius:12px 12px 0 0;padding:9px 16px;flex-wrap:wrap">
+                  <span style="font:600 11px 'JetBrains Mono';color:var(--acc);white-space:nowrap">In [{{ t.n }}]</span>
+                  <span style="font:500 18px/1.35 'Newsreader',serif;color:var(--ink);text-wrap:pretty;min-width:0;flex:1">{{ t.q }}</span>
+                </div>
+                <section style="background:var(--s1);border:1px solid var(--line);border-radius:0 0 14px 14px;padding:14px 18px 16px;display:flex;flex-direction:column;gap:12px">
+                  <sc-if value="{{ t.hasRes }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ t.resLines }}" as="x" hint-placeholder-count="0"><span style="font:500 12px 'JetBrains Mono';color:{{ x.col }}">{{ x.t }}</span></sc-for></sc-if>
+                  <sc-if value="{{ t.hasNotesLine }}" hint-placeholder-val="{{ false }}">
+                    <details style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:8px 12px">
+                      <summary style="cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2)"><span style="font:600 11px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc);margin-right:8px">What the model was given</span>{{ t.notesLine }}</summary>
+                      <sc-if value="{{ t.hasNotes }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:2px;padding-top:8px"><sc-for list="{{ t.notesLines }}" as="x" hint-placeholder-count="0"><span style="font:400 13px/1.5 'JetBrains Mono';color:var(--ink2)">{{ x.l }}</span></sc-for></div></sc-if>
+                    </details>
+                  </sc-if>
+                  <sc-if value="{{ t.hasRd }}" hint-placeholder-val="{{ false }}">
+                    <div style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">
+                      <span style="font:600 11px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">From the reader’s pass over the corpus, not the model</span>
+                      <sc-for list="{{ t.rdLines }}" as="x" hint-placeholder-count="0"><button onClick="{{ x.onClick }}" style="all:unset;cursor:pointer;font:400 14px/1.45 'Hanken Grotesk';color:var(--ink2)" style-hover="color:var(--acc)">{{ x.t }}</button></sc-for>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ t.hasComp }}" hint-placeholder-val="{{ false }}">
+                    <div style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">
+                      <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><span style="font:600 11px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">Counted from Records, not by the model</span><button onClick="{{ t.onComp }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="text-decoration:underline">Open in Records →</button></div>
+                      <span style="font:600 14px 'Hanken Grotesk';color:var(--ink)">{{ t.compHead }}</span>
+                      <sc-for list="{{ t.compLines }}" as="x" hint-placeholder-count="0"><span style="font:400 13px 'JetBrains Mono';color:var(--ink2)">{{ x.l }}</span></sc-for>
+                      <span style="font:400 12px 'Hanken Grotesk';color:var(--dim)">{{ t.compSaid }}</span>
+                    </div>
+                  </sc-if>
+                  <p style="margin:0;font:400 17px/1.65 'Newsreader',serif;color:var(--ink);text-wrap:pretty"><sc-for list="{{ t.sents }}" as="x" hint-placeholder-count="3"><span style="text-decoration:{{ x.deco }};text-underline-offset:4px;text-decoration-thickness:1px">{{ x.t }}</span><sc-if value="{{ x.hasSrc }}" hint-placeholder-val="{{ false }}"><button onClick="{{ x.onSrc }}" title="Read the passage this sentence matches" style="all:unset;cursor:pointer;vertical-align:super;font:600 11px 'JetBrains Mono';color:var(--acc);margin:0 4px 0 -2px" style-hover="text-decoration:underline">{{ x.n }}</button></sc-if></sc-for></p>
+                  <sc-if value="{{ t.hasBad }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px 'Hanken Grotesk';color:var(--amber)">Not in the material: {{ t.bad }}</span></sc-if>
+                  <sc-if value="{{ t.noMaterial }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px 'Hanken Grotesk';color:var(--mut)">No passage shared a word with the question, so the model answered without material. Nothing here carries an address.</span></sc-if>
+                  <sc-if value="{{ t.hasSrcs }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column">
+                      <sc-for list="{{ t.srcs }}" as="x" hint-placeholder-count="2">
+                        <div style="display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px 10px;border-top:1px solid var(--line);padding:10px 0">
+                          <span style="font:600 12px 'JetBrains Mono';color:var(--acc)">{{ x.n }}</span>
+                          <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+                            <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline"><span style="font:600 14px/1.35 'Hanken Grotesk';color:var(--ink);min-width:0">{{ x.title }}</span><span style="font:500 12px 'JetBrains Mono';color:var(--mut);white-space:nowrap">{{ x.date }}</span></div>
+                            <span style="font:400 15px/1.5 'Newsreader',serif;color:var(--ink2);text-wrap:pretty">{{ x.text }}</span>
+                            <div style="display:flex;gap:14px"><sc-if value="{{ x.canPin }}" hint-placeholder-val="{{ false }}"><button onClick="{{ x.onPin }}" style="all:unset;cursor:pointer;font:600 13px 'Hanken Grotesk';color:{{ x.pinColor }}" style-hover="text-decoration:underline">{{ x.pinLabel }}</button></sc-if><button onClick="{{ x.onRead }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="text-decoration:underline">Read in context →</button></div>
+                          </div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                  <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px">
+                    <span style="font:500 12px 'JetBrains Mono';color:var(--ink2);flex:1;min-width:0">{{ t.rec }}</span>
+                    <sc-if value="{{ t.canGen }}" hint-placeholder-val="{{ false }}"><button onClick="{{ t.onGen }}" title="Turn this answer’s cited passages into a Draft document" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="border-color:var(--acc)">Generate a document →</button></sc-if>
+                  </div>
+                  <span style="font:400 12px 'JetBrains Mono';color:var(--dim)">Folded to: {{ t.fold }}</span>
+                  <span style="font:400 12px 'JetBrains Mono';color:var(--dim)">{{ t.meter }} · {{ t.meta }}</span>
+                </section>
+              </div>
+            </sc-for>
+            <sc-if value="{{ ak.hasPending }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column">
+                <div style="display:flex;gap:10px;align-items:baseline;background:var(--s2);border:1px solid #8b5cf6;border-bottom:0;border-radius:12px 12px 0 0;padding:9px 16px;flex-wrap:wrap">
+                  <span style="font:600 11px 'JetBrains Mono';color:var(--acc);white-space:nowrap">In [{{ ak.nextN }}]</span>
+                  <span style="font:500 18px/1.35 'Newsreader',serif;color:var(--ink);text-wrap:pretty;min-width:0;flex:1">{{ ak.pendingQ }}</span>
+                </div>
+                <section style="background:var(--s1);border:1px solid #8b5cf6;border-radius:0 0 14px 14px;padding:14px 18px 16px;display:flex;flex-direction:column;gap:10px">
+                  <sc-if value="{{ ak.hasPendComp }}" hint-placeholder-val="{{ false }}"><span style="font:500 13px 'JetBrains Mono';color:var(--acc)">Counted from Records · {{ ak.pendComp }}</span></sc-if>
+                  <sc-if value="{{ ak.hasStream }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font:400 17px/1.6 'Newsreader',serif;color:var(--ink2);white-space:pre-wrap;text-wrap:pretty">{{ ak.stream }}</p></sc-if>
+                  <span style="font:500 13px 'Hanken Grotesk';color:var(--mut)">{{ ak.stage }}</span>
+                </section>
+              </div>
+            </sc-if>
+            <sc-if value="{{ ak.hasErr }}" hint-placeholder-val="{{ false }}"><span style="font:400 14px 'Hanken Grotesk';color:var(--bad)">{{ ak.err }}</span></sc-if>
+            <div ref="{{ askRef }}" style="position:sticky;bottom:0;z-index:12;background:var(--hdr);backdrop-filter:blur(8px);padding:10px 0 2px;border-top:1px solid var(--line)">
+              <div style="display:flex;flex-direction:column;gap:8px;background:var(--s1);border:1px solid var(--line2);border-radius:12px;padding:10px 12px">
+                <textarea value="{{ ak.q }}" onChange="{{ ak.onQ }}" onKeyDown="{{ ak.onKey }}" rows="2" placeholder="Ask about the sources in this workspace — Enter to ask, Shift+Enter for a new line" style="background:transparent;border:0;outline:none;resize:vertical;color:var(--ink);font:400 16px/1.5 'Hanken Grotesk';min-height:48px"></textarea>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                  <sc-if value="{{ ak.noTurns }}" hint-placeholder-val="{{ true }}"><sc-for list="{{ ak.examples }}" as="x" hint-placeholder-count="3"><button onClick="{{ x.onClick }}" style="background:var(--s2);border:1px solid var(--line2);border-radius:999px;padding:3px 10px;cursor:pointer;font:400 13px 'Hanken Grotesk';color:var(--ink2);white-space:normal;text-align:left" style-hover="border-color:var(--acc)">{{ x.t }}</button></sc-for></sc-if>
+                  <div style="margin-left:auto;display:flex;gap:8px">
+                    <sc-if value="{{ ak.busy }}" hint-placeholder-val="{{ false }}"><button onClick="{{ ak.stop }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)">Stop</button></sc-if>
+                    <button onClick="{{ ak.send }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 16px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Ask ↵</button>
+                  </div>
                 </div>
               </div>
             </div>
-            <sc-if value="{{ ak.hasErr }}" hint-placeholder-val="{{ false }}"><span style="font:400 14px 'Hanken Grotesk';color:var(--bad)">{{ ak.err }}</span></sc-if>
-            <sc-if value="{{ ak.hasPending }}" hint-placeholder-val="{{ false }}">
-              <section style="background:var(--s1);border:1px solid #8b5cf6;border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
-                <span style="font:500 20px/1.3 'Newsreader',serif;color:var(--ink)">{{ ak.pendingQ }}</span>
-                <sc-if value="{{ ak.hasPendComp }}" hint-placeholder-val="{{ false }}"><span style="font:500 13px 'JetBrains Mono';color:var(--acc)">Counted from Records · {{ ak.pendComp }}</span></sc-if>
-                <sc-if value="{{ ak.hasStream }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font:400 17px/1.6 'Newsreader',serif;color:var(--ink2);white-space:pre-wrap;text-wrap:pretty">{{ ak.stream }}</p></sc-if>
-                <span style="font:500 13px 'Hanken Grotesk';color:var(--mut)">{{ ak.stage }}</span>
-              </section>
-            </sc-if>
-            <sc-for list="{{ ak.turns }}" as="t" hint-placeholder-count="0">
-              <section style="background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:12px">
-                <div style="display:flex;gap:10px;align-items:baseline"><span style="font:600 12px 'JetBrains Mono';color:var(--dim)">{{ t.n }}</span><span style="font:500 20px/1.3 'Newsreader',serif;color:var(--ink);text-wrap:pretty">{{ t.q }}</span></div>
-                <sc-if value="{{ t.hasRes }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ t.resLines }}" as="x" hint-placeholder-count="0"><span style="font:500 12px 'JetBrains Mono';color:{{ x.col }}">{{ x.t }}</span></sc-for></sc-if>
-                <sc-if value="{{ t.hasNotesLine }}" hint-placeholder-val="{{ false }}">
-                  <details style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:8px 12px">
-                    <summary style="cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2)"><span style="font:600 11px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc);margin-right:8px">What the model was given</span>{{ t.notesLine }}</summary>
-                    <sc-if value="{{ t.hasNotes }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:2px;padding-top:8px"><sc-for list="{{ t.notesLines }}" as="x" hint-placeholder-count="0"><span style="font:400 13px/1.5 'JetBrains Mono';color:var(--ink2)">{{ x.l }}</span></sc-for></div></sc-if>
-                  </details>
-                </sc-if>
-                <sc-if value="{{ t.hasRd }}" hint-placeholder-val="{{ false }}">
-                  <div style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">
-                    <span style="font:600 11px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">From the reader’s pass over the corpus, not the model</span>
-                    <sc-for list="{{ t.rdLines }}" as="x" hint-placeholder-count="0"><button onClick="{{ x.onClick }}" style="all:unset;cursor:pointer;font:400 14px/1.45 'Hanken Grotesk';color:var(--ink2)" style-hover="color:var(--acc)">{{ x.t }}</button></sc-for>
-                  </div>
-                </sc-if>
-                <sc-if value="{{ t.hasComp }}" hint-placeholder-val="{{ false }}">
-                  <div style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">
-                    <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><span style="font:600 11px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">Counted from Records, not by the model</span><button onClick="{{ t.onComp }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="text-decoration:underline">Open in Records →</button></div>
-                    <span style="font:600 14px 'Hanken Grotesk';color:var(--ink)">{{ t.compHead }}</span>
-                    <sc-for list="{{ t.compLines }}" as="x" hint-placeholder-count="0"><span style="font:400 13px 'JetBrains Mono';color:var(--ink2)">{{ x.l }}</span></sc-for>
-                    <span style="font:400 12px 'Hanken Grotesk';color:var(--dim)">{{ t.compSaid }}</span>
-                  </div>
-                </sc-if>
-                <p style="margin:0;font:400 17px/1.65 'Newsreader',serif;color:var(--ink);text-wrap:pretty"><sc-for list="{{ t.sents }}" as="x" hint-placeholder-count="3"><span style="text-decoration:{{ x.deco }};text-underline-offset:4px;text-decoration-thickness:1px">{{ x.t }}</span><sc-if value="{{ x.hasSrc }}" hint-placeholder-val="{{ false }}"><button onClick="{{ x.onSrc }}" title="Read the passage this sentence matches" style="all:unset;cursor:pointer;vertical-align:super;font:600 11px 'JetBrains Mono';color:var(--acc);margin:0 4px 0 -2px" style-hover="text-decoration:underline">{{ x.n }}</button></sc-if></sc-for></p>
-                <sc-if value="{{ t.hasBad }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px 'Hanken Grotesk';color:var(--amber)">Not in the material: {{ t.bad }}</span></sc-if>
-                <sc-if value="{{ t.noMaterial }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px 'Hanken Grotesk';color:var(--mut)">No passage shared a word with the question, so the model answered without material. Nothing here carries an address.</span></sc-if>
-                <sc-if value="{{ t.hasSrcs }}" hint-placeholder-val="{{ false }}">
-                  <div style="display:flex;flex-direction:column">
-                    <sc-for list="{{ t.srcs }}" as="x" hint-placeholder-count="2">
-                      <div style="display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px 10px;border-top:1px solid var(--line);padding:10px 0">
-                        <span style="font:600 12px 'JetBrains Mono';color:var(--acc)">{{ x.n }}</span>
-                        <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
-                          <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline"><span style="font:600 14px/1.35 'Hanken Grotesk';color:var(--ink);min-width:0">{{ x.title }}</span><span style="font:500 12px 'JetBrains Mono';color:var(--mut);white-space:nowrap">{{ x.date }}</span></div>
-                          <span style="font:400 15px/1.5 'Newsreader',serif;color:var(--ink2);text-wrap:pretty">{{ x.text }}</span>
-                          <div style="display:flex;gap:14px"><sc-if value="{{ x.canPin }}" hint-placeholder-val="{{ false }}"><button onClick="{{ x.onPin }}" style="all:unset;cursor:pointer;font:600 13px 'Hanken Grotesk';color:{{ x.pinColor }}" style-hover="text-decoration:underline">{{ x.pinLabel }}</button></sc-if><button onClick="{{ x.onRead }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="text-decoration:underline">Read in context →</button></div>
-                        </div>
-                      </div>
-                    </sc-for>
-                  </div>
-                </sc-if>
-                <div style="display:flex;flex-direction:column;gap:3px;border-top:1px solid var(--line);padding-top:10px">
-                  <span style="font:500 12px 'JetBrains Mono';color:var(--ink2)">{{ t.rec }}</span>
-                  <span style="font:400 12px 'JetBrains Mono';color:var(--dim)">Folded to: {{ t.fold }}</span>
-                  <span style="font:400 12px 'JetBrains Mono';color:var(--dim)">{{ t.meter }} · {{ t.meta }}</span>
-                </div>
-              </section>
-            </sc-for>
           </div>
           <aside style="flex:0 1 290px;min-width:250px;position:sticky;top:calc(var(--hdr-h, 84px) + 12px);display:flex;flex-direction:column;gap:12px">
             <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
@@ -2643,7 +2656,12 @@ class Component extends DCLogic {
     window.addEventListener('dragenter', this._h.enter); window.addEventListener('dragleave', this._h.leave); window.addEventListener('dragover', this._h.over); window.addEventListener('drop', this._h.drop); window.addEventListener('paste', this._h.paste);
   }
   componentWillUnmount() { window.removeEventListener('resize', this._onRz); if (this._pdfRo) { try { this._pdfRo.disconnect(); } catch (e) {} } window.removeEventListener('message', this._onYt); document.removeEventListener('selectionchange', this._onSelCh); window.removeEventListener('scroll', this._onSelCh, true); window.removeEventListener('message', this._onMsg); const h = this._h; window.removeEventListener('dragenter', h.enter); window.removeEventListener('dragleave', h.leave); window.removeEventListener('dragover', h.over); window.removeEventListener('drop', h.drop); window.removeEventListener('paste', h.paste); }
-  componentDidUpdate() { this.applyTheme(); this.measureHdr(); if (this._prevCorpus !== this.state.corpus || this._prevAdded !== this.state.added) { this._prevCorpus = this.state.corpus; this._prevAdded = this.state.added; this.loadHtml(); } this.syncReader(); this.ytHook(); this.syncOmni(); }
+  componentDidUpdate() { this.applyTheme(); this.measureHdr(); if (this._prevCorpus !== this.state.corpus || this._prevAdded !== this.state.added) { this._prevCorpus = this.state.corpus; this._prevAdded = this.state.added; this.loadHtml(); } this.syncReader(); this.ytHook(); this.syncOmni();
+    const S = this.state;
+    if (S.view === 'ask' && this._askEl) {
+      const n = (S.akPending ? 1 : 0) + (this._conv ? this._conv.turns.length : 0);
+      if (n !== this._akN && n > 0) { this._akN = n; try { this._askEl.scrollIntoView({ block: 'end', behavior: 'smooth' }); } catch (e) {} }
+    } else if (S.view !== 'ask') this._akN = undefined; }
   applyTheme() { document.documentElement.dataset.theme = this.state.theme; }
   async ingest(dt) {
     if (!dt) return;
@@ -2729,6 +2747,7 @@ class Component extends DCLogic {
   plainRef = el => { this._plainEl = el; };
   omniRef = el => { this._omniEl = el; };
   hdrRef = el => { this._hdrEl = el; this.measureHdr(); };
+  askRef = el => { this._askEl = el; };
   measureHdr() {
     const el = this._hdrEl; if (!el) return;
     const h = Math.round(el.getBoundingClientRect().height);
@@ -3173,6 +3192,31 @@ class Component extends DCLogic {
       this._conv = r.conv; this._lastMsgs = r.turn.messages; this.saveConv(); this.setState({ akBusy: '', akStream: '', akPending: '', akComputed: null });
     } catch (e) { this.setState({ akBusy: '', akStream: '', akPending: '', akComputed: null, akErr: ac.signal.aborted ? 'Stopped before the answer finished.' : String(e && e.message || e), akQ: q }); }
   }
+  askToDraft(t) {
+    const A = this.analysis();
+    const docOfName = n => this._ix && this._ix.docOf[n];
+    const claims = []; const seen = new Set();
+    (t.attr || []).forEach(x => {
+      if (!x.ref || seen.has(x.ref)) return; seen.add(x.ref);
+      const m = String(x.ref).match(/^(.*)#(\d+)-(\d+)$/); if (!m) return;
+      const id = docOfName(m[1]); const d = id && A.docById[id]; if (!d) return;
+      const st = (A.stsByDoc[id] || []).find(y => y.e > +m[2] && y.s < +m[3]) || null; if (!st) return;
+      const u = (t.used || []).find(z => z.ref === x.ref);
+      claims.push({ text: short(clean(x.text), 300), st, src: (u && u.text) || clean(st.text), date: this.dateOf(A, st).iso });
+    });
+    if (!claims.length) { this.toast('That answer has no cited passages to generate from.'); return; }
+    this.setPinData(D => {
+      claims.forEach(c => {
+        const pin = this.ensurePin(D, A, c.st);
+        const cl = { id: 'claim-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text: c.text, pins: [pin], fixed: [pin], q: c.src, by: 'ask', g: { verdict: 'source', why: 'From the Ask the Fold answer, quoted from its own passage.', at: Date.now() } };
+        if (c.date) cl.date = c.date;
+        D.claims.push(cl);
+      });
+      return D;
+    });
+    this.setState({ view: 'draft', readDoc: null, sel: null, f: {} });
+    this.toast('Generated ' + plural(claims.length, 'claim') + ' into the Draft from that answer.');
+  }
   askVals(A, view) {
     if (view !== 'ask') return { ak: { on: false } };
     const S = this.state; const cid = this.corpusId();
@@ -3193,9 +3237,11 @@ class Component extends DCLogic {
         return { n: String(n), title: info.d.title, date: info.d.pubLabel || (info.d.year ? String(info.d.year) : ''), text: short(clean(u ? u.text : ''), 320), onRead: () => this.read(info.id, info.st && info.st.id), ...(info.st ? this.pinF(info.st) : { onPin: null, pinLabel: '', pinColor: 'var(--dim)' }), canPin: !!info.st }; }).filter(Boolean);
       const r = t.record || {}; const recBits = [plural((r.refs || []).length, 'address', 'addresses') + ' checked', (r.unsupported || []).length ? (r.unsupported || []).length + ' not in the material' : 'nothing unsupported', ...(r.open || [])];
       const C = t.computed;
+      const gen = t.attr && t.attr.some(x => x.ref && this._ix && this._ix.docOf[(String(x.ref).match(/^(.*)#/) || [])[1]]);
       return { n: String(t.n), q: t.question, sents, srcs, hasSrcs: srcs.length > 0, bad: bad.map(f => f.text).join(' · '), hasBad: bad.length > 0, noMaterial: !(t.offered || []).length,
         hasRes: !!(t.resolved && t.resolved.length), resLines: (t.resolved || []).map(r => ({ t: r.mode === 'nearmiss' ? 'Read “' + r.from + '” as ' + r.to + ': one letter off it, and off no other name.' : 'Did not guess who “' + r.from + '” is: ' + r.why + '.', col: r.mode === 'nearmiss' ? 'var(--acc)' : 'var(--amber)' })), hasNotes: !!(t.notes && t.notes.lines && t.notes.lines.length), notesLines: ((t.notes && t.notes.lines) || []).map(l => ({ l })), notesLine: t.notes ? (t.notes.empty ? 'The reader made no notes on these passages, and the model was told so.' : plural(t.notes.lines.length, 'note') + ' from ' + t.notes.coverage + '% of the sentences read · ' + plural(t.notes.spans, 'span') + ' of source text sent with them' + (t.notes.omitted ? ' · ' + t.notes.omitted + ' lower-ranked notes held back' : '')) : '', hasNotesLine: !!t.notes, hasRd: !!(t.reading && t.reading.lines && t.reading.lines.length), rdLines: ((t.reading && t.reading.lines) || []).map(l => ({ t: l.text, onClick: () => A.names[l.name] ? this.openProfile(l.name) : null })), hasComp: !!C, compHead: C ? C.head : '', compLines: C ? C.lines.map(l => ({ l })) : [], compSaid: C ? C.said : '', onComp: () => this.setState({ view: 'records', readDoc: null, dbT: C && C.type, dbAskDraft: C && C.q, dbRes: null }, () => C && this.dbRun(C.q)),
-        rec: 'On record · turn ' + t.n + ' · ' + recBits.join(' · '), fold: t.foldLine, meter: 'Sent ' + t.sentChars.toLocaleString() + ' characters in place of a ' + t.transcriptChars.toLocaleString() + '-character transcript', meta: t.model + (t.tokens && t.tokens.secs ? ' · ' + t.tokens.secs.toFixed(1) + ' s' : '') + (t.refresh && !t.refresh.ok && t.refresh.why ? ' · summary kept: ' + short(t.refresh.why, 120) : '') }; }).reverse();
+        rec: 'On record · turn ' + t.n + ' · ' + recBits.join(' · '), fold: t.foldLine, meter: 'Sent ' + t.sentChars.toLocaleString() + ' characters in place of a ' + t.transcriptChars.toLocaleString() + '-character transcript', meta: t.model + (t.tokens && t.tokens.secs ? ' · ' + t.tokens.secs.toFixed(1) + ' s' : '') + (t.refresh && !t.refresh.ok && t.refresh.why ? ' · summary kept: ' + short(t.refresh.why, 120) : ''),
+        canGen: gen, onGen: () => this.askToDraft(t) }; }).reverse();
     const sm = conv.summary || {};
     const M = this._askM; let nextChars = 0; try { if (M) nextChars = M.FOLD.charCount(M.FOLD.buildTurnMessages({ basePrompt: 'x'.repeat(290), summary: sm, history: conv.history, question: '' })); } catch (e) {}
     const trChars = conv.history.reduce((n, m) => n + (m.content || '').length, 0);
@@ -3207,6 +3253,7 @@ class Component extends DCLogic {
       models: ms.map(m => ({ v: m.v, label: m.label })), hasModels: ms.length > 1, model, onModel: e => this.setState({ akModel: e.target.value }), retry: () => this.akProbe(),
       ixLine: this._ix ? plural(this._ix.chunks.length, 'passage') + ' from ' + plural(Object.keys(this._ix.texts).length, 'source') : 'Indexing passages…',
       turns, hasTurns: turns.length > 0, noTurns: turns.length === 0 && !S.akPending,
+      nextN: String(conv.turns.length ? parseInt(conv.turns[conv.turns.length - 1].n) + 1 : 1),
       busy: !!S.akBusy, stage: stageL[S.akBusy] || '', pendingQ: S.akPending || '', hasPending: !!S.akPending, stream: S.akStream || '', hasStream: !!S.akStream,
       pendComp: S.akComputed ? S.akComputed.head : '', hasPendComp: !!S.akComputed,
       err: S.akErr || '', hasErr: !!S.akErr, q: S.akQ || '', onQ: e => this.setState({ akQ: e.target.value }), onKey: e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.askSend(); } }, send: () => this.askSend(), canSend: this.llmOk() && !S.akBusy, stop: () => { if (this._akAbort) this._akAbort.abort(); },
