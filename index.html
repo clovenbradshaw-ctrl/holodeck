@@ -1739,7 +1739,7 @@ select option{background:var(--s1);color:var(--ink)}
                   <sc-if value="{{ rdMedia.ask }}" hint-placeholder-val="{{ false }}">
                     <div style="display:flex;flex-direction:column;gap:10px;border:1px solid #8b5cf6;background:var(--sel);border-radius:12px;padding:12px 14px">
                       <span style="font:600 13px 'Hanken Grotesk';color:var(--ink)">Which priors should the transcriber listen with?</span>
-                      <span style="font:400 12.5px/1.45 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">Whisper runs locally here; the recording never leaves this machine. A transcript is a machine interpretation — the prior changes what it hears, and the choice stays on the record.</span>
+                      <span style="font:400 12.5px/1.45 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">{{ rdMedia.priorNote }}</span>
                       <div style="display:flex;flex-direction:column;gap:6px">
                         <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)"><input type="radio" name="fx-prior" checked="{{ rdMedia.pw }}" onChange="{{ rdMedia.onPriorW }}">The names this workspace already knows</label>
                         <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)"><input type="radio" name="fx-prior" checked="{{ rdMedia.pn }}" onChange="{{ rdMedia.onPriorN }}">Plain English — no vocabulary prior</label>
@@ -2044,11 +2044,11 @@ const loadMeta = () => { try { return JSON.parse(localStorage.getItem('fold-expl
 // The side panel is fixed full-height at the right edge; it's used whenever the reader column keeps at least the panel's own width (250 nav + 40 padding + panel + reader >= panel), else a bottom sheet.
 const SIDE_PANEL_W = 360;
 const SIDE_PANEL_MIN_VW = 250 + 40 + SIDE_PANEL_W + SIDE_PANEL_W;
-const KIND_ORDER = ['Audit or report', 'Contract', 'Legislation', 'Meeting record', 'Meeting recording', 'Letter', 'Government page', 'News', 'Podcast', 'Blog', 'Own article', 'Organisation page', 'Not yet located', 'Source'];
+const KIND_ORDER = ['Audit or report', 'Contract', 'Legislation', 'Meeting record', 'Meeting recording', 'Recording', 'Letter', 'Government page', 'News', 'Podcast', 'Blog', 'Own article', 'Organisation page', 'Not yet located', 'Source'];
 const KIND_DESC = {
   'Audit or report': 'Formal findings, with their own figures and risk ratings.', 'Legislation': 'Bills, amendments and code as filed, with their action history.',
   'Meeting record': 'Agendas, minutes and bylaws: what a body said it would do and what it recorded doing.', 'Meeting recording': 'What was said aloud, read from a machine transcript and linked to the moment in the recording.',
-  'Letter': 'Correspondence in the sender’s own words.', 'Government page': 'Official web pages as captured, which can change without notice.',
+  'Recording': 'Audio or video kept in this browser, playable here; read only when transcribed.', 'Letter': 'Correspondence in the sender’s own words.', 'Government page': 'Official web pages as captured, which can change without notice.',
   'News': 'Reporting; check whether it quotes the record or only characterises it.', 'Podcast': 'Audio; page text only unless transcribed.', 'Blog': 'Independent writing and commentary.',
   'Own article': 'Pieces by the author of this project.', 'Organisation page': 'What an organisation says about itself.', 'Not yet located': 'Cited, but no copy has been found yet.'
 };
@@ -2673,7 +2673,7 @@ const whenOf = (st, d) => d.pubLabel || (d.year ? String(d.year) : 'Undated');
 const assertLine = (st, A) => { const d = A.docById[st.doc]; const w = whoSays(st, A); return (w ? w.who + (w.how === 'quoted' ? ' (quoted)' : w.how === 'publisher' ? '' : ' (' + w.how + ')') + ' · ' : '') + d.title + ' · ' + whenOf(st, d); };
 
 class Component extends DCLogic {
-  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, draftTitle: '', draftYear: '', draftText: '', repoVal: '', note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, ground: { on: true, names: true, figures: true, dates: true, sentences: true } };
+  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, draftTitle: '', draftYear: '', draftText: '', repoVal: '', note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true } };
   _html = {};
 
   componentDidMount() {
@@ -2697,12 +2697,14 @@ class Component extends DCLogic {
     window.addEventListener('dragenter', this._h.enter); window.addEventListener('dragleave', this._h.leave); window.addEventListener('dragover', this._h.over); window.addEventListener('drop', this._h.drop); window.addEventListener('paste', this._h.paste);
   }
   componentWillUnmount() { window.removeEventListener('resize', this._onRz); if (this._pdfRo) { try { this._pdfRo.disconnect(); } catch (e) {} } window.removeEventListener('message', this._onYt); document.removeEventListener('selectionchange', this._onSelCh); window.removeEventListener('scroll', this._onSelCh, true); window.removeEventListener('message', this._onMsg); const h = this._h; window.removeEventListener('dragenter', h.enter); window.removeEventListener('dragleave', h.leave); window.removeEventListener('dragover', h.over); window.removeEventListener('drop', h.drop); window.removeEventListener('paste', h.paste); }
-  componentDidUpdate() { this.applyTheme(); this.measureHdr(); if (this._prevCorpus !== this.state.corpus || this._prevAdded !== this.state.added) { this._prevCorpus = this.state.corpus; this._prevAdded = this.state.added; this.loadHtml(); } this.syncReader(); this.ytHook(); this.syncOmni();
+  componentDidUpdate() { this.applyTheme(); this.measureHdr(); if (this._prevCorpus !== this.state.corpus || this._prevAdded !== this.state.added) { this._prevCorpus = this.state.corpus; this._prevAdded = this.state.added; this.loadHtml(); } const rd0 = this.state.readDoc && this.analysis().docById[this.state.readDoc]; if (rd0 && rd0.media && rd0.media.kind === 'local') { this.ensureMediaUrl(rd0); } this.hookLocal(); this.syncReader(); this.ytHook(); this.syncOmni();
     const S = this.state;
     if (S.view === 'ask' && this._askEl) {
       const n = (S.akPending ? 1 : 0) + (this._conv ? this._conv.turns.length : 0);
-      if (n !== this._akN && n > 0) { this._akN = n; try { this._askEl.scrollIntoView({ block: 'end', behavior: 'smooth' }); } catch (e) {} }
-    } else if (S.view !== 'ask') this._akN = undefined; }
+      const settled = this._akWasPend && !S.akPending;
+      this._akWasPend = !!S.akPending;
+      if ((n !== this._akN || settled) && n > 0) { this._akN = n; try { this._askEl.scrollIntoView({ block: 'end' }); } catch (e) {} }
+    } else { this._akN = undefined; this._akWasPend = false; } }
   applyTheme() { document.documentElement.dataset.theme = this.state.theme; }
   async ingest(dt) {
     if (!dt) return;
@@ -2899,7 +2901,7 @@ class Component extends DCLogic {
       else { const v = +m[5].replace(/,/g, ''); if (v >= 1900 && v <= 2100 && !/,/.test(m[5])) continue; const n = m[6].toLowerCase().replace(/(ies)$/, 'y').replace(/s$/, ''); if (/^(of|and|or|to|in|on|at|the|for|by|per|a|an|am|pm|years?|months?|days?|weeks?|hours?|minutes?)$/.test(n)) continue; out.push({ u: 'n:' + n, v, raw: m[0].trim() }); } }
     return out; }
   ytPost(func, args) { const f = document.getElementById('fx-yt'); if (f && f.contentWindow) f.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args: args || [] }), '*'); }
-  ytSeek(t) { this._ytUser = 0; this.ytPost('seekTo', [t, true]); this.ytPost('playVideo'); this.ytMark(t, true); }
+  ytSeek(t) { this._ytUser = 0; const lp = document.getElementById('fx-local'); if (lp) { lp.currentTime = t; lp.play(); this.ytMark(t, true); return; } this.ytPost('seekTo', [t, true]); this.ytPost('playVideo'); this.ytMark(t, true); }
   ytMark(t, force) { const root = this._rRoot; if (!root) return; const ps = [...root.querySelectorAll('[data-t]')]; if (!ps.length) return; let cur = null; for (const p of ps) { if (+p.getAttribute('data-t') <= t + 0.3) cur = p; else break; }
     const now = document.getElementById('fx-yt-now'); if (now) now.textContent = fmtT(Math.floor(t));
     if (cur === this._ytCur && !force) return; if (this._ytCur) { this._ytCur.style.background = ''; this._ytCur.style.boxShadow = ''; } this._ytCur = cur; if (!cur) return;
@@ -3084,6 +3086,81 @@ class Component extends DCLogic {
     this.addDocs([{ title: title + (forDoc ? '' : ''), html, format: 'html', text: htmlToText(html), url: forDoc ? forDoc.url : null, extra }]); this.ilog('Transcribed ' + plural(r.segments.length, 'segment') + ' in this browser (' + r.model.split('/').pop() + ').');
     const bytes = JSON.stringify({ source: r.source, model: r.model, video_id: forDoc && forDoc.media ? forDoc.media.id : null, segments: r.segments });
     if (this._net.s && !this._net.s.guest && this.wsRooms().pub) await this.publish({ bytes, meta: { kind: 'transcript', title, url: forDoc ? forDoc.url : null, ytid: forDoc && forDoc.media ? forDoc.media.id : null, mime: 'application/json', filename: (title || 'transcript').replace(/[^\w-]+/g, '-').slice(0, 60) + '.segments.json' } }); }); }
+  async transcribeLocal(d0) {
+    const A = this.analysis(); const prior = this.state.txPrior || 'workspace';
+    const buf = await idbGet('media:' + d0.id).catch(() => null);
+    if (!buf) { this.setState({ txBusy: false, txAsk: null, txProg: '', note: 'The recording’s bytes aren’t stored in this browser.' }); return; }
+    let prompt = null, priorNote = 'no vocabulary prior';
+    if (prior !== 'none') {
+      const names = [...new Set(A.sts.flatMap(s => s.names).filter(n => { const r = A.names[n]; return r && (r.type === 'person' || r.type === 'organisation' || r.type === 'place') && n.length <= 40; }))]
+        .map(n => [n, A.names[n].sts.length]).sort((a, b) => b[1] - a[1]).slice(0, 80).map(x => x[0]);
+      if (names.length) { prompt = names.join(', '); priorNote = 'the ' + names.length + ' names this workspace already knows'; }
+    }
+    const terms = (this._txTerms || '').trim();
+    if (terms) { prompt = prompt ? prompt + ', ' + terms : terms; priorNote = priorNote === 'no vocabulary prior' ? 'the terms you typed' : priorNote + ' and the terms you typed'; }
+    const lang = this.state.txLang || 'en';
+    const model = this.state.txModel === 'small' ? 'onnx-community/whisper-small' : this.state.txModel === 'smallen' ? 'onnx-community/whisper-small.en' : 'onnx-community/whisper-base';
+    this.setState({ txBusy: true, txProg: 'loading the recognizer…', txAsk: null });
+    try {
+      const N = await this.net();
+      const r = await N.transcribe(buf, p => this.setState({ txProg: p.stage + (p.pct != null ? ' ' + p.pct + '%' : '') }), model, { prompt, language: lang });
+      const html = ohsSegmentsHtml(r.segments, d0.title);
+      const media = { ...d0.media, segN: r.segments.length, model: r.model, priors: r.priors || { prompt: prompt ? priorNote : 'none', language: lang } };
+      this._html[d0.id] = html; idbPut('html:' + d0.id, html).catch(() => {});
+      this.replaceAddedDoc(d0.id, { format: 'html', html, text: htmlToText(html), media, transcribed: true });
+      this.ilog('Transcribed ' + plural(r.segments.length, 'segment') + ' in this browser (' + r.model.split('/').pop() + '), listening with ' + priorNote + '.');
+      this.setState({ txBusy: false, txProg: '' });
+      const bytes = JSON.stringify({ source: r.source, model: r.model, segments: r.segments, priors: r.priors || { prompt: prompt ? priorNote : 'none', language: lang } });
+      if (this._net && this._net.s && !this._net.s.guest && this.wsRooms().pub) this.publish({ bytes, meta: { kind: 'transcript', title: d0.title, url: null, mime: 'application/json', filename: d0.title.replace(/[^\w-]+/g, '-').slice(0, 60) + '.segments.json' } }).catch(() => {});
+    } catch (e) { this.setState({ txBusy: false, txProg: '', note: 'Transcription failed: ' + (e && e.message || e) }); }
+  }
+  pickYtFile(d0) {
+    const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'audio/*,video/*';
+    inp.onchange = () => { const f = inp.files && inp.files[0]; if (f) this.transcribeYt(d0, f); };
+    inp.click();
+  }
+  async transcribeYt(d0, file) {
+    const A = this.analysis(); const prior = this.state.txPrior || 'workspace';
+    let prompt = null, priorNote = 'no vocabulary prior';
+    if (prior !== 'none') {
+      const names = [...new Set(A.sts.flatMap(s => s.names).filter(n => { const r = A.names[n]; return r && (r.type === 'person' || r.type === 'organisation' || r.type === 'place') && n.length <= 40; }))]
+        .map(n => [n, A.names[n].sts.length]).sort((a, b) => b[1] - a[1]).slice(0, 80).map(x => x[0]);
+      if (names.length) { prompt = names.join(', '); priorNote = 'the ' + names.length + ' names this workspace already knows'; }
+    }
+    const terms = (this._txTerms || '').trim();
+    if (terms) { prompt = prompt ? prompt + ', ' + terms : terms; priorNote = priorNote === 'no vocabulary prior' ? 'the terms you typed' : priorNote + ' and the terms you typed'; }
+    const lang = this.state.txLang || 'en';
+    const model = this.state.txModel === 'small' ? 'onnx-community/whisper-small' : this.state.txModel === 'smallen' ? 'onnx-community/whisper-small.en' : 'onnx-community/whisper-base';
+    this.setState({ txBusy: true, txProg: 'loading the recognizer…', txAsk: null });
+    try {
+      const N = await this.net();
+      const r = await N.transcribe(file, p => this.setState({ txProg: p.stage + (p.pct != null ? ' ' + p.pct + '%' : '') }), model, { prompt, language: lang });
+      const title = d0.title; const html = ohsSegmentsHtml(r.segments, title);
+      const extra = { format: 'html', media: { ...d0.media, segN: r.segments.length, model: r.model, priors: r.priors || { prompt: prompt ? priorNote : 'none', language: lang } }, kind: 'Meeting recording', medium: 'Video', transcribed: true };
+      this.addDocs([{ title, html, format: 'html', text: htmlToText(html), url: d0.url, extra }], { open: true });
+      this.ilog('Transcribed ' + plural(r.segments.length, 'segment') + ' in this browser (' + r.model.split('/').pop() + '), listening with ' + priorNote + '.');
+      this.setState({ txBusy: false, txProg: '' });
+      const bytes = JSON.stringify({ source: r.source, model: r.model, video_id: d0.media.id, segments: r.segments, priors: r.priors || { prompt: prompt ? priorNote : 'none', language: lang } });
+      if (this._net && this._net.s && !this._net.s.guest && this.wsRooms().pub) this.publish({ bytes, meta: { kind: 'transcript', title, url: d0.url, ytid: d0.media.id, mime: 'application/json', filename: title.replace(/[^\w-]+/g, '-').slice(0, 60) + '.segments.json' } }).catch(() => {});
+    } catch (e) { this.setState({ txBusy: false, txProg: '', note: 'Transcription failed: ' + (e && e.message || e) }); }
+  }
+  replaceAddedDoc(id, patch) {
+    const cid = this.corpusId();
+    const added = { ...this.state.added, [cid]: (this.state.added[cid] || []).map(d => d.id === id ? { ...d, ...patch } : d) };
+    this.saveAdded(added);
+    this.setState({ added, htmlVer: this.state.htmlVer + 1 });
+  }
+  async ensureMediaUrl(d) {
+    if (!d || !d.media || d.media.kind !== 'local' || (this._mediaUrl || {})[d.id] !== undefined) return;
+    this._mediaUrl = this._mediaUrl || {};
+    const buf = await idbGet('media:' + d.id).catch(() => null);
+    this._mediaUrl[d.id] = buf ? URL.createObjectURL(new Blob([buf], { type: d.media.mime || 'application/octet-stream' })) : null;
+    this.setState({});
+  }
+  hookLocal() {
+    const el = document.getElementById('fx-local'); if (!el || el === this._fxLocal) return; this._fxLocal = el;
+    el.addEventListener('timeupdate', () => { if (this.state.ytFollow !== false) this.ytMark(el.currentTime); });
+  }
   async loadFromRoom() { return this.netDo('Load from room', async N => { await this.refreshRoom(); const s = this._net.s; const A = this.analysis(); const known = this.knownIds(A); const list = [];
     for (const b of this._net.chain || []) { const m = b.meta || {}; const k = m.ytid || (m.url || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''); if (k && known.has(k) && m.kind !== 'transcript') continue;
       if (m.kind === 'transcript') { const buf = await N.download(s, b.mxc); const h = await N.sha256(buf); if (h !== b.sha256) { this.ilog('Block ' + b.block.slice(0, 12) + ': bytes don\u2019t match their sha256, skipped', 'bad'); continue; } const j = JSON.parse(new TextDecoder().decode(buf)); const html = ohsSegmentsHtml(j.segments || [], m.title); list.push({ title: m.title, html, format: 'html', text: htmlToText(html), url: m.url, extra: { media: m.ytid ? { kind: 'youtube', id: m.ytid, url: m.url, segN: (j.segments || []).length, model: j.model } : null, kind: 'Meeting recording', medium: m.ytid ? 'Video' : 'Audio', transcribed: true, chain: b.block } }); }
@@ -3282,7 +3359,7 @@ class Component extends DCLogic {
       return { n: String(t.n), q: t.question, sents, srcs, hasSrcs: srcs.length > 0, bad: bad.map(f => f.text).join(' · '), hasBad: bad.length > 0, noMaterial: !(t.offered || []).length,
         hasRes: !!(t.resolved && t.resolved.length), resLines: (t.resolved || []).map(r => ({ t: r.mode === 'nearmiss' ? 'Read “' + r.from + '” as ' + r.to + ': one letter off it, and off no other name.' : 'Did not guess who “' + r.from + '” is: ' + r.why + '.', col: r.mode === 'nearmiss' ? 'var(--acc)' : 'var(--amber)' })), hasNotes: !!(t.notes && t.notes.lines && t.notes.lines.length), notesLines: ((t.notes && t.notes.lines) || []).map(l => ({ l })), notesLine: t.notes ? (t.notes.empty ? 'The reader made no notes on these passages, and the model was told so.' : plural(t.notes.lines.length, 'note') + ' from ' + t.notes.coverage + '% of the sentences read · ' + plural(t.notes.spans, 'span') + ' of source text sent with them' + (t.notes.omitted ? ' · ' + t.notes.omitted + ' lower-ranked notes held back' : '')) : '', hasNotesLine: !!t.notes, hasRd: !!(t.reading && t.reading.lines && t.reading.lines.length), rdLines: ((t.reading && t.reading.lines) || []).map(l => ({ t: l.text, onClick: () => A.names[l.name] ? this.openProfile(l.name) : null })), hasComp: !!C, compHead: C ? C.head : '', compLines: C ? C.lines.map(l => ({ l })) : [], compSaid: C ? C.said : '', onComp: () => this.setState({ view: 'records', readDoc: null, dbT: C && C.type, dbAskDraft: C && C.q, dbRes: null }, () => C && this.dbRun(C.q)),
         rec: 'On record · turn ' + t.n + ' · ' + recBits.join(' · '), fold: t.foldLine, meter: 'Sent ' + t.sentChars.toLocaleString() + ' characters in place of a ' + t.transcriptChars.toLocaleString() + '-character transcript', meta: t.model + (t.tokens && t.tokens.secs ? ' · ' + t.tokens.secs.toFixed(1) + ' s' : '') + (t.refresh && !t.refresh.ok && t.refresh.why ? ' · summary kept: ' + short(t.refresh.why, 120) : ''),
-        canGen: gen, onGen: () => this.askToDraft(t) }; }).reverse();
+        canGen: gen, onGen: () => this.askToDraft(t) }; });
     const sm = conv.summary || {};
     const M = this._askM; let nextChars = 0; try { if (M) nextChars = M.FOLD.charCount(M.FOLD.buildTurnMessages({ basePrompt: 'x'.repeat(290), summary: sm, history: conv.history, question: '' })); } catch (e) {}
     const trChars = conv.history.reduce((n, m) => n + (m.content || '').length, 0);
@@ -4129,7 +4206,7 @@ class Component extends DCLogic {
     const svMode = S.svMode || 'cards', svGroup = 'tabs'; const allSrcItems = srcGroups.flatMap(g => g.items.map(it => ({ it, g: g.label })));
     const docOfCard = it => A.docs.find(d => d.title === it.title) || null;
     const isVid = it => { const d = docByTitle.get(it.title); return !!(d && (d.medium === 'Video' || d.medium === 'Audio' || d.media)); }; const vidItems = allSrcItems.filter(x => isVid(x.it));
-    const FAM = k => /^(Audit or report|Legislation|Letter|Meeting record|Contract)$/.test(k) ? 'Documents' : /^(Meeting recording|Video|Podcast)$/.test(k) ? 'Video & audio' : /^(Government page|Organisation page)$/.test(k) ? 'Official pages' : /^(News|Blog|Own article)$/.test(k) ? 'Press and commentary' : 'Other';
+    const FAM = k => /^(Audit or report|Legislation|Letter|Meeting record|Contract)$/.test(k) ? 'Documents' : /^(Meeting recording|Video|Podcast|Recording)$/.test(k) ? 'Video & audio' : /^(Government page|Organisation page)$/.test(k) ? 'Official pages' : /^(News|Blog|Own article)$/.test(k) ? 'Press and commentary' : 'Other';
     const FAMS = ['Documents', 'Video & audio', 'Official pages', 'Press and commentary', 'Other'];
     const famN = {}; srcGroups.forEach(g => { const f = FAM(g.label); famN[f] = (famN[f] || 0) + g.items.length; });
     const tabs = [{ label: 'All', n: String(allSrcItems.length), id: '__all' }, ...FAMS.filter(f => famN[f]).map(f => ({ label: f, n: String(famN[f]), id: f }))];
@@ -4548,14 +4625,36 @@ class Component extends DCLogic {
       layers: [['names', 'Names', 'var(--acc)', 'People, organisations and places'], ['figures', 'Figures', 'var(--amber)', 'Numbers and amounts'], ['dates', 'Dates', 'var(--date)', 'Years, months and times'], ['sentences', 'Sentences', 'var(--sel2)', 'Make every sentence clickable']].map(([k, label, color, title]) => { const on = S.ground.on && S.ground[k]; return { label, title, color, op: S.ground.on ? (on ? 1 : 0.5) : 0.35, bd: on ? 'var(--line2)' : 'transparent', bg: on ? 'var(--s1)' : 'transparent', onClick: () => this.setState(s => ({ ground: { ...s.ground, on: true, [k]: s.ground.on ? !s.ground[k] : true } })) }; }),
       readerHint: S.ground.on ? 'Click a name or sentence to inspect · links open here · Shift-click a link to inspect it' : 'Grounding off — the page as published. Links still open here.',
       readerPad: S.readDoc && A.docById[S.readDoc] && (A.docById[S.readDoc].format === 'page' || ((A.docById[S.readDoc].faithful || A.docById[S.readDoc].binPath) && S.readMode === 'original')) ? '0' : A.docById[S.readDoc] && A.docById[S.readDoc].pdfSrc && S.readMode === 'original' ? '24px 16px' : '28px 34px', readerMax: S.readDoc && A.docById[S.readDoc] && (A.docById[S.readDoc].format === 'page' || ((A.docById[S.readDoc].faithful || A.docById[S.readDoc].binPath) && S.readMode === 'original')) ? 'none' : '900px',
-      rdMedia: (() => { const d0 = S.readDoc && A.docById[S.readDoc]; const m = d0 && d0.media; if (!m || m.kind !== 'youtube') return { has: false }; const LZ = d0.lazy ? (this._lazy || {})[d0.id] : null; const segN = LZ && !LZ.loading ? LZ.segN : m.segN; const timed = segN > 0 || segN === -1;
-        const org = typeof location !== 'undefined' ? encodeURIComponent(location.origin) : '';
-        return { has: true, isLocal: false, ytOnly: true, noAudio: true, hasUrl: true, title: d0.title, url: m.url || 'https://www.youtube.com/watch?v=' + m.id, timed, follow: S.ytFollow !== false, onFollow: e => this.setState({ ytFollow: e.target.checked }),
-          src: 'https://www.youtube.com/embed/' + m.id + '?rel=0&enablejsapi=1&playsinline=1' + (org ? '&origin=' + org : ''),
-          kindLine: d0.aboutOnly ? 'Linked video, not transcribed' : segN === -1 ? 'Loading transcript…' : timed ? plural(segN, 'timed segment') + (LZ && LZ.from ? ' · read from ' + (LZ.from === 'opfs' ? 'this browser’s file store' : LZ.from) : '') : 'Transcript without timings',
-          txTitle: d0.aboutOnly ? 'About this video' : timed ? 'Transcript · click a timecode to play from there' : 'Transcript',
-          note: d0.aboutOnly ? 'Only the link was captured. No transcript exists in the record yet.' : timed ? 'Machine transcript (' + ((LZ && LZ.model) || m.model || 'Whisper').split('/').pop() + '), not checked by a person. Use it to find moments; quote from the recording, not the transcript.' : 'Auto-caption or machine transcript with no timestamps, so the transcript can’t follow the video. Quote from the recording, not the transcript.' }; })(),
-      isOriginalFlat: S.readMode !== 'plain' && S.readMode !== 'restated' && !(S.readDoc && A.docById[S.readDoc] && A.docById[S.readDoc].media && A.docById[S.readDoc].media.kind === 'youtube'),
+      rdMedia: (() => { const d0 = S.readDoc && A.docById[S.readDoc]; const m = d0 && d0.media; if (!m) return { has: false };
+        if (m.kind === 'youtube') { const LZ = d0.lazy ? (this._lazy || {})[d0.id] : null; const segN = LZ && !LZ.loading ? LZ.segN : m.segN; const timed = segN > 0 || segN === -1;
+          const org = typeof location !== 'undefined' ? encodeURIComponent(location.origin) : '';
+          const prior = S.txPrior || 'workspace';
+          return { has: true, isLocal: false, ytOnly: true, noAudio: true, hasUrl: true, title: d0.title, url: m.url || 'https://www.youtube.com/watch?v=' + m.id, timed, follow: S.ytFollow !== false, onFollow: e => this.setState({ ytFollow: e.target.checked }),
+            src: 'https://www.youtube.com/embed/' + m.id + '?rel=0&enablejsapi=1&playsinline=1' + (org ? '&origin=' + org : ''),
+            kindLine: d0.aboutOnly ? 'Linked video, not transcribed' : segN === -1 ? 'Loading transcript…' : timed ? plural(segN, 'timed segment') + (LZ && LZ.from ? ' · read from ' + (LZ.from === 'opfs' ? 'this browser’s file store' : LZ.from) : '') : 'Transcript without timings',
+            txTitle: d0.aboutOnly ? 'About this video' : timed ? 'Transcript · click a timecode to play from there' : 'Transcript',
+            note: d0.aboutOnly ? 'Only the link was captured. No transcript exists in the record yet.' : timed ? 'Machine transcript (' + ((LZ && LZ.model) || m.model || 'Whisper').split('/').pop() + '), not checked by a person. Use it to find moments; quote from the recording, not the transcript.' : 'Auto-caption or machine transcript with no timestamps, so the transcript can’t follow the video. Quote from the recording, not the transcript.',
+            canAsk: !timed && !d0.aboutOnly, ask: S.txAsk === d0.id, noAsk: !timed && !d0.aboutOnly && S.txAsk !== d0.id,
+            onAsk: () => this.setState({ txAsk: d0.id }), onCancelAsk: () => this.setState({ txAsk: null }),
+            prior: prior, pw: prior === 'workspace', pn: prior === 'none', pm: prior === 'mine', onPriorW: () => this.setState({ txPrior: 'workspace' }), onPriorN: () => this.setState({ txPrior: 'none' }), onPriorM: () => this.setState({ txPrior: 'mine' }),
+            lang: S.txLang || 'en', onLang: e => this.setState({ txLang: e.target.value }), langs: [['en', 'English'], ['es', 'Spanish'], ['fr', 'French'], ['de', 'German'], ['pt', 'Portuguese'], ['it', 'Italian'], ['nl', 'Dutch'], ['pl', 'Polish'], ['ru', 'Russian'], ['uk', 'Ukrainian'], ['ar', 'Arabic'], ['hi', 'Hindi'], ['zh', 'Chinese'], ['ja', 'Japanese'], ['ko', 'Korean']].map(([v, l]) => ({ v, l })),
+            model: S.txModel || 'base', onModel: e => this.setState({ txModel: e.target.value }), models: [['base', 'whisper-base · fast, multilingual'], ['small', 'whisper-small · slower, more accurate, multilingual'], ['smallen', 'whisper-small.en · English only, most accurate for English']].map(([v, l]) => ({ v, l })),
+            onTerms: e => { this._txTerms = e.target.value; }, busy: !!S.txBusy, prog: S.txProg || '', onTx: () => this.pickYtFile(d0), priorNote: 'Choose the file you downloaded from YouTube — Whisper reads it locally here, so it never leaves this machine. A transcript is a machine interpretation; the prior changes what it hears, and the choice stays on the record.' }; }
+        const timed = m.segN > 0;
+        const prior = S.txPrior || 'workspace';
+        const PRIOR_LABEL = { workspace: 'the names this workspace already knows', none: 'no vocabulary prior', mine: 'the terms you typed' };
+        return { has: true, isLocal: true, ytOnly: false, hasUrl: false, title: d0.title, url: null, timed, follow: S.ytFollow !== false, onFollow: e => this.setState({ ytFollow: e.target.checked }),
+          isAudio: (m.mime || '').indexOf('audio') === 0, noAudio: (m.mime || '').indexOf('audio') !== 0, hasSrc: !!(this._mediaUrl && this._mediaUrl[d0.id]), noSrc: !(this._mediaUrl && this._mediaUrl[d0.id]), src: (this._mediaUrl || {})[d0.id] || '',
+          kindLine: timed ? plural(m.segN, 'timed segment') + ' · ' + (m.model || 'Whisper').split('/').pop() : (m.dur != null ? fmtT(m.dur) : '') + (m.mime ? ' · ' + m.mime.split('/')[0] + (m.size ? ' · ' + Math.max(1, Math.round(m.size / 1e6)) + ' MB' : '') : ''),
+          txTitle: timed ? 'Transcript · click a timecode to play from there' : 'Transcript',
+          note: timed ? 'Machine transcript (' + (m.model || 'Whisper').split('/').pop() + '), not checked by a person' + (m.priors ? ' · transcribed with the prior: ' + (PRIOR_LABEL[m.priors.prompt] || m.priors.prompt || 'none') + ', language ' + (m.priors.language || 'auto') : '') + '. Quote from the recording, not the transcript.' : 'The recording is kept in this browser; nothing in it has been read until it is transcribed. A transcript is a machine interpretation — the priors you choose (what it should listen for, and in which language) change what it hears, and they stay on the record.',
+          canAsk: !timed, ask: S.txAsk === d0.id, noAsk: !timed && S.txAsk !== d0.id,
+          onAsk: () => this.setState({ txAsk: d0.id }), onCancelAsk: () => this.setState({ txAsk: null }),
+          prior: prior, pw: prior === 'workspace', pn: prior === 'none', pm: prior === 'mine', onPriorW: () => this.setState({ txPrior: 'workspace' }), onPriorN: () => this.setState({ txPrior: 'none' }), onPriorM: () => this.setState({ txPrior: 'mine' }),
+          lang: S.txLang || 'en', onLang: e => this.setState({ txLang: e.target.value }), langs: [['en', 'English'], ['es', 'Spanish'], ['fr', 'French'], ['de', 'German'], ['pt', 'Portuguese'], ['it', 'Italian'], ['nl', 'Dutch'], ['pl', 'Polish'], ['ru', 'Russian'], ['uk', 'Ukrainian'], ['ar', 'Arabic'], ['hi', 'Hindi'], ['zh', 'Chinese'], ['ja', 'Japanese'], ['ko', 'Korean']].map(([v, l]) => ({ v, l })),
+          model: S.txModel || 'base', onModel: e => this.setState({ txModel: e.target.value }), models: [['base', 'whisper-base · fast, multilingual'], ['small', 'whisper-small · slower, more accurate, multilingual'], ['smallen', 'whisper-small.en · English only, most accurate for English']].map(([v, l]) => ({ v, l })),
+          onTerms: e => { this._txTerms = e.target.value; }, busy: !!S.txBusy, prog: S.txProg || '', onTx: () => this.transcribeLocal(d0), priorNote: 'Whisper runs locally here; the recording never leaves this machine. A transcript is a machine interpretation — the prior changes what it hears, and the choice stays on the record.' }; })(),
+      isOriginalFlat: S.readMode !== 'plain' && S.readMode !== 'restated' && !(S.readDoc && A.docById[S.readDoc] && A.docById[S.readDoc].media),
       isOriginal: S.readMode !== 'plain' && S.readMode !== 'restated', isRestated: S.readMode === 'restated', rs: S.readMode === 'restated' && S.readDoc && A.docById[S.readDoc] ? this.restatedVals(A.docById[S.readDoc], A) : { note: '', sections: [], hasCover: false, cover: { pairs: [] } }, isPlain: S.readMode === 'plain', readerRef: this.readerRef,
       ...(() => { const d0 = S.readDoc && A.docById[S.readDoc]; const hf = !!(d0 && (d0.faithful || d0.binPath || d0.pdfSrc)); const onO = S.readMode === 'original' || (!hf && S.readMode === 'reading'), onR = hf && S.readMode === 'reading'; const pill = on => ({ bg: on ? 'var(--sel)' : 'transparent', color: on ? 'var(--ink)' : 'var(--mut)' });
         return { hasFaithful: hf, modeR: pill(onR), modeReading: () => this.setState({ readMode: 'reading' }), faithOn: hf && S.readMode === 'original',
