@@ -40,7 +40,6 @@ select option{background:var(--s1);color:var(--ink)}
         </sc-for>
       </select>
       <button onClick="{{ openAdd }}" style="width:100%;box-sizing:border-box;background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:8px 10px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Add source</button>
-      <button onClick="{{ repo.open }}" title="{{ repo.title }}" style="width:100%;box-sizing:border-box;display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)"><span style="width:8px;height:8px;border-radius:50%;background:{{ repo.dot }}"></span>Data</button>
     </div>
     <nav style="display:flex;flex-direction:column;gap:2px">
       <div style="display:flex;flex-direction:column;gap:1px;padding:10px 0 12px;border-top:1px solid var(--line)">
@@ -1890,30 +1889,6 @@ select option{background:var(--s1);color:var(--ink)}
 
   </div>
 </div>
-  <sc-if value="{{ repo.show }}" hint-placeholder-val="{{ false }}">
-    <div onClick="{{ repo.closeBg }}" style="position:fixed;inset:0;z-index:50;background:rgba(6,5,12,.75);display:flex;align-items:center;justify-content:center;padding:20px">
-      <div style="width:100%;max-width:620px;background:var(--s1);border:1px solid var(--line2);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:14px">
-        <div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0;font:500 24px 'Newsreader',serif">Where this data comes from</h2><button onClick="{{ repo.close }}" style="background:none;border:0;color:var(--mut);cursor:pointer;font-size:16px">✕</button></div>
-        <div style="display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--line);padding-top:10px">
-          <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">holodeck/corpus.json</span>
-          <span style="font:400 14px/1.45 'Hanken Grotesk';color:var(--ink)">{{ repo.corpusLine }}</span>
-          <span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--mut)">If present, Holodeck loads the processed corpus from this file; otherwise it reads the captures directly.</span>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--line);padding-top:10px">
-          <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">holodeck/workspace.json</span>
-          <span style="font:400 14px/1.45 'Hanken Grotesk';color:var(--ink)">{{ repo.wsLine }}</span>
-          <span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--mut)">If present, read on open and merged under anything in this browser.</span>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px">
-          <span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--mut)">This view only reads the shared source store. Nothing here writes to it; those files are produced upstream. What you do here (added sources, decisions, reading order) stays in this browser.</span>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button onClick="{{ repo.rebuild }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:8px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Reload</button>
-          </div>
-          <sc-if value="{{ repo.hasMsg }}" hint-placeholder-val="{{ false }}"><span style="font:500 14px/1.45 'Hanken Grotesk';color:var(--ink)">{{ repo.msg }}</span></sc-if>
-        </div>
-      </div>
-    </div>
-  </sc-if>
   <sc-if value="{{ showAdd }}" hint-placeholder-val="{{ false }}">
     <div onClick="{{ closeAddBg }}" style="position:fixed;inset:0;z-index:50;background:rgba(6,5,12,.75);display:flex;align-items:center;justify-content:center;padding:20px">
       <div style="width:100%;max-width:620px;background:var(--s1);border:1px solid var(--line2);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:12px">
@@ -1928,6 +1903,10 @@ select option{background:var(--s1);color:var(--ink)}
         </div>
         <textarea value="{{ draftText }}" onChange="{{ onDraftText }}" placeholder="Paste text here…" rows="9" style="background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:10px 12px;outline:none;font:400 15px/1.5 'Newsreader',serif;resize:vertical"></textarea>
         <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--mut)">or upload text files <input type="file" multiple="{{ true }}" onChange="{{ onFiles }}" style="color:var(--mut)"></label>
+        <div style="display:flex;gap:10px;align-items:center;border-top:1px solid var(--line);padding-top:10px">
+          <input value="{{ repoVal }}" onChange="{{ onRepoVal }}" placeholder="…or a GitHub repo: owner/repo" style="flex:1 1 260px;min-width:0;background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:9px 12px;outline:none;font:400 13px 'JetBrains Mono'"></input>
+          <button onClick="{{ addRepo }}" style="flex:none;background:none;border:1px solid var(--line2);border-radius:8px;padding:9px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Pull from repo</button>
+        </div>
         <div style="display:flex;gap:10px;align-items:center">
           <button onClick="{{ addDraft }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:9px 18px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Add</button>
           <span style="flex:1;font-size:13px;color:var(--mut)">{{ customNote }}</span>
@@ -1949,24 +1928,10 @@ select option{background:var(--s1);color:var(--ink)}
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;defaultCorpus&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;ohs&quot;,&quot;keybridge&quot;,&quot;bridge&quot;,&quot;transit&quot;,&quot;kitchen&quot;,&quot;custom&quot;],&quot;default&quot;:&quot;ohs&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Content&quot;},&quot;showTerrainNames&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Display&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;showTerrainNames&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Display&quot;}}">
 function digammaH(x) { let r = 0; while (x < 6) { r -= 1 / x; x += 1; } const f = 1 / (x * x); return r + Math.log(x) - 0.5 / x - f * (1 / 12 - f * (1 / 120 - f * (1 / 252 - f * (1 / 240 - f / 132)))); }
 const klAdmitH = (bv, B) => Math.max(0, Math.log(B) - Math.log(bv) + digammaH(bv + 1) - digammaH(B + 1));
-const LP_RAW = 'https://raw.githubusercontent.com/clovenbradshaw-ctrl/live_priors/main/';
-const LP_SETS = {
-  gov: { label: 'Government & legal', desc: 'US Code and UK Acts from live_priors (06-government-legal)', paths: ['USC-T1-S1', 'USC-T12-S1', 'USC-T13-S3', 'USC-T15-S1', 'USC-T15-S3', 'USC-T18-S1', 'USC-T19-S1', 'USC-T19-S2', 'USC-T26-S1', 'USC-T26-S2', 'USC-T28-S1', 'USC-T29-S2', 'USC-T3-S1', 'USC-T30-S1', 'USC-T33-S1', 'USC-T35-S1', 'USC-T35-S2', 'USC-T4-S1', 'USC-T7-S1', 'USC-T7-S2'].map(x => '06-government-legal/world-legislation/us/' + x + '.md').concat(['ukpga-2015-1', 'ukpga-2017-1', 'asp-2017-1', 'asp-2020-1', 'asp-2021-1', 'nia-2016-1', 'asc-2020-1'].map(x => '06-government-legal/world-legislation/uk/' + x + '.md')) },
-  ency: { label: 'Encyclopedic', desc: 'Wikipedia articles from live_priors (02-encyclopedic)', paths: ['Aristotle', 'Byzantine_Empire', 'Chemistry', 'Christianity', 'Cold_War', 'Confucianism', 'DNA', 'Drama', 'Entropy', 'Evolution', 'Epistemology', 'Ethics', 'Friedrich_Nietzsche', 'General_relativity', 'Hinduism', 'Homer', 'Immanuel_Kant', 'Industrial_Revolution', 'Islam', 'Judaism', 'Leo_Tolstoy', 'Logic', 'Mathematics', 'Ming_dynasty', 'Mongol_Empire', 'Neuroscience', 'Novel', 'Plato', 'Poetry', 'Quantum_mechanics', 'Renaissance'].map(x => '02-encyclopedic/wikipedia/' + x + '.txt') },
-  lit: { label: 'Books', desc: 'English books from live_priors (01-literature-books/gutenberg)', paths: ['pg1342_Pride_and_Prejudice', 'pg1661_The_Adventures_of_Tom_Sawyer', 'pg174_The_Picture_of_Dorian_Gray', 'pg345_Dracula', 'pg768_The_Adventures_of_Sherlock_Holmes', 'pg62168_The_Origin_of_Species_by_Darwin', 'pg59129_Leviathan_by_Hobbes', 'pg11_Alice_s_Adventures_in_Wonderland'].map(x => '01-literature-books/gutenberg/' + x + '.txt') },
-};
-LP_SETS.general = { label: 'General English', desc: 'books, encyclopedia articles, and US/UK law from live_priors', paths: LP_SETS.lit.paths.concat(LP_SETS.ency.paths, LP_SETS.gov.paths) };
-const _lpCache = {};
 const holoTokens = t => [...new Set((clean(t).toLowerCase().replace(/[\u2019']/g, '').match(/[a-z][a-z-]{2,}/g) || []).filter(w => !STOP.has(w) && !/^-|-$/.test(w)))];
-async function loadBaseline(id, onProgress) {
-  if (_lpCache[id]) return _lpCache[id];
-  const set = LP_SETS[id]; const counts = new Map(); let N = 0, done = 0, words = 0;
-  await ohsPool(set.paths, 6, async p => { try { const r = await fetch(LP_RAW + p); if (r.ok) { let t = await r.text(); t = t.replace(/^---[\s\S]*?\n---\n/, ''); const ws = (t.toLowerCase().replace(/[\u2019']/g, '').match(/[a-z][a-z-]{2,}/g) || []); ws.forEach(w => { if (STOP.has(w)) return; counts.set(w, (counts.get(w) || 0) + 1); N++; }); words += ws.length; } } catch (e) {} onProgress && onProgress(++done, set.paths.length); });
-  return (_lpCache[id] = { id, label: set.label, desc: set.desc, files: set.paths.length, counts, N, V: counts.size, words });
-}
 const SU_CURSORS = [
   { id: 'loo', label: 'Everything else', desc: 'Each statement against normal text plus everything the other sources in this view say, regardless of date: what this source says that nothing else in view, and nothing normal, prepares you for.' },
   { id: 'pub', label: 'When published', desc: 'Sources in the order they were published: what a reader following the story would have learned, and when.' },
@@ -2015,62 +1980,9 @@ const inferRole = d => { const u = (d.url || '').toLowerCase(), t = (d.type || '
   if (/record|register|court|contract|invoice|log\b/i.test(t)) return 'Primary record';
   return 'Unsorted'; };
 const loadMeta = () => { try { return JSON.parse(localStorage.getItem('fold-explorer-srcmeta') || '{}'); } catch (e) { return {}; } };
-const OHS_REPO = 'clovenbradshaw-ctrl/ohs-custody', OHS_RAW = 'https://raw.githubusercontent.com/' + OHS_REPO + '/main/';
 // The side panel is fixed full-height at the right edge; it's used whenever the reader column keeps at least the panel's own width (250 nav + 40 padding + panel + reader >= panel), else a bottom sheet.
 const SIDE_PANEL_W = 360;
 const SIDE_PANEL_MIN_VW = 250 + 40 + SIDE_PANEL_W + SIDE_PANEL_W;
-const OHS_DERIVED = ['AUD-CTTE-BYLAWS', 'AUD-CTTE-DEC9', 'AUD-CTTE-SEP23-AGENDA', 'AUD-CTTE-SEP23-MINUTES', 'AUD-HID-2023', 'AUD-HID-FOLLOWUP-2025', 'LEG-AMD1', 'LEG-AMD2', 'MHRC-ED-DETERMINATION', 'MHRC-STAFF-INVESTIGATIVE-REPORT', 'MUNI-263040.rendered', 'WELSCH-AUDIT-REQUEST-LETTER'];
-const OHS_TIER = { 'primary-record': 'Primary record', 'secondary-quoting-primary': 'Article quoting the record', 'secondary': 'Article', 'own-publication': 'Commentary', 'commentary': 'Commentary' };
-const OHS_STATUS = { captured: 'captured and independently archived', 'bytes-held': 'bytes held, not yet archived', 'local-only': 'held locally only, no independent archive', 'anchor-missing': 'anchor not found in the captured bytes', 'no-text-layer': 'PDF has no text layer', 'not-located': 'no URL located yet', 'fetch-failed': 'could not be fetched', unverified: 'not yet attempted' };
-const OHS_JUNK = 'script,style,noscript,template,svg,iframe,nav,header,footer,aside,button,select,input,figure figcaption,[role=navigation],[role=banner],[role=contentinfo],[aria-hidden=true],.share,.social,.newsletter,.related,.advertisement,.ad,#comments';
-const OHS_BLOCK = 'h1,h2,h3,h4,h5,p,li,blockquote,pre,td,th,dt,dd,label,span[id]';
-const OHS_MON = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ');
-function ohsDateLabel(v) { const m = String(v || '').match(/((?:19|20)\d\d)-(\d\d)(?:-(\d\d))?/); if (m) return (m[3] ? +m[3] + ' ' : '') + OHS_MON[+m[2] - 1] + ' ' + m[1]; const t = Date.parse(v); if (!isNaN(t)) { const d = new Date(t); return d.getUTCDate() + ' ' + OHS_MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); } return ''; }
-function ohsMeta(d) {
-  const mc = sel => { for (const q of sel.split('|')) { const el = d.querySelector(q); const v = el && (el.getAttribute('content') || el.getAttribute('datetime') || el.textContent); if (v && v.trim()) return v.trim(); } return ''; };
-  const ld = []; d.querySelectorAll('script[type="application/ld+json"]').forEach(sc => { try { const j = JSON.parse(sc.textContent); (Array.isArray(j) ? j : j['@graph'] || [j]).forEach(x => ld.push(x)); } catch (e) {} });
-  const art = ld.find(x => /Article|Posting|Report|NewsArticle|WebPage/.test([].concat(x['@type'] || []).join(' ')) && (x.author || x.datePublished)) || {};
-  let authors = [];
-  const pushA = v => { if (!v) return; if (Array.isArray(v)) return v.forEach(pushA); if (typeof v === 'object') return pushA(v.name); String(v).replace(/^\s*by\s+/i, '').split(/\s*(?:,|\band\b|&|\|)\s*/).forEach(x => { x = x.replace(/\s+/g, ' ').trim(); if (x && x.length < 50 && !/^https?:|@|\d{3}/.test(x) && /[A-Za-z]/.test(x) && x.split(' ').length <= 5) authors.push(x); }); };
-  pushA(art.author);
-  if (!authors.length) pushA(mc('meta[name="author"]|meta[name="parsely-author"]|meta[name="sailthru.author"]|meta[property="article:author"]|meta[name="byl"]|meta[name="dc.creator"]'));
-  if (!authors.length) { const el = d.querySelector('[rel="author"], [itemprop="author"] [itemprop="name"], [itemprop="author"], .byline a, .byline__name, .author-name, .c-byline__author, .tnt-byline, [class*="byline"] [class*="author"], [class*="byline"]'); if (el) pushA(el.textContent); }
-  authors = [...new Set(authors)].filter(a => !/^(staff|admin|editor|news|the)$/i.test(a));
-  const pub = art.datePublished || mc('meta[property="article:published_time"]|meta[name="pubdate"]|meta[name="publish-date"]|meta[name="parsely-pub-date"]|meta[itemprop="datePublished"]|meta[name="dc.date"]|meta[name="date"]|time[pubdate]|time[datetime]');
-  const publisher = (mc('meta[property="og:site_name"]|meta[name="application-name"]|meta[name="publisher"]') || (art.publisher && art.publisher.name) || '').replace(/\s+/g, ' ').trim();
-  return { authors, published: pub || '', pubLabel: ohsDateLabel(pub), publisher };
-}
-function ohsHtmlText(html) {
-  const d = new DOMParser().parseFromString(html, 'text/html');
-  const meta = ohsMeta(d);
-  const title = (d.querySelector('meta[property="og:title"]')?.content || d.querySelector('h1')?.textContent || d.title || '').replace(/\s+/g, ' ').trim();
-  d.querySelectorAll(OHS_JUNK).forEach(n => n.remove());
-  const score = new Map();
-  d.querySelectorAll('p').forEach(p => { const n = p.textContent.replace(/\s+/g, ' ').trim().length; if (n < 40) return; let el = p.parentElement, w = 1; for (let i = 0; el && i < 3; i++, el = el.parentElement, w /= 2) score.set(el, (score.get(el) || 0) + n * w); });
-  let root = null, best = 0; score.forEach((v, el) => { if (v > best) { best = v; root = el; } });
-  if (root) { let r = root; while (r.parentElement && r.parentElement !== d.body) { const h = r.parentElement.querySelector('h1'); if (h && !r.contains(h) && r.parentElement.textContent.length < r.textContent.length * 1.6) { r = r.parentElement; break; } if (r.parentElement.textContent.length > r.textContent.length * 1.25) break; r = r.parentElement; } root = r; }
-  const st = t => TAG_STYLE[t] ? ' style="' + TAG_STYLE[t] + '"' : '';
-  const collect = r => { const seen = new Set(), out = []; let inList = false;
-    r.querySelectorAll(OHS_BLOCK).forEach(el => { if (el.querySelector(OHS_BLOCK)) return; const t = el.textContent.replace(/\s+/g, ' ').trim(); if (!t || seen.has(t)) return;
-      const tg = el.tagName, isH = /^H[1-6]$/.test(tg); if (!isH && t.split(' ').length < 3) return; seen.add(t);
-      const tag = isH ? tg : tg === 'LI' ? 'LI' : tg === 'BLOCKQUOTE' ? 'BLOCKQUOTE' : tg === 'PRE' ? 'PRE' : 'P';
-      if (tag === 'LI' && !inList) { out.push('<ul' + st('UL') + '>'); inList = true; } if (tag !== 'LI' && inList) { out.push('</ul>'); inList = false; }
-      const lo = tag.toLowerCase(); out.push('<' + lo + st(tag) + '>' + esc(t) + '</' + lo + '>'); });
-    if (inList) out.push('</ul>'); return out; };
-  let parts = root && best > 400 ? collect(root) : [];
-  if (parts.join('').length < 500) parts = collect(d.body || d.documentElement);
-  let body = parts.join('\n');
-  if (title && !/<h1[ >]/.test(body)) body = '<h1' + st('H1') + '>' + esc(title) + '</h1>\n' + body;
-  const by = [meta.authors.length ? 'By ' + meta.authors.join(', ') : '', meta.pubLabel ? 'Published ' + meta.pubLabel : ''].filter(Boolean).join(' · ');
-  if (by) { const line = '<p style="font:500 15px \'Hanken Grotesk\',sans-serif;color:var(--mut);margin:0 0 18px">' + esc(by) + '.</p>'; body = /<\/h1>/.test(body) ? body.replace(/<\/h1>/, '</h1>\n' + line) : line + '\n' + body; }
-  return { html: body, text: htmlToText(body), meta };
-}
-async function ohsPool(items, n, f) { const out = new Array(items.length); let i = 0; await Promise.all(Array.from({ length: n }, async () => { while (i < items.length) { const k = i++; out[k] = await f(items[k], k); } })); return out; }
-const SRC_KIND = {
-  'audit-pdf': 'Audit or report', 'report-pdf': 'Audit or report', 'legislative-file': 'Legislation', 'amendment-pdf': 'Legislation', 'municipal-code': 'Legislation',
-  'minutes-pdf': 'Meeting record', 'agenda-pdf': 'Meeting record', 'bylaws-pdf': 'Meeting record', 'letter-pdf': 'Letter', 'gov-page': 'Government page',
-  'transcript-derived': 'Meeting recording', 'podcast': 'Podcast', 'news': 'News', 'blog': 'Blog', 'own-article': 'Own article', 'org-page': 'Organisation page', 'not-yet-located': 'Not yet located'
-};
 const KIND_ORDER = ['Audit or report', 'Contract', 'Legislation', 'Meeting record', 'Meeting recording', 'Letter', 'Government page', 'News', 'Podcast', 'Blog', 'Own article', 'Organisation page', 'Not yet located', 'Source'];
 const KIND_DESC = {
   'Audit or report': 'Formal findings, with their own figures and risk ratings.', 'Legislation': 'Bills, amendments and code as filed, with their action history.',
@@ -2079,13 +1991,11 @@ const KIND_DESC = {
   'News': 'Reporting; check whether it quotes the record or only characterises it.', 'Podcast': 'Audio; page text only unless transcribed.', 'Blog': 'Independent writing and commentary.',
   'Own article': 'Pieces by the author of this project.', 'Organisation page': 'What an organisation says about itself.', 'Not yet located': 'Cited, but no copy has been found yet.'
 };
-const MEDIUM_OF = dt => /pdf$/.test(dt || '') ? 'PDF' : dt === 'transcript-derived' ? 'Video' : dt === 'podcast' ? 'Audio' : dt === 'not-yet-located' ? 'Missing' : 'Web page';
 const MEDIUM_C = { PDF: 'var(--pink)', Video: 'var(--date)', Audio: 'var(--date)', 'Web page': 'var(--blue)', Missing: 'var(--bad)', Text: 'var(--mut)' };
 const STANDING_C = { 'Primary record': 'var(--green)', 'Article quoting the record': 'var(--blue)', 'Article': 'var(--mut)', 'Commentary': 'var(--amber)', 'Source': 'var(--mut)' };
 const fmtT = t => { t = Math.max(0, Math.floor(t)); const h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, x = t % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(x).padStart(2, '0'); };
 const OHS_PUB = [[/legistar\.com/, 'Metro Council (Legistar)'], [/nashville\.gov/, 'Metro Nashville Government'], [/library\.municode|municode/, 'Metro Code'], [/nashvillescene/, 'Nashville Scene'], [/nashvillebanner/, 'Nashville Banner'], [/tennessean/, 'The Tennessean'], [/wkrn/, 'WKRN'], [/fox17/, 'FOX 17'], [/newschannel5/, 'NewsChannel 5'], [/thecontributor/, 'The Contributor'], [/axios/, 'Axios'], [/forbes/, 'Forbes'], [/citycast/, 'City Cast Nashville'], [/youtube/, 'Metro Nashville Network (YouTube)'], [/substack|ratiotempered|ratio/, 'Newsletter']];
 const ohsPublisher = u => { const h = String(u || ''); for (const [re, n] of OHS_PUB) if (re.test(h)) return n; try { return new URL(h).hostname.replace(/^www\./, ''); } catch (e) { return ''; } };
-const OHS_MEDIA = { 'SEPT23-MEETING-TRANSCRIPT': 'transcripts/sept23-audit-committee' };
 function ohsSegmentsHtml(segs, title) {
   const paras = []; let cur = null;
   segs.forEach(g => { const t = (g.text || '').trim(); if (!t) return; const gap = cur ? g.start - cur.end : 0;
@@ -2093,144 +2003,10 @@ function ohsSegmentsHtml(segs, title) {
   const P = TAG_STYLE.P ? ' style="' + TAG_STYLE.P + '"' : '';
   return '<h1' + (TAG_STYLE.H1 ? ' style="' + TAG_STYLE.H1 + '"' : '') + '>' + esc(title) + '</h1>\n' + paras.map(p => '<p data-t="' + Math.floor(p.t) + '"' + P + '>' + esc(p.txt) + '</p>').join('\n');
 }
-const HOLO_CORPUS = 'holodeck/corpus.json', HOLO_WS = 'holodeck/workspace.json';
-async function ohsExtraTranscripts(get, known, listNames, lazy) {
-  let names = []; if (listNames) names = listNames; else try { const r = await fetch('https://api.github.com/repos/' + OHS_REPO + '/contents/readings'); if (r.ok) names = (await r.json()).map(f => f.name).filter(n => /\.json$/.test(n)).map(n => n.replace(/\.json$/, '')); } catch (e) {}
-  const src = await get('sources.json', true).catch(() => null); const SE = {}; ((src && (src.entries || src.sources || (Array.isArray(src) ? src : []))) || []).forEach(x => { if (x && x.id) SE[x.id] = x; });
-  const ids = [...new Set([...names, ...Object.keys(SE)])].filter(id => !known.has(id));
-  const rd = await ohsPool(ids, 8, async id => { if (!names.includes(id) && !/transcript|meeting/i.test(id + ' ' + ((SE[id] || {}).label || ''))) return null; try { return await get('readings/' + id + '.json', true); } catch (e) { return null; } });
-  const out = await ohsPool(ids, 6, async (id, i) => { const R = rd[i] || {}; const S = SE[id] || {}; const path = R.path || S.path || ''; if (!/^transcripts\//.test(path) && !/transcript|meeting/i.test(id + ' ' + (S.label || ''))) return null;
-    const base = path.replace(/\.(txt|json)$/, '').replace(/\.segments$/, ''); let text = '', html = '', segN = 0, model = '', from = '';
-    if (lazy && base) { text = ' '; segN = -1; from = base + '.segments.json'; }
-    else if (base) { try { const sg = await get(base + '.segments.json', true); html = ohsSegmentsHtml(sg.segments || [], S.label || id); text = htmlToText(html); segN = (sg.segments || []).length; model = sg.model || ''; from = base + '.segments.json'; } catch (e) {} }
-    if (!text && path) { try { text = await get(path); from = path; } catch (e) {} } if (!lazy && (!text || text.trim().length < 200)) return null;
-    const url = R.source_url || S.url || S.source_url || ''; const yt = (String(url).match(/[?&]v=([\w-]{6,})|youtu\.be\/([\w-]{6,})/) || []); const ytid = yt[1] || yt[2];
-    const lab = S.label || S.title || id.replace(/-/g, ' '); const dm = (lab + ' ' + id + ' ' + path).match(/\b((?:19|20)\d\d)[-_]?(\d\d)[-_]?(\d\d)\b/) || (lab.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sept?|Oct|Nov|Dec)[a-z]*\.?\s+(\d{1,2}),?\s+((?:19|20)\d\d)\b/i));
-    let published = '', pubLabel = ''; if (dm) { if (/^\d{4}$/.test(dm[1])) { published = dm[1] + '-' + dm[2] + '-' + dm[3]; } else { const mo = 'jan feb mar apr may jun jul aug sep oct nov dec'.split(' ').indexOf(dm[1].slice(0, 3).toLowerCase()); published = dm[3] + '-' + String(mo + 1).padStart(2, '0') + '-' + String(+dm[2]).padStart(2, '0'); } pubLabel = ohsDateLabel(published); }
-    const audioOnly = !ytid; const note = 'Custody: machine transcript' + (R.sha256 ? ' · sha256 ' + R.sha256.slice(0, 12) : '') + ' · text from ' + from + '. ' + (audioOnly ? 'Audio-only local recording; there is no video to link.' : segN ? 'Timed transcript of the meeting video.' : 'Transcript of the meeting video (no timings, so the player can’t jump to a line).') + (S.anchor ? ' Cited for: “' + S.anchor + '”' + (R.spans && R.spans[0] && R.spans[0].byte_offset != null ? ' at byte ' + R.spans[0].byte_offset + '.' : '.') : '') + (R.derivation_note ? ' ' + R.derivation_note : '');
-    return { id: 'ohs-' + id, ohsId: id, title: lab, published, pubLabel, year: published ? +published.slice(0, 4) : null, authors: [], doctype: 'transcript-derived', kind: 'Meeting recording', medium: audioOnly ? 'Audio' : 'Video', standing: 'Transcript of the record', custody: 'derived transcript', custodyStatus: 'derived',
-      recordings: [], bodyBase: lazy ? base : undefined, bodyPath: lazy ? path : undefined, media: ytid ? { kind: 'youtube', id: ytid, url, segN, model } : null, anchor: S.anchor || undefined, anchorClaim: (R.spans && R.spans[0] && R.spans[0].claim) || S.claim || '', transcribed: true, type: 'Meeting transcript', url: url || undefined, publisher: S.publisher || (ytid ? 'Metro Nashville Network (YouTube)' : 'Local recording'), text: text.replace(/\r/g, ''), format: html ? 'html' : undefined, html: html || undefined, note, aboutOnly: false }; });
-  return out.filter(Boolean);
-}
-async function ohsVideos(docs) {
-  const YT = /(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:[^"'\s<>]*&)?v=|embed\/|live\/|shorts\/)|youtu\.be\/)([\w-]{11})/g; const found = new Map();
-  const strip = s => String(s || '').replace(/<[^>]+>/g, ' ').replace(/&[a-z#0-9]+;/gi, ' ').replace(/\s+/g, ' ').trim();
-  await ohsPool(docs.filter(d => d.binPath || d.html), 8, async d => { let raw = d.html || ''; if (d.binPath) { try { raw = await (await fetch(OHS_RAW + d.binPath)).text(); } catch (e) {} } if (!raw) return; let m; YT.lastIndex = 0;
-    while ((m = YT.exec(raw))) { const id = m[1]; const around = raw.slice(Math.max(0, m.index - 600), m.index + 400); const a = around.match(/<a[^>]*>([\s\S]{0,200}?)<\/a>/g); const ttl = (around.match(/title="([^"]{6,160})"/) || [])[1];
-      const ctx = strip(ttl || (a ? a.map(strip).filter(t => t.length > 8).slice(-1)[0] : '') || strip(around).slice(0, 180));
-      const e = found.get(id) || { id, url: 'https://www.youtube.com/watch?v=' + id, from: [], ctx: '' }; if (!e.from.some(x => x.id === d.id)) e.from.push({ id: d.id, title: d.title, pubLabel: d.pubLabel, published: d.published, year: d.year }); if (!e.ctx && ctx) e.ctx = ctx; found.set(id, e); } });
-  const vids = [...found.values()];
-  await ohsPool(vids, 6, async v => { try { const r = await fetch('https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent(v.url)); if (r.ok) { const j = await r.json(); v.title = j.title; v.channel = j.author_name; } } catch (e) {} });
-  return vids.filter(v => !/^(MetroNashville|axios)$/i.test(v.id)).map(v => { const src = v.from[0]; const title = v.title || (v.ctx && v.ctx.length < 140 ? v.ctx : 'YouTube video linked from ' + src.title);
-    const meet = /\b(meeting|council|committee|board|hearing|commission|session|planning council|coc|hpc|budget|symposium|forum|town hall|briefing)\b/i.test(title + ' ' + (v.ctx || '')) || /^\d{2}\/\d{2}\/\d{2}\b/.test(title);
-    const dm = title.match(/^(\d{2})\/(\d{2})\/(\d{2})\b/); const own = dm ? '20' + dm[3] + '-' + dm[1] + '-' + dm[2] : '';
-    const text = title + '. ' + (v.channel ? 'Published on YouTube by ' + v.channel + '. ' : '') + 'Linked from ' + v.from.map(f => '“' + f.title + '”' + (f.pubLabel ? ' (' + f.pubLabel + ')' : '')).join(', ') + '.' + (v.ctx && v.ctx !== title ? ' Context on the page: ' + v.ctx + '.' : '') + ' Not transcribed yet.';
-    return { id: 'yt-' + v.id, ohsId: 'yt-' + v.id, title, published: own || src.published || '', pubLabel: own ? ohsDateLabel(own) : src.pubLabel || '', year: own ? +own.slice(0, 4) : src.year || null, authors: v.channel ? [v.channel] : [], doctype: 'video', kind: meet ? 'Meeting recording' : 'Video', medium: 'Video', standing: 'Linked video', custody: 'link only, video not captured', custodyStatus: 'linked',
-      recordings: [], media: { kind: 'youtube', id: v.id, url: v.url, segN: 0 }, transcribed: false, type: 'YouTube video', url: v.url, publisher: v.channel || 'YouTube', text, note: 'Found as a YouTube link inside ' + plural(v.from.length, 'captured source') + '. The video itself is not captured or transcribed.', aboutOnly: true, linkedFrom: v.from.map(f => f.id) }; });
-}
 async function opfsDir(path) { const root = await navigator.storage.getDirectory(); let d = root; for (const p of path.split('/').filter(Boolean)) d = await d.getDirectoryHandle(p, { create: true }); return d; }
 async function opfsRead(path) { try { const parts = path.split('/'); const name = parts.pop(); const d = await opfsDir(parts.join('/')); const fh = await d.getFileHandle(name); return await (await fh.getFile()).arrayBuffer(); } catch (e) { return null; } }
 async function opfsWrite(path, buf) { try { const parts = path.split('/'); const name = parts.pop(); const d = await opfsDir(parts.join('/')); const fh = await d.getFileHandle(name, { create: true }); const w = await fh.createWritable(); await w.write(buf); await w.close(); return true; } catch (e) { return false; } }
-async function ohsBodyBytes(rel) { const key = 'ohs-custody/' + rel; const hit = await opfsRead(key); if (hit) return { buf: hit, from: 'opfs' };
-  for (const u of [OHS_RAW + rel]) { try { const r = await fetch(u, { cache: 'no-cache' }); if (!r.ok) continue; const buf = await r.arrayBuffer(); opfsWrite(key, buf); return { buf, from: u.startsWith('ohs-local') ? 'local copy' : 'GitHub' }; } catch (e) {} } return null; }
-const OHS_TX = id => /TRANSCRIPT$/.test(id || '');
-const ohsTxBase = id => id === 'SEPT23-MEETING-TRANSCRIPT' ? 'transcripts/sept23-audit-committee' : 'transcripts/' + String(id).toLowerCase().replace(/-transcript$/, '');
-function ohsSameBytes(docs, meta) {
-  const shaOf = d => { const id = d.ohsId || String(d.id).replace(/^ohs-/, ''); const e = (meta && meta[id]) || {}; return (e.evidence && e.evidence.sha256) || ((String(d.note || '').match(/sha256 ([0-9a-f]{12,})/) || [])[1]) || null; };
-  const first = new Map(); const out = docs.map(d => { if (d.lazy && d.bodyBase) return d; const h = shaOf(d); if (!h) return d; const k = h.slice(0, 12); const f = first.get(k); if (!f) { first.set(k, d); return d; }
-    const id = d.ohsId || String(d.id).replace(/^ohs-/, ''); const e = (meta && meta[id]) || {};
-    return { ...d, sameAs: f.id, sameAsTitle: f.title, text: [d.title + '.', e.anchor || e.claim || ''].filter(Boolean).join(' '), html: undefined, format: undefined, binPath: undefined, note: (d.note || '') + ' Byte-identical to “' + f.title + '” (sha256 ' + k + '); its text is read once, from that source, so it isn’t counted twice.' }; });
-  return out; }
-function ohsLazify(docs, meta) { return docs.map(d => { const id = d.ohsId || String(d.id).replace(/^ohs-/, ''); if (!OHS_TX(id)) { if ((d.text || '').length > 60000 && !d.lazy) return { ...d, lazy: true, bodyPath: 'derived/' + id + '.txt', text: d.text.slice(0, 1500), html: undefined, format: d.format === 'pdf' ? 'pdf' : undefined, fullLen: d.text.length }; return d; } const e = (meta && meta[id]) || {};
-  const url = d.url || e.url || ''; const yt = (String(url).match(/[?&]v=([\w-]{6,})|youtu\.be\/([\w-]{6,})/) || []); const ytid = yt[1] || yt[2];
-  const dm = id.match(/^((?:19|20)\d\d)-(\d\d)-(\d\d)/); const published = d.published || (dm ? dm[1] + '-' + dm[2] + '-' + dm[3] : ''); const claim = e.claim || e.anchor || d.anchor || '';
-  return { ...d, id: d.id || 'ohs-' + id, ohsId: id, title: d.title || e.label || id, published, pubLabel: d.pubLabel || (published ? ohsDateLabel(published) : ''), year: published ? +published.slice(0, 4) : d.year,
-    kind: 'Meeting recording', doctype: 'transcript-derived', medium: ytid ? 'Video' : 'Audio', transcribed: true, standing: 'Transcript of the record',
-    media: ytid ? { kind: 'youtube', id: ytid, url, segN: -1 } : null, lazy: true, bodyBase: ohsTxBase(id), bodyPath: ohsTxBase(id) + '.txt',
-    text: [(d.title || e.label || id) + '.', claim].filter(Boolean).join(' '), html: undefined, format: undefined, binPath: undefined, aboutOnly: false,
-    note: (ytid ? 'Transcript of the meeting video; opens beside the player.' : 'Audio-only recording; there is no video to link.') + (e.anchor ? ' Cited for: “' + e.anchor + '”.' : '') }; }); }
-async function loadOhs(onProgress, opts) {
-  const get = async (p, json) => { const r = await fetch(OHS_RAW + p, { cache: 'no-cache' }); if (!r.ok) throw new Error(p + ' ' + r.status); return json ? r.json() : r.text(); };
-  if (!(opts && opts.rebuild)) { try {
-    const m0 = await get('sources.structured.json', true).catch(() => null); const stamp = m0 && (m0.generated_at || String((m0.entries || []).length));
-    if (stamp) { const buf = await opfsRead('ohs-custody/corpus-cache.json'); if (buf) { const c0 = JSON.parse(new TextDecoder().decode(buf)); if (c0 && c0.stamp === stamp && Array.isArray(c0.docs)) { const MM0 = {}; ((m0 && m0.entries) || []).forEach(x => { MM0[x.id] = x; }); return { ...c0, docs: ohsSameBytes(c0.docs, MM0), from: 'opfs-cache' }; } } }
-  } catch (e) {} }
-  if (!(opts && opts.rebuild)) { try {
-    const [c, m] = await Promise.all([get(HOLO_CORPUS, true), get('sources.structured.json', true).catch(() => null)]);
-    if (c && c.schema === 'holodeck-corpus@1' && Array.isArray(c.docs)) { const stale = !!(m && m.generated_at && c.manifestAt && m.generated_at !== c.manifestAt);
-      const known = new Set(c.docs.map(d => d.ohsId || String(d.id).replace(/^ohs-/, ''))); const extra = await ohsExtraTranscripts(get, known).catch(() => []);
-      const MM = {}; ((m && m.entries) || []).forEach(x => { MM[x.id] = x; });
-      return { name: c.name || 'OHS source custody · GitHub', docs: ohsSameBytes(ohsLazify([...c.docs, ...extra], MM), MM).map(d => d.pdfSrc || d.format === 'pdf' || !(d.medium === 'PDF' || /pdf/i.test(String(d.doctype || ''))) ? d : { ...d, pdfSrc: OHS_RAW + 'bytes/' + d.id + '.bin' }), transcript: c.demoText || '', from: 'repo', builtAt: c.builtAt, manifestAt: c.manifestAt, stale }; }
-  } catch (e) {} }
-  let derived = OHS_DERIVED;
-  try { const r = await fetch('https://api.github.com/repos/' + OHS_REPO + '/contents/derived'); if (r.ok) { const l = (await r.json()).map(f => f.name).filter(n => /\.txt$/.test(n)).map(n => n.replace(/\.txt$/, '')); if (l.length) derived = l; } } catch (e) {}
-  const [man, texts, transcript, enr] = await Promise.all([
-    get('sources.structured.json', true),
-    Promise.all(derived.filter(k => !OHS_TX(k) && !/(hpc-meeting|committee|symposium|special-called|transcript)/i.test(k)).map(k => get('derived/' + k + '.txt').then(t => [k.replace(/\.rendered$/, ''), t]).catch(() => [k, null]))),
-    get('research/opioid-settlement-audit/extracted-text.txt').catch(() => ''),
-    get('sources.enriched.json', true).catch(() => null)
-  ]);
-  const DT = {}; ((enr && enr.entries) || []).forEach(x => { DT[x.id] = x; });
-  const T = Object.fromEntries(texts.filter(x => x[1]));
-  const entries = man.entries || [];
-  let done = 0;
-  const bodies = await ohsPool(entries, 8, async e => {
-    let out = null; if (OHS_TX(e.id)) { onProgress && onProgress(++done, entries.length); return { text: (e.label || e.id) + '. ' + (e.claim || ''), from: 'lazy' }; }
-    if (OHS_MEDIA[e.id]) { try { const sg = await get(OHS_MEDIA[e.id] + '.segments.json', true); const html = ohsSegmentsHtml(sg.segments || [], e.label || e.id); out = { text: htmlToText(html), html, from: OHS_MEDIA[e.id] + '.segments.json', segN: (sg.segments || []).length, model: sg.model }; } catch (x) {} }
-    if (out) {}
-    else if (T[e.id]) { const tx = T[e.id]; if (tx.length > 60000) { opfsWrite('ohs-custody/derived/' + e.id + '.txt', new TextEncoder().encode(tx)); out = { text: tx.slice(0, 1500), from: 'derived/' + e.id + '.txt', lazyPath: 'derived/' + e.id + '.txt', fullLen: tx.length }; } else out = { text: tx, from: 'derived/' + e.id + '.txt' }; }
-    else { const ev = e.evidence || {}, ct = String(ev.content_type || '');
-      if (ct && !/pdf/i.test(ct)) {
-        const ts = ev.archive && ev.archive.timestamp, names = [];
-        if (ts && ev.archive.tier === 'wayback-historical') names.push(e.id + '.historical-' + ts + '.bin');
-        names.push(e.id + '.bin');
-        for (const nm of names) { try { const raw = await get('bytes/' + nm); if (raw.length > 1500000) { opfsWrite('ohs-custody/bytes/' + nm, new TextEncoder().encode(raw)); out = { text: (e.claim || e.label || e.id), from: 'bytes/' + nm, lazyPath: 'bytes/' + nm, lazyHtml: true, fullLen: raw.length }; break; } const isH = /html/i.test(ct) || /^\s*</.test(raw); const r = isH ? ohsHtmlText(raw) : { text: raw }; if (r.text && r.text.trim().length > 200) { out = { text: r.text, html: r.html, meta: r.meta, binPath: isH ? 'bytes/' + nm : null, from: 'bytes/' + nm }; break; } } catch (x) {} }
-      } }
-    onProgress && onProgress(++done, entries.length); await new Promise(r => setTimeout(r, 0));
-    return out;
-  });
-  const yearOf = (...xs) => { for (const x of xs) { const m = String(x || '').match(/\b(19|20)\d\d\b/g); if (m) return +m[m.length - 1]; } return null; };
-  const docs = entries.map((e, i) => { const body = bodies[i]; const ev = e.evidence || {};
-    const custody = 'Custody: ' + (OHS_STATUS[e.status] || e.status || 'unknown') + (ev.sha256 ? ' · sha256 ' + ev.sha256.slice(0, 12) : '') + (ev.fetched_at ? ' · fetched ' + ev.fetched_at.slice(0, 10) : '') + (body ? ' · text from ' + body.from : '') + '.';
-    const text = body ? body.text.replace(/\r/g, '') : e.claim || '';
-    const aboutOnly = !body;
-    const mt = { ...((body && body.meta) || {}) };
-    if (!mt.pubLabel) { const L = String(e.label || ''); const MO = 'jan feb mar apr may jun jul aug sep oct nov dec'.split(' ');
-      let m = L.match(/\b(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sept?|Oct|Nov|Dec)[a-z]*\.?\s+((?:19|20)\d\d)\b/i), y, mo, dd;
-      if (m) { dd = +m[1]; mo = MO.indexOf(m[2].slice(0, 3).toLowerCase()); y = +m[3]; }
-      else if ((m = L.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sept?|Oct|Nov|Dec)[a-z]*\.?\s+(\d{1,2}),?\s+((?:19|20)\d\d)\b/i))) { mo = MO.indexOf(m[1].slice(0, 3).toLowerCase()); dd = +m[2]; y = +m[3]; }
-      if (y && mo >= 0) { mt.published = y + '-' + String(mo + 1).padStart(2, '0') + '-' + String(dd).padStart(2, '0'); mt.pubLabel = dd + ' ' + OHS_MON[mo] + ' ' + y; mt.dateFrom = 'label'; } } const py = (String(mt.published || '').match(/\b(19|20)\d\d\b/) || [])[0];
-    const ts = ev.archive && ev.archive.timestamp; const capturedAt = ts && /^\d{8}/.test(ts) ? ts.slice(0, 4) + '-' + ts.slice(4, 6) + '-' + ts.slice(6, 8) + 'T' + (ts.slice(8, 10) || '00') + ':' + (ts.slice(10, 12) || '00') + ':00Z' : (ev.fetched_at || '');
-    return { id: 'ohs-' + e.id, ohsId: e.id, capturedAt, authors: mt.authors || [], published: mt.published || '', pubLabel: mt.pubLabel || '', title: e.label || e.id, year: py ? +py : yearOf(e.label, e.url, body && body.text.slice(0, 600)), ...(() => { const dt = (DT[e.id] || {}).doctype || ''; const kind = SRC_KIND[dt] || (/contract/i.test(dt + ' ' + e.id) ? 'Contract' : 'Source'); const medium = MEDIUM_OF(dt); const yt = (String(e.url || '').match(/[?&]v=([\w-]{6,})/) || [])[1];
-      const recs = [...new Set((String(e.note || '') + ' ' + String(e.claim || '')).match(/https?:\/\/\S*Video\.aspx\S*/g) || [])].map(u => ({ url: u.replace(/[).,]+$/, ''), label: 'Video of this reading', transcribed: false }));
-      return { doctype: dt, kind, medium, standing: OHS_TIER[e.tier] || 'Source', custody: OHS_STATUS[e.status] || e.status || '', custodyStatus: e.status || '', recordings: recs, media: yt && body && body.segN ? { kind: 'youtube', id: yt, url: e.url, segN: body.segN, model: body.model } : null,
-        transcribed: medium === 'Video' || medium === 'Audio' ? !!(body && body.segN) : null, type: kind + (body ? '' : ' · citation note') }; })(), binPath: (body && body.binPath) || undefined, ...(body && body.lazyPath ? { lazy: true, bodyPath: body.lazyPath, bodyHtml: !!body.lazyHtml, fullLen: body.fullLen } : {}), pdfSrc: /pdf/i.test(String((e.evidence || {}).content_type || '')) ? OHS_RAW + 'bytes/' + e.id + '.bin' : undefined, url: e.url || undefined, publisher: mt.publisher || ohsPublisher(e.url), text, aboutOnly, format: body && body.html ? 'html' : undefined, html: body && body.html || undefined, note: body ? custody : custody + ' No readable capture in the repo (PDF without a text layer, or nothing fetched), so this shows the claim it is cited for.', anchor: e.anchor };
-  }).filter(d => d.text && d.text.trim());
-  const MM = {}; entries.forEach(x => { MM[x.id] = x; }); const lz = ohsSameBytes(ohsLazify(docs, MM), MM); docs.length = 0; docs.push(...lz);
-  const out = { name: (man.case_label || 'OHS source custody') + ' · GitHub', docs, transcript, from: 'live', manifestAt: man.generated_at || '', builtAt: new Date().toISOString() };
-  try { const stamp = man.generated_at || String(entries.length); opfsWrite('ohs-custody/corpus-cache.json', new TextEncoder().encode(JSON.stringify({ ...out, stamp }))); } catch (e) {}
-  return out;
-}
-const SAMPLES = {
-  ohs: { name: 'OHS source custody · GitHub', docs: [] },
-  keybridge: { name: 'Key Bridge collapse · Wikipedia', docs: [
-    { id: 'kb1', title: 'Francis Scott Key Bridge collapse', year: 2024, type: 'Wikipedia article', wiki: 'Francis_Scott_Key_Bridge_collapse', url: 'https://en.wikipedia.org/wiki/Francis_Scott_Key_Bridge_collapse', text: "On March 26, 2024, the main spans and the three nearest northeast approach spans of the Francis Scott Key Bridge across the Patapsco River in the Baltimore metropolitan area of Maryland, United States, collapsed after one of the bridge piers was struck by the container ship Dali, which had suffered catastrophic power outages that impaired its control systems. Six members of a maintenance crew working on the roadway were killed, one was rescued from the river, and an inspector was rescued from the remaining structure.\n\nThe collapse blocked most shipping to and from the Port of Baltimore for 11 weeks. Maryland Governor Wes Moore called the event a \"global crisis\" that affected more than 8,000 jobs. The economic impact of the closure of the waterway was estimated at $15 million per day.\n\nMV Dali is a container ship registered in Singapore, and at the time of the collision was operated by Synergy Marine Group and owned by Grace Ocean Private Ltd, both based in Singapore. Danish shipping company Maersk chartered Dali upon its delivery.\n\nOn November 18, 2025, the NTSB released its final report, detailing its findings. It determined the probable cause of the accident to be a loose signal wire in the ship's electrical control center's terminal block 381, which caused a circuit breaker to open that led to both blackouts on the night of the incident. The preliminary National Transportation Safety Board (NTSB) report noted that inspections conducted in March 2021 and May 2023 found the bridge in satisfactory condition.\n\nOn April 1, Grace Ocean Private and Synergy Marine Group filed a joint petition in the Maryland U.S. District Court to limit their liability to about $43.6 million under the Limitation of Liability Act of 1851. Dun & Bradstreet estimated the weekly cost of the supply chain disruptions caused by the port closure to be $1.7 billion." },
-    { id: 'kb2', title: 'Francis Scott Key Bridge replacement', year: 2026, type: 'Wikipedia article', wiki: 'Francis_Scott_Key_Bridge_replacement', url: 'https://en.wikipedia.org/wiki/Francis_Scott_Key_Bridge_replacement', text: "The Francis Scott Key Bridge replacement is a project to replace the Francis Scott Key Bridge in greater Baltimore, Maryland, United States.\n\nSix weeks after the collapse, officials at the Maryland Department of Transportation announced plans to replace the bridge by October 2028 at an estimated cost of $1.7 billion to $1.9 billion. The cost will be borne by the federal government under a December 2024 bill signed by President Joe Biden. In November 2025, Maryland officials announced that the projected cost had more than doubled, to an estimated $4.3 billion to $5.2 billion, and that the anticipated opening date had been delayed two years to late 2030. In April 2026, the state abruptly cut ties with the design contractor Kiewit.\n\nOn August 29, 2024, the Maryland Transportation Authority awarded a $73 million contract to Kiewit for pre-construction and design work. On February 4, 2025, the Maryland Transportation Authority unveiled a preliminary design for a cable-stayed bridge, Maryland's first. Its clearance over the shipping channel will be at least 230 feet, 45 feet higher than the old bridge's 185 feet." }
-  ]},
-  bridge: { name: 'Harbor bridge coverage', docs: [
-    { id: 'b1', title: 'Council approves bridge repair', year: 2023, type: 'Article', text: 'The Harbor City Council approved $4.2 million for repairs to the Linden Bridge. Mayor Ana Ruiz said work should begin in March. The bridge carries 18,000 vehicles a day.' },
-    { id: 'b2', title: 'Engineers question repair budget', year: 2024, type: 'Article', text: 'Engineers at Coastline Structural estimated the repair at $6.1 million. Ana Ruiz said the council may revisit the budget. The Linden Bridge was last inspected in 2019.' },
-    { id: 'b3', title: 'Bridge closes for inspection', year: 2025, type: 'Notice', text: 'The Linden Bridge will close for two weeks for inspection. Traffic on Harbor Avenue is expected to rise by 30 percent. Coastline Structural will publish its findings in June.' }
-  ]},
-  transit: { name: 'City transit plans', docs: [
-    { id: 'a', title: 'Grove Plan', year: 2024, type: 'Plan', text: 'The Grove Transit Authority (GTA) will build 12 miles of busway.\nThe GTA will coordinate with East Bank development.\n' },
-    { id: 'b', title: 'Metro Line Study', year: 2025, type: 'Study', text: 'The new Metro Line will run 8 miles of track through the corridor.\n' }
-  ]},
-  kitchen: { name: 'Kitchen supplier notes', docs: [
-    { id: 'k1', title: 'Supplier review', year: 2024, type: 'Note', text: 'Green Valley Farms delivers 40 kg of tomatoes every Tuesday. Chef Omar Haddad reported 3 kg spoiled in the last delivery. Prices may rise 10 percent in spring.' },
-    { id: 'k2', title: 'Dairy switch', year: 2025, type: 'Note', text: 'Northside Dairy replaced Green Valley Farms for cream in 2024. Omar Haddad wants a second supplier for tomatoes. Northside Dairy delivers 12 litres of cream daily.' }
-  ]}
-};
+const SAMPLES = {};
 const W = s => new Set(s.split(' '));
 const STOP = W('the a an and or of to in on for with at by from as is are was were be been being will would should could may might can this that these those it its their his her they them we our you your i not no new every per than then also into over under about after before during each which who whom what when where while there here has have had do does did said says last first next more most some any all other such only just very since until because through across between within without upon a day week daily');
 const ART = W('The A An This That These Those Our Their Its His Her');
@@ -2556,6 +2332,29 @@ const short = (t, n) => { t = clean(t); return t.length > n ? t.slice(0, n - 1) 
 function loadAdded() {
   try { const a = JSON.parse(localStorage.getItem('fold-explorer-added') || 'null'); if (a) return a; const c = JSON.parse(localStorage.getItem('fold-explorer-custom') || 'null'); return { custom: c ? c.docs : [] }; } catch (e) { return {}; }
 }
+const LEGACY_CORPORA = ['ohs', 'keybridge', 'bridge', 'transit', 'kitchen'];
+function purgeLegacyHistory() {
+  if (typeof localStorage === 'undefined') return;
+  try { if (localStorage.getItem('holodeck-purged-legacy') === '1') return; } catch (e) {}
+  try {
+    const prune = (key, fn) => { try { const raw = localStorage.getItem(key); if (!raw) return; const v = JSON.parse(raw); const nv = fn(v); if (nv !== v) localStorage.setItem(key, JSON.stringify(nv)); } catch (e) {} };
+    prune('fold-explorer-added', v => { const n = {}; Object.keys(v).forEach(k => { if (LEGACY_CORPORA.includes(k)) return; const docs = (v[k] || []).filter(d => !d.ohsId && !/^(ohs-|yt-)/.test(d.id || '')); if (docs.length) n[k] = docs; }); return n; });
+    prune('fold-explorer-srcmeta', v => { const n = {}; Object.keys(v).forEach(k => { if (LEGACY_CORPORA.includes(k)) return; const docs = {}; Object.keys(v[k] || {}).forEach(id => { if (!/^(ohs-|yt-)/.test(id)) docs[id] = v[k][id]; }); if (Object.keys(docs).length) n[k] = docs; }); return n; });
+    prune('fold-explorer-readlog', v => { const n = {}; Object.keys(v).forEach(k => { if (!LEGACY_CORPORA.includes(k)) n[k] = v[k]; }); return n; });
+    prune('fold-explorer-pins', v => { const n = {}; Object.keys(v).forEach(k => { if (!LEGACY_CORPORA.includes(k)) n[k] = v[k]; }); return n; });
+    prune('fold-explorer-workspaces', v => { const n = {}; Object.keys(v).forEach(k => { if (!LEGACY_CORPORA.includes(k)) n[k] = v[k]; }); return n; });
+    prune('fold-ws-rooms', v => { const n = {}; Object.keys(v).forEach(k => { if (!LEGACY_CORPORA.includes(k)) n[k] = v[k]; }); return n; });
+    try { localStorage.removeItem('fold-explorer-custom'); } catch (e) {}
+    try { Object.keys(localStorage).forEach(k => { if (k.startsWith('holodeck-fold:')) { const cid = k.slice('holodeck-fold:'.length); if (LEGACY_CORPORA.includes(cid)) localStorage.removeItem(k); } }); } catch (e) {}
+    try { localStorage.setItem('holodeck-purged-legacy', '1'); } catch (e) {}
+  } catch (e) {}
+  try { if (navigator.storage && navigator.storage.getDirectory) navigator.storage.getDirectory().then(async root => { try { await root.removeEntry('ohs-custody', { recursive: true }); } catch (e) {} }).catch(() => {}); } catch (e) {}
+  try {
+    const r = indexedDB.open('fold-explorer', 1);
+    r.onsuccess = () => { try { const db = r.result; const tx = db.transaction('blobs', 'readwrite'); const st = tx.objectStore('blobs'); const keys = st.getAllKeys(); keys.onsuccess = () => { (keys.result || []).forEach(k => { const s = String(k); if (s === 'meet:ohs' || s.startsWith('html:ohs-') || s.startsWith('pdf:ohs-') || s.startsWith('wiki5:kb')) { try { st.delete(k); } catch (e) {} } }); }; } catch (e) {} };
+  } catch (e) {}
+}
+purgeLegacyHistory();
 function loadTheme() { try { return localStorage.getItem('fold-explorer-theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'); } catch (e) { return 'dark'; } }
 function loadRailOpen() { try { const v = localStorage.getItem('fold-explorer-rail'); return v === null ? true : v === '1'; } catch (e) { return true; } }
 function loadSegOpen() { try { return localStorage.getItem('fold-explorer-segopen') === '1'; } catch (e) { return false; } }
@@ -2563,13 +2362,8 @@ function loadSegOpen() { try { return localStorage.getItem('fold-explorer-segope
 function loadWorkspaceNames() { try { return JSON.parse(localStorage.getItem('fold-explorer-workspaces') || '{}'); } catch (e) { return {}; } }
 function saveWorkspaceNames(w) { try { localStorage.setItem('fold-explorer-workspaces', JSON.stringify(w)); } catch (e) {} }
 const DEMOS = {
-  bridge: { title: 'Inspection findings', year: 2025, text: "Coastline Structural found corrosion on 14 of the Linden Bridge's 40 cables. Ruiz said the Harbor City Council will meet in July. Repairs are now estimated at $7.5 million." },
-  transit: { title: 'Council minutes', year: 2025, text: 'The GTA confirmed the busway will reach East Bank by 2027. Metro Line construction may begin in 2026. The GTA estimated 9,000 riders a day.' },
-  kitchen: { title: 'Delivery log', year: 2025, text: 'Green Valley Farms delivered 35 kg of tomatoes on Tuesday. Chef Haddad rejected 5 kg as spoiled. Northside Dairy will raise cream prices by 8 percent.' }
+  custom: { title: 'A note on reading', year: 2026, text: "Reading is not the same as believing. A source can state a figure plainly, attribute it to someone, plan for it, or guess at it, and the same words in a different frame carry a different weight. When a record is read this way, what is said, by whom, and how firmly becomes the material, not the gloss. Pin the passages that matter and the Draft keeps their source." }
 };
-DEMOS.custom = DEMOS.bridge;
-DEMOS.ohs = { title: 'Opioid settlement audit, extracted text', year: 2025, text: '' };
-DEMOS.keybridge = { title: 'MV Dali', year: 2024, url: 'https://en.wikipedia.org/wiki/MV_Dali', text: "MV Dali is a Neopanamax container ship built by Hyundai Heavy Industries. On 26 March 2024, she caused the collapse of the Francis Scott Key Bridge in Baltimore when she lost power and collided with one of its supports.\n\nDali was sold by Stellar Marine to Grace Ocean, a Singaporean company, in October 2016; she was placed under the management of Synergy Marine and reflagged as Singaporean. A faulty fuel pressure gauge was detected at the port of San Antonio, Chile, in June 2023; the gauge was replaced and no faults were detected at a further check three months later.\n\nThe ship has been chartered to the Danish shipping and logistics company Maersk since it was delivered in 2015. The National Transportation Safety Board released its findings on 18 November 2025, tracing the ship's two power outages to an improperly labeled signal wire for terminal block 381 in the electrical control room, which came loose." };
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const BLOCK_RE = /^(P|DIV|H[1-6]|LI|TR|TABLE|UL|OL|DL|DT|DD|BLOCKQUOTE|PRE|SECTION|ARTICLE|HEADER|FOOTER|FIGURE|FIGCAPTION|CAPTION|HR|MAIN|ASIDE|TBODY|THEAD)$/;
 function walkText(root, fn) {
@@ -2811,11 +2605,11 @@ const whenOf = (st, d) => d.pubLabel || (d.year ? String(d.year) : 'Undated');
 const assertLine = (st, A) => { const d = A.docById[st.doc]; const w = whoSays(st, A); return (w ? w.who + (w.how === 'quoted' ? ' (quoted)' : w.how === 'publisher' ? '' : ' (' + w.how + ')') + ' · ' : '') + d.title + ' · ' + whenOf(st, d); };
 
 class Component extends DCLogic {
-  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, draftTitle: '', draftYear: '', draftText: '', note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, ground: { on: true, names: true, figures: true, dates: true, sentences: true } };
+  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, draftTitle: '', draftYear: '', draftText: '', repoVal: '', note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, ground: { on: true, names: true, figures: true, dates: true, sentences: true } };
   _html = {};
 
   componentDidMount() {
-    this.applyTheme(); this._c = 0; import(new URL('holodeck-match.js', location.href).href).then(M => { this._mt = M; this._qc = null; this.forceUpdate(); }).catch(() => {}); this.loadHtml(); this.restoreMeet(); if (typeof location !== 'undefined' && /fx-share=/.test(location.hash)) { this.netInit(); this.setState({ view: 'draft' }); }
+    this.applyTheme(); this._c = 0; import(new URL('holodeck-match.js', location.href).href).then(M => { this._mt = M; this._qc = null; this.forceUpdate(); }).catch(() => {}); this.loadHtml(); if (typeof location !== 'undefined' && /fx-share=/.test(location.hash)) { this.netInit(); this.setState({ view: 'draft' }); }
     this._onRz = () => { if ((window.innerWidth < SIDE_PANEL_MIN_VW) !== this._narrow) this.forceUpdate(); }; window.addEventListener('resize', this._onRz);
     this._onSelCh = () => { cancelAnimationFrame(this._selRaf); this._selRaf = requestAnimationFrame(() => this.updatePinPop()); };
     document.addEventListener('selectionchange', this._onSelCh); window.addEventListener('scroll', this._onSelCh, true);
@@ -2865,27 +2659,42 @@ class Component extends DCLogic {
       else this.addDocs([{ title: url, year: new Date().getFullYear(), type: 'Link', text: '', url, note: 'That site doesn’t let its page be read from here — open it, then drag or paste its text instead.' }]);
     }
   }
-  async loadRepoWorkspace() {
-    try { const r = await fetch(OHS_RAW + HOLO_WS, { cache: 'no-cache' }); if (!r.ok) { this._wsInfo = { found: false }; return; } const w = await r.json(); if (w.schema !== 'holodeck-workspace@1') return;
-      const cid = 'ohs'; const loc = this.state.added[cid] || []; const have = new Set(loc.map(d => d.id)); const add = (w.added || []).filter(d => !have.has(d.id));
-      add.forEach(d => { if (d.html) { this._html[d.id] = d.html; idbPut('html:' + d.id, d.html).catch(() => {}); } });
-      const added = { ...this.state.added, [cid]: [...loc, ...add.map(d => { const x = { ...d }; delete x.html; if (d.html) x.hasHtml = true; return x; })] };
-      const meta = { ...this.metaAll() }; meta[cid] = { ...(w.meta || {}), ...(meta[cid] || {}) }; this._meta = meta; try { localStorage.setItem('fold-explorer-srcmeta', JSON.stringify(meta)); } catch (e) {}
-      this.readLog(); this._rlog[cid] = { ...(w.readlog || {}), ...(this._rlog[cid] || {}) }; try { localStorage.setItem('fold-explorer-readlog', JSON.stringify(this._rlog)); } catch (e) {}
-      this.saveAdded(added); this.state.added = added; this._wsInfo = { found: true, savedAt: w.savedAt, n: (w.added || []).length, merged: add.length };
-    } catch (e) { this._wsInfo = { found: false, err: e.message }; }
-  }
-  rebuildLive() { this._rebuild = true; this._ohsP = null; SAMPLES.ohs.docs = []; this._key = null; this.setState(s => ({ htmlVer: s.htmlVer + 1 })); this.loadHtml(); }
-  async loadOhsCorpus() {
-    if (this._ohsP) return this._ohsP;
-    this.setState({ busy: 'Loading OHS source custody…' });
-    this._ohsP = loadOhs((n, t) => this.setState({ busy: 'Reading captured sources… ' + n + ' / ' + t }), { rebuild: this._rebuild }).then(async r => {       try { const have = new Set(r.docs.map(d => d.media && d.media.id).filter(Boolean)); const vids = (await ohsVideos(r.docs)).filter(v => !have.has(v.media.id)); r.docs = [...r.docs, ...vids]; } catch (e) {} SAMPLES.ohs.name = r.name; SAMPLES.ohs.docs = r.docs; DEMOS.ohs.text = r.transcript || 'Transcript not available.'; this._corpusInfo = { from: r.from, builtAt: r.builtAt, manifestAt: r.manifestAt, stale: !!r.stale, n: r.docs.length }; this._rebuild = false;
-        await this.loadRepoWorkspace(); this._key = null; this.setState(s => ({ htmlVer: s.htmlVer + 1, busy: '', ohsErr: '' })); })
-      .catch(e => { this._ohsP = null; this.setState({ busy: '', note: 'Couldn’t load OHS source custody — ' + e.message }); });
-    return this._ohsP;
+  async addRepo() {
+    const v = (this.state.repoVal || '').trim();
+    const m = v.match(/^https?:\/\/(?:www\.)?github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?(?:\/|$)/) || v.match(/^([\w.-]+)\/([\w.-]+)$/);
+    if (!m) { this.setState({ note: 'Give it as owner/repo or a github.com URL.' }); return; }
+    const owner = m[1], repo = m[2];
+    const api = 'https://api.github.com/repos/' + encodeURIComponent(owner) + '/' + encodeURIComponent(repo);
+    let tree = [];
+    try {
+      const r = await fetch(api + '/git/trees/HEAD?recursive=1', { headers: { Accept: 'application/vnd.github+json' } });
+      if (!r.ok) throw new Error(r.status === 403 ? 'GitHub rate limit — wait a minute and try again.' : 'GitHub said ' + r.status);
+      tree = (await r.json()).tree || [];
+    } catch (e) { this.setState({ note: 'Couldn’t list that repo: ' + e.message }); return; }
+    const textRe = /\.(md|markdown|mdown|txt|text|json|jsonl|ndjson|csv|tsv|html?|xml|yaml|yml|org|rst|adoc|log|ini|conf|cfg|toml|py|js|ts|rb|go|rs|java|c|h|cpp|hpp|sh|sql|r|jl|ipynb)$/i;
+    const skipDir = /(^|\/)(node_modules|vendor|dist|build|\.git|coverage|target|\.venv|venv|__pycache__|\.next|\.cache)(\/|$)/i;
+    const files = tree.filter(x => x.type === 'blob' && textRe.test(x.path) && !skipDir.test(x.path)).slice(0, 400);
+    if (!files.length) { this.setState({ note: 'No text files found in that repo.' }); return; }
+    this.setState({ busy: 'Pulling ' + owner + '/' + repo + '…' });
+    const rawBase = 'https://raw.githubusercontent.com/' + owner + '/' + repo + '/HEAD/';
+    const docs = [];
+    for (let i = 0; i < files.length; i++) {
+      try {
+        const r = await fetch(rawBase + files[i].path, { cache: 'no-cache' });
+        if (!r.ok) continue;
+        const t = await r.text();
+        if (t.length < 40 || t.length > 2000000) continue;
+        const parts = files[i].path.split('/');
+        const title = parts.length > 1 ? parts.slice(-2).join('/') : parts[0].replace(/\.[^.]+$/, '');
+        docs.push({ title, year: null, type: 'Repo file', text: t, url: 'https://github.com/' + owner + '/' + repo + '/blob/HEAD/' + files[i].path, note: 'From ' + owner + '/' + repo + ' · ' + files[i].path });
+      } catch (e) {}
+      if ((i + 1) % 10 === 0) this.setState({ busy: 'Pulling ' + owner + '/' + repo + ' · ' + (i + 1) + ' / ' + files.length + ' files…' });
+    }
+    if (!docs.length) { this.setState({ busy: '', note: 'Nothing readable came back from that repo.' }); return; }
+    this.addDocs(docs);
+    this.setState({ repoVal: '', note: 'Pulled ' + plural(docs.length, 'file') + ' from ' + owner + '/' + repo + ' into this workspace.' });
   }
   async loadHtml() {
-    if (this.corpusId() === 'ohs' && !SAMPLES.ohs.docs.length) await this.loadOhsCorpus();
     const id = this.corpusId(); const docs = this.baseDocs(id).concat(this.state.added[id] || []);
     this._loading = this._loading || {}; const todo = docs.filter(d => (d.wiki || d.hasHtml) && this._html[d.id] === undefined && !this._loading[d.id]);
     if (!todo.length) return;
@@ -3414,9 +3223,8 @@ class Component extends DCLogic {
       cast: castRows, load: load.slice(0, 40), back: back.slice(0, 20), backN: String(back.length), loadN: String(load.length), churn, srcRows, built: 'Built ' + new Date(X.builtAt).toLocaleString() + ' in ' + (X.ms / 1000).toFixed(1) + ' s from ' + String(X.from).split('/').pop(), onRebuild: () => { this._rix = null; this.loadReading(true); this.forceUpdate(); } } };
   }
   async sourceBytes(d) {
-    const N = await this.net(); const rel = d.bodyBase ? d.bodyBase + '.segments.json' : d.bodyPath || d.binPath || ((String(d.note || '').match(/text from ((?:derived|bytes|transcripts)\/\S+?)(?:\.|\s|$)/) || [])[1]) || null;
-    if (rel) { const b = await ohsBodyBytes(rel); if (b) return { buf: b.buf, rel, mime: /\.json$/.test(rel) ? 'application/json' : /\.txt$/.test(rel) ? 'text/plain' : 'application/octet-stream' }; }
-    if (d.pdfSrc) { try { const r = await fetch(d.pdfSrc); if (r.ok) return { buf: await r.arrayBuffer(), rel: d.pdfSrc.replace(OHS_RAW, ''), mime: 'application/pdf' }; } catch (e) {} }
+    await this.net();
+    if (d.pdfSrc) { try { const r = await fetch(d.pdfSrc); if (r.ok) return { buf: await r.arrayBuffer(), rel: (d.pdfSrc || '').split('/').pop(), mime: 'application/pdf' }; } catch (e) {} }
     return { buf: new TextEncoder().encode(d.text || '').buffer, rel: null, mime: 'text/plain' };
   }
   async publishAll() {
@@ -3427,7 +3235,7 @@ class Component extends DCLogic {
       const A = this.analysis(); const docs = A.docs.filter(d => this.counted(d)); run.total = docs.length;
       for (const d of docs) { if (run.stop) break; const key = d.ohsId || d.id; if (have.has(key) || (d.url && have.has(d.url))) { run.skipped++; this.forceUpdate(); continue; }
         try { const src = await this.sourceBytes(d); const ext = src.mime === 'application/pdf' ? '.pdf' : src.mime === 'application/json' ? '.json' : src.mime === 'text/plain' ? '.txt' : '.bin';
-          await this.publish({ bytes: src.buf, meta: { kind: d.media ? (d.bodyBase ? 'transcript' : 'video-link') : 'source', srcId: key, title: d.title, url: d.url || null, ytid: d.media && d.media.id || null, published: d.published || null, docKind: d.kind || null, from: src.rel ? 'ohs-custody/' + src.rel : 'workspace text', mime: src.mime, filename: key.replace(/[^\w-]+/g, '-').slice(0, 80) + ext } }, true);
+          await this.publish({ bytes: src.buf, meta: { kind: d.media ? (d.bodyBase ? 'transcript' : 'video-link') : 'source', srcId: key, title: d.title, url: d.url || null, ytid: d.media && d.media.id || null, published: d.published || null, docKind: d.kind || null, from: 'workspace text', mime: src.mime, filename: key.replace(/[^\w-]+/g, '-').slice(0, 80) + ext } }, true);
           if (d.url && !d.media) (await this.net()).saveToArchive(d.url); run.done++; }
         catch (e) { run.failed++; this.ilog('Could not publish ' + short(d.title, 50) + ': ' + e.message, 'bad'); if (e.status === 429) await new Promise(r => setTimeout(r, 5000)); }
         this.forceUpdate(); await new Promise(r => setTimeout(r, 250)); }
@@ -3610,7 +3418,7 @@ class Component extends DCLogic {
   }
   async renderFaithful(el, d, R, A, key, q) {
     this._faith = this._faith || {}; let page = d.faithful || this._faith[d.id];
-    if (!page) { el.innerHTML = '<p style="color:var(--mut);font:400 14px Hanken Grotesk;padding:24px">Loading the captured page…</p>'; try { const r = await fetch(OHS_RAW + d.binPath); if (!r.ok) throw new Error('HTTP ' + r.status); page = this._faith[d.id] = faithfulHtml(await r.text(), d.url || ''); } catch (e) { if (this._rKey === key) el.innerHTML = '<p style="color:var(--bad);padding:24px">Couldn’t load the capture (' + esc(e.message) + '). Switch to Reading.</p>'; return; } if (this._rKey !== key) return; }
+    if (!page) { el.innerHTML = '<p style="color:var(--bad);padding:24px">No captured bytes for this source in this browser.</p>'; return; }
     el.innerHTML = ''; const f = document.createElement('iframe');
     f.setAttribute('sandbox', 'allow-same-origin allow-popups allow-popups-to-escape-sandbox');
     f.style.cssText = 'width:100%;border:0;display:block;min-height:640px;background:#fff'; f.title = d.title;
@@ -3697,12 +3505,7 @@ class Component extends DCLogic {
     }
     return frag;
   }
-  async loadLazyBody(d) { this._lazy = this._lazy || {}; if (this._lazy[d.id]) return; this._lazy[d.id] = { loading: true };
-    let html = '', segN = 0, model = '', from = '';
-    const seg = d.bodyBase ? await ohsBodyBytes(d.bodyBase + '.segments.json') : null; if (seg) { try { const j = JSON.parse(new TextDecoder().decode(seg.buf)); const S = j.segments || []; html = ohsSegmentsHtml(S, d.title); segN = S.length; model = j.model || (j.source === 'youtube-caption-track' ? 'YouTube ' + (j.kind || 'caption track') : ''); from = seg.from; } catch (e) {} }
-    if (!html && d.bodyPath) { const tx = await ohsBodyBytes(d.bodyPath); if (tx) { const s = new TextDecoder().decode(tx.buf); if (d.bodyHtml) { const r = ohsHtmlText(s); html = r.html || textToHtml(r.text || ''); } else html = textToHtml(s); from = tx.from; } }
-    this._lazy[d.id] = { html: html || '<p>Transcript file not found in the local copy or on GitHub.</p>', segN, model, from, bytes: seg ? seg.buf.byteLength : 0 };
-    this._rKey = null; this.forceUpdate(); }
+  async loadLazyBody(d) { this._lazy = this._lazy || {}; if (this._lazy[d.id]) return; this._lazy[d.id] = { html: '<p>No body stored for this source in this browser.</p>', segN: 0, model: '', from: '', bytes: 0 }; this._rKey = null; this.forceUpdate(); }
   syncReader() {
     const el = this._rEl; const S = this.state; if (!el || S.view !== 'reader' || !S.readDoc || S.readMode === 'plain' || S.readMode === 'restated') return;
     const A = this.analysis(); const d = A.docById[S.readDoc]; if (!d) return;
@@ -3818,21 +3621,8 @@ class Component extends DCLogic {
       this._selKey = null; this.applySel(el); this.forceUpdate();
     } catch (e) { if (this._rKey === key) el.innerHTML = '<p style="color:var(--bad);padding:24px">Couldn’t render the captured PDF (' + esc(e.message) + '). Switch to Reading.</p>'; }
   }
-  corpusId() { return this.state.corpus || this.props.defaultCorpus || 'ohs'; }
-  baseDocs(id) { if (!SAMPLES[id]) return []; const b = SAMPLES[id].docs; if (id !== 'ohs' || !this._meet || !this._meet.length) return b; const have = new Set(b.map(d => d.ohsId || d.id)); return b.concat(this._meet.filter(d => !have.has(d.ohsId))); }
-  async loadMeetFolder(fileList) {
-    const files = [...(fileList || [])]; if (!files.length) return; this.setState({ busy: 'Reading ' + plural(files.length, 'file') + '…' });
-    const byPath = new Map(); files.forEach(f => { const p = (f.webkitRelativePath || f.name).replace(/\\/g, '/'); const i = p.search(/(^|\/)(readings|transcripts)\//); byPath.set(i >= 0 ? p.slice(p.indexOf(p.match(/(readings|transcripts)\//)[0])) : p.split('/').slice(-1)[0], f); });
-    const get = async (p, json) => { const f = byPath.get(p) || byPath.get(p.split('/').pop()); if (!f) throw new Error('missing ' + p); const t = await f.text(); return json ? JSON.parse(t) : t; };
-    const names = [...byPath.keys()].filter(p => /^readings\/[^/]+\.json$/.test(p)).map(p => p.replace(/^readings\//, '').replace(/\.json$/, ''));
-    const known = new Set(SAMPLES.ohs.docs.map(d => d.ohsId || String(d.id).replace(/^ohs-/, '')));
-    let docs = []; try { docs = await ohsExtraTranscripts(get, known, names); } catch (e) { this.setState({ busy: '', note: 'Couldn’t read that folder: ' + e.message }); return; }
-    if (!docs.length) { this.setState({ busy: '', note: 'No new meeting transcripts found. The folder needs readings/*.json with a transcripts/ path (and those transcript files), or sources.json.' }); return; }
-    this._meet = [...(this._meet || []).filter(d => !docs.some(x => x.ohsId === d.ohsId)), ...docs]; try { await idbPut('meet:ohs', this._meet); } catch (e) {}
-    this._key = null; this.setState(s => ({ htmlVer: s.htmlVer + 1, busy: '', note: 'Added ' + plural(docs.length, 'meeting transcript') + ' from your folder (' + docs.filter(d => d.media).length + ' with video). Kept in this browser until they’re pushed to the repo.' }));
-  }
-  async restoreMeet() { try { const m = await idbGet('meet:ohs'); if (Array.isArray(m) && m.length) { this._meet = m; this._key = null; this.setState(s => ({ htmlVer: s.htmlVer + 1 })); } } catch (e) {} }
-  clearMeet() { this._meet = []; idbPut('meet:ohs', []).catch(() => {}); this._key = null; this.setState(s => ({ htmlVer: s.htmlVer + 1 })); }
+  corpusId() { return this.state.corpus || 'custom'; }
+  baseDocs(id) { return SAMPLES[id] ? SAMPLES[id].docs : []; }
   analysis() {
     const id = this.corpusId(); const seenU = new Set(); const docs = this.baseDocs(id).concat(this.state.added[id] || []).filter(d => { const u = d.url && d.url.replace(/^https?:\/\/(www\.)?/, '').replace(/[#?].*$/, '').replace(/\/$/, '').toLowerCase(); if (!u || d.ohsId) { if (u) seenU.add(u); return true; } if (seenU.has(u)) return false; seenU.add(u); return true; });
     const key = id + ':' + docs.map(d => d.id).join(',') + ':' + this.state.htmlVer;
@@ -4227,7 +4017,6 @@ class Component extends DCLogic {
       ...(seenDocs.length ? [{ label: 'Seen, not kept', n: String(seenDocs.length), desc: 'Opened, but not counted.', items: seenDocs.map(cardOf) }] : []),
       ...(hasKinds ? Object.entries(kmap).sort((a, b) => KIND_ORDER.indexOf(a[0]) - KIND_ORDER.indexOf(b[0])).map(([k, ds]) => ({ label: k, n: String(ds.length), desc: KIND_DESC[k] || '', items: ds.slice().sort((x, y) => pubMsD(x) - pubMsD(y)).map(cardOf) })) : Object.entries(gmap).sort((x, y) => (x[0] === '_') - (y[0] === '_') || y[1].docs.length - x[1].docs.length).map(([k, g]) => ({ label: g.label, n: String(g.docs.length), desc: k === '_' ? (Object.keys(distinctOf).length ? 'No difference from the rest is large enough to matter.' : keptDocs.length < 2 ? '' : 'No difference between them is large enough to matter yet.') : '', items: g.docs.map(cardOf) }))),
     ];
-    const meetVals = { isOhs: this.corpusId() === 'ohs', meetN: (this._meet || []).length, hasMeet: !!(this._meet || []).length, meetLabel: plural((this._meet || []).length, 'meeting transcript') + ' loaded from your folder, not yet in the repo', onMeetPick: e => { this.loadMeetFolder(e.target.files); e.target.value = ''; }, onMeetClear: () => this.clearMeet() };
     const svMode = S.svMode || 'cards', svGroup = 'tabs'; const allSrcItems = srcGroups.flatMap(g => g.items.map(it => ({ it, g: g.label })));
     const docOfCard = it => A.docs.find(d => d.title === it.title) || null;
     const isVid = it => { const d = docByTitle.get(it.title); return !!(d && (d.medium === 'Video' || d.medium === 'Audio' || d.media)); }; const vidItems = allSrcItems.filter(x => isVid(x.it));
@@ -4248,7 +4037,7 @@ class Component extends DCLogic {
       : svGroup === 'tabs' ? [{ label: '', hasLabel: false, rows: mkRows(rowsAll.filter(r => svTab === '__all' || FAM(r.group) === svTab)) }]
       : srcGroups.map(g => ({ label: g.label + ' · ' + g.n, hasLabel: true, rows: mkRows(rowsAll.filter(r => r.group === g.label)) }));
     const seg = on => ({ bg: on ? 'var(--sel2)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)' });
-    const svVals = { ...meetVals, svCards: svMode === 'cards', svTable: svMode === 'table', svTabsOn: svGroup === 'tabs',
+    const svVals = { svCards: svMode === 'cards', svTable: svMode === 'table', svTabsOn: svGroup === 'tabs',
       svModes: [['cards', 'Cards'], ['table', 'Table']].map(([k, l]) => ({ label: l, ...seg(svMode === k), onClick: () => this.setState({ svMode: k }) })),
       svGroups: [['tabs', 'Tabs by kind'], ['sections', 'Sections by kind'], ['one', 'One list']].map(([k, l]) => ({ label: l, ...seg(svGroup === k), onClick: () => this.setState({ svGroup: k }) })),
       svTabs: tabs.map(t => ({ label: t.label, n: t.n, bd: t.id === svTab ? '#8b5cf6' : 'transparent', col: t.id === svTab ? 'var(--ink)' : 'var(--mut)', onClick: () => this.setState({ svTab: t.id }) })),
@@ -4420,7 +4209,7 @@ class Component extends DCLogic {
 
     const addN = k => (S.added[k] || []).length;
     const wsNames = loadWorkspaceNames();
-    const opts = ['ohs', 'keybridge', 'bridge', 'transit', 'kitchen'].map(k => ({ id: k, name: SAMPLES[k].name + (addN(k) ? ' + ' + addN(k) + ' added' : '') })).concat([{ id: 'custom', name: 'Your content' + (addN('custom') ? ' (' + addN('custom') + ')' : '') }])
+    const opts = [{ id: 'custom', name: 'Your content' + (addN('custom') ? ' (' + addN('custom') + ')' : '') }]
       .concat(Object.keys(S.added).filter(k => wsNames[k]).map(k => ({ id: k, name: wsNames[k] + ' (' + addN(k) + ')' })));
     const cid = this.corpusId(); const J = S.just; const demo = DEMOS[cid] || DEMOS.custom;
     // segmenting: the same paradigms computed once, driving both the left-rail quick segment switcher
@@ -4467,11 +4256,11 @@ class Component extends DCLogic {
       ['connections', 'See who is connected', 'Names that appear in the same statements.'],
     ];
     const gHi = on => ({ bg: on ? 'var(--sel)' : 'transparent', bd: on ? '#8b5cf6' : 'transparent', weight: on ? 600 : 500 });
-    const goalNav = [{ id: 'summary', label: 'Start here', count: '' }, { id: 'draft', label: 'Draft', count: this.activePins().length ? String(this.activePins().length) : '' }, { id: 'reading', label: 'The reading', count: this._rix ? String(this._rix.castTotal) : '' }, { id: 'ask', label: 'Ask the Fold', count: this._conv && this._conv.turns && this._conv.turns.length ? String(this._conv.turns.length) : '' }, { id: 'records', label: 'Records', count: this._db ? String(this._db.schema.tables.length) : '' }, { id: 'ingest', label: 'Ingest & publish', count: (this._net && this._net.chain && this._net.chain.length) ? String(this._net.chain.length) : '' }, ...GOALS.map(g => ({ id: g[0], label: g[1], count: counts[g[0]] }))].map(g => ({ ...g, ...gHi(view === g.id), onClick: () => this.go(g.id) }));
-    const NAVG = [['', [['summary', 'Start here'], ['ask', 'Ask the Fold']]], ['Read', [['sources', 'Sources'], ['names', 'Names'], ['records', 'Assertions']]], ['Explore', [['reading', 'The reading'], ['connections', 'Connections']]], ['Your work', [['draft', 'Draft'], ['ingest', 'Add & publish']]]];
+    const goalNav = [{ id: 'summary', label: 'Start here', count: '' }, { id: 'draft', label: 'Draft', count: this.activePins().length ? String(this.activePins().length) : '' }, { id: 'ask', label: 'Ask the Fold', count: this._conv && this._conv.turns && this._conv.turns.length ? String(this._conv.turns.length) : '' }, { id: 'records', label: 'Records', count: this._db ? String(this._db.schema.tables.length) : '' }, { id: 'ingest', label: 'Ingest & publish', count: (this._net && this._net.chain && this._net.chain.length) ? String(this._net.chain.length) : '' }, ...GOALS.map(g => ({ id: g[0], label: g[1], count: counts[g[0]] }))].map(g => ({ ...g, ...gHi(view === g.id), onClick: () => this.go(g.id) }));
+    const NAVG = [['', [['summary', 'Start here'], ['ask', 'Ask the Fold']]], ['Read', [['sources', 'Sources'], ['names', 'Names'], ['records', 'Assertions']]], ['Explore', [['connections', 'Connections']]], ['Your work', [['draft', 'Draft'], ['ingest', 'Add & publish']]]];
     const countFor = id => ({
       sources: String(A.docs.filter(d => this.counted(d)).length), names: String(D.nameList.length), records: String(F.length),
-      reading: this._rix ? String(this._rix.castTotal) : '', connections: String(D.edgeList.length),
+      connections: String(D.edgeList.length),
       draft: this.activePins().length ? String(this.activePins().length) : '',
       ingest: (this._net && this._net.chain && this._net.chain.length) ? String(this._net.chain.length) : '',
       ask: (this._conv && this._conv.turns && this._conv.turns.length) ? String(this._conv.turns.length) : '',
@@ -4557,12 +4346,8 @@ class Component extends DCLogic {
         const months = {}; A.docs.filter(d => this._cnt.has(d.id)).forEach(d => { const m = String(d.published || '').slice(0, 7); if (/^\d{4}-\d{2}$/.test(m)) months[m] = (months[m] || 0) + 1; }); const topM = Object.entries(months).sort((a, b) => b[1] - a[1]).slice(0, 4).map(x => x[0]).sort();
         const lensOpts = [{ k: 'fin', label: 'Financials' }, { k: 'audit', label: 'Audit' }, ...topNames.map(n => ({ k: 'name', v: n.name, label: n.name })), ...topM.map(m => ({ k: 'time', v: m, label: this.lensLabel({ k: 'time', v: m }) }))]
           .map(o => ({ ...o, ...pill(onL(o.k, o.v)), onClick: () => setL(o.v === undefined ? { k: o.k } : { k: o.k, v: o.v }) }));
-        const bid = S.suBase || 'general';
-        const baseOpts = [['general', 'General English'], ['gov', 'Government & legal'], ['ency', 'Encyclopedic'], ['lit', 'Books'], ['none', 'None (this content only)']].map(([id, label]) => ({ label, ...pill(bid === id), onClick: () => this.setState({ suBase: id, suN: 30 }) }));
-        const bl = bid !== 'none' && _lpCache[bid];
         const lg = (lab, ks) => ({ label: lab, items: lensOpts.filter(o => ks.includes(o.k)) });
-        return { suLensOpts: lensOpts, suLensGroups: [lg('Topic', ['fin', 'audit']), lg('Name', ['name']), lg('Month', ['time'])].filter(g => g.items.length), suBaseOpts: baseOpts, suNeedLens: !L, suHasLens: !!L, suLensText: S.suLensText || '', onSuLensText: e => this.setState({ suLensText: e.target.value }), onSuLensKey: e => { if (e.key === 'Enter' && e.target.value.trim()) setL({ k: 'text', v: e.target.value.trim() }); },
-          suBaseNote: bid === 'none' ? 'No outside baseline: expectations come only from this content, so anything new to the record looks surprising.' : bl ? 'Normal = ' + bl.desc + ': ' + plural(bl.files, 'document') + ', ' + bl.N.toLocaleString() + ' content words. A word common there moves little; one rare there moves a lot the first time this view meets it.' : 'Loading ' + LP_SETS[bid].desc + '…',
+        return { suLensOpts: lensOpts, suLensGroups: [lg('Topic', ['fin', 'audit']), lg('Name', ['name']), lg('Month', ['time'])].filter(g => g.items.length), suNeedLens: !L, suHasLens: !!L, suLensText: S.suLensText || '', onSuLensText: e => this.setState({ suLensText: e.target.value }), onSuLensKey: e => { if (e.key === 'Enter' && e.target.value.trim()) setL({ k: 'text', v: e.target.value.trim() }); },
           suViewLine: L ? 'Looking from ' + this.lensLabel(L) + (SU && SU.n ? ': ' + plural(SU.n, 'statement') + ' in view' : '') : '' }; })(),
       suCursors: SU_CURSORS.map(c => { const on = SU && SU.cur === c.id; return { label: c.label, desc: c.desc, bg: on ? 'var(--sel)' : 'var(--s1)', bd: on ? '#8b5cf6' : 'var(--line2)', fw: on ? 600 : 500, onClick: () => this.setState({ cursor: c.id, suN: 30 }) }; }),
       suReadingEmpty: !!(SU && SU.cur === 'reading' && SU.n === 0),
@@ -4607,12 +4392,6 @@ class Component extends DCLogic {
       hasFilters: chips.length > 0 && view !== 'search', chips, clearAll: () => this.setState(s => ({ f: {}, q: '', ...(s.view === 'search' ? { view: s.prevView || 'summary' } : {}) })),
       filterNote: plural(F.length, 'statement') + ' of ' + A.sts.length + ' — every terrain now reflects only these.',
       filterCount: F.length.toLocaleString() + ' of ' + plural(A.sts.length, 'statement'),
-      repo: (() => { const ci = this._corpusInfo || {}, wi = this._wsInfo || {}; const d8 = x => x ? String(x).slice(0, 16).replace('T', ' ') : '';
-        const corpusLine = !ci.from ? 'Loading…' : ci.from === 'repo' ? 'Loaded from the shared store · built ' + d8(ci.builtAt) + ' · ' + plural(ci.n || 0, 'source') + (ci.stale ? ' · the custody manifest is newer than this file' : '') + '.' : 'Not in the store — read directly from ' + plural(ci.n || 0, 'capture') + '.';
-        const locN = (S.added.ohs || []).length; const wsLine = (wi.found ? 'In the store · saved ' + d8(wi.savedAt) + (wi.merged ? ' · ' + plural(wi.merged, 'source') + ' merged in' : '') + '. ' : 'Not in the store. ') + 'This browser holds ' + plural(locN, 'added source') + ', ' + plural(Object.keys(this.metaAll().ohs || {}).length, 'decision') + ', ' + plural(Object.keys(this.readLog()).length, 'opened source') + '.';
-        return { show: !!S.showRepo, name: OHS_REPO, open: () => this.setState({ showRepo: true, repoMsg: '' }), close: () => this.setState({ showRepo: false }), closeBg: e => { if (e.target === e.currentTarget) this.setState({ showRepo: false }); },
-          dot: ci.from ? 'var(--ok)' : 'var(--mut)', title: 'Read-only source store',
-          corpusLine, wsLine, rebuild: () => { this.setState({ showRepo: false }); this.rebuildLive(); }, msg: '', hasMsg: false }; })(),
       openAdd: () => this.setState({ showAdd: true }), closeAdd: () => this.setState({ showAdd: false }),
       closeAddBg: e => { if (e.target === e.currentTarget) this.setState({ showAdd: false }); },
       goSummary: () => this.go('summary'), summaryBtn: hi(view === 'summary'),
@@ -4655,6 +4434,7 @@ class Component extends DCLogic {
         return pf.has || view === 'draft' || view === 'profile' ? { ...det, ...side, hasSel: false, noSel: true, pf } : { ...det, ...side, pf }; })(),
       showAdd: S.showAdd, draftTitle: S.draftTitle, draftYear: S.draftYear, draftText: S.draftText,
       onDraftTitle: e => this.setState({ draftTitle: e.target.value }), onDraftYear: e => this.setState({ draftYear: e.target.value }), onDraftText: e => this.setState({ draftText: e.target.value }),
+      repoVal: S.repoVal, onRepoVal: e => this.setState({ repoVal: e.target.value }), addRepo: () => this.addRepo(),
       addDraft: () => { const t = S.draftText.trim(); if (!t) { this.setState({ note: 'Paste some text first.' }); return; } this.addDocs([{ title: S.draftTitle.trim(), year: parseInt(S.draftYear) || null, text: t }]); },
       onFiles: e => this.ingest({ files: e.target.files, getData: () => '' }),
       customNote: S.note || (addN(cid) ? plural(addN(cid), 'item') + ' added here' : ''),
@@ -4748,7 +4528,7 @@ class Component extends DCLogic {
   markRead(docId) { const rl = this.readLog(); if (rl[docId]) return; this._rlog[this.corpusId()] = { ...rl, [docId]: Date.now() }; try { localStorage.setItem('fold-explorer-readlog', JSON.stringify(this._rlog)); } catch (e) {} }
   surprise(A) {
     const cur = SU_CURSORS.some(c => c.id === this.state.cursor) ? this.state.cursor : 'pub';
-    const lens = this.state.suLens; const bid = this.state.suBase || 'general'; const base = bid === 'none' ? null : _lpCache[bid];
+    const lens = this.state.suLens; const base = null;
     if (!lens) return { none: true, needLens: true, list: [], by: {}, n: 0 };
     const lensFn = this.lensFn(lens, A);
     const rl = this.readLog();
@@ -4955,7 +4735,6 @@ class Component extends DCLogic {
     this._rs = { key, v }; return v;
   }
   restatedVals(d, A) { const v = this.restate(d, A); return v.ok ? v : { note: v.note, sections: [], hasCover: false, cover: { pairs: [] } }; }
-  ensureBaseline(id) { if (this._lpLoading === id) return; this._lpLoading = id; loadBaseline(id, (n, t) => this.setState({ busy: 'Loading the ' + LP_SETS[id].label.toLowerCase() + ' baseline from live_priors… ' + n + ' / ' + t })).then(() => { this._lpLoading = null; this._su = null; this.setState({ busy: '', suVer: (this.state.suVer || 0) + 1 }); }); }
   lensFn(L, A) {
     const MON = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
     if (L.k === 'fin') { const re = /\b(budget|budgets|fund|funds|funding|funded|grant|grants|contract|contracts|spend|spending|spent|cost|costs|revenue|revenues|million|billion|dollars?|appropriat\w*|fiscal|payment|payments|paid|salary|salaries|invoice\w*)\b/i; return st => re.test(st.text) || st.figs.some(g => /dollar|percent/.test(g.unit)); }
@@ -4974,7 +4753,7 @@ class Component extends DCLogic {
     [...x.det].sort((a, b) => b.b - a.b).slice(0, 3).forEach(o => {
       const isF = o.w.startsWith('f:'); const isN = o.w.startsWith('n:'); const nm = isN ? o.w.slice(2) : isF ? o.w.slice(2).replace(/:([\d.e+]+)$/, (m, v) => ' ' + Number(v).toLocaleString()) : o.w;
       const rest = o.c ? plural(o.c, 'other mention') + ' in view' + (su.cur === 'loo' ? ' outside this source' : su.cur === 'source' ? ' earlier in this source' : ' before this, in other sources') : (su.cur === 'loo' ? 'nowhere else in view' : su.cur === 'source' ? 'first time in this source' : 'first time in view');
-      const norm = isN ? 'a name' : isF ? 'a figure' : base ? (base.counts.get(nm) ? 'about 1 in ' + Math.round(1 / o.p).toLocaleString() + ' words of normal text' : 'never in normal text') : '';
+      const norm = isN ? 'a name' : isF ? 'a figure' : '';
       out.push({ text: (isN || isF ? nm : '“' + nm + '”') + ' — ' + [norm, rest].filter(Boolean).join('; '), name: isN ? nm : null }); });
     return out;
   }
