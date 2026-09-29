@@ -102,13 +102,26 @@ select option{background:var(--s1);color:var(--ink)}
   </div>
   <div style="flex:1 1 0;min-width:0;box-sizing:border-box;{{ colPad }}">
 
-  <header style="position:sticky;top:0;z-index:20;background:var(--hdr);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)">
-    <div style="max-width:1230px;padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-      <div style="flex:1 1 320px;min-width:220px;display:flex;align-items:center;border:1px solid var(--line2);border-radius:8px;background:var(--s1)">
-        <input defaultValue="{{ omniVal }}" ref="{{ omniRef }}" onChange="{{ onOmni }}" onKeyDown="{{ onOmniKey }}" placeholder="Search, ask a question, or paste a link — then Enter" style="flex:1;min-width:0;background:transparent;border:0;color:var(--ink);font:400 14px 'Hanken Grotesk';padding:8px 12px;outline:none">
-        <sc-if value="{{ omniPending }}" hint-placeholder-val="{{ false }}"><button onClick="{{ omniGo }}" style="margin:3px;border:0;background:var(--acc2);color:#fff;border-radius:6px;padding:4px 12px;cursor:pointer;font:600 13px 'Hanken Grotesk';white-space:nowrap">Search ↵</button></sc-if>
-        <sc-if value="{{ omniUrl }}" hint-placeholder-val="{{ false }}"><button onClick="{{ omniOpen }}" style="margin:3px;border:0;background:var(--acc2);color:#fff;border-radius:6px;padding:4px 12px;cursor:pointer;font:600 14px 'Hanken Grotesk'">Open page ↵</button></sc-if>
+  <header ref="{{ hdrRef }}" style="position:sticky;top:0;z-index:20;background:var(--hdr);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)">
+    <div style="max-width:1230px;padding:12px 20px 10px;display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="flex:1 1 320px;min-width:220px;display:flex;align-items:center;border:1px solid var(--line2);border-radius:8px;background:var(--s1)">
+          <input defaultValue="{{ omniVal }}" ref="{{ omniRef }}" onChange="{{ onOmni }}" onKeyDown="{{ onOmniKey }}" placeholder="Search, ask a question, or paste a link — then Enter" style="flex:1;min-width:0;background:transparent;border:0;color:var(--ink);font:400 14px 'Hanken Grotesk';padding:8px 12px;outline:none">
+          <sc-if value="{{ omniPending }}" hint-placeholder-val="{{ false }}"><button onClick="{{ omniGo }}" style="margin:3px;border:0;background:var(--acc2);color:#fff;border-radius:6px;padding:4px 12px;cursor:pointer;font:600 13px 'Hanken Grotesk';white-space:nowrap">Search ↵</button></sc-if>
+          <sc-if value="{{ omniUrl }}" hint-placeholder-val="{{ false }}"><button onClick="{{ omniOpen }}" style="margin:3px;border:0;background:var(--acc2);color:#fff;border-radius:6px;padding:4px 12px;cursor:pointer;font:600 14px 'Hanken Grotesk'">Open page ↵</button></sc-if>
+        </div>
       </div>
+      <sc-if value="{{ hasCrumbs }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font:500 12px 'JetBrains Mono';color:var(--dim)">
+          <sc-for list="{{ crumbs }}" as="c" hint-placeholder-count="3">
+            <span style="display:flex;align-items:center;gap:6px;min-width:0">
+              <sc-if value="{{ c.hasOn }}" hint-placeholder-val="{{ false }}"><button onClick="{{ c.onClick }}" title="{{ c.title }}" style="all:unset;cursor:pointer;color:var(--mut);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" style-hover="color:var(--acc)">{{ c.label }}</button></sc-if>
+              <sc-if value="{{ c.noOn }}" hint-placeholder-val="{{ true }}"><span style="color:var(--ink2);font-weight:600;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.label }}</span></sc-if>
+              <sc-if value="{{ c.hasSep }}" hint-placeholder-val="{{ false }}"><span style="color:var(--dim)">›</span></sc-if>
+            </span>
+          </sc-for>
+        </div>
+      </sc-if>
     </div>
   </header>
 
@@ -557,7 +570,7 @@ select option{background:var(--s1);color:var(--ink)}
               </section>
             </sc-for>
           </div>
-          <aside style="flex:0 1 290px;min-width:250px;position:sticky;top:76px;display:flex;flex-direction:column;gap:12px">
+          <aside style="flex:0 1 290px;min-width:250px;position:sticky;top:calc(var(--hdr-h, 84px) + 12px);display:flex;flex-direction:column;gap:12px">
             <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
               <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">What the model carries</span>
               <span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--mut)">A paraphrase of the conversation so far. It can’t support a claim, and the model is told so.</span>
@@ -817,7 +830,7 @@ select option{background:var(--s1);color:var(--ink)}
               </div>
             </sc-if>
           </section>
-          <aside style="flex:0 1 360px;min-width:280px;position:sticky;top:84px;max-height:calc(100vh - 104px);overflow:auto;display:flex;flex-direction:column;gap:10px">
+          <aside style="flex:0 1 360px;min-width:280px;position:sticky;top:calc(var(--hdr-h, 84px) + 20px);max-height:calc(100vh - 104px);overflow:auto;display:flex;flex-direction:column;gap:10px">
             <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Pins · {{ dr.pinCount }}</span>
             <sc-if value="{{ dr.noPins }}" hint-placeholder-val="{{ false }}">
               <div style="border:1px dashed var(--line2);border-radius:12px;padding:16px;font:400 14px/1.5 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">Select any passage in a source, or press Pin on a search answer or a profile mention.</div>
@@ -1642,7 +1655,7 @@ select option{background:var(--s1);color:var(--ink)}
           </div>
         </sc-if>
         <div style="background:var(--s1);border:1px solid var(--line);border-radius:14px">
-          <div style="position:sticky;top:61px;z-index:15;background:var(--s1);border-radius:14px 14px 0 0;overflow:hidden">
+          <div style="position:sticky;top:var(--hdr-h, 61px);z-index:15;background:var(--s1);border-radius:14px 14px 0 0;overflow:hidden">
           <div style="display:flex;gap:14px;align-items:flex-start;padding:16px 18px 14px;flex-wrap:wrap">
             <button onClick="{{ closeReader }}" title="Back" style="flex:none;width:36px;height:36px;border-radius:10px;border:1px solid var(--line2);background:var(--s2);color:var(--ink);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center" style-hover="border-color:var(--acc)">←</button>
             <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:3px">
@@ -1699,14 +1712,14 @@ select option{background:var(--s1);color:var(--ink)}
           </sc-if>
           <sc-if value="{{ rdMedia.has }}" hint-placeholder-val="{{ false }}">
             <div style="border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));align-items:start">
-              <div style="position:sticky;top:61px;min-width:0;padding:18px 20px 18px 24px;display:flex;flex-direction:column;gap:10px;background:var(--s1);z-index:2">
+              <div style="position:sticky;top:var(--hdr-h, 61px);min-width:0;padding:18px 20px 18px 24px;display:flex;flex-direction:column;gap:10px;background:var(--s1);z-index:2">
                 <iframe id="fx-yt" src="{{ rdMedia.src }}" title="{{ rdMedia.title }}" referrerPolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="{{ true }}" style="width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000"></iframe>
                 <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><span id="fx-yt-now" style="font:600 13px 'JetBrains Mono';color:var(--acc);white-space:nowrap"></span><span style="font:500 13px 'Hanken Grotesk';color:var(--ink2)">{{ rdMedia.kindLine }}</span></div>
                 <span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">{{ rdMedia.note }}</span>
                 <sc-if value="{{ rdMedia.timed }}" hint-placeholder-val="{{ false }}"><label style="display:flex;gap:8px;align-items:center;font:500 13px 'Hanken Grotesk';color:var(--ink2);cursor:pointer"><input type="checkbox" checked="{{ rdMedia.follow }}" onChange="{{ rdMedia.onFollow }}"></input>Follow the video in the transcript</label></sc-if>
                 <a href="{{ rdMedia.url }}" target="_blank" rel="noopener" style="font:500 13px 'Hanken Grotesk';color:var(--acc);text-decoration:none">Open on YouTube ↗</a>
               </div>
-              <div id="fx-tx" style="min-width:0;overflow-x:hidden;overflow-wrap:anywhere;border-left:1px solid var(--line);padding:18px 28px 40px;font:400 17px/1.65 'Newsreader',serif;color:var(--ink);max-height:calc(100vh - 80px);overflow:auto;position:sticky;top:61px">
+              <div id="fx-tx" style="min-width:0;overflow-x:hidden;overflow-wrap:anywhere;border-left:1px solid var(--line);padding:18px 28px 40px;font:400 17px/1.65 'Newsreader',serif;color:var(--ink);max-height:calc(100vh - 80px);overflow:auto;position:sticky;top:var(--hdr-h, 61px)">
                 <span style="display:block;font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-bottom:10px">{{ rdMedia.txTitle }}</span>
                 <div ref="{{ readerRef }}"></div>
               </div>
@@ -1932,6 +1945,7 @@ select option{background:var(--s1);color:var(--ink)}
 function digammaH(x) { let r = 0; while (x < 6) { r -= 1 / x; x += 1; } const f = 1 / (x * x); return r + Math.log(x) - 0.5 / x - f * (1 / 12 - f * (1 / 120 - f * (1 / 252 - f * (1 / 240 - f / 132)))); }
 const klAdmitH = (bv, B) => Math.max(0, Math.log(B) - Math.log(bv) + digammaH(bv + 1) - digammaH(B + 1));
 const holoTokens = t => [...new Set((clean(t).toLowerCase().replace(/[\u2019']/g, '').match(/[a-z][a-z-]{2,}/g) || []).filter(w => !STOP.has(w) && !/^-|-$/.test(w)))];
+const VIEW_LABEL = { summary: 'Overview', search: 'Search', sources: 'Sources', names: 'Names', types: 'Types', figures: 'Figures', statements: 'Statements', connections: 'Connections', framing: 'Framing', views: 'Views', patterns: 'Patterns', surprise: 'Surprise', reader: 'Sources', profile: 'Names', draft: 'Draft', records: 'Records', ask: 'Ask the Fold', ingest: 'Add & publish' };
 const SU_CURSORS = [
   { id: 'loo', label: 'Everything else', desc: 'Each statement against normal text plus everything the other sources in this view say, regardless of date: what this source says that nothing else in view, and nothing normal, prepares you for.' },
   { id: 'pub', label: 'When published', desc: 'Sources in the order they were published: what a reader following the story would have learned, and when.' },
@@ -2609,8 +2623,9 @@ class Component extends DCLogic {
   _html = {};
 
   componentDidMount() {
+    setTimeout(() => this.measureHdr(), 400);
     this.applyTheme(); this._c = 0; import(new URL('holodeck-match.js', location.href).href).then(M => { this._mt = M; this._qc = null; this.forceUpdate(); }).catch(() => {}); this.loadHtml(); if (typeof location !== 'undefined' && /fx-share=/.test(location.hash)) { this.netInit(); this.setState({ view: 'draft' }); }
-    this._onRz = () => { if ((window.innerWidth < SIDE_PANEL_MIN_VW) !== this._narrow) this.forceUpdate(); }; window.addEventListener('resize', this._onRz);
+    this._onRz = () => { this.measureHdr(); if ((window.innerWidth < SIDE_PANEL_MIN_VW) !== this._narrow) this.forceUpdate(); }; window.addEventListener('resize', this._onRz);
     this._onSelCh = () => { cancelAnimationFrame(this._selRaf); this._selRaf = requestAnimationFrame(() => this.updatePinPop()); };
     document.addEventListener('selectionchange', this._onSelCh); window.addEventListener('scroll', this._onSelCh, true);
     this._seenIn = {};
@@ -2628,7 +2643,7 @@ class Component extends DCLogic {
     window.addEventListener('dragenter', this._h.enter); window.addEventListener('dragleave', this._h.leave); window.addEventListener('dragover', this._h.over); window.addEventListener('drop', this._h.drop); window.addEventListener('paste', this._h.paste);
   }
   componentWillUnmount() { window.removeEventListener('resize', this._onRz); if (this._pdfRo) { try { this._pdfRo.disconnect(); } catch (e) {} } window.removeEventListener('message', this._onYt); document.removeEventListener('selectionchange', this._onSelCh); window.removeEventListener('scroll', this._onSelCh, true); window.removeEventListener('message', this._onMsg); const h = this._h; window.removeEventListener('dragenter', h.enter); window.removeEventListener('dragleave', h.leave); window.removeEventListener('dragover', h.over); window.removeEventListener('drop', h.drop); window.removeEventListener('paste', h.paste); }
-  componentDidUpdate() { this.applyTheme(); if (this._prevCorpus !== this.state.corpus || this._prevAdded !== this.state.added) { this._prevCorpus = this.state.corpus; this._prevAdded = this.state.added; this.loadHtml(); } this.syncReader(); this.ytHook(); this.syncOmni(); }
+  componentDidUpdate() { this.applyTheme(); this.measureHdr(); if (this._prevCorpus !== this.state.corpus || this._prevAdded !== this.state.added) { this._prevCorpus = this.state.corpus; this._prevAdded = this.state.added; this.loadHtml(); } this.syncReader(); this.ytHook(); this.syncOmni(); }
   applyTheme() { document.documentElement.dataset.theme = this.state.theme; }
   async ingest(dt) {
     if (!dt) return;
@@ -2713,6 +2728,12 @@ class Component extends DCLogic {
   }
   plainRef = el => { this._plainEl = el; };
   omniRef = el => { this._omniEl = el; };
+  hdrRef = el => { this._hdrEl = el; this.measureHdr(); };
+  measureHdr() {
+    const el = this._hdrEl; if (!el) return;
+    const h = Math.round(el.getBoundingClientRect().height);
+    if (h && h !== this._hdrH) { this._hdrH = h; try { document.documentElement.style.setProperty('--hdr-h', h + 'px'); } catch (e) {} }
+  }
   // the search box is uncontrolled so typing never waits on a render; write it only when the query changes from elsewhere (Escape, a narrow-to button, a corpus switch)
   syncOmni() { const S = this.state; const v = S.qDraft !== undefined ? S.qDraft : S.q || ''; if (this._omniLast === undefined) { this._omniLast = v; return; } if (v === this._omniLast) return; this._omniLast = v; if (this._omniEl && this._omniEl.value !== v) this._omniEl.value = v; }
   capL(key, arr, n) { const step = Math.max(n, 20); const lim = Math.max(n, (this.state.caps || {})[key] || n); const all = arr.length; const set = v => this.setState(s => ({ caps: { ...(s.caps || {}), [key]: v } }));
@@ -4207,6 +4228,31 @@ class Component extends DCLogic {
     this._chips = chips;
     const addAsFold = { show: chips.length > 0 && view !== 'search', label: 'Save as a fold', onClick: () => { const label = chips.map(c => c.k.toLowerCase() + ' ' + c.v).join(' · '); if (!label) return; this.addFoldFromFilter(label, { ...f }, S.q, new Set(F.map(st => st.doc)).size); } };
 
+    // breadcrumbs: workspace › surface › (narrows) › the content you're in — every level above the last is a way back
+    const crumbs = (() => {
+      const out = [{ label: this.corpusName(), onClick: () => this.go('summary') }];
+      const push = (label, onClick) => out.push({ label, onClick });
+      push(VIEW_LABEL[view] || 'Overview', () => this.go(view));
+      chips.forEach(c => { if (c.k !== 'Search') push(c.k.toLowerCase() + ': ' + c.v, c.onClear); });
+      const rd = view === 'reader' && S.readDoc ? A.docById[S.readDoc] : null;
+      const selSt = S.sel && S.sel.type === 'statement' ? A.byId[S.sel.id] : null;
+      const selNm = S.sel && S.sel.type === 'name' ? S.sel.id : null;
+      if (view === 'profile' && selNm) push(selNm, null);
+      else if (rd) {
+        push(rd.title, () => this.read(rd.id));
+        if (selSt) push(short(clean(selSt.text), 70), null);
+        else if (selNm) push(selNm, null);
+      }
+      else if (view === 'records' && S.dbT) push(S.dbT, null);
+      else if (view === 'search' && S.q.trim()) push('“' + S.q.trim() + '”', null);
+      else if (view === 'summary' && this._topicStr) push('Topic: ' + this._topicStr, () => this.setMeta('__topic', ''));
+      else if (selSt) push(short(clean(selSt.text), 70), null);
+      else if (S.sel && S.sel.type === 'doc' && A.docById[S.sel.id]) push(A.docById[S.sel.id].title, () => this.read(S.sel.id));
+      else if (selNm) push(selNm, null);
+      const last = out[out.length - 1];
+      return out.map((c, i) => ({ label: c.label, title: c.label, hasOn: !!c.onClick && c !== last, noOn: !c.onClick || c === last, hasSep: i < out.length - 1, onClick: c !== last && c.onClick ? c.onClick : null }));
+    })();
+
     const addN = k => (S.added[k] || []).length;
     const wsNames = loadWorkspaceNames();
     const opts = [{ id: 'custom', name: 'Your content' + (addN('custom') ? ' (' + addN('custom') + ')' : '') }]
@@ -4399,6 +4445,7 @@ class Component extends DCLogic {
       docCards, gaps, nameGroups, nameTable, typeBlocks, measures, noMeasures: !measures.length, ...(() => { const c = this.capL('stg', stGroups, 8); return { stGroups: c.items.map(g => ({ ...g, ...this.capL('stg:' + g.title, g.items, 4) })), stgMore: c }; })(),
       graphEl, timeInfo, ...orbX, ...(() => { const c = this.capL('pairs', pairs, 12); return { pairs: c.items, pairsMore: c }; })(), noPairs: !pairs.length, frameCols: frameCols.map(c => ({ ...c, ...this.capL('fr:' + c.label, c.items, 5) })), timeBars, ...(() => { const c = this.capL('topics', topicChips, 24); return { topicChips: c.items, topicMore: c }; })(), ...(() => { const c = this.capL('srcbars', [...sourceBars].sort((a, b) => +b.n - +a.n), 12); return { sourceBars: c.items, srcBarMore: c }; })(), shapes, noShapes: !shapes.length, hasRoutine: (this._routineN || 0) > 0, routineLine: plural(this._routineN || 0, 'routine agreement') + ' hidden: repeated by several sources, but about names and words that appear together in most sources anyway.', holds, breaks, noBreaks: !breaks.length,
       hdrShow: !isEmpty && view !== 'reader' && view !== 'profile',
+      crumbs, hasCrumbs: crumbs.length > 1,
       ...(() => { const d0 = S.readDoc && A.docById[S.readDoc]; if (!d0) return { rd: { eyebrow: '', title: '', meta: '' } }; const dsts = A.stsByDoc[d0.id] || []; const nm = new Set(dsts.flatMap(s => s.names)); const host = d0.url ? (/wikipedia\.org/.test(d0.url) ? 'Wikipedia' : d0.url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]) : 'Your content'; return { rd: { eyebrow: [host, d0.type, d0.year].filter(Boolean).join(' · '), title: d0.title, meta: [d0.authors && d0.authors.length ? 'By ' + d0.authors.join(', ') : '', d0.pubLabel ? 'Published ' + d0.pubLabel : ''].filter(Boolean).map(x => x + ' · ').join('') + plural(dsts.length, 'statement') + ' · ' + plural(nm.size, 'name') + ' · ' + plural(dsts.reduce((a, s) => a + s.figs.length, 0), 'figure') } }; })(),
       gsw: { track: S.ground.on ? 'var(--acc2)' : 'var(--line2)', left: S.ground.on ? '16px' : '2px' },
       toggleGround: () => this.setState(s => ({ ground: { ...s.ground, on: !s.ground.on } })),
