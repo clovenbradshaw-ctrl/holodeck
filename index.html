@@ -1393,12 +1393,11 @@ select option{background:var(--s1);color:var(--ink)}
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
             <div style="display:flex;flex-direction:column;gap:4px;min-width:0;flex:1 1 320px">
               <div style="font:600 17px 'Hanken Grotesk';color:var(--ink)">{{ orb.title }}</div>
-              <div style="font:400 13px/1.45 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">{{ orb.note }} {{ orb.depthNote }}</div>
+              <div style="font:400 13px/1.45 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">{{ orb.note }}</div>
             </div>
             <div style="display:flex;gap:6px;flex-wrap:wrap">
               <sc-if value="{{ orb.canBack }}" hint-placeholder-val="{{ false }}"><button onClick="{{ orb.back }}" style="display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:8px;border:1px solid var(--line);background:var(--s1);color:var(--ink);font:500 13px 'Hanken Grotesk';cursor:pointer" style-hover="border-color:#8b5cf6">Back to topic</button></sc-if>
-              <button onClick="{{ orb.spin }}" style="display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:8px;border:1px solid var(--line);background:var(--s1);color:var(--ink);font:500 13px 'Hanken Grotesk';cursor:pointer" style-hover="border-color:#8b5cf6">{{ orb.spinLabel }}</button>
-              <button onClick="{{ orb.dim }}" style="display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:8px;border:1px solid var(--line);background:var(--s1);color:var(--ink);font:500 13px 'Hanken Grotesk';cursor:pointer" style-hover="border-color:#8b5cf6">{{ orb.dimLabel }}</button>
+
             </div>
           </div>
           <div style="border-radius:10px;background:var(--bg);border:1px solid var(--line)">{{ graphEl }}</div>
@@ -3066,33 +3065,14 @@ async function readText(file, M) {
   } catch (e) { return { title, year, type, text: '', note: 'Couldn’t read ' + name + ' (' + e.message + ').' }; }
 }
 
-function Orbit(p) {
-  const R = React; const [, setT] = R.useState(0); const st = R.useRef({ m: {}, last: 0, hover: null }).current; st.p = p;
-  R.useEffect(() => { let raf; const loop = t => { const dt = st.last ? Math.min(0.05, (t - st.last) / 1000) : 0; st.last = t; const k = 1 - Math.pow(0.03, dt);
-      st.p.nodes.forEach(n => { const c = st.m[n.id] || (st.m[n.id] = { r: n.r + (n.parent ? 20 : 140), a: n.a, h: n.h, o: 0, ph: 0, parent: n.parent }); c.parent = n.parent; c.r += (n.r - c.r) * k; let da = n.a - c.a; da = Math.atan2(Math.sin(da), Math.cos(da)); c.a += da * k; c.h += (n.h - c.h) * k; c.o += (1 - c.o) * k;
-        if (st.p.spin && !st.hover) c.ph += dt * (n.parent ? 0.55 * (30 / (c.r + 10)) : 0.09 * (120 / (c.r + 120))); });
-      setT(x => (x + 1) % 1e6); raf = requestAnimationFrame(loop); }; raf = requestAnimationFrame(loop); return () => cancelAnimationFrame(raf); }, []);
-  const h = R.createElement; const W = 860, H = 600, cx = W / 2, cy = H / 2 + 10, FOC = 1100;
-  const el = p.flat ? Math.PI / 2 : 0.55, se = Math.sin(el), ce = Math.cos(el);
-  const pr = (x, y, hh) => { const z = y * ce + hh * se; const s = FOC / (FOC - z); return { x: cx + x * s, y: cy + (y * se - hh * ce) * s, z, s }; };
-  const Wd = {}; const byId = {}; p.nodes.forEach(n => { byId[n.id] = n; });
-  const world = id => { if (Wd[id]) return Wd[id]; const n = byId[id], c = st.m[id]; if (!n || !c) return null; if (n.center) return (Wd[id] = { x: 0, y: 0, h: 0 });
-    const base = n.parent ? world(n.parent) : { x: 0, y: 0, h: 0 }; if (!base) return null; const ang = c.a + c.ph; return (Wd[id] = { x: base.x + Math.cos(ang) * c.r, y: base.y + Math.sin(ang) * c.r, h: base.h + (n.parent ? 0 : c.h) }); };
-  const P = {}; p.nodes.forEach(n => { const w = world(n.id), c = st.m[n.id]; if (!w || !c) return; P[n.id] = { ...pr(w.x, w.y, w.h), o: c.o, w }; });
-  const ring = (ox, oy, oh, r, key, style) => { const pts = []; for (let j = 0; j <= 72; j++) { const a2 = j / 72 * Math.PI * 2; const q = pr(ox + Math.cos(a2) * r, oy + Math.sin(a2) * r, oh); pts.push(q.x.toFixed(1) + ',' + q.y.toFixed(1)); } return h('polyline', { key, points: pts.join(' '), style: { fill: 'none', ...style } }); };
-  const hv = st.hover; const nb = new Set(); if (hv) p.edges.forEach(e => { if (e.a === hv) nb.add(e.b); if (e.b === hv) nb.add(e.a); });
-  const fam = new Set(); if (hv) { fam.add(hv); const hn = byId[hv]; if (hn && hn.parent) fam.add(hn.parent); p.nodes.forEach(n => { if (n.parent === hv) fam.add(n.id); }); }
-  const rings = p.nodes.filter(n => !n.center && st.m[n.id]).map(n => { const c = st.m[n.id]; const on = hv && (fam.has(n.id)); const base = n.parent ? P[n.parent] && P[n.parent].w : { x: 0, y: 0, h: 0 }; if (!base) return null;
-    return ring(base.x, base.y, n.parent ? base.h : c.h, c.r, 'o' + n.id, { stroke: on ? 'var(--acc)' : 'var(--line)', strokeWidth: n.parent ? 0.7 : 1, strokeDasharray: n.parent ? '2 3' : 'none', opacity: c.o * (n.parent ? 0.7 : on ? 0.9 : 0.55) }); });
-  const lines = hv ? p.edges.map((e, i) => { const a1 = P[e.a], b1 = P[e.b]; if (!a1 || !b1 || !(e.a === hv || e.b === hv)) return null; return h('line', { key: 'e' + i, x1: a1.x, y1: a1.y, x2: b1.x, y2: b1.y, style: { stroke: 'var(--acc)', strokeWidth: (0.8 + 2.5 * e.w) * (a1.s + b1.s) / 2, strokeLinecap: 'round', opacity: 0.75 } }); }) : null;
-  const order = p.nodes.filter(n => P[n.id]).sort((x, y) => P[x.id].z - P[y.id].z);
-  const dots = order.map(n => { const q = P[n.id]; const r = n.size * q.s; const depth = p.flat ? 1 : 0.6 + 0.4 * Math.max(0, Math.min(1, (q.z + 350) / 700)); const isH = hv === n.id; const dim = hv && !isH && !nb.has(n.id) && !fam.has(n.id) && !n.center;
-    const lab = n.name.length > 24 ? n.name.slice(0, 23) + '…' : n.name; const showL = n.center || isH || (hv ? (nb.has(n.id) || fam.has(n.id)) : n.label);
-    return h('g', { key: n.id, style: { cursor: 'pointer', opacity: q.o * n.op * depth * (dim ? 0.25 : 1) }, onMouseEnter: () => { st.hover = n.id; }, onMouseLeave: () => { st.hover = null; }, onClick: () => (n.center ? p.onCenter(n.id) : p.onPick(n.id)) },
-      h('title', null, n.tip), n.center ? h('circle', { cx: q.x, cy: q.y, r: r + 10, style: { fill: 'var(--sel)', stroke: 'var(--acc)', strokeWidth: 1.5, opacity: 0.7 } }) : null,
-      h('circle', { cx: q.x, cy: q.y, r, style: { fill: n.color, stroke: isH ? 'var(--ink)' : 'var(--s1)', strokeWidth: isH ? 2.5 : 1.2 } }),
-      showL ? h('text', { x: q.x, y: q.y + r + (n.parent ? 10 : 13) * Math.max(0.9, q.s), textAnchor: 'middle', style: { fill: n.parent && !isH ? 'var(--ink2)' : 'var(--ink)', stroke: 'var(--s1)', strokeWidth: 4, paintOrder: 'stroke', strokeLinejoin: 'round', font: (n.center || isH ? '600 ' : '500 ') + Math.round((n.center ? 15 : n.parent ? 11 : 12.5) * Math.max(0.85, q.s)) + 'px Hanken Grotesk, sans-serif' } }, lab) : null); });
-  return h('svg', { viewBox: '0 0 ' + W + ' ' + H, style: { width: '100%', height: 'auto', display: 'block', userSelect: 'none' } }, h('rect', { key: 'bgc', x: 0, y: 0, width: W, height: H, style: { fill: 'transparent', cursor: 'default' }, onClick: () => p.onCenter() }), h('g', { style: { pointerEvents: 'none' } }, rings, lines), dots);
+// The Connections map: holodeck-map.js (layers, nested names, non-overlapping labels) mounted into the page.
+function MapView(p) {
+  const R = React, host = R.useRef(null), ctl = R.useRef(null), cur = R.useRef(p); cur.current = p;
+  R.useEffect(() => { let dead = false;
+    import(new URL('holodeck-map.js', location.href).href).then(M => { if (dead || !host.current) return; ctl.current = M.mountMap(host.current, { legend: true, padBottom: 44, onProfile: n => cur.current.onProfile(n) }); ctl.current.set(cur.current.data); }).catch(e => console.warn('holodeck map', e));
+    return () => { dead = true; if (ctl.current) ctl.current.destroy(); ctl.current = null; }; }, []);
+  R.useEffect(() => { if (ctl.current) ctl.current.set(p.data); });
+  return R.createElement('div', { ref: host, style: { position: 'relative', height: '560px' } });
 }
 
 const SAY_RE = '(?:said|says|told|wrote|writes|argued|added|stated|states|announced|asked|testified|explained|noted|claimed|contends|replied|responded)';
@@ -3193,7 +3173,8 @@ class Component extends DCLogic {
         html = got.html; note = got.note; title = title || got.title || url; fmt = got.format || 'html'; url = got.url || url;
       }
       hdT('bytes', 'fetched', 'Received ' + (html || '').length.toLocaleString() + ' characters of HTML' + (note ? ' \u2014 ' + note : ''));
-      this.addDocs([{ title, year: opt.year || new Date().getFullYear(), type, format: fmt, html, url, note }], { open: opt.open });
+      const doc = { title, year: opt.year || new Date().getFullYear(), type, format: fmt, html, url, note };
+      if (opt.collect) opt.collect.push(doc); else this.addDocs([doc], { open: opt.open });
     } catch (e) {
       hdT('bytes', 'fail', 'Fetch failed: ' + e.message + (opt.fallback ? '; using the saved excerpt' : ''));
       if (opt.fallback) this.addDocs([{ title: opt.title || url, year: opt.year, type: wt ? 'Wikipedia article (excerpt)' : 'Text', text: opt.fallback, url, note: 'Couldn’t reach the live page, so a saved excerpt was used.' }], { open: opt.open });
@@ -3207,10 +3188,12 @@ class Component extends DCLogic {
       if (r.ok) {
         const j = await r.json();
         const results = (j.query && j.query.search) || [];
+        const got = [];
         for (const p of results.slice(0, 2)) {
           const url = 'https://en.wikipedia.org/wiki/' + encodeURIComponent(p.title.replace(/ /g, '_'));
-          await this.ingestUrl(url, { title: p.title });
+          await this.ingestUrl(url, { title: p.title, collect: got });
         }
+        if (got.length) await this.addDocs(got); else this.setState({ busy: '' });
       }
     } catch (e) { this.setState({ busy: '' }); }
     clearTimeout(this._omniT); this._askLive = '';
@@ -4653,7 +4636,7 @@ class Component extends DCLogic {
     else hdT('paradigm', 'none', 'No paradigm: nothing here shares two or more uncommon names (reach ≤ ' + (Math.sqrt(A.docs.length) + 1).toFixed(1) + ' sources) with another source');
     hdT('store', 'done', 'Ingest finished'); T.ms = performance.now() - T.t0; T.focus = [...T.focus]; HD_TR = null;
     (window.__hdTraces = window.__hdTraces || []).push(T); if (window.__hdTraces.length > 8) window.__hdTraces.shift();
-    import(new URL('holodeck-ingest-player.js', location.href).href).then(M => M.open(T)).catch(e => console.warn('ingest player', e));
+    import(new URL('holodeck-ingest-player.js', location.href).href).then(M => M.chipFor(T)).catch(e => console.warn('ingest player', e));
   }
   async addDocs(list, aopt) {
     if (!list.length) { HD_TR = null; this.setState({ busy: '' }); return; }
@@ -5584,47 +5567,18 @@ class Component extends DCLogic {
   graph(D, selName, F, A) {
     const h = React.createElement;
     const longer = D.nameList.filter(n => n.name.includes(' ')).map(n => n.name);
-    const frag = n => !n.name.includes(' ') && longer.some(L => L !== n.name && (L.endsWith(' ' + n.name) || L.endsWith('\u2019' + n.name) || L.endsWith("'" + n.name)) && A.names[L] && A.names[L].sts.length >= 2);
-    const pool = D.nameList.filter(n => holoName(n.name, A) && !(n.name.length <= 2 && !(n.aliases || []).length) && !frag(n)).slice(0, 60); if (!pool.length) return h('p', { style: { color: 'var(--mut)', margin: '12px' } }, 'No names to connect.');
-    const byN = {}; pool.forEach(n => { byN[n.name] = n; });
-    const focus = selName && byN[selName] ? byN[selName] : null;
-    const totalDocs = new Set(F.map(s => s.doc)).size || 1; const maxS = Math.max(1, ...pool.map(n => n.sts.length));
-    const yrs = F.map(s => s.year).filter(Boolean); const y0 = Math.min(...yrs), y1 = Math.max(...yrs); const span = yrs.length ? Math.max(1, y1 - y0) : 0;
-    const hsh = t => { let x = 2166136261; for (let i = 0; i < t.length; i++) { x ^= t.charCodeAt(i); x = Math.imul(x, 16777619); } return (x >>> 0) / 4294967296; };
-    const SECT = { person: 0, organisation: 1, place: 2, other: 3 };
-    const meanY = n => { const y = n.sts.map(s => s.year).filter(Boolean); return y.length ? y.reduce((a, b) => a + b, 0) / y.length : null; };
-    const hOf = n => { const y = meanY(n); return span && y != null ? ((y - (y0 + y1) / 2) / span) * 150 : 0; };
-    const titlesL = A.docs.filter(d => this._cnt.has(d.id)).map(d => d.title.toLowerCase()); const topicL = (this._topicStr || '').toLowerCase();
-    const allTxt = A.sts.filter(x => this._cnt.has(x.doc)).map(x => x.text).join(' ');
-    const geo = n => n.type === 'place' || new RegExp('\\b' + n.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ',\\s*(TN|Tenn|Tennessee)\\b').test(allTxt) || /^(Nashville|Davidson County|Tennessee|Metro|TN)$/.test(n.name);
-    const hubScore = n => { const tf = titlesL.filter(t => t.includes(n.name.toLowerCase())).length / Math.max(1, titlesL.length); return (topicL && n.name.toLowerCase().includes(topicL) ? 1e4 : 0) + (tf > 0.5 ? 0 : tf * 40) + n.sts.length * 0.2 + n.docs.size - (geo(n) ? 1e3 : 0) + (n.type === 'organisation' ? 10 : 0); };
-    const sid = n => new Set(n.sts.map(x => x.id));
-    const S = {}; pool.forEach(n => { S[n.name] = sid(n); });
-    const tie = (x, y) => { if (x === y) return 0; const A1 = S[x.name], B1 = S[y.name]; let k = 0; const [sm, lg] = A1.size < B1.size ? [A1, B1] : [B1, A1]; sm.forEach(v => { if (lg.has(v)) k++; }); if (!k || !dmdCo(k, A1.size, B1.size, F.length)) return 0; return k / Math.sqrt(A1.size * B1.size); };
-    // an auto-picked hub must have at least one real, significance-tested tie -- else a boilerplate phrase
-    // that appears everywhere but ties to nothing (e.g. stock contract-approval language) wins on raw
-    // frequency alone and leaves the whole system empty
-    const hasTies = n => pool.some(o => o !== n && tie(n, o) > 0);
-    const ranked = pool.slice().sort((x, y) => hubScore(y) - hubScore(x) || y.sts.length - x.sts.length);
-    const hub = focus || ranked.find(hasTies) || ranked[0];
-    const cand = pool.filter(n => n !== hub).map(n => ({ n, wc: tie(hub, n) })).sort((x, y) => y.wc - x.wc || y.n.sts.length - x.n.sts.length);
-    const planets = [], moons = [], moonN = {};
-    cand.forEach(c => { if (planets.length + moons.length >= 44) return; let best = { id: null, w: c.wc };
-      planets.forEach(pl => { const w = tie(pl.n, c.n); if (w > best.w && w > 0.08 && (moonN[pl.n.name] || 0) < 5 && (!best.id || w > best.w)) best = { id: pl.n.name, w }; });
-      if (best.id) { moons.push({ ...c, parent: best.id, w: best.w }); moonN[best.id] = (moonN[best.id] || 0) + 1; }
-      else if (c.wc > 0 && planets.length < 18) planets.push(c); });
-    const maxW = Math.max(0.01, ...planets.map(x => x.wc));
-    let lastR = 0; const GA = 2.399963;
-    const nodes = [{ id: hub.name, name: hub.name, color: TYPE_C[hub.type], size: 14, r: 0, a: 0, h: 0, op: 1, label: true, center: true, tip: hub.name + ' — ' + plural(hub.sts.length, 'statement') }];
-    planets.forEach((c, i) => { let r = 78 + Math.pow(1 - c.wc / maxW, 1.1) * 250 + (moonN[c.n.name] ? 10 : 0); r = Math.max(r, lastR + 17); lastR = r;
-      nodes.push({ id: c.n.name, name: c.n.name, color: TYPE_C[c.n.type], size: 4 + 7 * Math.sqrt(c.n.sts.length / maxS), r: Math.min(r, 360), a: i * GA, h: hOf(c.n) * 0.5, op: 1, label: true, tip: c.n.name + ' — orbits ' + hub.name + ' · together in ' + plural([...S[c.n.name]].filter(v => S[hub.name].has(v)).length, 'statement') + (moonN[c.n.name] ? ' · ' + plural(moonN[c.n.name], 'moon') : '') }); });
-    const mi = {}; moons.forEach(c => { const k = mi[c.parent] = (mi[c.parent] || 0) + 1; nodes.push({ id: c.n.name, name: c.n.name, color: TYPE_C[c.n.type], size: 2.5 + 4 * Math.sqrt(c.n.sts.length / maxS), r: 14 + k * 9, a: k * 2.1 + hsh(c.n.name) * 3, h: 0, parent: c.parent, op: 0.95, label: false, tip: c.n.name + ' — orbits ' + c.parent + ' more than ' + hub.name }); });
-    this._orbInfo = { hub: hub.name, planets: planets.length, moons: moons.length, auto: !focus };
-    const shown = new Set(nodes.map(n => n.id)); const edges = [];
-    planets.forEach(c => edges.push({ a: hub.name, b: c.n.name, w: c.wc / maxW }));
-    moons.forEach(c => edges.push({ a: c.parent, b: c.n.name, w: Math.min(1, c.w) }));
-    D.edgeList.forEach(e => { if (!shown.has(e.a) || !shown.has(e.b) || !byN[e.a] || !byN[e.b]) return; if (e.a === hub.name || e.b === hub.name) return; const w = tie(byN[e.a], byN[e.b]); if (w >= 0.2) edges.push({ a: e.a, b: e.b, w }); });
-    return h(Orbit, { nodes, edges, spin: this.state.spin !== false, flat: this.state.flat === true, onPick: id => this.sel('name', id), onCenter: id => (id && !focus ? this.sel('name', id) : this.setState({ sel: null })) });
+    const frag = n => !n.name.includes(' ') && longer.some(L => L !== n.name && (L.endsWith(' ' + n.name) || L.endsWith('’' + n.name) || L.endsWith("'" + n.name)) && A.names[L] && A.names[L].sts.length >= 2);
+    const pool = D.nameList.filter(n => holoName(n.name, A) && !(n.name.length <= 2 && !(n.aliases || []).length) && !frag(n)).slice(0, 160); if (!pool.length) return h('p', { style: { color: 'var(--mut)', margin: '12px' } }, 'No names to connect.');
+    const docs = A.docs.filter(d => this._cnt.has(d.id)).map(d => ({ id: d.id, title: d.title }));
+    const key = pool.map(n => n.name + ':' + n.sts.length).join('|') + '#' + F.length + '#' + docs.map(d => d.id).join(',');
+    let M = this._mapMemo;
+    if (!M || M.key !== key) {
+      // a tie is two names sharing more statements than chance would give (dmdCo); the map nests names by those ties
+      const S = pool.map(n => new Set(n.sts.map(x => x.id))), edges = [];
+      for (let i = 0; i < pool.length; i++) for (let j = i + 1; j < pool.length; j++) { const a = S[i], b = S[j]; let k = 0; const [sm, lg] = a.size < b.size ? [a, b] : [b, a]; sm.forEach(v => { if (lg.has(v)) k++; }); if (k && dmdCo(k, a.size, b.size, F.length)) edges.push({ a: pool[i].name, b: pool[j].name, c: k }); }
+      M = this._mapMemo = { key, nodes: pool.map(n => ({ n: n.name, c: n.sts.length, color: TYPE_C[n.type] })), edges, occ: new Map(pool.map(n => [n.name, n.sts.map(x => ({ doc: x.doc, id: x.id, t: short(x.text, 240) }))])) };
+    }
+    return h(MapView, { data: { sig: M.key, nodes: M.nodes, edges: M.edges, docs, occ: M.occ, sel: selName || null }, onProfile: id => this.setState({ sel: { type: 'name', id }, selAll: false, pfIdx: 0, pfAll: false, view: 'profile', readDoc: null }) });
   }
 
   orbitUi(A, selName) {
@@ -5637,17 +5591,15 @@ class Component extends DCLogic {
     const nOn = kept.filter(d => !off[d.id]).length;
     const play = () => { if (this._play) { clearInterval(this._play); this._play = null; this.forceUpdate(); return; } let y = (S.tMax && S.tMax < mx) ? S.tMax : mn; this.setState({ tMax: y }); this._play = setInterval(() => { y += 1; if (y >= mx) { clearInterval(this._play); this._play = null; this.setState({ tMax: null }); return; } this.setState({ tMax: y }); }, 900); };
     return {
-      orb: (() => { const oi = this._orbInfo || {}; return { title: 'The system around ' + (oi.hub || selName || 'the topic'), note: (oi.auto ? oi.hub + ' is at the centre because the sources are most about it. ' : '') + plural(oi.planets || 0, 'name') + ' orbit it, closer when they share more statements with it than chance would give. ' + (oi.moons ? plural(oi.moons, 'smaller body', 'smaller bodies') + ' orbit one of those instead, because they are more tied to it than to the centre. ' : '') + 'Hover to see ties; click any body to make it the centre.',
-        canBack: !!selName, back: () => this.setState({ sel: null }),
-        spinLabel: S.spin === false ? 'Rotate' : 'Pause', spin: () => this.setState({ spin: S.spin === false }), dimLabel: S.flat ? '3D' : 'Flat', dim: () => this.setState({ flat: !S.flat }), depthNote: S.flat ? '' : 'Height = when: newer sits higher.' }; })(),
+      orb: { title: 'Names, nested by what they are tied to', note: 'Each name sits under the name it shares the most statements with, more than chance would give. Click a ring to open the names inside it, or a name to see the statements it appears in. Sources and Statements are the layers around it.', canBack: !!selName, back: () => this.setState({ sel: null }) },
       tl: { has: yrs.length > 1, min: mn, max: mx, val, label: val === mx ? 'Up to ' + mx + ' · everything' : 'Up to ' + val, onChange: e => { const v = +e.target.value; this.setState({ tMax: v >= mx ? null : v }); }, playLabel: this._play ? 'Stop' : 'Play', play, start: String(mn), end: String(mx) },
       srcPick: { open: !!S.srcOpen, label: S.srcOpen ? 'Done' : 'Choose sources', toggle: () => this.setState({ srcOpen: !S.srcOpen }), q: S.srcQ || '', onQ: e => this.setState({ srcQ: e.target.value }),
         count: (() => { const q = (S.srcQ || '').trim().toLowerCase(); const n = q ? kept.filter(d => d.title.toLowerCase().includes(q)).length : kept.length; return q ? n + ' match' : plural(n, 'source'); })() },
       srcT: kept.filter(d => { const q = (S.srcQ || '').trim().toLowerCase(); return !q || d.title.toLowerCase().includes(q); }).map(d => ({ box: off[d.id] ? 'transparent' : '#8b5cf6', label: d.title.length > 34 ? d.title.slice(0, 33) + '…' : d.title, tip: d.title, onClick: () => toggle(d.id), onOnly: () => only(d.id), bg: off[d.id] ? 'transparent' : 'var(--sel)', bd: off[d.id] ? 'var(--line)' : '#8b5cf6', col: off[d.id] ? 'var(--dim)' : 'var(--ink)', mark: off[d.id] ? '○' : '●' })),
       srcNote: nOn + ' of ' + kept.length + ' sources on', allOn: () => this.setState({ offDocs: {} }), someOff: nOn < kept.length,
-      scope: (() => { const oi = this._orbInfo || {}; const timeOn = !!(S.tMax && S.tMax < mx); const srcOn = nOn < kept.length; const ex = (this._chips || []);
+      scope: (() => { const timeOn = !!(S.tMax && S.tMax < mx); const srcOn = nOn < kept.length; const ex = (this._chips || []);
         const rows = [
-          { k: 'Centre', v: (oi.hub || selName || 'the topic') + (selName ? ', chosen by you' : ', picked because the sources are most about it'), on: !!selName, onClear: () => this.setState({ sel: null }) },
+          { k: 'Focus', v: selName ? selName + ', chosen by you' : 'none: every name is shown', on: !!selName, onClear: () => this.setState({ sel: null }) },
           { k: 'Dated', v: timeOn ? 'statements up to ' + val + ' (of ' + mn + '–' + mx + ')' : 'all years, ' + mn + '–' + mx, on: timeOn, onClear: () => this.setState({ tMax: null }) },
           { k: 'Sources', v: srcOn ? nOn + ' of ' + kept.length + ' switched on' : 'all ' + kept.length, on: srcOn, onClear: () => this.setState({ offDocs: {} }) },
           ...ex.map(c => ({ k: c.k, v: c.v, on: true, onClear: c.onClear })) ].map(r => ({ ...r, bd: r.on ? '#8b5cf6' : 'var(--line)', bg: r.on ? 'var(--sel)' : 'transparent', vc: r.on ? 'var(--ink)' : 'var(--mut)', canClear: r.on }));

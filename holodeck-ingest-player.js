@@ -2,6 +2,7 @@
 // (index.html: readAny, splitSentences, analyze, holoKit, paradigms). Nothing here re-reads the content: the log is the
 // trace, and the holograph is rebuilt from the trace's own events up to the playhead, so rewinding un-folds it exactly.
 // Two clocks: "Steps" gives every event the same airtime; "Real time" uses the recorded performance.now() offsets.
+import { mountMap } from './holodeck-map.js';
 
 const STAGES = {
   bytes: ['Bytes', '--dim'], decode: ['Decode', '--pink'], text: ['Text', '--blue'], sentences: ['Statements', '--ink2'],
@@ -47,11 +48,10 @@ const CSS = `
 .hdp-lens .nm{box-shadow:inset 0 -2px 0 var(--acc);color:var(--ink)}.hdp-lens .fg{box-shadow:inset 0 -2px 0 var(--amber)}.hdp-lens .dt{box-shadow:inset 0 -2px 0 var(--date)}
 .hdp-lens .fu{text-decoration:line-through;opacity:.5}.hdp-lens .hit{outline:2px solid var(--acc);border-radius:2px}
 .hdp-lens .big{font:13px 'JetBrains Mono',monospace;color:var(--ink2);padding:10px 0}
-.hdp-graph{position:relative;min-height:0}
-.hdp-graph canvas{position:absolute;inset:0;width:100%;height:100%}
+.hdp-graph{position:relative;min-height:0;grid-row:2}
 .hdp-key{position:absolute;left:14px;bottom:10px;display:flex;flex-wrap:wrap;gap:12px;font:12px 'Hanken Grotesk',sans-serif;color:var(--dim);pointer-events:none}
 .hdp-key i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px}
-.hdp-par{position:absolute;right:14px;top:10px;font:500 13px 'Hanken Grotesk';color:var(--pink);text-align:right;max-width:50%}
+.hdp-par{position:absolute;right:14px;top:50px;font:500 13px 'Hanken Grotesk';color:var(--pink);text-align:right;max-width:50%}
 .hdp-bar{border-top:1px solid var(--line);padding:6px 18px calc(12px + env(safe-area-inset-bottom,0px));display:grid;gap:8px}
 .hdp-rib{position:relative;height:18px;cursor:pointer;touch-action:none}
 .hdp-rib canvas{width:100%;height:100%;display:block}
@@ -65,16 +65,18 @@ const CSS = `
 
 
 // Replay state is a pure fold of the trace: the same events 0..k always give the same picture, whichever way the playhead came.
-const fresh = () => ({ nodes: new Map(), edges: new Map(), marks: new Map(), paradigm: '', echo: new Map(), odd: new Map() });
+const fresh = () => ({ nodes: new Map(), edges: new Map(), marks: new Map(), paradigm: '', echo: new Map(), odd: new Map(), lastSt: new Map(), occ: new Map() });
 const node = (S, n) => S.nodes.get(n) || (S.nodes.set(n, { n, c: 0, st: 'cand', mine: false }), S.nodes.get(n));
 const ek = (a, b) => a < b ? a + '\u0001' + b : b + '\u0001' + a;
 const mark = (S, e, cls) => { if (e.doc == null || e.s == null) return; (S.marks.get(e.doc) || (S.marks.set(e.doc, []), S.marks.get(e.doc))).push({ s: e.s, e: e.e, cls }); };
 function apply(S, e) {
-  if (e.stage === 'sentences') mark(S, e, e.kind === 'statement' ? 's' : e.kind === 'furniture' ? 'fu' : '');
-  else if (e.kind === 'name') { mark(S, e, 'nm'); const x = node(S, e.name); if (x.st === 'cand') x.c++; }
+  if (e.stage === 'sentences') { mark(S, e, e.kind === 'statement' ? 's' : e.kind === 'furniture' ? 'fu' : ''); if (e.kind === 'statement') S.lastSt.set(e.doc, e); }
+  else if (e.kind === 'name') { mark(S, e, 'nm'); const x = node(S, e.name); if (x.st === 'cand') x.c++;
+    const ls = S.lastSt.get(e.doc); if (ls) { const L = S.occ.get(e.name) || (S.occ.set(e.name, []), S.occ.get(e.name)); if (!L.some(o => o.doc === e.doc && o.id === ls.id)) L.push({ doc: e.doc, id: ls.id, s: ls.s, e: ls.e }); } }
   else if (e.kind === 'figure') mark(S, e, 'fg');
   else if (e.kind === 'date') mark(S, e, 'dt');
-  else if (e.kind === 'merge') { const f = S.nodes.get(e.from); if (f && f.st === 'cand') { S.nodes.delete(e.from); node(S, e.to).c += f.c; } }
+  else if (e.kind === 'merge') { const f = S.nodes.get(e.from); if (f && f.st === 'cand') { S.nodes.delete(e.from); node(S, e.to).c += f.c; }
+    const mv = S.occ.get(e.from); if (mv) { S.occ.delete(e.from); const t = S.occ.get(e.to) || []; mv.forEach(r => { if (!t.some(q => q.doc === r.doc && q.id === r.id)) t.push(r); }); S.occ.set(e.to, t); } }
   else if (e.kind === 'prior') { (e.nodes || []).forEach(p => { const x = node(S, p.n); x.st = 'prior'; x.c = p.c; }); (e.edges || []).forEach(p => S.edges.set(ek(p.a, p.b), { a: p.a, b: p.b, c: p.c, neg: false, mine: false })); }
   else if (e.kind === 'drop') (e.names || []).forEach(n => { const x = S.nodes.get(n); if (x && x.st === 'cand') x.st = 'drop'; });
   else if (e.kind === 'admit') { (e.ns || []).forEach(n => { const x = node(S, n); if (x.st !== 'prior' || !x.mine) x.mine = true; x.st = 'fold'; x.c++; });
@@ -109,8 +111,8 @@ function mount(T, opt = {}) {
     <div class="hdp-body">
       <div class="hdp-log" style="grid-template-rows:1fr auto"><div class="hdp-rows" tabindex="0"><div class="hdp-sz"></div></div><div class="hdp-now"></div></div>
       <div class="hdp-right"><div class="hdp-lens"></div>
-        <div class="hdp-graph"><canvas></canvas><div class="hdp-par"></div>
-          <div class="hdp-key"><span><i style="background:var(--acc)"></i>folded from what you added</span><span><i style="background:var(--blue)"></i>already in the picture</span><span><i style="border:1.5px solid var(--dim)"></i>found, not yet admitted</span><span><i style="background:var(--bad)"></i>bond negated in what you added</span><span><i style="border:2px solid var(--amber)"></i>odd: Fort raised it and it stands</span></div></div></div>
+        <div class="hdp-graph"><div class="hdp-par"></div>
+          <div class="hdp-key"><span><i style="background:var(--acc)"></i>folded from what you added</span><span><i style="background:var(--blue)"></i>already in the picture</span><span><i style="border:1.5px solid var(--dim)"></i>found, not yet admitted</span><span><i style="border:1.5px dashed var(--dim)"></i>ring: holds more names, click to open</span><span><i style="background:var(--bad)"></i>bond negated in what you added</span><span><i style="border:2px solid var(--amber)"></i>odd: Fort raised it and it stands</span></div></div></div>
     </div>
     <div class="hdp-bar"><div class="hdp-rib" title="Drag to scrub"><canvas></canvas></div>
       <div class="hdp-ctl">
@@ -125,7 +127,7 @@ function mount(T, opt = {}) {
   document.body.appendChild(root);
   const $ = s => root.querySelector(s);
   const rowsEl = $('.hdp-rows'), sz = $('.hdp-sz'), nowEl = $('.hdp-now'), lens = $('.hdp-lens'), par = $('.hdp-par');
-  const gc = $('.hdp-graph canvas'), rc = $('.hdp-rib canvas'), rd = $('.rd'), speedSel = $('#hdp-speed');
+  const rc = $('.hdp-rib canvas'), rd = $('.rd'), speedSel = $('#hdp-speed');
 
   // ---------- clock ----------
   let real = false, dir = 0, pos = 0, k = 0, speed = 30;
@@ -178,41 +180,12 @@ function mount(T, opt = {}) {
     const hit = lens.querySelector('.hit') || lens.querySelector('.on'); if (hit && dir) hit.scrollIntoView({ block: 'nearest' });
   }
 
-  // ---------- holograph (canvas, persistent positions so rewinding keeps the layout) ----------
-  const P = new Map(); let W = 0, H = 0, dpr = 1, col = {};
-  const readCols = () => { col = { acc: css('--acc'), blue: css('--blue'), dim: css('--dim'), ink: css('--ink'), ink2: css('--ink2'), bad: css('--bad'), amber: css('--amber'), edge: css('--edge'), line2: css('--line2'), bg: css('--bg') }; };
-  function size() { const r = gc.getBoundingClientRect(); dpr = window.devicePixelRatio || 1; W = r.width; H = r.height; gc.width = W * dpr; gc.height = H * dpr; const q = rc.getBoundingClientRect(); rc.width = q.width * dpr; rc.height = q.height * dpr; drawRibbon(); }
-  const nearOf = (S, n) => { let sx = 0, sy = 0, c = 0; S.edges.forEach(E => { const o = E.a === n ? E.b : E.b === n ? E.a : null; const q = o && P.get(o); if (q) { sx += q.x; sy += q.y; c++; } }); return c ? { x: sx / c, y: sy / c } : null; };
-  const posOf = (x, S) => { let p = P.get(x.n); if (!p && S && x.st !== 'cand') { const q = nearOf(S, x.n); if (q) { const u = hash(x.n) * 6.283; p = { x: q.x + Math.cos(u) * 18, y: q.y + Math.sin(u) * 18, vx: 0, vy: 0 }; P.set(x.n, p); } } if (!p) { const u = hash(x.n), v = hash(x.n + '#'); const R = Math.min(W, H) * (x.st === 'cand' ? 0.44 : 0.22); p = { x: W / 2 + Math.cos(u * 6.283) * R * (0.6 + 0.4 * v), y: H / 2 + Math.sin(u * 6.283) * R * (0.6 + 0.4 * v), vx: 0, vy: 0 }; P.set(x.n, p); } return p; };
-  let heat = 1, sig = '';
-  function simulate(S) {
-    const g0 = S.nodes.size + ':' + S.edges.size + ':' + [...S.nodes.values()].filter(x => x.st !== 'cand').length; if (g0 !== sig) { sig = g0; heat = Math.max(heat, 0.8); } heat = Math.max(0, heat * 0.985 - 0.0005); if (heat < 0.01) return;
-    const V = [...S.nodes.values()]; const cx = W / 2, cy = (H - 30) / 2 + 10, R = Math.min(W, H) * 0.44; const L = Math.max(34, Math.min(110, Math.sqrt(W * H / (V.length + 1)) * 0.7)), KR = L * L * 0.5;
-    V.forEach(x => posOf(x, S));
-    for (let i = 0; i < V.length; i++) { const a = P.get(V[i].n); for (let j = i + 1; j < V.length; j++) { const b = P.get(V[j].n); let dx = a.x - b.x, dy = a.y - b.y; const d2 = dx * dx + dy * dy + 0.01; if (d2 > 9 * L * L) continue; const f = KR / d2 * 0.6; a.vx += dx * f; a.vy += dy * f; b.vx -= dx * f; b.vy -= dy * f; } }
-    S.edges.forEach(E => { const a = P.get(E.a), b = P.get(E.b); if (!a || !b) return; const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, f = (d - L) * 0.01 * Math.min(2, 0.6 + Math.log2(1 + E.c) * 0.3); a.vx += dx / d * f; a.vy += dy / d * f; b.vx -= dx / d * f; b.vy -= dy / d * f; });
-    V.forEach(x => { const p = P.get(x.n); if (x.st === 'cand' || x.st === 'drop') { const dx = p.x - cx, dy = p.y - cy, d = Math.hypot(dx, dy) || 1, f = (R - d) * 0.02; p.vx += dx / d * f; p.vy += dy / d * f; } else { p.vx += (cx - p.x) * 0.006; p.vy += (cy - p.y) * 0.006; }
-      p.vx *= 0.7; p.vy *= 0.7; const sp = Math.hypot(p.vx, p.vy), cap = 1 + 7 * heat; if (sp > cap) { p.vx *= cap / sp; p.vy *= cap / sp; } p.x = Math.max(24, Math.min(W - 24, p.x + p.vx)); p.y = Math.max(30, Math.min(H - 48, p.y + p.vy)); });
-  }
-  function drawGraph(S) {
-    const g = gc.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
-    const e = ev[k], hot = new Set([e.name, e.to, ...(e.ns || [])].filter(Boolean)), hotE = new Set((e.pairs || []).map(([a, b]) => ek(a, b)));
-    S.edges.forEach((E, key) => { const a = P.get(E.a), b = P.get(E.b); if (!a || !b) return; g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y);
-      g.strokeStyle = E.neg ? col.bad : E.mine ? col.acc : col.edge; g.globalAlpha = hotE.has(key) ? 1 : E.mine ? 0.75 : 0.3; g.lineWidth = Math.min(5, 0.8 + Math.log2(1 + E.c)) + (hotE.has(key) ? 1.5 : 0); g.setLineDash(E.neg ? [5, 4] : []); g.stroke(); });
-    g.setLineDash([]); g.globalAlpha = 1; g.textAlign = 'center';
-    const big = new Set([...S.nodes.values()].filter(x => x.st === 'prior' && !x.mine).sort((a, b) => b.c - a.c).slice(0, 10).map(x => x.n));
-    S.nodes.forEach(x => { const p = P.get(x.n); if (!p) return; const r = Math.min(16, 3.5 + Math.sqrt(x.c) * 2), h = hot.has(x.n);
-      g.beginPath(); g.arc(p.x, p.y, r + (h ? 3 : 0), 0, 6.283);
-      const od = S.odd.get(x.n); if (od === 'stands' || od === 'contested') { g.save(); g.beginPath(); g.arc(p.x, p.y, r + 6, 0, 6.283); g.strokeStyle = col.amber; g.lineWidth = 2; g.setLineDash(od === 'contested' ? [3, 3] : []); g.stroke(); g.restore(); g.beginPath(); g.arc(p.x, p.y, r + (h ? 3 : 0), 0, 6.283); }
-      if (x.st === 'cand' || x.st === 'drop') { g.globalAlpha = x.st === 'drop' ? 0.3 : 0.8; g.strokeStyle = h ? col.acc : col.dim; g.lineWidth = 1.5; g.stroke(); }
-      else { g.globalAlpha = 1; g.fillStyle = x.mine ? col.acc : col.blue; g.fill(); if (h) { g.strokeStyle = col.ink; g.lineWidth = 2; g.stroke(); } }
-      if (x.st === 'prior' && !x.mine && !h && !big.has(x.n)) return;
-      g.globalAlpha = x.st === 'drop' ? 0.35 : x.st === 'cand' ? 0.7 : 1; g.fillStyle = h ? col.ink : x.st === 'prior' ? col.ink2 : col.ink;
-      g.font = (h ? '600 ' : '') + (x.st === 'cand' || x.st === 'drop' ? 'italic 11px' : '12px') + " 'Hanken Grotesk', sans-serif";
-      g.fillText(x.n.length > 26 ? x.n.slice(0, 25) + '…' : x.n, p.x, p.y + r + 13); });
-    g.globalAlpha = 1; par.textContent = S.paradigm;
-    if (!S.nodes.size) { g.fillStyle = col.dim; g.font = "13px 'Hanken Grotesk', sans-serif"; g.fillText('Names appear here as they are found, then fold into the picture.', W / 2, H / 2); }
-  }
+  // ---------- holograph: the shared map engine (holodeck-map.js), fed from the fold at the playhead ----------
+  let dpr = 1;
+  const map = mountMap($('.hdp-graph'), { padBottom: 30, wheelZoom: true, empty: 'Names appear here as they are found, then fold into the picture.', sentence: o => { const d = docs.get(o.doc); return d && d.text ? d.text.slice(o.s, o.e) : ''; } });
+  function size() { dpr = window.devicePixelRatio || 1; const q = rc.getBoundingClientRect(); rc.width = q.width * dpr; rc.height = q.height * dpr; drawRibbon(); }
+  const mapData = S => { const e = ev[k]; return { nodes: [...S.nodes.values()], edges: [...S.edges.values()], docs: [...docs.values()], occ: S.occ, odd: S.odd, hot: new Set([e.name, e.to, ...(e.ns || [])].filter(Boolean)), hotPairs: e.pairs || [] }; };
+
   function drawRibbon() {
     const g = rc.getContext('2d'), w = rc.width, h = rc.height; g.clearRect(0, 0, w, h); const mp = maxPos();
     for (let i = 0; i < N; i++) { const x0 = clockOf(i) / mp * w, x1 = i + 1 < N ? clockOf(i + 1) / mp * w : w; g.fillStyle = css((STAGES[ev[i].stage] || [0, '--dim'])[1]); g.globalAlpha = 0.85; g.fillRect(x0, h * 0.25, Math.max(1, x1 - x0), h * 0.5); }
@@ -223,7 +196,7 @@ function mount(T, opt = {}) {
   $('.hdp-rib').addEventListener('pointermove', e => { if (dragging) scrub(e); }); $('.hdp-rib').addEventListener('pointerup', () => { dragging = false; });
 
   function render(follow) {
-    const St = stateAt(k); renderLog(follow); renderLens(St); drawRibbon();
+    const St = stateAt(k); renderLog(follow); renderLens(St); map.set(mapData(St)); par.textContent = St.paradigm; drawRibbon();
     rd.textContent = (real ? 't = ' + ms(pos) + ' of ' + ms(ev[N - 1].t) + ' ms' : 'event ' + (k + 1).toLocaleString() + ' of ' + N.toLocaleString()) + ' · real ' + ms(ev[k].t) + ' ms';
   }
 
@@ -233,8 +206,7 @@ function mount(T, opt = {}) {
     const dt = Math.min(100, now - last); last = now;
     if (dir) { pos += dir * (real ? dt * speed : dt / 1000 * speed); if (pos >= maxPos()) { pos = maxPos(); setDir(0); } if (pos <= 0) { pos = 0; setDir(0); }
       const nk = idxAt(pos); if (nk !== k) { k = nk; render(true); } else drawRibbon(); }
-    if (++frame % 30 === 0) readCols();
-    const St = stateAt(k); simulate(St); drawGraph(St); raf = requestAnimationFrame(loop);
+    raf = requestAnimationFrame(loop);
   }
 
   // ---------- controls ----------
@@ -248,10 +220,10 @@ function mount(T, opt = {}) {
     if (e.key === 'Escape') close(); else if (e.key === ' ') { e.preventDefault(); setDir(dir ? 0 : 1); } else if (e.key === 'ArrowLeft') { setDir(0); seek(k - 1); } else if (e.key === 'ArrowRight') { setDir(0); seek(k + 1); }
     else if (e.key === 'j' || e.key === 'J') setDir(-1); else if (e.key === 'k' || e.key === 'K') setDir(0); else if (e.key === 'l' || e.key === 'L') setDir(1); else if (e.key === 'Home') { setDir(0); seek(0); } else if (e.key === 'End') { setDir(0); seek(N - 1); } };
   document.addEventListener('keydown', onKey);
-  const ro = new ResizeObserver(() => { size(); render(false); }); ro.observe(gc.parentElement);
-  function close() { cancelAnimationFrame(raf); ro.disconnect(); document.removeEventListener('keydown', onKey); root.remove(); if (current && current.root === root) current = null; }
+  const ro = new ResizeObserver(() => { size(); render(false); }); ro.observe($('.hdp-right'));
+  function close() { cancelAnimationFrame(raf); ro.disconnect(); map.destroy(); document.removeEventListener('keydown', onKey); root.remove(); if (current && current.root === root) current = null; }
 
-  readCols(); fillSpeeds(); size(); seek(opt.seek != null ? opt.seek : 0);
+  fillSpeeds(); size(); seek(opt.seek != null ? opt.seek : 0);
   if (opt.seek == null && !matchMedia('(prefers-reduced-motion: reduce)').matches) setDir(1);
   raf = requestAnimationFrame(loop);
   return { root, close };
