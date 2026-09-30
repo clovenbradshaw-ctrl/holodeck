@@ -2172,6 +2172,10 @@ select option{background:var(--s1);color:var(--ink)}
           <button onClick="{{ closeAdd }}" style="background:none;border:0;color:var(--mut);cursor:pointer;font-size:16px">✕</button>
         </div>
         <p style="margin:0;color:var(--mut);font-size:13px">Anything works — PDFs, Word, slides, spreadsheets, web pages, data files, notes, transcripts. It's added to “{{ corpusName }}” and linked to everything already there. Nothing leaves your browser.</p>
+        <div style="display:flex;gap:10px;align-items:center;padding-bottom:12px;border-bottom:1px solid var(--line)">
+          <input value="{{ srcAskVal }}" onChange="{{ onSrcAskVal }}" onKeyDown="{{ onSrcAskKey }}" placeholder="Ask anything, and let it find the sources for you" style="flex:1 1 260px;min-width:0;background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:9px 12px;outline:none">
+          <button onClick="{{ findSources }}" style="flex:none;background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:9px 16px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Find sources</button>
+        </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <input value="{{ draftTitle }}" onChange="{{ onDraftTitle }}" placeholder="Title" style="flex:1 1 260px;background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:9px 12px;outline:none">
           <input value="{{ draftYear }}" onChange="{{ onDraftYear }}" placeholder="Year (optional)" style="flex:0 1 140px;background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:9px 12px;outline:none">
@@ -3203,8 +3207,8 @@ class Component extends DCLogic {
         }
       }
     } catch (e) { this.setState({ busy: '' }); }
-    clearTimeout(this._omniT);
-    this.setState(s => ({ q, qDraft: undefined, view: 'search', readDoc: null, srN: 25, qaN: 0, prevView: s.view === 'search' || s.view === 'reader' ? (s.prevView || 'summary') : s.view }));
+    clearTimeout(this._omniT); this._askLive = '';
+    this.setState(s => ({ q, askVal: '', showAdd: false, qDraft: undefined, view: 'search', readDoc: null, srN: 25, qaN: 0, prevView: s.view === 'search' || s.view === 'reader' ? (s.prevView || 'summary') : s.view }));
   }
   async addRepo() {
     const v = (this.state.repoVal || '').trim();
@@ -3455,7 +3459,8 @@ class Component extends DCLogic {
   async generate() {
     const A = this.analysis(); const S = this.state; const kind = S.gKind || 'brief', mode = S.gMode || 'mech'; const subject = (this._gSubj != null ? this._gSubj : S.gSubj != null ? S.gSubj : this.defaultSubject(A)).trim();
     if (!subject) { this.toast('Name a subject first'); return; } if (S.gen) return; this.setState({ gen: true });
-    if (kind === 'widget') {
+    const effectiveKind = kind !== 'brief' ? kind : /\b(widget|html|interactive|chart|graph|dashboard|visuali|canvas|app|tool|calculator|countdown|timer|slideshow|game|quiz|animation|svg|d3|plot)\b/i.test(subject) ? 'widget' : /\b(timeline|chronolog|histor|sequence|milestones?)\b/i.test(subject) ? 'timeline' : 'brief';
+    if (effectiveKind === 'widget') {
       const pd = this.pinData(); const curDoc = pd.doc;
       const gl = (curDoc && curDoc.genLog) || [];
       const gc = Math.min(Math.max(1, (curDoc && curDoc.genCursor) || gl.length), Math.max(1, gl.length));
@@ -3476,7 +3481,7 @@ class Component extends DCLogic {
     const sre = new RegExp(subject.replace(/[.*+?^$(){}|[\]\\]/g, '\\$&'), 'i');
     const pick = (list, n, distinct) => { const seenD = new Set(), seenT = new Set(), out = []; for (const x of list) { const k = clean(x.st.text).toLowerCase().slice(0, 60); if (seenT.has(k)) continue; if (distinct !== false && seenD.has(x.st.doc)) continue; seenD.add(x.st.doc); seenT.add(k); out.push(x.st); if (out.length >= n) break; } return out; };
     const secs = []; const FIND = /\b(did not|does not|was not|were not|has not|have not|lacks?|lacked|no (documentation|evidence|policy|process|plan)|not (always|consistently|properly|maintain))\b/i;
-    if (kind === 'timeline') {
+    if (effectiveKind === 'timeline') {
       const rows = this.retrieve(A, subject, { must: sre, boost: st => /\b(approved|passed|announced|created|established|hired|appointed|named|released|found|voted|launched|opened|closed|began|requested|reported|budget|audit)\b/i.test(st.text) ? 1.6 : 1 });
       const sts = pick(rows, 14).filter(st => this.dateOf(A, st).iso).sort((a, b) => this.dateOf(A, a).iso.localeCompare(this.dateOf(A, b).iso));
       secs.push({ heading: null, sts, each: true });
@@ -3507,8 +3512,8 @@ class Component extends DCLogic {
     const genId = 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
     this.setPinData(D => { blocks.forEach(b => { const c = { id: 'claim-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text: b.text, pins: [], by: b.model ? 'model' : b.kind === 'heading' ? undefined : 'template' };
       if (b.kind === 'heading') c.kind = 'heading'; else { c.gen = genId; c.pins = b.sts.map(st => this.ensurePin(D, A, st)); c.fixed = c.pins.slice(); if (!b.model && b.sts.length === 1) c.q = body(b.sts[0]); c.g = { verdict: 'source', why: b.model ? 'Written by the model from its excerpts, then checked.' : 'Quoted from its excerpt.', at: Date.now() }; if (b.date) c.date = b.date; } D.claims.push(c); }); return D; });
-    const genEntry = { id: genId, at: new Date().toISOString(), prompt: subject, kind, mode };
-    this.setDocs(X => ({ ...X, docs: X.docs.map(d => d.id === X.cur ? { ...d, kind, title: !d.title || d.title === 'Untitled document' ? subject + (kind === 'timeline' ? ': timeline' : ': brief') : d.title, genLog: [...(d.genLog || []), genEntry], genCursor: (d.genLog || []).length + 1 } : d) }));
+    const genEntry = { id: genId, at: new Date().toISOString(), prompt: subject, kind: effectiveKind, mode };
+    this.setDocs(X => ({ ...X, docs: X.docs.map(d => d.id === X.cur ? { ...d, kind: effectiveKind, title: !d.title || d.title === 'Untitled document' ? subject + (effectiveKind === 'timeline' ? ': timeline' : ': brief') : d.title, genLog: [...(d.genLog || []), genEntry], genCursor: (d.genLog || []).length + 1 } : d) }));
     const newIds = []; this.pinData().claims.forEach(c => { if (c.fixed && !c.g2) newIds.push(c.id); }); this.setPinData(D => { D.claims.forEach(c => { if (newIds.includes(c.id)) c.g2 = true; }); return D; }); this.groundClaims(newIds);
     this.setState({ gen: false }); if (false) this.toast(mode === 'model' && modelFail && !modelUsed ? 'The local model didn’t answer' + (this._llmErr ? ' (' + this._llmErr + ')' : '') + '; used quotes instead' : 'Added ' + plural(blocks.filter(b => b.kind !== 'heading').length, 'claim') + ' with their excerpts');
   }
@@ -5519,6 +5524,9 @@ class Component extends DCLogic {
       showAdd: S.showAdd, draftTitle: S.draftTitle, draftYear: S.draftYear, draftText: S.draftText,
       onDraftTitle: e => this.setState({ draftTitle: e.target.value }), onDraftYear: e => this.setState({ draftYear: e.target.value }), onDraftText: e => this.setState({ draftText: e.target.value }),
       repoVal: S.repoVal, onRepoVal: e => this.setState({ repoVal: e.target.value }), addRepo: () => this.addRepo(),
+      srcAskVal: S.askVal || '', onSrcAskVal: e => { this._askLive = e.target.value; this.setState({ askVal: e.target.value }); },
+      findSources: () => { const v = (this._askLive || S.askVal || '').trim(); if (v) this.autoResearch(v); },
+      onSrcAskKey: e => { if (e.key === 'Enter') { const v = e.target.value.trim(); if (v) this.autoResearch(v); } },
       addDraft: () => { const t = S.draftText.trim(); if (!t) { this.setState({ note: 'Paste some text first.' }); return; } this.addDocs([{ title: S.draftTitle.trim(), year: parseInt(S.draftYear) || null, text: t }]); },
       onFiles: e => this.ingest({ files: e.target.files, getData: () => '' }),
       customNote: S.note || (addN(cid) ? plural(addN(cid), 'item') + ' added here' : ''),
