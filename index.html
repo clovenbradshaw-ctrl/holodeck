@@ -25,6 +25,7 @@ select option{background:var(--s1);color:var(--ink)}
 </helmet>
 <div style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Hanken Grotesk',sans-serif;font-size:14px;line-height:1.5">
 <div style="display:flex;align-items:flex-start;min-height:100vh">
+  <sc-if value="{{ railScrim }}" hint-placeholder-val="{{ false }}"><div onClick="{{ toggleRail }}" style="position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.4)"></div></sc-if>
   <div style="{{ railStyle }}">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding:2px 2px 2px 10px">
       <sc-if value="{{ railOpen }}" hint-placeholder-val="{{ true }}"><div style="display:flex;align-items:center;gap:10px;min-width:0"><span style="width:12px;height:12px;border-radius:3px;background:#8b5cf6;flex:none"></span><span style="font:600 13px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);white-space:nowrap">Holodeck</span></div></sc-if>
@@ -2301,6 +2302,10 @@ const loadMeta = () => { try { return JSON.parse(localStorage.getItem('fold-expl
 // The side panel is fixed full-height at the right edge; it's used whenever the reader column keeps at least the panel's own width (250 nav + 40 padding + panel + reader >= panel), else a bottom sheet.
 const SIDE_PANEL_W = 360;
 const SIDE_PANEL_MIN_VW = 250 + 40 + SIDE_PANEL_W + SIDE_PANEL_W;
+// Below this width the 250px rail cannot dock: it would leave the content column under ~450px and push the page wider than the
+// screen (measured at 390px: the page laid out at 524px and the browser zoomed out). There the open rail is an overlay drawer instead.
+const RAIL_DOCK_MIN_VW = 700;
+const railDocks = () => typeof window === 'undefined' || window.innerWidth >= RAIL_DOCK_MIN_VW;
 const KIND_ORDER = ['Audit or report', 'Contract', 'Legislation', 'Meeting record', 'Meeting recording', 'Recording', 'Letter', 'Government page', 'News', 'Podcast', 'Blog', 'Own article', 'Organisation page', 'Not yet located', 'Source'];
 const KIND_DESC = {
   'Audit or report': 'Formal findings, with their own figures and risk ratings.', 'Legislation': 'Bills, amendments and code as filed, with their action history.',
@@ -3113,13 +3118,13 @@ const whenOf = (st, d) => d.pubLabel || (d.year ? String(d.year) : 'Undated');
 const assertLine = (st, A) => { const d = A.docById[st.doc]; const w = whoSays(st, A); return (w ? w.who + (w.how === 'quoted' ? ' (quoted)' : w.how === 'publisher' ? '' : ' (' + w.how + ')') + ' · ' : '') + d.title + ' · ' + whenOf(st, d); };
 
 class Component extends DCLogic {
-  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, draftTitle: '', draftYear: '', draftText: '', fw: {}, repoVal: '', note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true } };
+  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, draftTitle: '', draftYear: '', draftText: '', fw: {}, repoVal: '', note: '', theme: loadTheme(), railOpen: railDocks() ? loadRailOpen() : false, segOpen: loadSegOpen(), dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true } };
   _html = {};
 
   componentDidMount() {
     setTimeout(() => this.measureHdr(), 400);
     this.applyTheme(); this._c = 0; import(new URL('holodeck-match.js', location.href).href).then(M => { this._mt = M; this._qc = null; this.forceUpdate(); }).catch(() => {}); this.loadHtml(); if (typeof location !== 'undefined' && /fx-share=/.test(location.hash)) { this.netInit(); this.setState({ view: 'draft' }); }
-    this._onRz = () => { this.measureHdr(); if ((window.innerWidth < SIDE_PANEL_MIN_VW) !== this._narrow) this.forceUpdate(); }; window.addEventListener('resize', this._onRz);
+    this._onRz = () => { this.measureHdr(); if ((window.innerWidth < SIDE_PANEL_MIN_VW) !== this._narrow || railDocks() !== this._docks) { this._docks = railDocks(); this.forceUpdate(); } }; window.addEventListener('resize', this._onRz);
 
     this._onSelCh = () => { cancelAnimationFrame(this._selRaf); this._selRaf = requestAnimationFrame(() => this.updatePinPop()); };
     document.addEventListener('selectionchange', this._onSelCh); window.addEventListener('scroll', this._onSelCh, true);
@@ -4574,7 +4579,7 @@ class Component extends DCLogic {
     saveWorkspaceNames({ ...loadWorkspaceNames(), [newId]: p.label });
     this.setState({ added, corpus: newId, view: 'summary', sel: null, f: {}, q: '', readDoc: null, just: null }); }
   sel(type, id) { const S0 = this.state; if (type === 'name' && S0.view === 'reader' && !(S0.sel && S0.sel.type === 'name' && S0.sel.id === id)) this.pushHist(); if (type === 'doc') this.markRead(id); this.setState(s => (s.sel && s.sel.type === type && s.sel.id === id) ? { sel: null, selAll: false, pfIdx: 0, pfAll: false } : { sel: { type, id }, selAll: false, pfIdx: 0, pfAll: false }); }
-  go(view) { this.setState({ view, readDoc: null }); }
+  go(view) { this.setState({ view, readDoc: null, ...(railDocks() ? {} : { railOpen: false }) }); } // on a phone the overlay rail gets out of the way once a view is picked
   read(docId, stId) { const S0 = this.state; if (S0.view !== 'reader' || docId !== S0.readDoc || (S0.sel && S0.sel.type === 'name')) this.pushHist(); this.markRead(docId); if (docId !== this.state.readDoc) { this.state.seekT = 0; this._faithFound = null; } this.setState({ view: 'reader', readDoc: docId, sel: stId ? { type: 'statement', id: stId } : { type: 'doc', id: docId } }); }
   saveAdded(added) { try { localStorage.setItem('fold-explorer-added', JSON.stringify(added)); } catch (e) {} }
   // Fold the new statements into the holograph by the surprise view's own rules (holoKit), recording each step,
@@ -5446,10 +5451,13 @@ class Component extends DCLogic {
       openAddr: () => { const u = (S.addr || '').trim(); if (u) { this.setState({ addr: '' }); this.ingestUrl(/^https?:\/\//.test(u) ? u : 'https://' + u, { open: true }); } },
       toggleTheme: () => { const th = S.theme === 'dark' ? 'light' : 'dark'; try { localStorage.setItem('fold-explorer-theme', th); } catch (e) {} this.setState({ theme: th }); },
       railOpen: S.railOpen, railIcon: S.railOpen ? '‹' : '›', railTitle: S.railOpen ? 'Collapse' : 'Expand',
-      railStyle: S.railOpen
+      railScrim: S.railOpen && !railDocks(),
+      railStyle: S.railOpen && !railDocks()
+        ? 'position:fixed;top:0;left:0;bottom:0;width:min(280px,85vw);z-index:41;overflow:auto;box-sizing:border-box;border-right:1px solid var(--line);background:var(--s1);padding:16px 12px 20px;display:flex;flex-direction:column;gap:18px;box-shadow:6px 0 24px rgba(0,0,0,.35)'
+        : S.railOpen
         ? 'flex:0 0 250px;position:sticky;top:0;height:100vh;overflow:auto;box-sizing:border-box;border-right:1px solid var(--line);background:var(--s1);padding:16px 12px 20px;display:flex;flex-direction:column;gap:18px'
         : 'flex:0 0 40px;position:sticky;top:0;height:100vh;overflow:hidden;box-sizing:border-box;border-right:1px solid var(--line);background:var(--s1);padding:16px 8px 20px;display:flex;flex-direction:column;gap:18px',
-      toggleRail: () => { const open = !S.railOpen; try { localStorage.setItem('fold-explorer-rail', open ? '1' : '0'); } catch (e) {} this.setState({ railOpen: open }); },
+      toggleRail: () => { const open = !S.railOpen; if (railDocks()) { try { localStorage.setItem('fold-explorer-rail', open ? '1' : '0'); } catch (e) {} } this.setState({ railOpen: open }); },
       themeIcon: S.theme === 'dark' ? '☀' : '☾', themeTitle: S.theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode',
       dragging: S.dragging, isBusy: !!S.busy, busy: S.busy,
       hasJust: !!J && view !== 'reader', just, dismissJust: () => this.setState({ just: null }), showDropStrip: !J && view === 'summary',

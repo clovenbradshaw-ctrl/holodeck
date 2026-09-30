@@ -60,3 +60,7 @@ Each earlier run failed, and each failure was traced before anything was changed
 - F1 was run on this machine (same python/numpy as the recorded runs), in a clean directory with only `PATH` set; a different numpy was not tried.
 - The switched-off-method re-find guard (upstream) is in place but was not exercised by a colony that actually re-found a switched-off pipeline.
 - There is no static (Pyodide) mode: every result above needs the local notebook server.
+
+### Amendment 2026-09-30 — R8-phone after the host-layout fix (appended; nothing above changed)
+
+The partial R8-phone result above was the host page's own width. The Holodeck's left rail docked at 250 px at every screen size, so on a 390 px phone the content column was ~140 px and the page laid out at 524 px (Ask the Fold 520 px, with the Data notebook 492 px); the browser zoomed out. Fixed in `index.html`: below 700 px the rail starts collapsed and opens as an overlay drawer with a scrim, and picking a view closes it; at 700 px and above nothing changed. Measured in Chromium with `tools/phone-fit.mjs`: at 320, 390, 600 and 699 px, `scrollWidth` equals the visible width on the start page (empty and with a dropped document), with the rail overlay open, and in Ask the Fold (Sources and Data notebook), with no console errors. The Data notebook drawer now spans 0–390 of 390 px. Desktop: at 1400, 1024 and 700 px, screenshots of the old and the new page, with site storage cleared for both, are pixel-identical.
