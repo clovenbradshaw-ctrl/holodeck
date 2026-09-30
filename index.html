@@ -736,9 +736,6 @@ select option{background:var(--s1);color:var(--ink)}
                   </sc-if>
                   <button onClick="{{ ak.fold.open }}" style="all:unset;cursor:pointer;font:500 13px ‘Hanken Grotesk’;color:var(--acc);white-space:nowrap" style-hover="text-decoration:underline">Open Draft →</button>
                 </div>
-                <div style="display:flex;gap:4px">
-                  <sc-for list="{{ ak.fold.kinds }}" as="k" hint-placeholder-count="0"><button onClick="{{ k.onClick }}" style="background:{{ k.bg }};color:{{ k.col }};border:1px solid var(--line2);border-radius:6px;padding:3px 10px;font:500 12px ‘Hanken Grotesk’;cursor:pointer">{{ k.label }}</button></sc-for>
-                </div>
                 <sc-if value="{{ ak.fold.hasFolds }}" hint-placeholder-val="{{ false }}"><span style="font:400 12px ‘JetBrains Mono’;color:var(--dim)">{{ ak.fold.foldPrompt }}</span></sc-if>
                 <sc-if value="{{ ak.fold.hasWidget }}" hint-placeholder-val="{{ false }}"><iframe src="{{ ak.fold.widgetSrc }}" sandbox="allow-scripts" style="width:100%;height:320px;border:1px solid var(--line);border-radius:8px;background:#fff"></iframe></sc-if>
                 <sc-if value="{{ ak.fold.has }}" hint-placeholder-val="{{ false }}">
