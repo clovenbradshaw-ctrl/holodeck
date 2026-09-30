@@ -491,21 +491,21 @@ select option{background:var(--s1);color:var(--ink)}
       </sc-if>
 
       <sc-if value="{{ ak.on }}" hint-placeholder-val="{{ false }}">
-        <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
-          <div style="flex:1 1 480px;min-width:0;display:flex;flex-direction:column;gap:14px">
+        <div ref="{{ ak.wrapRef }}" style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
+          <div style="flex:{{ ak.mainFlex }};min-width:0;display:flex;flex-direction:column;gap:14px">
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font:500 13px 'Hanken Grotesk';color:var(--mut)">
               <span style="width:8px;height:8px;border-radius:50%;background:{{ ak.dot }};flex:none"></span>
               <span style="color:var(--ink2)">{{ ak.status }}</span>
               <span style="font:400 12px 'JetBrains Mono';color:var(--dim)">{{ ak.ixLine }}</span>
               <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
                 <sc-if value="{{ ak.hasModels }}" hint-placeholder-val="{{ false }}"><select value="{{ ak.model }}" onChange="{{ ak.onModel }}" style="background:var(--s1);border:1px solid var(--line2);border-radius:8px;color:var(--ink);font:500 13px 'Hanken Grotesk';padding:5px 8px;cursor:pointer;outline:none"><sc-for list="{{ ak.models }}" as="m" hint-placeholder-count="2"><option value="{{ m.v }}">{{ m.label }}</option></sc-for></select></sc-if>
-                <sc-if value="{{ ak.hasTurns }}" hint-placeholder-val="{{ false }}"><button onClick="{{ ak.reset }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">New conversation</button></sc-if>
+                <sc-if value="{{ ak.showReset }}" hint-placeholder-val="{{ false }}"><button onClick="{{ ak.reset }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">New conversation</button></sc-if>
+                <sc-if value="{{ ak.art.canNew }}" hint-placeholder-val="{{ false }}"><button onClick="{{ ak.art.onNew }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">New conversation</button></sc-if>
               </div>
             </div>
             <sc-if value="{{ ak.needLoad }}" hint-placeholder-val="{{ false }}">
               <div style="border:1px dashed var(--line2);border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:8px">
                 <span style="font:500 18px 'Newsreader',serif;color:var(--ink)">{{ ak.mName }} runs here, in this tab.</span>
-                <span style="font:400 14px/1.5 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">The first time, the browser downloads the model ({{ ak.mSize }}) and keeps it, so later visits start in seconds. After that it runs on this machine’s graphics card. Nothing you ask, and none of the sources, leaves the tab.</span>
                 <button onClick="{{ ak.load }}" style="align-self:flex-start;background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:7px 16px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Load {{ ak.mName }}</button>
               </div>
             </sc-if>
@@ -528,9 +528,9 @@ select option{background:var(--s1);color:var(--ink)}
               <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden">
                 <sc-for list="{{ ak.modes }}" as="m" hint-placeholder-count="3"><button onClick="{{ m.onClick }}" style="border:0;background:{{ m.bg }};color:{{ m.col }};padding:5px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';white-space:nowrap">{{ m.label }}</button></sc-for>
               </div>
-              <span style="font:400 12px 'JetBrains Mono';color:var(--dim)">{{ ak.modeNote }}</span>
             </div>
             <sc-if value="{{ ak.showCells }}" hint-placeholder-val="{{ true }}">
+            <sc-if value="{{ ak.notGen }}" hint-placeholder-val="{{ true }}">
             <sc-for list="{{ ak.turns }}" as="t" hint-placeholder-count="0">
               <sc-if value="{{ ak.mChat }}" hint-placeholder-val="{{ false }}">
                 <!-- Chat mode: Claude-style bubbles, no cell numbering -->
@@ -671,26 +671,48 @@ select option{background:var(--s1);color:var(--ink)}
                 </div>
               </sc-if>
             </sc-if>
+            </sc-if>
+            <sc-if value="{{ ak.mGen }}" hint-placeholder-val="{{ false }}">
+              <sc-for list="{{ ak.art.thread }}" as="t" hint-placeholder-count="0">
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <div style="display:flex;justify-content:flex-end"><div style="background:#8b5cf6;color:#fff;border-radius:20px 20px 4px 20px;padding:11px 16px;max-width:85%;font:400 16px/1.5 'Hanken Grotesk';word-break:break-word;white-space:pre-wrap">{{ t.q }}</div></div>
+                  <button onClick="{{ t.onOpen }}" style="align-self:flex-start;display:flex;gap:12px;align-items:center;background:var(--s1);border:1px solid {{ t.bd }};border-radius:12px;padding:10px 14px;cursor:pointer;text-align:left;min-width:240px;max-width:85%" style-hover="border-color:var(--acc)">
+                    <span style="flex:none;width:34px;height:34px;border-radius:8px;background:var(--s2);display:flex;align-items:center;justify-content:center;font:600 12px 'JetBrains Mono';color:var(--acc)">{{ t.icon }}</span>
+                    <span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font:600 14px 'Hanken Grotesk';color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ t.title }}</span><span style="font:400 12px 'JetBrains Mono';color:var(--mut)">{{ t.sub }}</span></span>
+                  </button>
+                </div>
+              </sc-for>
+              <sc-if value="{{ ak.art.live.has }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <div style="display:flex;justify-content:flex-end"><div style="background:#8b5cf6;color:#fff;border-radius:20px 20px 4px 20px;padding:11px 16px;max-width:85%;font:400 16px/1.5 'Hanken Grotesk';word-break:break-word;white-space:pre-wrap">{{ ak.art.live.q }}</div></div>
+                  <div onClick="{{ ak.art.live.onOpen }}" style="align-self:flex-start;display:flex;gap:12px;align-items:center;background:var(--s1);border:1px solid #8b5cf6;border-radius:12px;padding:10px 14px;min-width:240px;max-width:85%;cursor:pointer">
+                    <span style="flex:none;width:34px;height:34px;border-radius:8px;background:var(--s2);display:flex;align-items:center;justify-content:center;font:600 12px 'JetBrains Mono';color:var(--acc)">…</span>
+                    <span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font:600 14px 'Hanken Grotesk';color:var(--ink)">{{ ak.art.live.label }}</span><span style="font:400 12px 'JetBrains Mono';color:var(--mut)">{{ ak.art.live.meta }}</span></span>
+                  </div>
+                </div>
+              </sc-if>
+            </sc-if>
             <sc-if value="{{ ak.hasErr }}" hint-placeholder-val="{{ false }}"><span style="font:400 14px 'Hanken Grotesk';color:var(--bad)">{{ ak.err }}</span></sc-if>
             <div id="ak-composer" style="position:sticky;bottom:0;z-index:12;background:var(--hdr);backdrop-filter:blur(8px);padding:10px 0 2px;border-top:1px solid var(--line)">
               <div style="display:flex;flex-direction:column;gap:8px;background:var(--s1);border:1px solid var(--line2);border-radius:12px;padding:10px 12px">
-                <textarea value="{{ ak.q }}" onChange="{{ ak.onQ }}" onKeyDown="{{ ak.onKey }}" rows="2" placeholder="Ask about the sources in this workspace — Enter to ask, Shift+Enter for a new line" style="background:transparent;border:0;outline:none;resize:vertical;color:var(--ink);font:400 16px/1.5 'Hanken Grotesk';min-height:48px"></textarea>
+                <sc-if value="{{ ak.art.web.has }}" hint-placeholder-val="{{ false }}"><div style="display:flex;justify-content:flex-end"><button onClick="{{ ak.art.web.onToggle }}" title="{{ ak.art.web.title }}" style="all:unset;cursor:pointer;font:500 12px 'JetBrains Mono';color:{{ ak.art.web.col }}" style-hover="text-decoration:underline">{{ ak.art.web.label }}</button></div></sc-if>
+                <sc-if value="{{ ak.art.chip.has }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:8px;font:500 13px 'Hanken Grotesk';color:var(--ink2);padding-bottom:6px;border-bottom:1px solid var(--line)"><span style="flex:none;width:8px;height:8px;border-radius:2px;background:{{ ak.art.chip.col }}"></span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ ak.art.chip.label }}</span><button onClick="{{ ak.art.chip.onToggle }}" style="all:unset;cursor:pointer;color:var(--acc);font:500 13px 'Hanken Grotesk';white-space:nowrap" style-hover="text-decoration:underline">{{ ak.art.chip.action }}</button></div></sc-if>
+                <textarea value="{{ ak.q }}" onChange="{{ ak.onQ }}" onKeyDown="{{ ak.onKey }}" rows="2" placeholder="{{ ak.ph }}" style="background:transparent;border:0;outline:none;resize:vertical;color:var(--ink);font:400 16px/1.5 'Hanken Grotesk';min-height:48px"></textarea>
                 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                  <sc-if value="{{ ak.noTurns }}" hint-placeholder-val="{{ true }}"><sc-for list="{{ ak.examples }}" as="x" hint-placeholder-count="3"><button onClick="{{ x.onClick }}" style="background:var(--s2);border:1px solid var(--line2);border-radius:999px;padding:3px 10px;cursor:pointer;font:400 13px 'Hanken Grotesk';color:var(--ink2);white-space:normal;text-align:left" style-hover="border-color:var(--acc)">{{ x.t }}</button></sc-for></sc-if>
+                  <sc-if value="{{ ak.showEx }}" hint-placeholder-val="{{ true }}"><sc-for list="{{ ak.examples }}" as="x" hint-placeholder-count="3"><button onClick="{{ x.onClick }}" style="background:var(--s2);border:1px solid var(--line2);border-radius:999px;padding:3px 10px;cursor:pointer;font:400 13px 'Hanken Grotesk';color:var(--ink2);white-space:normal;text-align:left" style-hover="border-color:var(--acc)">{{ x.t }}</button></sc-for></sc-if>
                   <div style="margin-left:auto;display:flex;gap:8px">
-                    <sc-if value="{{ ak.busy }}" hint-placeholder-val="{{ false }}"><button onClick="{{ ak.stop }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)">Stop</button></sc-if>
-                    <button onClick="{{ ak.send }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 16px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Ask ↵</button>
+                    <sc-if value="{{ ak.busyAny }}" hint-placeholder-val="{{ false }}"><button onClick="{{ ak.stop }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)">Stop</button></sc-if>
+                    <button onClick="{{ ak.send }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 16px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">{{ ak.sendLabel }}</button>
                   </div>
                 </div>
               </div>
             </div>
             </sc-if>
           </div>
-          <aside style="flex:0 1 290px;min-width:250px;position:sticky;top:calc(var(--hdr-h, 84px) + 12px);display:flex;flex-direction:column;gap:12px">
+          <aside style="flex:{{ ak.asideFlex }};min-width:{{ ak.asideMin }};z-index:{{ ak.asideZ }};position:sticky;top:calc(var(--hdr-h, 84px) + 12px);display:flex;flex-direction:column;gap:12px">
             <sc-if value="{{ ak.notGen }}" hint-placeholder-val="{{ true }}">
               <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
                 <span style="font:600 12px ‘JetBrains Mono’;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">What the model carries</span>
-                <span style="font:400 13px/1.45 ‘Hanken Grotesk’;color:var(--mut)">A paraphrase of the conversation so far. It can’t support a claim, and the model is told so.</span>
                 <div style="display:flex;flex-direction:column;gap:2px"><span style="font:500 12px ‘JetBrains Mono’;color:var(--dim)">Topic</span><span style="font:500 14px ‘Hanken Grotesk’;color:var(--ink)">{{ ak.sm.topic }}</span></div>
                 <sc-if value="{{ ak.sm.hasFlow }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:2px"><span style="font:500 12px ‘JetBrains Mono’;color:var(--dim)">Flow</span><span style="font:400 14px/1.45 ‘Hanken Grotesk’;color:var(--ink2)">{{ ak.sm.flow }}</span></div></sc-if>
                 <sc-if value="{{ ak.sm.hasEnt }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:2px"><span style="font:500 12px ‘JetBrains Mono’;color:var(--dim)">Named so far</span><span style="font:400 14px/1.45 ‘Hanken Grotesk’;color:var(--ink2)">{{ ak.sm.entities }}</span></div></sc-if>
@@ -698,7 +720,6 @@ select option{background:var(--s1);color:var(--ink)}
               </section>
               <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px">
                 <span style="font:600 12px ‘JetBrains Mono’;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">On record</span>
-                <span style="font:400 13px/1.45 ‘Hanken Grotesk’;color:var(--mut)">What each turn was checked against. These addresses re-open.</span>
                 <sc-if value="{{ ak.hasRecs }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ ak.recs }}" as="r" hint-placeholder-count="0"><div style="display:flex;flex-direction:column;gap:1px;border-top:1px solid var(--line);padding:6px 0"><span style="font:400 13px/1.4 ‘Hanken Grotesk’;color:var(--ink2)">{{ r.line }}</span><span style="font:400 12px ‘JetBrains Mono’;color:var(--dim)">{{ r.sub }}</span></div></sc-for></sc-if>
               </section>
               <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
@@ -707,31 +728,47 @@ select option{background:var(--s1);color:var(--ink)}
                 <sc-if value="{{ ak.sentOpen }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ ak.sent }}" as="m" hint-placeholder-count="0"><div style="display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line);padding-top:8px"><span style="font:600 11px ‘JetBrains Mono’;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)">{{ m.role }} · {{ m.n }}</span><pre style="margin:0;font:400 11px/1.5 ‘JetBrains Mono’;color:var(--ink2);white-space:pre-wrap;overflow-wrap:anywhere;max-height:320px;overflow:auto">{{ m.text }}</pre></div></sc-for></sc-if>
               </section>
             </sc-if>
-            <sc-if value="{{ ak.mGen }}" hint-placeholder-val="{{ false }}">
-              <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 140px);overflow:auto">
-                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-                  <span style="font:600 12px ‘JetBrains Mono’;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-right:auto">Fold</span>
-                  <sc-if value="{{ ak.fold.hasFolds }}" hint-placeholder-val="{{ false }}">
-                    <button onClick="{{ ak.fold.onPrev }}" style="background:none;border:1px solid var(--line2);border-radius:6px;padding:2px 8px;font:500 14px ‘Hanken Grotesk’;color:var(--ink2);cursor:pointer;opacity:{{ ak.fold.prevOp }}">‹</button>
-                    <span style="font:500 12px ‘JetBrains Mono’;color:var(--mut)">{{ ak.fold.foldLabel }}</span>
-                    <button onClick="{{ ak.fold.onNext }}" style="background:none;border:1px solid var(--line2);border-radius:6px;padding:2px 8px;font:500 14px ‘Hanken Grotesk’;color:var(--ink2);cursor:pointer;opacity:{{ ak.fold.nextOp }}">›</button>
+            <sc-if value="{{ ak.art.showPane }}" hint-placeholder-val="{{ false }}">
+              <section style="{{ ak.art.paneStyle }}">
+                <div style="display:flex;align-items:center;gap:8px;padding:8px 10px 8px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap">
+                  <sc-if value="{{ ak.art.back }}" hint-placeholder-val="{{ false }}"><button onClick="{{ ak.art.onBack }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:4px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)">← Chat</button></sc-if>
+                  <span style="flex:1 1 120px;min-width:0;font:600 14px 'Hanken Grotesk';color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ ak.art.title }}</span>
+                  <sc-if value="{{ ak.art.multi }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:2px">
+                    <button onClick="{{ ak.art.onPrev }}" style="background:none;border:0;padding:2px 6px;font:500 15px 'Hanken Grotesk';color:var(--ink2);cursor:pointer;opacity:{{ ak.art.prevOp }}">‹</button>
+                    <span style="font:500 12px 'JetBrains Mono';color:var(--mut);white-space:nowrap">{{ ak.art.verLabel }}</span>
+                    <button onClick="{{ ak.art.onNext }}" style="background:none;border:0;padding:2px 6px;font:500 15px 'Hanken Grotesk';color:var(--ink2);cursor:pointer;opacity:{{ ak.art.nextOp }}">›</button>
+                  </div></sc-if>
+                  <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden"><sc-for list="{{ ak.art.tabs }}" as="m" hint-placeholder-count="2"><button onClick="{{ m.onClick }}" style="border:0;background:{{ m.bg }};color:{{ m.col }};padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk'">{{ m.label }}</button></sc-for></div>
+                  <sc-if value="{{ ak.art.canAct }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ ak.art.onCopy }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:4px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)">{{ ak.art.copyLabel }}</button>
+                    <button onClick="{{ ak.art.onDl }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:4px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)">Download</button>
                   </sc-if>
-                  <button onClick="{{ ak.fold.open }}" style="all:unset;cursor:pointer;font:500 13px ‘Hanken Grotesk’;color:var(--acc);white-space:nowrap" style-hover="text-decoration:underline">Open Draft →</button>
                 </div>
-                <sc-if value="{{ ak.fold.hasFolds }}" hint-placeholder-val="{{ false }}"><span style="font:400 12px ‘JetBrains Mono’;color:var(--dim)">{{ ak.fold.foldPrompt }}</span></sc-if>
-                <sc-if value="{{ ak.fold.hasWidget }}" hint-placeholder-val="{{ false }}"><iframe src="{{ ak.fold.widgetSrc }}" sandbox="allow-scripts" style="width:100%;height:320px;border:1px solid var(--line);border-radius:8px;background:#fff"></iframe></sc-if>
-                <sc-if value="{{ ak.fold.has }}" hint-placeholder-val="{{ false }}">
-                  <span style="font:600 15px/1.2 ‘Newsreader’,serif;color:var(--ink)">{{ ak.fold.title }}</span>
-                  <sc-for list="{{ ak.fold.items }}" as="fi" hint-placeholder-count="0"><p style="margin:0;font:400 14px/1.6 ‘Newsreader’,serif;color:var(--ink);text-wrap:pretty;border-top:1px solid var(--line);padding-top:8px">{{ fi.t }}</p></sc-for>
-                </sc-if>
-                <sc-if value="{{ ak.fold.emptyWidget }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px/1.5 ‘Hanken Grotesk’;color:var(--mut);text-wrap:pretty">Describe your widget below and click Generate.</span></sc-if>
-                <sc-if value="{{ ak.fold.noFoldClaims }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px/1.5 ‘Hanken Grotesk’;color:var(--mut);text-wrap:pretty">No claims in this fold yet.</span></sc-if>
-                <sc-if value="{{ ak.fold.empty }}" hint-placeholder-val="{{ true }}"><span style="font:400 13px/1.5 ‘Hanken Grotesk’;color:var(--mut);text-wrap:pretty">No folds yet. Ask a question, then click "Generate a document →" on an answer to start building one here.</span></sc-if>
-                <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:10px;margin-top:2px">
-                  <span style="font:600 11px ‘JetBrains Mono’;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Edit this fold</span>
-                  <textarea value="{{ ak.fold.editPrompt }}" onInput="{{ ak.fold.onEditPrompt }}" placeholder="{{ ak.fold.editHint }}" rows="2" style="background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font:400 13px ‘Hanken Grotesk’;color:var(--ink);resize:vertical;outline:none;width:100%;box-sizing:border-box"></textarea>
-                  <button onClick="{{ ak.fold.onRunEdit }}" style="align-self:flex-end;background:#8b5cf6;border:none;border-radius:8px;padding:6px 16px;font:600 13px ‘Hanken Grotesk’;color:#fff;cursor:pointer;opacity:{{ ak.fold.runEditOp }}">{{ ak.fold.runEditLabel }}</button>
-                </div>
+                <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;padding:6px 14px;border-bottom:1px solid var(--line);font:400 12px 'JetBrains Mono';color:var(--mut)"><span style="flex:1;min-width:0">{{ ak.art.status }}</span><sc-if value="{{ ak.art.hasLiveUrl }}" hint-placeholder-val="{{ false }}"><a href="{{ ak.art.liveUrl }}" target="_blank" rel="noopener" style="color:var(--acc);text-decoration:none;white-space:nowrap">Live page on eoreader7 ↗</a></sc-if></div>
+                <sc-if value="{{ ak.art.showPreview }}" hint-placeholder-val="{{ false }}"><iframe src="{{ ak.art.src }}" sandbox="allow-scripts allow-forms allow-modals" style="flex:1;min-height:0;width:100%;border:0;background:#fff"></iframe></sc-if>
+                <sc-if value="{{ ak.art.showCells }}" hint-placeholder-val="{{ false }}"><div style="flex:1;min-height:0;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px;background:var(--bg)">
+                  <span style="font:400 13px/1.5 'Hanken Grotesk';color:var(--mut)">{{ ak.art.cellsNote }}</span>
+                  <sc-for list="{{ ak.art.cellRows }}" as="c" hint-placeholder-count="0">
+                    <div style="border:1px solid var(--line);border-radius:10px;background:var(--s1);padding:10px 12px;display:flex;flex-direction:column;gap:6px">
+                      <div style="display:flex;gap:8px;align-items:baseline"><span style="font:600 12px 'JetBrains Mono';color:var(--acc)">{{ c.n }}</span><span style="font:600 13px/1.4 'Hanken Grotesk';color:var(--ink2)">{{ c.q }}</span></div>
+                      <span style="font:400 14px/1.55 'Newsreader',serif;color:{{ c.col }};white-space:pre-wrap">{{ c.text }}</span>
+                      <sc-if value="{{ c.has }}" hint-placeholder-val="{{ false }}"><span style="font:400 11px 'JetBrains Mono';color:var(--dim);overflow-wrap:anywhere">{{ c.meta }}</span></sc-if>
+                    </div>
+                  </sc-for>
+                </div></sc-if>
+                <sc-if value="{{ ak.art.showLedger }}" hint-placeholder-val="{{ false }}"><div style="flex:1;min-height:0;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:6px;background:var(--bg)">
+                  <span style="font:400 13px/1.5 'Hanken Grotesk';color:var(--mut)">{{ ak.art.ledgerNote }}</span>
+                  <sc-for list="{{ ak.art.ledgerRows }}" as="x" hint-placeholder-count="0">
+                    <div style="display:grid;grid-template-columns:92px minmax(0,1fr);gap:4px 10px;border-top:1px solid var(--line);padding:7px 0">
+                      <span style="font:600 12px 'JetBrains Mono';color:{{ x.col }};text-transform:uppercase;letter-spacing:.04em">{{ x.role }}</span>
+                      <div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+                        <span style="font:600 13px/1.4 'Hanken Grotesk';color:var(--ink2);overflow-wrap:anywhere">{{ x.title }}</span>
+                        <span style="font:400 13px/1.5 'Hanken Grotesk';color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere">{{ x.text }}</span>
+                        <span style="font:400 11px 'JetBrains Mono';color:var(--dim);overflow-wrap:anywhere">{{ x.meta }}</span>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div></sc-if>
               </section>
             </sc-if>
           </aside>
@@ -1228,20 +1265,6 @@ select option{background:var(--s1);color:var(--ink)}
       </sc-if>
 
       <sc-if value="{{ v.names }}" hint-placeholder-val="{{ false }}">
-        <sc-if value="{{ corr.has }}" hint-placeholder-val="{{ false }}">
-          <div style="background:var(--s1);border:1px solid var(--line2);border-radius:12px;padding:12px 16px;display:flex;flex-direction:column;gap:8px">
-            <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--amber)">{{ corr.title }}</span>
-            <div style="display:flex;gap:8px;flex-wrap:wrap"><input value="{{ corr.draft }}" onChange="{{ corr.onDraft }}" onKeyDown="{{ corr.onKey }}" placeholder="Plain English, e.g. &quot;INC&quot; is not a contractor — then Enter" style="flex:1 1 260px;min-width:0;background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);font:400 14px 'Hanken Grotesk';padding:7px 12px;outline:none"><button onClick="{{ corr.onFile }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:7px 14px;cursor:pointer;font:600 13px 'Hanken Grotesk'">File it</button></div>
-            <sc-for list="{{ corr.items }}" as="c" hint-placeholder-count="1">
-              <div style="display:flex;gap:10px;align-items:baseline;border-top:1px solid var(--line);padding-top:6px">
-                <span style="flex:1;min-width:0;font:400 13px/1.45 'Hanken Grotesk';color:{{ c.color }};overflow-wrap:anywhere">{{ c.text }}</span>
-                <span style="font:400 11px 'JetBrains Mono';color:var(--dim);white-space:nowrap">{{ c.meta }}</span>
-                <button onClick="{{ c.onToggle }}" style="all:unset;cursor:pointer;font:600 12px 'Hanken Grotesk';color:var(--acc);white-space:nowrap">{{ c.action }}</button>
-              </div>
-            </sc-for>
-            <span style="font:400 12px 'Hanken Grotesk';color:var(--dim)">{{ corr.note }}</span>
-          </div>
-        </sc-if>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <sc-for list="{{ nameTable.tabs }}" as="t" hint-placeholder-count="4">
             <button onClick="{{ t.onClick }}" style="display:flex;align-items:baseline;gap:6px;background:{{ t.bg }};border:1px solid {{ t.bd }};border-radius:999px;padding:4px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">{{ t.label }}<span style="font:400 12px 'JetBrains Mono';color:var(--mut)">{{ t.n }}</span></button>
@@ -2041,24 +2064,6 @@ select option{background:var(--s1);color:var(--ink)}
         <button onMouseDown="{{ pinPop.onCorrect }}" title="Comment on this into the system" style="padding:7px 14px;border-radius:8px;border:1px solid var(--line2);background:var(--s1);color:var(--ink);font:600 14px 'Hanken Grotesk';cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.35)">That's incorrect</button>
       </div>
     </sc-if>
-    <button onClick="{{ corr.onOpen }}" title="Comment into the system from anywhere" style="position:fixed;z-index:55;right:16px;bottom:16px;width:44px;height:44px;border-radius:50%;border:1px solid #8b5cf6;background:var(--sel);color:var(--ink);font:600 20px 'Hanken Grotesk';cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.35)">✎</button>
-    <sc-if value="{{ corr.show }}" hint-placeholder-val="{{ false }}">
-      <div onClick="{{ corr.onCloseBg }}" style="position:fixed;inset:0;z-index:70;background:rgba(6,5,12,.75);display:flex;align-items:center;justify-content:center;padding:20px">
-        <div style="width:100%;max-width:520px;background:var(--s1);border:1px solid var(--line2);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:12px">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <h2 style="margin:0;font:500 22px 'Newsreader',serif">Comment into the system</h2>
-            <button onClick="{{ corr.onClose }}" style="background:none;border:0;color:var(--mut);cursor:pointer;font-size:16px">✕</button>
-          </div>
-          <p style="margin:0;color:var(--mut);font-size:13px">Plain English. Negations (“X is not a contractor”) strike it everywhere, past and future. Anything else is kept on the record. Nothing is ever deleted — retract it under Names.</p>
-          <input value="{{ corr.target }}" onChange="{{ corr.onTarget }}" placeholder="What is this about? (optional if quoted below)" style="background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:9px 12px;outline:none">
-          <textarea value="{{ corr.draft }}" onChange="{{ corr.onDraft }}" placeholder="Say it, e.g. &quot;INC&quot; is not a contractor" rows="4" style="background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:10px 12px;outline:none;font:400 15px/1.5 'Hanken Grotesk';resize:vertical"></textarea>
-          <div style="display:flex;gap:10px;align-items:center">
-            <button onClick="{{ corr.onFileModal }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:9px 18px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">File it</button>
-            <span style="flex:1;font-size:13px;color:var(--mut)">Filed to “{{ corpusName }}”.</span>
-          </div>
-        </div>
-      </div>
-    </sc-if>
     <sc-if value="{{ hasPinToast }}" hint-placeholder-val="{{ false }}">
       <div style="position:fixed;z-index:60;left:50%;bottom:24px;transform:translateX(-50%);display:flex;gap:14px;align-items:center;padding:10px 16px;border-radius:10px;background:var(--s2);border:1px solid var(--line2);font:500 14px 'Hanken Grotesk';color:var(--ink);box-shadow:0 8px 24px rgba(0,0,0,.3)">{{ pinToast }}<button onClick="{{ goDraft }}" style="all:unset;cursor:pointer;color:var(--acc);font-weight:600">Open draft →</button></div>
     </sc-if>
@@ -2807,6 +2812,7 @@ function purgeLegacyHistory() {
   } catch (e) {}
 }
 purgeLegacyHistory();
+const ART_CHAT_W = 340, ART_PANE_W = 560, ART_GAP = 20;
 function loadTheme() { try { return localStorage.getItem('fold-explorer-theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'); } catch (e) { return 'dark'; } }
 function loadRailOpen() { try { const v = localStorage.getItem('fold-explorer-rail'); return v === null ? true : v === '1'; } catch (e) { return true; } }
 function loadSegOpen() { try { return localStorage.getItem('fold-explorer-segopen') === '1'; } catch (e) { return false; } }
@@ -3459,25 +3465,7 @@ class Component extends DCLogic {
   async generate() {
     const A = this.analysis(); const S = this.state; const kind = S.gKind || 'brief', mode = S.gMode || 'mech'; const subject = (this._gSubj != null ? this._gSubj : S.gSubj != null ? S.gSubj : this.defaultSubject(A)).trim();
     if (!subject) { this.toast('Name a subject first'); return; } if (S.gen) return; this.setState({ gen: true });
-    const effectiveKind = kind !== 'brief' ? kind : /\b(widget|html|interactive|chart|graph|dashboard|visuali|canvas|app|tool|calculator|countdown|timer|slideshow|game|quiz|animation|svg|d3|plot)\b/i.test(subject) ? 'widget' : /\b(timeline|chronolog|histor|sequence|milestones?)\b/i.test(subject) ? 'timeline' : 'brief';
-    if (effectiveKind === 'widget') {
-      const pd = this.pinData(); const curDoc = pd.doc;
-      const gl = (curDoc && curDoc.genLog) || [];
-      const gc = Math.min(Math.max(1, (curDoc && curDoc.genCursor) || gl.length), Math.max(1, gl.length));
-      const targetFold = gl.length > 0 ? gl[gc - 1] : null;
-      const prevHtml = targetFold ? ((pd.claims || []).find(c => c.gen === targetFold.id && c.kind === 'widget') || {}).text || '' : '';
-      const askW = async (sys, user) => { try { return await this.localLLM(sys, user); } catch (e) { this._llmErr = e.message || String(e); return ''; } };
-      const WSYS = 'You generate self-contained HTML widgets. Output ONLY the complete HTML starting with <!doctype html>. No explanation, no markdown fences, no surrounding text.';
-      const wUser = prevHtml ? 'Current HTML:\n' + prevHtml.slice(0, 10000) + '\n\nChange instruction: ' + subject + '\nOutput the complete updated HTML only.' : 'Make a self-contained, visually polished HTML widget: ' + subject + '\nUse only inline styles. Make it interactive where it makes sense.';
-      const html = await askW(WSYS, wUser);
-      if (!html || !/<html|<!doctype/i.test(html)) { this.setState({ gen: false }); this.toast('No HTML returned. Is a local model running? Set it in Ask the Fold.'); return; }
-      const wHtml = html.replace(/^[\s\S]*?(<!doctype html>|<html)/i, '$1');
-      const genId = 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-      this.setPinData(D => { D.claims.push({ id: 'claim-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), kind: 'widget', text: wHtml, gen: genId, pins: [], by: 'model' }); return D; });
-      const genEntry = { id: genId, at: new Date().toISOString(), prompt: subject, kind: 'widget', mode };
-      this.setDocs(X => ({ ...X, docs: X.docs.map(d => d.id === X.cur ? { ...d, genLog: [...(d.genLog || []), genEntry], genCursor: (d.genLog || []).length + 1 } : d) }));
-      this.setState({ gen: false }); this.toast(prevHtml ? 'Widget updated — fold ' + (gl.length + 1) + ' of ' + (gl.length + 1) : 'Widget built. Edit it using the panel →'); return;
-    }
+    const effectiveKind = kind;
     const sre = new RegExp(subject.replace(/[.*+?^$(){}|[\]\\]/g, '\\$&'), 'i');
     const pick = (list, n, distinct) => { const seenD = new Set(), seenT = new Set(), out = []; for (const x of list) { const k = clean(x.st.text).toLowerCase().slice(0, 60); if (seenT.has(k)) continue; if (distinct !== false && seenD.has(x.st.doc)) continue; seenD.add(x.st.doc); seenT.add(k); out.push(x.st); if (out.length >= n) break; } return out; };
     const secs = []; const FIND = /\b(did not|does not|was not|were not|has not|have not|lacks?|lacked|no (documentation|evidence|policy|process|plan)|not (always|consistently|properly|maintain))\b/i;
@@ -3804,7 +3792,7 @@ class Component extends DCLogic {
   // ---------- Ask the Fold: The Fold's grounded conversation over this workspace, answered by a model on this machine ----------
   askMod() { if (!this._askP) this._askP = import(new URL('holodeck-ask.js', location.href).href).then(M => { this._askM = M; return M; }); return this._askP; }
   akModels() { const M = this._askM; const wl = M ? M.WEBLLM_MODELS.map(m => ({ v: 'webllm:' + m.id, label: m.label + ' · ' + m.size, size: m.size, name: m.label.replace(/ · in this tab$/, '') })) : []; const ol = (this._oll && this._oll.ok ? this._oll.models || [] : []).map(m => ({ v: m.name, label: m.name + ' · Ollama', name: m.name })); return [...wl, ...ol]; }
-  akModel() { const S = this.state; const ms = this.akModels(); if (S.akModel && ms.some(m => m.v === S.akModel)) return S.akModel; return 'webllm:gemma-2-2b-it-q4f16_1-MLC'; }
+  akModel() { const S = this.state; const ms = this.akModels(); let saved = null; try { saved = localStorage.getItem('fold-explorer-ak-model'); } catch (e) {} const want = S.akModel || saved; if (want && ms.some(m => m.v === want)) return want; return 'webllm:gemma-2-2b-it-q4f16_1-MLC'; }
   llmOk() { const m = this.akModel(); const M = this._askM; if (m.startsWith('webllm:')) return !!(M && M.webgpu()); return !!(this._oll && this._oll.ok); }
   async akLoad() { const M = await this.askMod(); const m = this.akModel(); if (!m.startsWith('webllm:') || M.webllmLoaded(m.slice(7))) return true; if (!M.webgpu()) { this.setState({ akErr: 'This browser has no WebGPU, so a model can’t run in this tab. Chrome or Edge with hardware acceleration on can.' }); return false; }
     this.setState({ akLoad: { text: 'Starting…', p: 0 }, akErr: '' }); let last = 0;
@@ -3823,6 +3811,45 @@ class Component extends DCLogic {
     else return null;
     return { text: [head, ...lines].join('\n'), head, lines, said, type: r.spec && r.spec.type, q };
   }
+  genWeb() { try { return localStorage.getItem('fold-explorer-gen-web') === '1'; } catch (e) { return false; } }
+  doorsMod() { if (!this._doorsP) this._doorsP = import('./holodeck-doors.js').then(m => { this._doors = m; this.forceUpdate(); return m; }); return this._doorsP; }
+  async genSend() {
+    const q = String(this.state.akQ || '').trim(); if (!q || this.state.docStarting) return;
+    const A = this.artState(); const base = this.state.genNew || !A.sel ? null : A.sel;
+    const D = await this.doorsMod(); const m = this.akModel();
+    const task = base && base.g.task ? base.g.task + '\n\nChange requested: ' + q : q; const jobId = D.newJobId();
+    this.setState({ akQ: '', docStarting: q, akErr: '' });
+    try { await D.startDocument(D.ER7_BASE, { task, jobId, model: m.startsWith('webllm:') ? undefined : m, webConsent: this.genWeb() }); }
+    catch (e) { this.setState({ docStarting: false, akQ: q, akErr: e.type === 'unreachable' ? 'eoreader7 isn’t answering at ' + D.ER7_BASE + '. Start its proxy, then send again.' : e.message }); return; }
+    const entry = { id: 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), at: new Date().toISOString(), prompt: q, task, kind: 'document', jobId, base: base ? base.g.id : null };
+    this.setDocs(X => ({ ...X, docs: X.docs.map(d => d.id === X.cur ? { ...d, genLog: [...(d.genLog || []), entry], genCursor: (d.genLog || []).length + 1 } : d) }));
+    this.setState({ docStarting: false, genNew: false, akTab: 'preview' }); this.docWatch(jobId);
+  }
+  // The doorway writes; the page only reads. One refresh = the job's poll + its ledger, both from the proxy.
+  async docRefresh(jobId) {
+    const D = await this.doorsMod(); const prev = (this._docs || {})[jobId] || {};
+    let next; try { const [p, L] = await Promise.all([D.pollDocument(D.ER7_BASE, jobId), D.readLedger(D.ER7_BASE, jobId)]); next = { status: p.status, job: p.job, projection: p.projection || '', ledger: L, cells: D.cellsOf(L.rows), at: Date.now() }; }
+    catch (e) { next = { ...prev, status: prev.status || 'unreachable', err: e.message, at: Date.now() }; }
+    this._docs = { ...(this._docs || {}), [jobId]: next }; this.forceUpdate(); return next;
+  }
+  docWatch(jobId) {
+    this._watching = this._watching || new Set(); if (this._watching.has(jobId)) return; this._watching.add(jobId);
+    const tick = async () => { const d = await this.docRefresh(jobId); if (d.status === 'writing') setTimeout(tick, 2500); else this._watching.delete(jobId); };
+    tick();
+  }
+  artState() {
+    const pd = this.pinData(); const doc = pd.doc || {}; const gl = Array.isArray(doc.genLog) ? doc.genLog : [];
+    const byGen = {}; (pd.claims || []).forEach(c => { if (c.kind === 'widget' && c.gen) byGen[c.gen] = c; });
+    const ent = {}; gl.forEach((g, i) => { ent[g.id] = { g, i, c: byGen[g.id] || null }; });
+    const rootOf = id => { let e = ent[id], n = 0; while (e && e.g.base && ent[e.g.base] && n++ < gl.length) e = ent[e.g.base]; return e ? e.g.id : id; };
+    const groups = {}; const vers = gl.map(g => ent[g.id]).filter(v => v.c || v.g.jobId).map(v => { const x = { ...v, root: rootOf(v.g.id) }; (groups[x.root] = groups[x.root] || []).push(x); x.k = groups[x.root].length; return x; });
+    const gc = doc.genCursor || gl.length; const sel = vers.find(v => v.i === gc - 1) || vers[vers.length - 1] || null;
+    return { pd, doc, gl, vers, groups, sel, byId: Object.fromEntries(vers.map(v => [v.g.id, v])) };
+  }
+  akWrapRef = el => {
+    if (this._akWrapEl === el) return; if (this._akRO) { this._akRO.disconnect(); this._akRO = null; } this._akWrapEl = el; if (!el || typeof ResizeObserver === 'undefined') return;
+    this._akRO = new ResizeObserver(() => { const nar = el.clientWidth < ART_CHAT_W + ART_PANE_W + ART_GAP; if (nar !== !!this._akNarrow) { this._akNarrow = nar; this.forceUpdate(); } }); this._akRO.observe(el);
+  };
   async askSend(qIn) {
     const q = String(qIn ?? this.state.akQ ?? '').trim(); if (!q || this.state.akBusy) return;
     const M = await this.askMod(); if (!this._conv) this._conv = M.emptyConv();
@@ -3897,10 +3924,62 @@ class Component extends DCLogic {
     const trChars = conv.history.reduce((n, m) => n + (m.content || '').length, 0);
     const stageL = { indexing: 'Indexing the passages…', retrieving: 'Finding passages by the question’s own words…', reading: 'Reading the passages into notes…', answering: 'Answering…', checking: 'Checking every sentence against the passages…', folding: 'Folding the turn…' };
     const recs = (sm.records || []).slice().reverse().map(r => ({ line: 'Turn ' + r.turn + ' · ' + r.gist, sub: plural((r.refs || []).length, 'address', 'addresses') + ((r.unsupported || []).length ? ' · ' + (r.unsupported || []).length + ' unsupported' : '') + ((r.open || []).length ? ' · open' : '') }));
+    const isGen = S.akMode === 'generate';
+    const art = (() => {
+      const AS = this.artState(); const { vers, groups, sel } = AS; const docId = AS.pd.cur; const D = this._doors;
+      if (isGen && !D) this.doorsMod();
+      const tab = S.akTab || 'preview'; const narrow = !!this._akNarrow; const overlay = narrow && !!S.akOverlay;
+      const docOf = v => { if (!v || !v.g.jobId) return null; const d = (this._docs || {})[v.g.jobId]; if (!d && D) this.docWatch(v.g.jobId); return d || null; };
+      const titleOf = v => { if (v.c) { const m = /<title[^>]*>([^<]{1,80})<\/title>/i.exec(v.c.text); if (m) return m[1].trim(); } const root = (groups[v.root] || [v])[0]; return short(root.g.prompt, 56); };
+      const pick = v => () => { this.setDocs(X => ({ ...X, docs: X.docs.map(d => d.id === docId ? { ...d, genCursor: v.i + 1 } : d) })); this.setState({ genNew: false, ...(narrow ? { akOverlay: true } : {}) }); };
+      const ago = t => { const s2 = Math.max(0, Math.round((Date.now() - t) / 1000)); return s2 < 90 ? s2 + 's' : Math.round(s2 / 60) + 'm'; };
+      const progress = d => { if (!d) return 'Connecting to eoreader7…'; const cs = d.cells ? d.cells.current : null; const n = cs ? cs.plan.length : 0, w = cs ? cs.cells.filter(c => c.parts.length).length : 0; const rows = d.ledger ? d.ledger.rows.length : 0;
+        const head = { writing: 'Composing', complete: 'Complete', unsatisfied: 'Unsatisfied', truncated: 'Truncated', error: 'Failed', unreachable: 'eoreader7 unreachable', unknown: 'Not on the proxy' }[d.status] || d.status;
+        return head + (n ? ' · ' + w + ' of ' + n + ' cells' : ' · planning') + ' · ' + rows + ' ledger rows' + (d.status === 'writing' && d.job ? ' · ' + ago(d.job.createdAt) : ''); };
+      const grp = sel ? groups[sel.root] : []; const gi = sel ? grp.indexOf(sel) : -1;
+      const thread = vers.map(v => { const on = sel && v.g.id === sel.g.id; const d = docOf(v); const busy = !!(d && d.status === 'writing') || (!!v.g.jobId && !d);
+        return { q: v.g.prompt, title: titleOf(v), sub: 'v' + v.k + ' · ' + (v.c ? 'built before the doorway' : progress(d)) + (on ? ' · open' : ''), bd: on ? '#8b5cf6' : 'var(--line2)', icon: busy ? '…' : v.c ? '</>' : '¶', onOpen: pick(v) }; });
+      const sd = docOf(sel); const title = sel ? titleOf(sel) : '';
+      const seg = on => ({ bg: on ? 'var(--sel)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)' });
+      const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const proj = sd ? sd.projection : '';
+      const page = sel && sel.c ? sel.c.text : '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font:17px/1.6 Georgia,serif;max-width:680px;margin:32px auto;padding:0 20px;overflow-wrap:anywhere;color:#1a1a1a}h1,h2,h3{font-family:system-ui,sans-serif;line-height:1.25}p{margin:0 0 1em}.w{color:#888;font:14px system-ui,sans-serif}.d{font:13px/1.45 system-ui,sans-serif;color:#8a5a00;background:#fff6e0;border:1px solid #f0d9a0;border-radius:8px;padding:8px 12px}</style>'
+        + (sd && sd.ledger && D && D.disclosureOf(sd.ledger.rows) ? '<p class="d">eoreader7 disclosed: ' + esc(D.disclosureOf(sd.ledger.rows)) + '</p>' : '') + (proj ? proj.split(/\n{2,}/).map(b => { const h = /^(#{1,3})\s+(.*)$/.exec(b.trim()); return h ? '<h' + h[1].length + '>' + esc(h[2]) + '</h' + h[1].length + '>' : '<p>' + esc(b.trim()).replace(/\n/g, '<br>') + '</p>'; }).join('') : '<p class="w">' + (sd && sd.status === 'writing' ? 'Nothing has folded out yet. The cells are being composed; watch them under Cells, and every act under Ledger.' : 'Nothing folded out of this run.') + '</p>');
+      const cs = sd && sd.cells ? sd.cells : null; const cur = cs ? cs.current : null;
+      const clip = (t, n) => { t = String(t || ''); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
+      const cellRows = cur ? cur.cells.map((c, k) => { const p = c.parts[c.parts.length - 1]; const kept = p && String(p.text || '').trim(); return { n: String(k + 1), q: c.q, has: !!p, none: !p, text: kept ? clip(p.text, 700) : p ? 'Nothing kept from this cell.' : (sd.status === 'writing' ? 'Waiting' : 'Not composed'), meta: p ? (p.giver || '') + ' · ' + (p.basis || '') + (c.parts.length > 1 ? ' · ' + c.parts.length + ' drafts' : '') : '', col: kept ? 'var(--ink)' : 'var(--dim)' }; }) : [];
+      const ROLE = { plan: 'var(--acc)', ground: 'var(--ok)', part: 'var(--ink)', revision: 'var(--amber)', admission: '#60a5fa', citations: 'var(--ok)', fold: 'var(--acc)', tighten: 'var(--amber)', contract: 'var(--mut)', concrescence: 'var(--mut)' };
+      const ledgerRows = sd && sd.ledger ? sd.ledger.rows.map(r => ({ role: r.role, col: ROLE[r.role] || 'var(--mut)', title: clip(r.title, 160), text: clip(r.text, 600), meta: (r.giver || '') + (r.basis ? ' · ' + clip(r.basis, 200) : '') + (r.at ? ' · ' + r.at : '') })) : [];
+      const ledgerNote = !sel ? '' : sel.c ? 'Built before the doorway, straight from the model, so it has no ledger.' : !sd ? 'Reading the ledger…' : sd.ledger && sd.ledger.missing ? 'The proxy has not written a ledger for this job yet.' : (ledgerRows.length + ' rows from ' + (D ? D.ER7_BASE : 'eoreader7') + ', append-only, as the proxy wrote them' + (sd.ledger && sd.ledger.malformed ? '; ' + sd.ledger.malformed + ' lines were not observations' : '') + '.');
+      const cellsNote = !sel ? '' : sel.c ? 'Built before the doorway as one file, so it has no cells.' : !cur ? (sd && sd.status === 'writing' ? 'The void plan is being drawn.' : 'No void plan in the ledger.') : cur.plan.length + ' questions in the void plan; each is a cell composed on its own.' + (cur.revisions.length ? ' ' + cur.revisions.length + ' revision rows name no cell, so they are listed under Ledger, not assigned here.' : '') + (cs.unaddressed.length ? ' ' + cs.unaddressed.length + ' parts answer no question of their plan.' : '');
+      const targeting = !!sel && !S.genNew; const has = vers.length > 0 || !!S.docStarting;
+      return { has, thread, hasThread: thread.length > 0, narrow,
+        live: { has: !!S.docStarting, q: S.docStarting || '', label: 'Starting a document job…', meta: D ? D.ER7_BASE + '/v1/documents' : 'eoreader7', onOpen: () => {} },
+        web: { has: isGen, label: this.genWeb() ? 'Web ground: on' : 'Web ground: off', col: this.genWeb() ? 'var(--ok)' : 'var(--mut)', title: 'On: eoreader7 may fetch web pages to ground each cell (this leaves the machine). Off: cells are composed with no ground, and the ledger discloses that.', onToggle: () => { try { localStorage.setItem('fold-explorer-gen-web', this.genWeb() ? '0' : '1'); } catch (e) {} this.forceUpdate(); } },
+        chip: { has: isGen && vers.length > 0, col: targeting ? '#8b5cf6' : 'var(--ok)',
+          label: targeting ? 'Revising ' + title + ' · v' + sel.k + (gi < grp.length - 1 ? ' (an earlier version; the change branches from it)' : '') : 'Starting a new artifact',
+          action: targeting ? 'Start new instead' : sel ? 'Revise ' + title + ' instead' : '', onToggle: () => this.setState({ genNew: targeting }) },
+        targeting,
+        showPane: vers.length > 0 && (!narrow || overlay), back: overlay, onBack: () => this.setState({ akOverlay: false }),
+        paneStyle: overlay ? 'position:fixed;inset:0;z-index:65;background:var(--s1);display:flex;flex-direction:column;overflow:hidden' : 'background:var(--s1);border:1px solid var(--line2);border-radius:12px;display:flex;flex-direction:column;height:calc(100vh - var(--hdr-h, 84px) - 28px);min-height:420px;overflow:hidden',
+        title, status: sel ? (sel.c ? 'direct model' : progress(sd)) : '',
+        multi: grp.length > 1, verLabel: gi >= 0 ? 'v' + (gi + 1) + ' of ' + grp.length : '',
+        prevOp: gi > 0 ? 1 : 0.3, nextOp: gi >= 0 && gi < grp.length - 1 ? 1 : 0.3,
+        onPrev: () => { if (gi > 0) pick(grp[gi - 1])(); }, onNext: () => { if (gi >= 0 && gi < grp.length - 1) pick(grp[gi + 1])(); },
+        tabs: [['preview', 'Preview'], ['cells', 'Cells'], ['ledger', 'Ledger']].map(([k, l]) => ({ label: l, ...seg(tab === k), onClick: () => this.setState({ akTab: k }) })),
+        showPreview: !!sel && tab === 'preview', showCells: !!sel && tab === 'cells', showLedger: !!sel && tab === 'ledger',
+        src: sel ? 'data:text/html;charset=utf-8,' + encodeURIComponent(page) : '',
+        cellRows, hasCellRows: cellRows.length > 0, cellsNote, ledgerRows, ledgerNote,
+        liveUrl: sel && sel.g.jobId && D ? D.liveHtmlUrl(D.ER7_BASE, sel.g.jobId) : '', hasLiveUrl: !!(sel && sel.g.jobId && D),
+        canAct: !!sel && !!(sel.c || proj), copyLabel: S.akCopied ? 'Copied' : 'Copy',
+        onCopy: () => { const t = sel.c ? sel.c.text : proj; const done = () => { this.setState({ akCopied: true }); setTimeout(() => this.setState({ akCopied: false }), 1500); }; try { navigator.clipboard.writeText(t).then(done, () => { this._fallbackCopy(t); done(); }); } catch (e) { this._fallbackCopy(t); done(); } },
+        onDl: () => { const t = sel.c ? sel.c.text : proj; const b = new Blob([t], { type: sel.c ? 'text/html' : 'text/markdown' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = (title.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-').toLowerCase() || 'artifact') + (sel.c ? '.html' : '.md'); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); },
+        canNew: vers.length > 0, onNew: () => { const id = 'doc-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); this.setDocs(X => ({ docs: [...X.docs, { id, title: 'Untitled artifact', claims: [], created: new Date().toISOString() }], cur: id })); this.setState({ akTab: 'preview', akErr: '', genNew: false, akOverlay: false }); } };
+    })();
     return { ak: { on: true, ready: this.llmOk(), pending: false, gap: isWL ? !gpu && !!MM : !(O && O.ok), why: isWL ? 'navigator.gpu is not available in this browser' : (O.why || ''), isWL, noGpu: isWL && MM && !gpu, needLoad: isWL && gpu && !loaded && !LD, loading: !!LD, loadText: LD ? LD.text : '', loadPct: LD ? Math.round((LD.p || 0) * 100) + '%' : '0%', load: () => this.akLoad(), mName: mInfo.name, mSize: mInfo.size || '',
       dot: isWL ? (loaded ? 'var(--ok)' : gpu ? 'var(--amber)' : 'var(--bad)') : O.ok ? 'var(--ok)' : 'var(--bad)',
       status: isWL ? (loaded ? mInfo.name + ' running in this tab · nothing leaves it' : !MM ? 'Starting…' : gpu ? mInfo.name + ' runs in this tab once loaded' : 'This browser can’t run a model in the tab') : O.ok ? model + ' via Ollama on this machine' : 'Ollama isn’t reachable',
-      models: ms.map(m => ({ v: m.v, label: m.label })), hasModels: ms.length > 1, model, onModel: e => this.setState({ akModel: e.target.value }), retry: () => this.akProbe(),
+      models: ms.map(m => ({ v: m.v, label: m.label })), hasModels: ms.length > 1, model, onModel: e => { const v = e.target.value; try { localStorage.setItem('fold-explorer-ak-model', v); } catch (er) {} this.setState({ akModel: v }); }, retry: () => this.akProbe(),
       ixLine: this._ix ? plural(this._ix.chunks.length, 'passage') + ' from ' + plural(Object.keys(this._ix.texts).length, 'source') : 'Indexing passages…',
       turns, hasTurns: turns.length > 0, noTurns: turns.length === 0 && !S.akPending,
       nextN: String(conv.turns.length ? parseInt(conv.turns[conv.turns.length - 1].n) + 1 : 1),
@@ -3917,7 +3996,7 @@ class Component extends DCLogic {
         this.setState({ gNote: n > 0 ? 'Filled ' + plural(n, 'claim') + ' into the Draft — open it to see the document.' : 'Nothing in the sources matched that subject. Try another name, or check the workspace holds the material.' }); },
       busy: !!S.akBusy, stage: stageL[S.akBusy] || '', pendingQ: S.akPending || '', hasPending: !!S.akPending, stream: S.akStream || '', hasStream: !!S.akStream,
       pendComp: S.akComputed ? S.akComputed.head : '', hasPendComp: !!S.akComputed,
-      err: S.akErr || '', hasErr: !!S.akErr, q: S.akQ || '', onQ: e => this.setState({ akQ: e.target.value }), onKey: e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.askSend(); } }, send: () => this.askSend(), canSend: this.llmOk() && !S.akBusy, stop: () => { if (this._akAbort) this._akAbort.abort(); },
+      err: S.akErr || '', hasErr: !!S.akErr, q: S.akQ || '', onQ: e => this.setState({ akQ: e.target.value }), onKey: e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); isGen ? this.genSend() : this.askSend(); } }, send: () => isGen ? this.genSend() : this.askSend(), canSend: this.llmOk() && !S.akBusy, stop: () => { if (this._akAbort) this._akAbort.abort(); },
       reset: () => { if (M) { this._conv = M.emptyConv(); this.saveConv(); } this._lastMsgs = null; this.setState({ akErr: '', akShowSent: false }); },
       sm: { topic: sm.topic || '—', flow: sm.flow || '', entities: (sm.entities || []).join(' · '), context: sm.context || '', hasFlow: !!sm.flow, hasEnt: !!(sm.entities || []).length, hasCtx: !!sm.context },
       recs, hasRecs: recs.length > 0, meter: 'Next turn carries about ' + nextChars.toLocaleString() + ' characters plus the new passages. The transcript it stands in for is ' + trChars.toLocaleString() + '.',
@@ -3935,44 +4014,9 @@ class Component extends DCLogic {
         return qs.slice(0, 3).map(x => ({ t: x, onClick: () => this.setState({ akQ: x }) }));
       })(),
       notGen: (S.akMode || 'chat') !== 'generate',
-      fold: (() => {
-        const pd = this.pinData(); const curDoc = pd.doc; const docId = pd.cur;
-        const genLog = (curDoc && Array.isArray(curDoc.genLog)) ? curDoc.genLog : [];
-        const genHead = Math.max(1, genLog.length);
-        const genCur = Math.min(Math.max(1, (curDoc && curDoc.genCursor) || genHead), genHead);
-        const hasFolds = genLog.length > 0;
-        const selectedFold = hasFolds ? genLog[genCur - 1] : null;
-        const selectedId = selectedFold ? selectedFold.id : null;
-        const gKind = S.gKind || 'brief';
-        const isWidget = gKind === 'widget';
-        const foldClaims = (pd.claims || []).filter(c => c.kind !== 'heading' && (c.text || '').trim() && (!hasFolds || c.gen === selectedId));
-        const widgetClaim = foldClaims.find(c => c.kind === 'widget');
-        const widgetHtml = widgetClaim ? widgetClaim.text : '';
-        const widgetSrc = widgetHtml ? 'data:text/html;charset=utf-8,' + encodeURIComponent(widgetHtml) : '';
-        const hasWidget = !!widgetHtml;
-        const textClaims = foldClaims.filter(c => c.kind !== 'widget');
-        const has = textClaims.length > 0;
-        const setFoldCursor = n => { const nx = Math.min(Math.max(1, n), genHead); this.setDocs(X => ({ ...X, docs: X.docs.map(d => d.id === docId ? { ...d, genCursor: nx } : d) })); };
-        const kinds = [['brief', 'Brief'], ['timeline', 'Timeline'], ['widget', 'Widget']].map(([k, l]) => { const on = gKind === k; return { label: l, on, onClick: () => this.setState({ gKind: k }), bg: on ? 'var(--sel)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)' }; });
-        return { has, hasWidget, widgetSrc, isWidget, kinds,
-          empty: !has && !hasWidget && !hasFolds && !isWidget,
-          emptyWidget: isWidget && !hasWidget,
-          noFoldClaims: !has && !hasWidget && hasFolds,
-          hasFolds,
-          foldLabel: hasFolds ? 'fold ' + genCur + ' of ' + genHead : '',
-          foldPrompt: selectedFold ? selectedFold.prompt : '',
-          prevOp: genCur > 1 ? 1 : 0.3, nextOp: genCur < genHead ? 1 : 0.3,
-          onPrev: () => setFoldCursor(genCur - 1), onNext: () => setFoldCursor(genCur + 1),
-          title: (curDoc && curDoc.title) || 'Untitled document',
-          items: textClaims.slice(0, 30).map(c => ({ t: c.text })),
-          open: () => this.setState({ view: 'draft', readDoc: null, sel: null, f: {} }),
-          editPrompt: S.akFoldEdit || '',
-          onEditPrompt: e => this.setState({ akFoldEdit: e.target.value }),
-          onRunEdit: async () => { const p = (this.state.akFoldEdit || '').trim(); if (!p || this.state.gen) return; this._gSubj = p; await this.generate(); this.setState({ akFoldEdit: '' }); },
-          editHint: isWidget ? (hasFolds ? 'Describe what to change…' : 'Describe the widget to build…') : 'e.g. focus more on the budget',
-          runEditLabel: S.gen ? 'Working…' : (isWidget && !hasFolds ? 'Generate widget →' : isWidget ? 'Edit widget →' : 'Run edit →'),
-          runEditOp: S.gen ? 0.6 : 1 };
-      })() } };
+      art, isGen, mainFlex: isGen && art.has && !art.narrow ? '1 1 ' + ART_CHAT_W + 'px' : '1 1 480px', asideFlex: isGen ? (art.has && !art.narrow ? '1 1 ' + ART_PANE_W + 'px' : '0 0 0px') : '0 1 290px', asideMin: isGen ? (art.has && !art.narrow ? '320px' : '0px') : '250px', wrapRef: this.akWrapRef, asideZ: art.back ? 90 : 'auto',
+      showReset: turns.length > 0 && !isGen, showEx: !isGen && turns.length === 0 && !S.akPending, busyAny: !!S.akBusy,
+      ph: isGen ? (art.targeting ? 'Describe a change…' : 'Describe what to build…') : 'Ask about the sources…', sendLabel: isGen ? 'Send ↵' : 'Ask ↵' } };
   }
   readingVals(A, view) {
     const S = this.state; const X = this._rix; const docOf = src => { const id = String(src).replace(/\.(txt|json)$/, ''); return A.docs.find(d => d.ohsId === id) || null; };
@@ -4122,7 +4166,7 @@ class Component extends DCLogic {
     const genHead = Math.max(1, genLog.length);
     const genCursor = Math.min(Math.max(1, (curDoc && curDoc.genCursor) || genHead), genHead);
     const visGenIds = new Set(genLog.slice(0, genCursor).map(g => g.id));
-    const inFold = c => !c.gen || visGenIds.has(c.gen);
+    const inFold = c => c.kind !== 'widget' && (!c.gen || visGenIds.has(c.gen));
     const setGenCursor = n => { const id = P.cur; const nx = Math.min(Math.max(1, n), Math.max(1, genLog.length)); this.setDocs(X => ({ ...X, docs: X.docs.map(d => d.id === id ? { ...d, genCursor: nx } : d) })); };
     const docBar = { tabs: docTabs, title: curDoc.title || '', docKey: String(P.cur || 'none'), onTitle: e => { const v = e.target.value; const id = P.cur; this.later('title', () => this.setDocs(X => ({ ...X, docs: X.docs.map(d => d.id === id ? { ...d, title: v } : d) }))); },
       onNew: () => newDoc('Untitled document'), onDup: () => newDoc((curDoc.title || 'Untitled document') + ' (copy)', (curDoc.claims || []).map(c => ({ ...c, id: 'claim-' + Math.random().toString(36).slice(2, 9), pins: [...c.pins] }))),
@@ -5464,7 +5508,7 @@ class Component extends DCLogic {
       isEmpty, hasContent: !isEmpty, v: V, hdr, summaryRows,
       docCards, gaps, nameGroups, nameTable, corr: this.corrVals(), typeBlocks, measures, noMeasures: !measures.length, ...(() => { const c = this.capL('stg', stGroups, 8); return { stGroups: c.items.map(g => ({ ...g, ...this.capL('stg:' + g.title, g.items, 4) })), stgMore: c }; })(),
       graphEl, timeInfo, ...orbX, ...(() => { const c = this.capL('pairs', pairs, 12); return { pairs: c.items, pairsMore: c }; })(), noPairs: !pairs.length, frameCols: frameCols.map(c => ({ ...c, ...this.capL('fr:' + c.label, c.items, 5) })), timeBars, ...(() => { const c = this.capL('topics', topicChips, 24); return { topicChips: c.items, topicMore: c }; })(), ...(() => { const c = this.capL('srcbars', [...sourceBars].sort((a, b) => +b.n - +a.n), 12); return { sourceBars: c.items, srcBarMore: c }; })(), shapes, noShapes: !shapes.length, hasRoutine: (this._routineN || 0) > 0, routineLine: plural(this._routineN || 0, 'routine agreement') + ' hidden: repeated by several sources, but about names and words that appear together in most sources anyway.', holds, breaks, noBreaks: !breaks.length,
-      hdrShow: !isEmpty && view !== 'reader' && view !== 'profile',
+      hdrShow: !isEmpty && view !== 'reader' && view !== 'profile' && view !== 'ask',
       crumbLast, crumbAnc, hasAnc, yearOn: !isEmpty && (view === 'views' || view === 'surprise'),
       ...(() => { const d0 = S.readDoc && A.docById[S.readDoc]; if (!d0) return { rd: { eyebrow: '', title: '', meta: '' } }; const dsts = A.stsByDoc[d0.id] || []; const nm = new Set(dsts.flatMap(s => s.names)); const host = d0.url ? (/wikipedia\.org/.test(d0.url) ? 'Wikipedia' : d0.url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]) : 'Your content'; return { rd: { eyebrow: [host, d0.type, d0.year].filter(Boolean).join(' · '), title: d0.title, meta: [d0.authors && d0.authors.length ? 'By ' + d0.authors.join(', ') : '', d0.pubLabel ? 'Published ' + d0.pubLabel : ''].filter(Boolean).map(x => x + ' · ').join('') + plural(dsts.length, 'statement') + ' · ' + plural(nm.size, 'name') + ' · ' + plural(dsts.reduce((a, s) => a + s.figs.length, 0), 'figure') } }; })(),
       gsw: { track: S.ground.on ? 'var(--acc2)' : 'var(--line2)', left: S.ground.on ? '16px' : '2px' },
