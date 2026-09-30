@@ -52,17 +52,18 @@ export function parseLedger(text) {
 // plan, unbound — assigning them to a cell by position would be a guess.
 export function cellsOf(rows) {
   const norm = s => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
-  const sets = []; let cur = null; const unaddressed = []; let orphanParts = 0;
+  const sets = []; let cur = null; const unaddressed = []; const whole = []; let orphanParts = 0;
+  const supOf = r => Array.isArray(r.supersedes) ? r.supersedes : [];
   for (const r of rows) {
     if (r.role === 'plan') { const qs = String(r.text || '').split('\n').map(l => l.replace(/^\s*-\s*/, '').trim()).filter(Boolean); cur = { planId: r.id, plan: qs, cells: qs.map(q => ({ q, parts: [] })), revisions: [] }; sets.push(cur); }
     else if (r.role === 'part') {
       if (!cur) { orphanParts++; unaddressed.push(r); continue; }
       const t = norm(r.title); const c = cur.cells.find(x => { const q = norm(x.q); return q === t || q.startsWith(t) || t.startsWith(q); });
-      if (c) c.parts.push(r); else unaddressed.push(r);
+      if (c) c.parts.push(r); else if (supOf(r).some(id => cur.cells.some(x => x.parts.some(p => p.id === id)))) { whole.push(r); cur.whole = r; } else unaddressed.push(r);
     } else if (r.role === 'revision' && cur) cur.revisions.push(r);
   }
   const current = sets.length ? sets[sets.length - 1] : { planId: null, plan: [], cells: [], revisions: [] };
-  return { sets, current, unaddressed, orphanParts };
+  return { sets, current, unaddressed, whole, orphanParts };
 }
 
 // The doorway's claims about itself, checked against its own ledger and projection. Each verdict is true, false,
@@ -78,12 +79,39 @@ export function doorControls(poll, ledger) {
   add('the void plan is committed before any cell is composed', fPart < 0 ? null : fPlan >= 0 && fPlan < fPart, fPart < 0 ? 'no part yet' : 'plan at row ' + fPlan + ', first part at row ' + fPart);
   const C = cellsOf(rows); const nParts = rows.filter(r => r.role === 'part').length;
   const beats = C.unaddressed.filter(r => /^[a-z]+(, [a-z]+)+$/.test(r.title)); const strays = C.unaddressed.filter(r => !beats.includes(r));
-  add('every part answers a question of the plan before it (fold beats excepted)', nParts ? strays.length === 0 : null, nParts ? (nParts - C.unaddressed.length) + ' addressed, ' + beats.length + ' fold beats, ' + strays.length + ' strays' + (strays.length ? ': ' + strays.map(r => JSON.stringify(String(r.title).slice(0, 60))).join(', ') : '') : 'no part yet');
+  add('every part answers a question of the plan before it (fold beats excepted)', nParts ? strays.length === 0 : null, nParts ? (nParts - C.unaddressed.length - C.whole.length) + ' addressed, ' + C.whole.length + ' whole pieces, ' + beats.length + ' fold beats, ' + strays.length + ' strays' + (strays.length ? ': ' + strays.map(r => JSON.stringify(String(r.title).slice(0, 60))).join(', ') : '') : 'no part yet');
   const paras = String(poll.projection || '').split(/\n{2,}/).map(norm).filter(p => p.length > 40 && !/^#/.test(p) && !/^\d+\. /.test(p));
   const held = rows.map(r => norm(r.text)).join('\n'); const orphan = paras.filter(p => !held.includes(p.slice(0, 120)));
   add('every projected paragraph is held in the ledger', paras.length ? orphan.length === 0 : null, paras.length ? (paras.length - orphan.length) + ' of ' + paras.length + ' found' + (orphan.length ? '; first orphan: ' + JSON.stringify(orphan[0].slice(0, 90)) : '') : 'nothing projected yet');
   const disc = rows.find(r => /^DISCLOSED UNGROUNDED/.test(String(r.text || '')));
   add("the projection carries the ledger's ungrounded disclosure", disc && String(poll.projection || '').trim() ? /ungrounded|no material ground/i.test(poll.projection) : null, disc ? (String(poll.projection || '').trim() ? 'ledger row ' + disc.id + ' discloses it' : 'nothing projected yet') : 'the ledger discloses nothing');
   add('complete means the plan is satisfied', poll.status === 'complete' ? !!(poll.job && poll.job.satisfaction && poll.job.satisfaction.ok) : null, poll.status === 'complete' ? JSON.stringify(poll.job && poll.job.satisfaction).slice(0, 120) : 'status is ' + poll.status);
+  return out;
+}
+
+// Topic words of a plan: its words minus those every other plan also has, so the void template cancels itself out.
+const words = t => new Set(String(t || '').toLowerCase().match(/[a-z][a-z-]{2,}/g) || []);
+export function topicWords(planText, otherPlanTexts) { const own = words(planText); for (const o of otherPlanTexts) for (const w of words(o)) own.delete(w); return own; }
+// The null is the other jobs: a fold-out must share more of its own topic words than of any other job's.
+export function topicControl(jobs) {
+  const plans = jobs.map(j => (j.rows.find(r => r.role === 'plan') || {}).text || '');
+  const pieceOf = j => { const w = cellsOf(j.rows).whole; return w.length ? w[w.length - 1].text : j.projection; };
+  return jobs.map((j, i) => {
+    const pw = words(pieceOf(j)); const hits = ws => [...ws].filter(w => pw.has(w)).length;
+    const own = topicWords(plans[i], plans.filter((_, k) => k !== i)); const ownHits = hits(own);
+    const others = plans.map((p, k) => k === i ? null : hits(topicWords(p, plans.filter((_, m) => m !== k)))).filter(x => x != null);
+    const ok = !pieceOf(j).trim() || !own.size ? null : ownHits > Math.max(...others);
+    return { name: 'the whole piece is about its own task, not another job\'s', ok, detail: 'own topic words found ' + ownHits + ' of ' + own.size + ' (' + [...own].slice(0, 6).join(', ') + '); other jobs\' found ' + others.join(', ') };
+  });
+}
+// Two jobs with different tasks must not ship the same whole piece. Exact identity: no threshold to tune.
+export function identityControl(jobs) {
+  const out = [];
+  for (let i = 0; i < jobs.length; i++) for (let k = i + 1; k < jobs.length; k++) {
+    const wi = cellsOf(jobs[i].rows).whole, wk = cellsOf(jobs[k].rows).whole;
+    const pi = (jobs[i].rows.find(r => r.role === 'plan') || {}).text, pk = (jobs[k].rows.find(r => r.role === 'plan') || {}).text;
+    const a = wi.length ? wi[wi.length - 1].text : '', b = wk.length ? wk[wk.length - 1].text : '';
+    out.push({ name: 'different tasks do not ship the same whole piece', pair: [jobs[i].jobId, jobs[k].jobId], ok: !a || !b || pi === pk ? null : a !== b, detail: a && b ? (a === b ? 'byte-identical, ' + a.length + ' chars each' : 'they differ') : 'a job has no whole piece' });
+  }
   return out;
 }

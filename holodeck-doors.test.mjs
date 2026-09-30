@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { parseLedger, cellsOf, startDocument, readLedger, newJobId, DoorError, doorControls } from './holodeck-doors.js';
+import { parseLedger, cellsOf, startDocument, readLedger, newJobId, DoorError, doorControls, topicControl } from './holodeck-doors.js';
 
 const TEXT = fs.readFileSync(new URL('./fixtures/er7-document-ledger.jsonl', import.meta.url), 'utf8');
 const { rows } = parseLedger(TEXT);
@@ -122,4 +122,29 @@ test('an ungrounded disclosure that never reaches the projection is refuted (rea
   assert.equal(verdictOf(poll, L, "the projection carries"), false);
   // The same control passes when the fold-out carries the disclosure, so it is not a constant.
   assert.equal(verdictOf({ ...poll, projection: 'Ungrounded: no material ground.\n\n' + poll.projection }, L, "the projection carries"), true);
+});
+
+// Final ledgers of two unrelated jobs run 2026-09-30 through POST /v1/documents (gemma2:2b, no web, no workspace):
+// fixtures/er7-freewheel-* ("How a bicycle freewheel ...") and fixtures/er7-ungrounded-* ("Why a spinning top ...").
+const load = n => ({ jobId: n, rows: parseLedger(fs.readFileSync(new URL(`./fixtures/er7-${n}-ledger.jsonl`, import.meta.url), 'utf8')).rows, projection: JSON.parse(fs.readFileSync(new URL(`./fixtures/er7-${n}-poll.json`, import.meta.url), 'utf8')).projection });
+const pair = [load('freewheel'), load('ungrounded')];
+
+test("the pipeline's whole piece supersedes the plan's cells and is not counted a stray", () => {
+  for (const j of pair) {
+    const C = cellsOf(j.rows);
+    assert.equal(C.whole.length, 1);
+    assert.equal(C.whole[0].giver, 'eoreader7:pipeline');
+    assert.equal(C.unaddressed.length, 0);
+  }
+});
+
+test('refuted on real bytes: both whole pieces drift off their tasks onto the same stale material', () => {
+  const v = topicControl(pair);
+  assert.deepEqual(v.map(x => x.ok), [false, false]);
+  for (const j of pair) { const t = cellsOf(j.rows).whole[0].text.toLowerCase(); assert.ok(/magazine/.test(t) && /plastic gun/.test(t)); }
+});
+
+test('the topic control passes when a whole piece is about its task, so it is not a constant', () => {
+  const fixed = pair.map(j => ({ ...j, rows: j.rows.map(r => r.giver === 'eoreader7:pipeline' ? { ...r, text: j.rows.find(x => x.role === 'plan').text } : r) }));
+  assert.deepEqual(topicControl(fixed).map(x => x.ok), [true, true]);
 });
