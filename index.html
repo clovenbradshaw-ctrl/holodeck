@@ -736,16 +736,21 @@ select option{background:var(--s1);color:var(--ink)}
                   </sc-if>
                   <button onClick="{{ ak.fold.open }}" style="all:unset;cursor:pointer;font:500 13px ‘Hanken Grotesk’;color:var(--acc);white-space:nowrap" style-hover="text-decoration:underline">Open Draft →</button>
                 </div>
+                <div style="display:flex;gap:4px">
+                  <sc-for list="{{ ak.fold.kinds }}" as="k" hint-placeholder-count="0"><button onClick="{{ k.onClick }}" style="background:{{ k.bg }};color:{{ k.col }};border:1px solid var(--line2);border-radius:6px;padding:3px 10px;font:500 12px ‘Hanken Grotesk’;cursor:pointer">{{ k.label }}</button></sc-for>
+                </div>
                 <sc-if value="{{ ak.fold.hasFolds }}" hint-placeholder-val="{{ false }}"><span style="font:400 12px ‘JetBrains Mono’;color:var(--dim)">{{ ak.fold.foldPrompt }}</span></sc-if>
+                <sc-if value="{{ ak.fold.hasWidget }}" hint-placeholder-val="{{ false }}"><iframe src="{{ ak.fold.widgetSrc }}" sandbox="allow-scripts" style="width:100%;height:320px;border:1px solid var(--line);border-radius:8px;background:#fff"></iframe></sc-if>
                 <sc-if value="{{ ak.fold.has }}" hint-placeholder-val="{{ false }}">
                   <span style="font:600 15px/1.2 ‘Newsreader’,serif;color:var(--ink)">{{ ak.fold.title }}</span>
                   <sc-for list="{{ ak.fold.items }}" as="fi" hint-placeholder-count="0"><p style="margin:0;font:400 14px/1.6 ‘Newsreader’,serif;color:var(--ink);text-wrap:pretty;border-top:1px solid var(--line);padding-top:8px">{{ fi.t }}</p></sc-for>
                 </sc-if>
+                <sc-if value="{{ ak.fold.emptyWidget }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px/1.5 ‘Hanken Grotesk’;color:var(--mut);text-wrap:pretty">Describe your widget below and click Generate.</span></sc-if>
                 <sc-if value="{{ ak.fold.noFoldClaims }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px/1.5 ‘Hanken Grotesk’;color:var(--mut);text-wrap:pretty">No claims in this fold yet.</span></sc-if>
                 <sc-if value="{{ ak.fold.empty }}" hint-placeholder-val="{{ true }}"><span style="font:400 13px/1.5 ‘Hanken Grotesk’;color:var(--mut);text-wrap:pretty">No folds yet. Ask a question, then click "Generate a document →" on an answer to start building one here.</span></sc-if>
                 <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:10px;margin-top:2px">
                   <span style="font:600 11px ‘JetBrains Mono’;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Edit this fold</span>
-                  <textarea value="{{ ak.fold.editPrompt }}" onInput="{{ ak.fold.onEditPrompt }}" placeholder="e.g. focus more on the budget" rows="2" style="background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font:400 13px ‘Hanken Grotesk’;color:var(--ink);resize:vertical;outline:none;width:100%;box-sizing:border-box"></textarea>
+                  <textarea value="{{ ak.fold.editPrompt }}" onInput="{{ ak.fold.onEditPrompt }}" placeholder="{{ ak.fold.editHint }}" rows="2" style="background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font:400 13px ‘Hanken Grotesk’;color:var(--ink);resize:vertical;outline:none;width:100%;box-sizing:border-box"></textarea>
                   <button onClick="{{ ak.fold.onRunEdit }}" style="align-self:flex-end;background:#8b5cf6;border:none;border-radius:8px;padding:6px 16px;font:600 13px ‘Hanken Grotesk’;color:#fff;cursor:pointer;opacity:{{ ak.fold.runEditOp }}">{{ ak.fold.runEditLabel }}</button>
                 </div>
               </section>
@@ -3206,6 +3211,22 @@ class Component extends DCLogic {
       else this.addDocs([{ title: url, year: new Date().getFullYear(), type: 'Link', text: '', url, note: 'That site doesn’t let its page be read from here — open it, then drag or paste its text instead.' }]);
     }
   }
+  async autoResearch(q) {
+    this.setState({ busy: 'Searching Wikipedia for “' + q.slice(0, 60) + '”…' });
+    try {
+      const r = await fetch('https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=' + encodeURIComponent(q) + '&utf8=&format=json&origin=*&srlimit=3');
+      if (r.ok) {
+        const j = await r.json();
+        const results = (j.query && j.query.search) || [];
+        for (const p of results.slice(0, 2)) {
+          const url = 'https://en.wikipedia.org/wiki/' + encodeURIComponent(p.title.replace(/ /g, '_'));
+          await this.ingestUrl(url, { title: p.title });
+        }
+      }
+    } catch (e) { this.setState({ busy: '' }); }
+    clearTimeout(this._omniT);
+    this.setState(s => ({ q, qDraft: undefined, view: 'search', readDoc: null, srN: 25, qaN: 0, prevView: s.view === 'search' || s.view === 'reader' ? (s.prevView || 'summary') : s.view }));
+  }
   async addRepo() {
     const v = (this.state.repoVal || '').trim();
     const m = v.match(/^https?:\/\/(?:www\.)?github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?(?:\/|$)/) || v.match(/^([\w.-]+)\/([\w.-]+)$/);
@@ -3455,6 +3476,24 @@ class Component extends DCLogic {
   async generate() {
     const A = this.analysis(); const S = this.state; const kind = S.gKind || 'brief', mode = S.gMode || 'mech'; const subject = (this._gSubj != null ? this._gSubj : S.gSubj != null ? S.gSubj : this.defaultSubject(A)).trim();
     if (!subject) { this.toast('Name a subject first'); return; } if (S.gen) return; this.setState({ gen: true });
+    if (kind === 'widget') {
+      const pd = this.pinData(); const curDoc = pd.doc;
+      const gl = (curDoc && curDoc.genLog) || [];
+      const gc = Math.min(Math.max(1, (curDoc && curDoc.genCursor) || gl.length), Math.max(1, gl.length));
+      const targetFold = gl.length > 0 ? gl[gc - 1] : null;
+      const prevHtml = targetFold ? ((pd.claims || []).find(c => c.gen === targetFold.id && c.kind === 'widget') || {}).text || '' : '';
+      const askW = async (sys, user) => { try { return await this.localLLM(sys, user); } catch (e) { this._llmErr = e.message || String(e); return ''; } };
+      const WSYS = 'You generate self-contained HTML widgets. Output ONLY the complete HTML starting with <!doctype html>. No explanation, no markdown fences, no surrounding text.';
+      const wUser = prevHtml ? 'Current HTML:\n' + prevHtml.slice(0, 10000) + '\n\nChange instruction: ' + subject + '\nOutput the complete updated HTML only.' : 'Make a self-contained, visually polished HTML widget: ' + subject + '\nUse only inline styles. Make it interactive where it makes sense.';
+      const html = await askW(WSYS, wUser);
+      if (!html || !/<html|<!doctype/i.test(html)) { this.setState({ gen: false }); this.toast('No HTML returned. Is a local model running? Set it in Ask the Fold.'); return; }
+      const wHtml = html.replace(/^[\s\S]*?(<!doctype html>|<html)/i, '$1');
+      const genId = 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+      this.setPinData(D => { D.claims.push({ id: 'claim-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), kind: 'widget', text: wHtml, gen: genId, pins: [], by: 'model' }); return D; });
+      const genEntry = { id: genId, at: new Date().toISOString(), prompt: subject, kind: 'widget', mode };
+      this.setDocs(X => ({ ...X, docs: X.docs.map(d => d.id === X.cur ? { ...d, genLog: [...(d.genLog || []), genEntry], genCursor: (d.genLog || []).length + 1 } : d) }));
+      this.setState({ gen: false }); this.toast(prevHtml ? 'Widget updated — fold ' + (gl.length + 1) + ' of ' + (gl.length + 1) : 'Widget built. Edit it using the panel →'); return;
+    }
     const sre = new RegExp(subject.replace(/[.*+?^$(){}|[\]\\]/g, '\\$&'), 'i');
     const pick = (list, n, distinct) => { const seenD = new Set(), seenT = new Set(), out = []; for (const x of list) { const k = clean(x.st.text).toLowerCase().slice(0, 60); if (seenT.has(k)) continue; if (distinct !== false && seenD.has(x.st.doc)) continue; seenD.add(x.st.doc); seenT.add(k); out.push(x.st); if (out.length >= n) break; } return out; };
     const secs = []; const FIND = /\b(did not|does not|was not|were not|has not|have not|lacks?|lacked|no (documentation|evidence|policy|process|plan)|not (always|consistently|properly|maintain))\b/i;
@@ -3920,21 +3959,35 @@ class Component extends DCLogic {
         const hasFolds = genLog.length > 0;
         const selectedFold = hasFolds ? genLog[genCur - 1] : null;
         const selectedId = selectedFold ? selectedFold.id : null;
+        const gKind = S.gKind || 'brief';
+        const isWidget = gKind === 'widget';
         const foldClaims = (pd.claims || []).filter(c => c.kind !== 'heading' && (c.text || '').trim() && (!hasFolds || c.gen === selectedId));
-        const has = foldClaims.length > 0;
+        const widgetClaim = foldClaims.find(c => c.kind === 'widget');
+        const widgetHtml = widgetClaim ? widgetClaim.text : '';
+        const widgetSrc = widgetHtml ? 'data:text/html;charset=utf-8,' + encodeURIComponent(widgetHtml) : '';
+        const hasWidget = !!widgetHtml;
+        const textClaims = foldClaims.filter(c => c.kind !== 'widget');
+        const has = textClaims.length > 0;
         const setFoldCursor = n => { const nx = Math.min(Math.max(1, n), genHead); this.setDocs(X => ({ ...X, docs: X.docs.map(d => d.id === docId ? { ...d, genCursor: nx } : d) })); };
-        return { has, empty: !has && !hasFolds, noFoldClaims: !has && hasFolds, hasFolds,
+        const kinds = [['brief', 'Brief'], ['timeline', 'Timeline'], ['widget', 'Widget']].map(([k, l]) => { const on = gKind === k; return { label: l, on, onClick: () => this.setState({ gKind: k }), bg: on ? 'var(--sel)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)' }; });
+        return { has, hasWidget, widgetSrc, isWidget, kinds,
+          empty: !has && !hasWidget && !hasFolds && !isWidget,
+          emptyWidget: isWidget && !hasWidget,
+          noFoldClaims: !has && !hasWidget && hasFolds,
+          hasFolds,
           foldLabel: hasFolds ? 'fold ' + genCur + ' of ' + genHead : '',
           foldPrompt: selectedFold ? selectedFold.prompt : '',
           prevOp: genCur > 1 ? 1 : 0.3, nextOp: genCur < genHead ? 1 : 0.3,
           onPrev: () => setFoldCursor(genCur - 1), onNext: () => setFoldCursor(genCur + 1),
           title: (curDoc && curDoc.title) || 'Untitled document',
-          items: foldClaims.slice(0, 30).map(c => ({ t: c.text })),
+          items: textClaims.slice(0, 30).map(c => ({ t: c.text })),
           open: () => this.setState({ view: 'draft', readDoc: null, sel: null, f: {} }),
           editPrompt: S.akFoldEdit || '',
           onEditPrompt: e => this.setState({ akFoldEdit: e.target.value }),
           onRunEdit: async () => { const p = (this.state.akFoldEdit || '').trim(); if (!p || this.state.gen) return; this._gSubj = p; await this.generate(); this.setState({ akFoldEdit: '' }); },
-          runEditLabel: S.gen ? 'Working…' : 'Run edit →', runEditOp: S.gen ? 0.6 : 1 };
+          editHint: isWidget ? (hasFolds ? 'Describe what to change…' : 'Describe the widget to build…') : 'e.g. focus more on the budget',
+          runEditLabel: S.gen ? 'Working…' : (isWidget && !hasFolds ? 'Generate widget →' : isWidget ? 'Edit widget →' : 'Run edit →'),
+          runEditOp: S.gen ? 0.6 : 1 };
       })() } };
   }
   readingVals(A, view) {
@@ -5305,7 +5358,7 @@ class Component extends DCLogic {
     const isOmniUrl = v => /^(https?:\/\/|www\.)\S+$|^[\w-]+(\.[\w-]+)*\.[a-z]{2,}(\/\S*)?$/i.test(v);
     const omniUrl = isOmniUrl(dv);
     // live: the input's own value on Enter -- dv is from the last render and lags the debounced onOmni.
-    const omniGo = live => { const v = typeof live === 'string' ? live : dv; if (!v) return; clearTimeout(this._omniT); this.setState(s => ({ q: v, qDraft: undefined, view: 'search', readDoc: null, srN: 25, qaN: 0, prevView: s.view === 'search' || s.view === 'reader' ? (s.prevView || 'summary') : s.view })); };
+    const omniGo = live => { const v = typeof live === 'string' ? live : dv; if (!v) return; if (!A.docs.length && !isOmniUrl(v)) { this.autoResearch(v); return; } clearTimeout(this._omniT); this.setState(s => ({ q: v, qDraft: undefined, view: 'search', readDoc: null, srN: 25, qaN: 0, prevView: s.view === 'search' || s.view === 'reader' ? (s.prevView || 'summary') : s.view })); };
     const omniOpen = live => { const v = typeof live === 'string' ? live : dv; if (!isOmniUrl(v)) return; clearTimeout(this._omniT); this.setState({ q: '', qDraft: undefined }); this.ingestUrl(/^https?:\/\//.test(v) ? v : 'https://' + v, { open: true }); };
     Object.assign(this._extra = {}, { ...this.qaVals(A, F, qv, view), ...this.draftVals(A), ...this.pfCoVals(A), ...this.dbVals(A, view), ...this.askVals(A, view), askFold: () => { const q = (this.state.q || '').trim(); this.setState({ view: 'ask', readDoc: null }); setTimeout(() => this.askSend(q), 0); }, ...this.netVals(A, view), ...this.readingVals(A, view),
       ...(() => { const HL = A.docs.length ? this.headlines(A) : []; return { hasHeadlines: HL.length > 0, headlines: HL.map(x => ({ ...x, onClick: () => this.read(x.doc, x.stId), ...this.pinF(A.byId[x.stId]) })) }; })(),
