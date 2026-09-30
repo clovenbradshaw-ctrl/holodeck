@@ -548,27 +548,6 @@ select option{background:var(--s1);color:var(--ink)}
               </div>
               <span style="font:400 12px 'JetBrains Mono';color:var(--dim)">{{ ak.modeNote }}</span>
             </div>
-            <sc-if value="{{ ak.mGen }}" hint-placeholder-val="{{ false }}">
-              <div style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:12px">
-                <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Generate a document from this workspace</span>
-                <div style="display:flex;gap:10px 14px;flex-wrap:wrap;align-items:center">
-                  <span style="font:500 14px 'Hanken Grotesk';color:var(--mut)">Kind</span>
-                  <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden">
-                    <sc-for list="{{ ak.gKinds }}" as="k" hint-placeholder-count="2"><button onClick="{{ k.onClick }}" style="border:0;background:{{ k.bg }};color:{{ k.col }};padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';white-space:nowrap">{{ k.label }}</button></sc-for>
-                  </div>
-                  <span style="font:500 14px 'Hanken Grotesk';color:var(--mut)">Sentences</span>
-                  <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden">
-                    <sc-for list="{{ ak.gModes }}" as="k" hint-placeholder-count="2"><button onClick="{{ k.onClick }}" style="border:0;background:{{ k.bg }};color:{{ k.col }};padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';white-space:nowrap">{{ k.label }}</button></sc-for>
-                  </div>
-                </div>
-                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-                  <label style="display:flex;gap:8px;align-items:center;flex:1 1 260px;min-width:0;font:500 14px 'Hanken Grotesk';color:var(--mut)">about<input value="{{ ak.gSubj }}" onChange="{{ ak.onGSubj }}" placeholder="a person, office or topic" style="flex:1;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font:500 14px 'Hanken Grotesk';color:var(--ink);outline:none"></input></label>
-                  <button onClick="{{ ak.gFill }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:7px 16px;cursor:pointer;font:600 14px 'Hanken Grotesk';opacity:{{ ak.gOp }}" style-hover="background:#7c3aed">{{ ak.gRunLabel }}</button>
-                  <button onClick="{{ ak.gOpen }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Open the Draft →</button>
-                </div>
-                <sc-if value="{{ ak.gHasNote }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px/1.5 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">{{ ak.gNote }}</span></sc-if>
-              </div>
-            </sc-if>
             <sc-if value="{{ ak.showCells }}" hint-placeholder-val="{{ true }}">
             <sc-for list="{{ ak.turns }}" as="t" hint-placeholder-count="0">
               <sc-if value="{{ ak.mChat }}" hint-placeholder-val="{{ false }}">
@@ -726,24 +705,39 @@ select option{background:var(--s1);color:var(--ink)}
             </sc-if>
           </div>
           <aside style="flex:0 1 290px;min-width:250px;position:sticky;top:calc(var(--hdr-h, 84px) + 12px);display:flex;flex-direction:column;gap:12px">
-            <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
-              <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">What the model carries</span>
-              <span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--mut)">A paraphrase of the conversation so far. It can’t support a claim, and the model is told so.</span>
-              <div style="display:flex;flex-direction:column;gap:2px"><span style="font:500 12px 'JetBrains Mono';color:var(--dim)">Topic</span><span style="font:500 14px 'Hanken Grotesk';color:var(--ink)">{{ ak.sm.topic }}</span></div>
-              <sc-if value="{{ ak.sm.hasFlow }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:2px"><span style="font:500 12px 'JetBrains Mono';color:var(--dim)">Flow</span><span style="font:400 14px/1.45 'Hanken Grotesk';color:var(--ink2)">{{ ak.sm.flow }}</span></div></sc-if>
-              <sc-if value="{{ ak.sm.hasEnt }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:2px"><span style="font:500 12px 'JetBrains Mono';color:var(--dim)">Named so far</span><span style="font:400 14px/1.45 'Hanken Grotesk';color:var(--ink2)">{{ ak.sm.entities }}</span></div></sc-if>
-              <sc-if value="{{ ak.sm.hasCtx }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:2px"><span style="font:500 12px 'JetBrains Mono';color:var(--dim)">Carried</span><span style="font:400 14px/1.45 'Hanken Grotesk';color:var(--ink2)">{{ ak.sm.context }}</span></div></sc-if>
-            </section>
-            <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px">
-              <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">On record</span>
-              <span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--mut)">What each turn was checked against. These addresses re-open.</span>
-              <sc-if value="{{ ak.hasRecs }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ ak.recs }}" as="r" hint-placeholder-count="0"><div style="display:flex;flex-direction:column;gap:1px;border-top:1px solid var(--line);padding:6px 0"><span style="font:400 13px/1.4 'Hanken Grotesk';color:var(--ink2)">{{ r.line }}</span><span style="font:400 12px 'JetBrains Mono';color:var(--dim)">{{ r.sub }}</span></div></sc-for></sc-if>
-            </section>
-            <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
-              <span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--ink2)">{{ ak.meter }}</span>
-              <sc-if value="{{ ak.canSent }}" hint-placeholder-val="{{ false }}"><button onClick="{{ ak.toggleSent }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="text-decoration:underline">{{ ak.sentLabel }}</button></sc-if>
-              <sc-if value="{{ ak.sentOpen }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ ak.sent }}" as="m" hint-placeholder-count="0"><div style="display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line);padding-top:8px"><span style="font:600 11px 'JetBrains Mono';letter-spacing:.06em;text-transform:uppercase;color:var(--mut)">{{ m.role }} · {{ m.n }}</span><pre style="margin:0;font:400 11px/1.5 'JetBrains Mono';color:var(--ink2);white-space:pre-wrap;overflow-wrap:anywhere;max-height:320px;overflow:auto">{{ m.text }}</pre></div></sc-for></sc-if>
-            </section>
+            <sc-if value="{{ ak.notGen }}" hint-placeholder-val="{{ true }}">
+              <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+                <span style="font:600 12px ‘JetBrains Mono’;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">What the model carries</span>
+                <span style="font:400 13px/1.45 ‘Hanken Grotesk’;color:var(--mut)">A paraphrase of the conversation so far. It can’t support a claim, and the model is told so.</span>
+                <div style="display:flex;flex-direction:column;gap:2px"><span style="font:500 12px ‘JetBrains Mono’;color:var(--dim)">Topic</span><span style="font:500 14px ‘Hanken Grotesk’;color:var(--ink)">{{ ak.sm.topic }}</span></div>
+                <sc-if value="{{ ak.sm.hasFlow }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:2px"><span style="font:500 12px ‘JetBrains Mono’;color:var(--dim)">Flow</span><span style="font:400 14px/1.45 ‘Hanken Grotesk’;color:var(--ink2)">{{ ak.sm.flow }}</span></div></sc-if>
+                <sc-if value="{{ ak.sm.hasEnt }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:2px"><span style="font:500 12px ‘JetBrains Mono’;color:var(--dim)">Named so far</span><span style="font:400 14px/1.45 ‘Hanken Grotesk’;color:var(--ink2)">{{ ak.sm.entities }}</span></div></sc-if>
+                <sc-if value="{{ ak.sm.hasCtx }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:2px"><span style="font:500 12px ‘JetBrains Mono’;color:var(--dim)">Carried</span><span style="font:400 14px/1.45 ‘Hanken Grotesk’;color:var(--ink2)">{{ ak.sm.context }}</span></div></sc-if>
+              </section>
+              <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px">
+                <span style="font:600 12px ‘JetBrains Mono’;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">On record</span>
+                <span style="font:400 13px/1.45 ‘Hanken Grotesk’;color:var(--mut)">What each turn was checked against. These addresses re-open.</span>
+                <sc-if value="{{ ak.hasRecs }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ ak.recs }}" as="r" hint-placeholder-count="0"><div style="display:flex;flex-direction:column;gap:1px;border-top:1px solid var(--line);padding:6px 0"><span style="font:400 13px/1.4 ‘Hanken Grotesk’;color:var(--ink2)">{{ r.line }}</span><span style="font:400 12px ‘JetBrains Mono’;color:var(--dim)">{{ r.sub }}</span></div></sc-for></sc-if>
+              </section>
+              <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+                <span style="font:400 13px/1.45 ‘Hanken Grotesk’;color:var(--ink2)">{{ ak.meter }}</span>
+                <sc-if value="{{ ak.canSent }}" hint-placeholder-val="{{ false }}"><button onClick="{{ ak.toggleSent }}" style="all:unset;cursor:pointer;font:500 13px ‘Hanken Grotesk’;color:var(--acc)" style-hover="text-decoration:underline">{{ ak.sentLabel }}</button></sc-if>
+                <sc-if value="{{ ak.sentOpen }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ ak.sent }}" as="m" hint-placeholder-count="0"><div style="display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line);padding-top:8px"><span style="font:600 11px ‘JetBrains Mono’;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)">{{ m.role }} · {{ m.n }}</span><pre style="margin:0;font:400 11px/1.5 ‘JetBrains Mono’;color:var(--ink2);white-space:pre-wrap;overflow-wrap:anywhere;max-height:320px;overflow:auto">{{ m.text }}</pre></div></sc-for></sc-if>
+              </section>
+            </sc-if>
+            <sc-if value="{{ ak.mGen }}" hint-placeholder-val="{{ false }}">
+              <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 140px);overflow:auto">
+                <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap">
+                  <span style="font:600 12px ‘JetBrains Mono’;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-right:auto">Fold</span>
+                  <button onClick="{{ ak.fold.open }}" style="all:unset;cursor:pointer;font:500 13px ‘Hanken Grotesk’;color:var(--acc);white-space:nowrap" style-hover="text-decoration:underline">Open Draft →</button>
+                </div>
+                <sc-if value="{{ ak.fold.has }}" hint-placeholder-val="{{ false }}">
+                  <span style="font:600 15px/1.2 ‘Newsreader’,serif;color:var(--ink)">{{ ak.fold.title }}</span>
+                  <sc-for list="{{ ak.fold.items }}" as="fi" hint-placeholder-count="0"><p style="margin:0;font:400 14px/1.6 ‘Newsreader’,serif;color:var(--ink);text-wrap:pretty;border-top:1px solid var(--line);padding-top:8px">{{ fi.t }}</p></sc-for>
+                </sc-if>
+                <sc-if value="{{ ak.fold.empty }}" hint-placeholder-val="{{ true }}"><span style="font:400 13px/1.5 ‘Hanken Grotesk’;color:var(--mut);text-wrap:pretty">No folds yet. Ask a question, then click "Generate a document →" on an answer to start building one here.</span></sc-if>
+              </section>
+            </sc-if>
           </aside>
         </div>
       </sc-if>
@@ -3875,7 +3869,7 @@ class Component extends DCLogic {
       nextN: String(conv.turns.length ? parseInt(conv.turns[conv.turns.length - 1].n) + 1 : 1),
       modes: (() => { const akMode = S.akMode || 'chat'; const seg = on => ({ bg: on ? 'var(--sel)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)' });
         return [['chat', 'Chat'], ['generate', 'Generate'], ['notebook', 'Notebook']].map(([k, l]) => ({ label: l, ...seg(akMode === k), onClick: () => this.setState({ akMode: k }) })); })(),
-      mChat: (S.akMode || 'chat') === 'chat', mGen: S.akMode === 'generate', mNb: S.akMode === 'notebook', showCells: S.akMode !== 'generate',
+      mChat: (S.akMode || 'chat') !== 'notebook', mGen: S.akMode === 'generate', mNb: S.akMode === 'notebook', showCells: true,
       modeNote: S.akMode === 'generate' ? 'Build a sourced document — the answers you ask for, laid out by kind.' : S.akMode === 'notebook' ? 'Every cell can be edited and re-run; the output of each run stays below its cell.' : 'A conversation over the sources — every sentence traced back to its material.',
       gKinds: [['brief', 'Brief'], ['timeline', 'Timeline']].map(([k, l]) => { const on = (S.gKind || 'brief') === k; return { label: l, bg: on ? 'var(--sel)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)', onClick: () => this.setState({ gKind: k }) }; }),
       gModes: [['mech', 'Quotes'], ['model', 'Model']].map(([k, l]) => { const on = (S.gMode || 'mech') === k; return { label: l, bg: on ? 'var(--sel)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)', onClick: () => this.setState({ gMode: k }) }; }),
@@ -3902,6 +3896,11 @@ class Component extends DCLogic {
         const years = A.docs.map(d => d.year).filter(Boolean); if (years.length) qs.push('What happened in ' + Math.max(...years) + '?');
         if (!qs.length && A.docs.length) qs.push('What is this workspace about?');
         return qs.slice(0, 3).map(x => ({ t: x, onClick: () => this.setState({ akQ: x }) }));
+      })(),
+      notGen: (S.akMode || 'chat') !== 'generate',
+      fold: (() => {
+        const pd = this.pinData(); const claims = (pd.claims || []).filter(c => c.kind !== 'heading' && (c.text || '').trim()); const has = claims.length > 0;
+        return { has, empty: !has, n: claims.length, title: (pd.doc && pd.doc.title) || 'Untitled document', items: claims.slice(0, 30).map(c => ({ t: c.text })), open: () => this.setState({ view: 'draft', readDoc: null, sel: null, f: {} }) };
       })() } };
   }
   readingVals(A, view) {
