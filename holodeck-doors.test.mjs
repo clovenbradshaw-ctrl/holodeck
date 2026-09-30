@@ -6,7 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { isFunctionWord } from '../eoreader7/native/the-fold/pos-prior.js';
-import { parseLedger, cellsOf, startDocument, readLedger, newJobId, DoorError, doorControls, topicControl, claimSentences, documentsOf, groundOf } from './holodeck-doors.js';
+import { parseLedger, cellsOf, startDocument, readLedger, newJobId, DoorError, doorControls, topicControl, claimSentences, documentsOf, groundOf, prettyGround } from './holodeck-doors.js';
 
 const TEXT = fs.readFileSync(new URL('./fixtures/er7-document-ledger.jsonl', import.meta.url), 'utf8');
 const { rows } = parseLedger(TEXT);
@@ -229,4 +229,10 @@ test('the doorway controls pass on a no-ground job: nothing projected that the l
   assert.deepEqual(v.filter(x => x.ok === false).map(x => x.name), []);
   assert.match(poll.projection, /^No ground\./);
   assert.equal(poll.job.chars, 0, 'the model wrote nothing');
+});
+
+test('a passage of the received corpus reads as a place; a handed-over document is shown as it is', () => {
+  assert.equal(prettyGround('priors:live_priors/02-encyclopedic/wikipedia/Logic.txt#0-346'), 'live_priors/02-encyclopedic/wikipedia/Logic.txt (chars 0\u2013346)');
+  assert.equal(prettyGround('continuum-hypothesis.txt'), 'continuum-hypothesis.txt');
+  assert.equal(prettyGround('https://en.wikipedia.org/wiki/Freewheel'), 'https://en.wikipedia.org/wiki/Freewheel');
 });

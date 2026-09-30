@@ -146,3 +146,7 @@ export function groundOf(rows) {
   let src; try { src = JSON.parse(m[1]); } catch (e) { return { licensed: !/not licensed/i.test(r.title), docIds: [], carries: null, unparsed: true }; }
   return { licensed: !/not licensed|^no ground/i.test(r.title), none: /^no ground/i.test(r.title), docIds: src.docIds || [], carries: src.carries || null, web: src.web || 0 };
 }
+
+// A ground id as a place a person can read: a passage of the received corpus is "corpus/path (chars a–b)"; a handed-over
+// document or a fetched page is shown as it is.
+export const prettyGround = id => { const m = /^priors:(.+)#(\d+)-(\d+)$/.exec(String(id)); return m ? m[1] + ' (chars ' + m[2] + '\u2013' + m[3] + ')' : String(id); };
