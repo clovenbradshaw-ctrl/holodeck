@@ -727,15 +727,27 @@ select option{background:var(--s1);color:var(--ink)}
             </sc-if>
             <sc-if value="{{ ak.mGen }}" hint-placeholder-val="{{ false }}">
               <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 140px);overflow:auto">
-                <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap">
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
                   <span style="font:600 12px ‘JetBrains Mono’;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-right:auto">Fold</span>
+                  <sc-if value="{{ ak.fold.hasFolds }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ ak.fold.onPrev }}" style="background:none;border:1px solid var(--line2);border-radius:6px;padding:2px 8px;font:500 14px ‘Hanken Grotesk’;color:var(--ink2);cursor:pointer;opacity:{{ ak.fold.prevOp }}">‹</button>
+                    <span style="font:500 12px ‘JetBrains Mono’;color:var(--mut)">{{ ak.fold.foldLabel }}</span>
+                    <button onClick="{{ ak.fold.onNext }}" style="background:none;border:1px solid var(--line2);border-radius:6px;padding:2px 8px;font:500 14px ‘Hanken Grotesk’;color:var(--ink2);cursor:pointer;opacity:{{ ak.fold.nextOp }}">›</button>
+                  </sc-if>
                   <button onClick="{{ ak.fold.open }}" style="all:unset;cursor:pointer;font:500 13px ‘Hanken Grotesk’;color:var(--acc);white-space:nowrap" style-hover="text-decoration:underline">Open Draft →</button>
                 </div>
+                <sc-if value="{{ ak.fold.hasFolds }}" hint-placeholder-val="{{ false }}"><span style="font:400 12px ‘JetBrains Mono’;color:var(--dim)">{{ ak.fold.foldPrompt }}</span></sc-if>
                 <sc-if value="{{ ak.fold.has }}" hint-placeholder-val="{{ false }}">
                   <span style="font:600 15px/1.2 ‘Newsreader’,serif;color:var(--ink)">{{ ak.fold.title }}</span>
                   <sc-for list="{{ ak.fold.items }}" as="fi" hint-placeholder-count="0"><p style="margin:0;font:400 14px/1.6 ‘Newsreader’,serif;color:var(--ink);text-wrap:pretty;border-top:1px solid var(--line);padding-top:8px">{{ fi.t }}</p></sc-for>
                 </sc-if>
+                <sc-if value="{{ ak.fold.noFoldClaims }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px/1.5 ‘Hanken Grotesk’;color:var(--mut);text-wrap:pretty">No claims in this fold yet.</span></sc-if>
                 <sc-if value="{{ ak.fold.empty }}" hint-placeholder-val="{{ true }}"><span style="font:400 13px/1.5 ‘Hanken Grotesk’;color:var(--mut);text-wrap:pretty">No folds yet. Ask a question, then click "Generate a document →" on an answer to start building one here.</span></sc-if>
+                <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:10px;margin-top:2px">
+                  <span style="font:600 11px ‘JetBrains Mono’;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Edit this fold</span>
+                  <textarea value="{{ ak.fold.editPrompt }}" onInput="{{ ak.fold.onEditPrompt }}" placeholder="e.g. focus more on the budget" rows="2" style="background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font:400 13px ‘Hanken Grotesk’;color:var(--ink);resize:vertical;outline:none;width:100%;box-sizing:border-box"></textarea>
+                  <button onClick="{{ ak.fold.onRunEdit }}" style="align-self:flex-end;background:#8b5cf6;border:none;border-radius:8px;padding:6px 16px;font:600 13px ‘Hanken Grotesk’;color:#fff;cursor:pointer;opacity:{{ ak.fold.runEditOp }}">{{ ak.fold.runEditLabel }}</button>
+                </div>
               </section>
             </sc-if>
           </aside>
@@ -3474,9 +3486,11 @@ class Component extends DCLogic {
       } else sec.sts.forEach(st => blocks.push({ text: mech(st, sec), sts: [st] }));
     }
     if (!blocks.length) { this.setState({ gen: false }); this.toast('Nothing in the sources matched “' + subject + '”'); return; }
+    const genId = 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
     this.setPinData(D => { blocks.forEach(b => { const c = { id: 'claim-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text: b.text, pins: [], by: b.model ? 'model' : b.kind === 'heading' ? undefined : 'template' };
-      if (b.kind === 'heading') c.kind = 'heading'; else { c.pins = b.sts.map(st => this.ensurePin(D, A, st)); c.fixed = c.pins.slice(); if (!b.model && b.sts.length === 1) c.q = body(b.sts[0]); c.g = { verdict: 'source', why: b.model ? 'Written by the model from its excerpts, then checked.' : 'Quoted from its excerpt.', at: Date.now() }; if (b.date) c.date = b.date; } D.claims.push(c); }); return D; });
-    this.setDocs(X => ({ ...X, docs: X.docs.map(d => d.id === X.cur ? { ...d, kind, title: !d.title || d.title === 'Untitled document' ? subject + (kind === 'timeline' ? ': timeline' : ': brief') : d.title } : d) }));
+      if (b.kind === 'heading') c.kind = 'heading'; else { c.gen = genId; c.pins = b.sts.map(st => this.ensurePin(D, A, st)); c.fixed = c.pins.slice(); if (!b.model && b.sts.length === 1) c.q = body(b.sts[0]); c.g = { verdict: 'source', why: b.model ? 'Written by the model from its excerpts, then checked.' : 'Quoted from its excerpt.', at: Date.now() }; if (b.date) c.date = b.date; } D.claims.push(c); }); return D; });
+    const genEntry = { id: genId, at: new Date().toISOString(), prompt: subject, kind, mode };
+    this.setDocs(X => ({ ...X, docs: X.docs.map(d => d.id === X.cur ? { ...d, kind, title: !d.title || d.title === 'Untitled document' ? subject + (kind === 'timeline' ? ': timeline' : ': brief') : d.title, genLog: [...(d.genLog || []), genEntry], genCursor: (d.genLog || []).length + 1 } : d) }));
     const newIds = []; this.pinData().claims.forEach(c => { if (c.fixed && !c.g2) newIds.push(c.id); }); this.setPinData(D => { D.claims.forEach(c => { if (newIds.includes(c.id)) c.g2 = true; }); return D; }); this.groundClaims(newIds);
     this.setState({ gen: false }); if (false) this.toast(mode === 'model' && modelFail && !modelUsed ? 'The local model didn’t answer' + (this._llmErr ? ' (' + this._llmErr + ')' : '') + '; used quotes instead' : 'Added ' + plural(blocks.filter(b => b.kind !== 'heading').length, 'claim') + ' with their excerpts');
   }
@@ -3899,8 +3913,28 @@ class Component extends DCLogic {
       })(),
       notGen: (S.akMode || 'chat') !== 'generate',
       fold: (() => {
-        const pd = this.pinData(); const claims = (pd.claims || []).filter(c => c.kind !== 'heading' && (c.text || '').trim()); const has = claims.length > 0;
-        return { has, empty: !has, n: claims.length, title: (pd.doc && pd.doc.title) || 'Untitled document', items: claims.slice(0, 30).map(c => ({ t: c.text })), open: () => this.setState({ view: 'draft', readDoc: null, sel: null, f: {} }) };
+        const pd = this.pinData(); const curDoc = pd.doc; const docId = pd.cur;
+        const genLog = (curDoc && Array.isArray(curDoc.genLog)) ? curDoc.genLog : [];
+        const genHead = Math.max(1, genLog.length);
+        const genCur = Math.min(Math.max(1, (curDoc && curDoc.genCursor) || genHead), genHead);
+        const hasFolds = genLog.length > 0;
+        const selectedFold = hasFolds ? genLog[genCur - 1] : null;
+        const selectedId = selectedFold ? selectedFold.id : null;
+        const foldClaims = (pd.claims || []).filter(c => c.kind !== 'heading' && (c.text || '').trim() && (!hasFolds || c.gen === selectedId));
+        const has = foldClaims.length > 0;
+        const setFoldCursor = n => { const nx = Math.min(Math.max(1, n), genHead); this.setDocs(X => ({ ...X, docs: X.docs.map(d => d.id === docId ? { ...d, genCursor: nx } : d) })); };
+        return { has, empty: !has && !hasFolds, noFoldClaims: !has && hasFolds, hasFolds,
+          foldLabel: hasFolds ? 'fold ' + genCur + ' of ' + genHead : '',
+          foldPrompt: selectedFold ? selectedFold.prompt : '',
+          prevOp: genCur > 1 ? 1 : 0.3, nextOp: genCur < genHead ? 1 : 0.3,
+          onPrev: () => setFoldCursor(genCur - 1), onNext: () => setFoldCursor(genCur + 1),
+          title: (curDoc && curDoc.title) || 'Untitled document',
+          items: foldClaims.slice(0, 30).map(c => ({ t: c.text })),
+          open: () => this.setState({ view: 'draft', readDoc: null, sel: null, f: {} }),
+          editPrompt: S.akFoldEdit || '',
+          onEditPrompt: e => this.setState({ akFoldEdit: e.target.value }),
+          onRunEdit: async () => { const p = (this.state.akFoldEdit || '').trim(); if (!p || this.state.gen) return; this._gSubj = p; await this.generate(); this.setState({ akFoldEdit: '' }); },
+          runEditLabel: S.gen ? 'Working…' : 'Run edit →', runEditOp: S.gen ? 0.6 : 1 };
       })() } };
   }
   readingVals(A, view) {
