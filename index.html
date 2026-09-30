@@ -194,24 +194,6 @@ select option{background:var(--s1);color:var(--ink)}
                 </sc-for>
               </div>
             </sc-if>
-            <sc-if value="{{ hasFilters }}" hint-placeholder-val="{{ false }}">
-              <div style="display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;margin-top:8px">
-                <span style="font:600 14px 'Hanken Grotesk';color:var(--ink);white-space:nowrap">{{ filterCount }}</span>
-                <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">·</span>
-                <span style="font:400 12px 'JetBrains Mono';color:var(--dim);white-space:nowrap">{{ tupleLine }}</span>
-                <sc-for list="{{ chips }}" as="ch" hint-placeholder-count="1">
-                  <button onClick="{{ ch.onClear }}" title="Remove" style="display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid #8b5cf6;color:var(--ink);border-radius:999px;padding:3px 5px 3px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk'"><span style="color:var(--mut)">{{ ch.k }}</span><b style="font-weight:600">{{ ch.v }}</b><span style="font:500 12px 'Hanken Grotesk';color:var(--acc);border:1px solid var(--line2);border-radius:999px;padding:1px 8px;white-space:nowrap">{{ ch.w }}</span><span style="width:18px;height:18px;border-radius:50%;background:var(--line2);display:flex;align-items:center;justify-content:center;font-size:10px">✕</span></button>
-                </sc-for>
-                <sc-if value="{{ addAsFold.show }}" hint-placeholder-val="{{ false }}"><button onClick="{{ addAsFold.onClick }}" style="margin-left:auto;background:none;border:1px solid #8b5cf6;border-radius:999px;color:var(--acc);cursor:pointer;font:500 13px 'Hanken Grotesk';padding:3px 10px;white-space:nowrap">{{ addAsFold.label }}</button></sc-if>
-                <button onClick="{{ clearAll }}" style="background:none;border:0;color:var(--mut);cursor:pointer;font:500 14px 'Hanken Grotesk';white-space:nowrap" style-hover="color:var(--ink)">Clear all</button>
-              </div>
-              <div style="display:flex;flex-direction:column;gap:4px;margin-top:6px">
-                <span style="font:600 11px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--dim)">What counts · for whom each filter holds</span>
-                <sc-for list="{{ fwRows }}" as="r" hint-placeholder-count="1">
-                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font:400 13px 'Hanken Grotesk';color:var(--mut)"><span style="color:var(--ink2);font-weight:600">{{ r.label }}</span><span>for</span><sc-for list="{{ r.givers }}" as="g" hint-placeholder-count="1"><button onClick="{{ g.onClick }}" style="cursor:pointer;padding:2px 10px;border-radius:999px;background:{{ g.bg }};border:1px solid var(--line2);font:500 13px 'Hanken Grotesk';color:var(--ink)">{{ g.label }}</button></sc-for><input value="{{ r.question }}" onChange="{{ r.onQuestion }}" placeholder="what question does it answer?" style="flex:1 1 200px;min-width:160px;background:var(--s1);border:1px solid var(--line2);border-radius:6px;color:var(--ink);font:400 13px 'Hanken Grotesk';padding:4px 10px;outline:none"></div>
-                </sc-for>
-              </div>
-            </sc-if>
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)">
@@ -2984,7 +2966,7 @@ async function fetchAnySite(url) {
   const titleOf = raw => { const x = ((raw.match(/<title[^>]*>([^<]*)/i) || [])[1] || ''); return new DOMParser().parseFromString('<p>' + x + '</p>', 'text/html').body.textContent.replace(/\s+/g, ' ').trim(); };
   const tries = [
     async () => { const r = await fetchT(url, 8000); if (!r.ok) throw 0; const raw = await r.text(); return { html: faithfulHtml(raw, url), format: 'page', title: titleOf(raw), note: null }; },
-    async () => { const r = await fetchT('https://api.allorigins.win/raw?url=' + encodeURIComponent(url), 7000); if (!r.ok) throw 0; const raw = await r.text(); if (raw.length < 200) throw 0; return { html: faithfulHtml(raw, url), format: 'page', title: titleOf(raw), note: 'Fetched through a public relay (allorigins.win), because this site doesn’t let pages be read directly.' }; },
+    async () => { const r = await fetchT('https://holodeck-proxy.prometheoid.workers.dev/raw?url=' + encodeURIComponent(url), 8000); if (!r.ok) throw 0; const raw = await r.text(); if (raw.length < 200) throw 0; return { html: faithfulHtml(raw, url), format: 'page', title: titleOf(raw), note: null }; },
     async () => { const r = await fetchT('https://r.jina.ai/' + url, 7000); if (!r.ok) throw 0; const md = await r.text(); const tm = md.match(/^Title:\s*(.+)$/m); const body = md.includes('Markdown Content:') ? md.split('Markdown Content:').slice(1).join('Markdown Content:') : md; return { html: sanitizeHtml(mdToHtml(body), url), title: tm ? tm[1].trim() : '', note: 'Fetched through a public reader (r.jina.ai); layout is simplified.' }; }
   ];
   const variants = [url]; try { const u = new URL(url); if (!/^www\./.test(u.hostname) && u.hostname.split('.').length === 2) { u.hostname = 'www.' + u.hostname; variants.push(u.href); } } catch (e) {}
@@ -4532,7 +4514,6 @@ class Component extends DCLogic {
   // Position 2 (filters) is state.f. Position 3 (what-counts) is state.fw: one for-whom
   // frame per filter key — {giver, question} — never a view from nowhere. Empowerment,
   // not a limit: the same filter value means different things for different whoms.
-  FW_GIVERS = ['the reader', 'the editor', 'the auditor', 'the resident', 'the council'];
   fwOf(key) { const dfltQ = (this.state.q || '').trim() || (this._fold || []).join(' ') || 'what does this selection show?'; return (this.state.fw || {})[key] || { giver: 'the reader', question: dfltQ }; }
   setFw(key, patch) { this.setState(s => ({ fw: { ...(s.fw || {}), [key]: { ...((s.fw || {})[key] || { giver: 'the reader', question: '' }), ...patch } } })); }
   fwLabel(key) { const w = this.fwOf(key); return 'for ' + w.giver; }
@@ -5232,7 +5213,6 @@ class Component extends DCLogic {
     if (S.q.trim() && !IS_Q(S.q) && !PARSE_REL(S.q)) chips.push(chip('q', 'Search', '“' + S.q.trim() + '”', () => this.setState(s => ({ q: '', ...(s.view === 'search' ? { view: s.prevView || 'summary' } : {}) }))));
     this._chips = chips;
     // position 3 editor rows: one for-whom per active filter — giver + question, always visible
-    const fwRows = chips.map(ch => ({ key: ch.key, label: ch.k + ' ' + ch.v, giver: this.fwOf(ch.key).giver, question: this.fwOf(ch.key).question, givers: this.FW_GIVERS.map(g => ({ label: g, bg: g === this.fwOf(ch.key).giver ? 'var(--sel2)' : 'transparent', onClick: () => this.setFw(ch.key, { giver: g }) })), onGiver: e => this.setFw(ch.key, { giver: e.target.value }), onQuestion: e => this.setFw(ch.key, { question: e.target.value }) }));
     // position 1: sources on/off — beings for this surface are documents
     const srcTuple = { being: 'documents', on: this._cnt ? this._cnt.size : 0, off: A.docs.length - (this._cnt ? this._cnt.size : A.docs.length), total: A.docs.length };
     const addAsFold = { show: chips.length > 0 && view !== 'search', label: 'Save as a fold', onClick: () => { const label = chips.map(c => c.k.toLowerCase() + ' ' + c.v).join(' · '); if (!label) return; this.addFoldFromFilter(label, { ...f }, S.q, new Set(F.map(st => st.doc)).size); } };
@@ -5462,7 +5442,7 @@ class Component extends DCLogic {
       onSearch: e => this.setState({ q: e.target.value }),
       yearVal: f.year ? String(f.year) : '', yearOptions: [{ v: '', label: 'Any time' }, ...allYears.map(y => ({ v: String(y), label: 'up to ' + y }))],
       onYear: e => this.setF('year', e.target.value ? +e.target.value : null),
-      hasFilters: chips.length > 0 && view !== 'search', chips, fwRows, srcTuple, tupleLine: 'sources: ' + srcTuple.on + '/' + srcTuple.total + ' ' + srcTuple.being + ' on · ' + chips.length + ' filters · each with a for-whom', clearAll: () => this.setState(s => ({ f: {}, fw: {}, q: '', ...(s.view === 'search' ? { view: s.prevView || 'summary' } : {}) })),
+      hasFilters: chips.length > 0 && view !== 'search', chips, srcTuple, tupleLine: 'sources: ' + srcTuple.on + '/' + srcTuple.total + ' ' + srcTuple.being + ' on · ' + chips.length + ' filters', clearAll: () => this.setState(s => ({ f: {}, fw: {}, q: '', ...(s.view === 'search' ? { view: s.prevView || 'summary' } : {}) })),
       filterNote: plural(F.length, 'statement') + ' of ' + A.sts.length + ' — every terrain now reflects only these.',
       filterCount: F.length.toLocaleString() + ' of ' + A.sts.length.toLocaleString() + ' statements',
       ts: this.timeStrip(A, F),
