@@ -21,7 +21,10 @@ date: 2026-09-25T19:46:51Z
 | Fold Explorer v7.dc.html — Records (holodeck-records.js) | clovenbradshaw-ctrl/bare-metal-eo-matrix-app: src/fold.js, public/data-chat.js (vendored unchanged under vendor/bare-metal/; src/operators.js replaced by a local no-network shim) |
 | Fold Explorer v7.dc.html — Ask the Fold (holodeck-ask.js, holodeck-reader.js) | clovenbradshaw-ctrl/the-fold: fold.js, holon.js (surf-and-fold wiring, ported); eoreader7: native/the-fold/reader-bundle.js (ported to fetch-loaded priors), native/organs/{source,measure,cite,grounding,web,speaker,hypergraph,fact-block,aposiopesis,cast,asserted,heard-surfaces,kind-standing}.js, native/adapters/text/{priors,spans,surfaces,pronouns,relations-language,relations-gfp,relations-positional,clause-spans,grain-typing,wordclass,morphology}.js, native/{memory,kernel}/*, native/priors/{pos,morphology}-eng.json (vendored unchanged) |
 
+| Fold Explorer v7.dc.html — Ask the Fold → Data notebook (holodeck-notebook.js) | clovenbradshaw-ctrl/eoreader7: native/kernel/sha256.js, native/the-fold/surface/{bench,notebook}.mjs — **byte-identical**, copied by `node vendor-sync.mjs`, hashes and commit in `vendor/eoreader7/NOTEBOOK-VENDOR.json`; `node vendor-sync.mjs --check` fails on drift |
+
 ## Sync history
+- 2026-09-30 · eoreader7 @f18069e (branch ccr-f706e8c6-ymunv8, not yet on main) — Data notebook pane: the three ledger files vendored by script; the notebook server itself is NOT vendored (it runs from an eoreader7 checkout)
 - 2026-09-25T19:11:34Z · ohs-custody @40cf318 — no upstream changes; same-bytes badges, Ingest & publish view
 - 2026-09-25T17:10:00Z · ohs-custody @40cf318 — 49 meeting transcripts lazy-loaded via OPFS, large documents folded, video viewer beside transcript
 - 2026-09-25T16:12:39Z · ohs-custody — transcript discovery from readings/, "View a source", holograph grounding

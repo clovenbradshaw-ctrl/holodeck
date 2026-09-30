@@ -491,6 +491,15 @@ select option{background:var(--s1);color:var(--ink)}
       </sc-if>
 
       <sc-if value="{{ ak.on }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+          <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden"><sc-for list="{{ ak.panes }}" as="m" hint-placeholder-count="2"><button onClick="{{ m.onClick }}" style="border:0;background:{{ m.bg }};color:{{ m.col }};padding:5px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';white-space:nowrap">{{ m.label }}</button></sc-for></div>
+          <span style="font:400 12px 'JetBrains Mono';color:var(--dim)">{{ ak.paneNote }}</span>
+        </div>
+      </sc-if>
+      <sc-if value="{{ ak.onData }}" hint-placeholder-val="{{ false }}">
+        <div ref="{{ ak.nbRef }}" data-hd-notebook style="min-height:50vh"></div>
+      </sc-if>
+      <sc-if value="{{ ak.onSrc }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
           <div style="flex:1 1 480px;min-width:0;display:flex;flex-direction:column;gap:14px">
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font:500 13px 'Hanken Grotesk';color:var(--mut)">
@@ -3892,7 +3901,14 @@ class Component extends DCLogic {
     const trChars = conv.history.reduce((n, m) => n + (m.content || '').length, 0);
     const stageL = { indexing: 'Indexing the passages…', retrieving: 'Finding passages by the question’s own words…', reading: 'Reading the passages into notes…', answering: 'Answering…', checking: 'Checking every sentence against the passages…', folding: 'Folding the turn…' };
     const recs = (sm.records || []).slice().reverse().map(r => ({ line: 'Turn ' + r.turn + ' · ' + r.gist, sub: plural((r.refs || []).length, 'address', 'addresses') + ((r.unsupported || []).length ? ' · ' + (r.unsupported || []).length + ' unsupported' : '') + ((r.open || []).length ? ' · open' : '') }));
-    return { ak: { on: true, ready: this.llmOk(), pending: false, gap: isWL ? !gpu && !!MM : !(O && O.ok), why: isWL ? 'navigator.gpu is not available in this browser' : (O.why || ''), isWL, noGpu: isWL && MM && !gpu, needLoad: isWL && gpu && !loaded && !LD, loading: !!LD, loadText: LD ? LD.text : '', loadPct: LD ? Math.round((LD.p || 0) * 100) + '%' : '0%', load: () => this.akLoad(), mName: mInfo.name, mSize: mInfo.size || '',
+    const akPane = S.akPane || (() => { try { return localStorage.getItem('hd:ak-pane') || 'sources'; } catch (e) { return 'sources'; } })();
+    const setPane = k => { try { localStorage.setItem('hd:ak-pane', k); } catch (e) {} this.setState({ akPane: k }); };
+    // The Data notebook pane (holodeck-notebook.js) draws into a plain div; a STABLE callback ref, so React's re-renders never remount it.
+    if (!this._nbRef) this._nbRef = el => { if (el && el !== this._nbEl) { this._nbEl = el; import(new URL('holodeck-notebook.js', location.href).href).then(M => { this._nbPane = M.mount(el); }).catch(e => { el.textContent = 'The notebook pane did not load: ' + (e && e.message || e); }); } if (!el) this._nbEl = null; };
+    return { ak: { on: true, onSrc: akPane !== 'data', onData: akPane === 'data', nbRef: this._nbRef,
+      panes: [['sources', 'Sources'], ['data', 'Data notebook']].map(([k, l]) => ({ label: l, bg: akPane === k ? 'var(--sel)' : 'transparent', col: akPane === k ? 'var(--ink)' : 'var(--mut)', onClick: () => setPane(k) })),
+      paneNote: akPane === 'data' ? 'Your data, analysed in cells on a notebook server on this machine — tabs, forks, learned methods you can switch off, and an audit.' : 'A conversation over this workspace\u2019s sources, answered by a model in this tab.',
+      ready: this.llmOk(), pending: false, gap: isWL ? !gpu && !!MM : !(O && O.ok), why: isWL ? 'navigator.gpu is not available in this browser' : (O.why || ''), isWL, noGpu: isWL && MM && !gpu, needLoad: isWL && gpu && !loaded && !LD, loading: !!LD, loadText: LD ? LD.text : '', loadPct: LD ? Math.round((LD.p || 0) * 100) + '%' : '0%', load: () => this.akLoad(), mName: mInfo.name, mSize: mInfo.size || '',
       dot: isWL ? (loaded ? 'var(--ok)' : gpu ? 'var(--amber)' : 'var(--bad)') : O.ok ? 'var(--ok)' : 'var(--bad)',
       status: isWL ? (loaded ? mInfo.name + ' running in this tab · nothing leaves it' : !MM ? 'Starting…' : gpu ? mInfo.name + ' runs in this tab once loaded' : 'This browser can’t run a model in the tab') : O.ok ? model + ' via Ollama on this machine' : 'Ollama isn’t reachable',
       models: ms.map(m => ({ v: m.v, label: m.label })), hasModels: ms.length > 1, model, onModel: e => this.setState({ akModel: e.target.value }), retry: () => this.akProbe(),

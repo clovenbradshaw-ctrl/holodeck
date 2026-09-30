@@ -1,0 +1,11 @@
+{
+ "repo": "clovenbradshaw-ctrl/eoreader7",
+ "commit": "f18069efe4528a6f76d724cc3b5f4854c6a15674",
+ "uncommittedAtSync": null,
+ "at": "2026-09-30T14:40:06.836Z",
+ "files": {
+  "native/kernel/sha256.js": "5bb4aa16fcaa652b3dd639caddfa43b6299f94f32f01a6e216ebef0ce2228616",
+  "native/the-fold/surface/bench.mjs": "a1918f9d01cc30b9fc7c5b7f8b3e0d6959fe9b1186fd57cb17ad1449c640e10b",
+  "native/the-fold/surface/notebook.mjs": "5a69279f168a4dba6933eac5dac26ff9b2c2e1eaa8b025bbcfdba6f73e2d5d3b"
+ }
+}

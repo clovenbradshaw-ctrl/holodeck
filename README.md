@@ -57,6 +57,19 @@ A repo, a report, and a recording don't share affordances, so every ingest is hu
 
 This is the live, ongoing home for this surface — active development happens here going forward, not in a local-only copy.
 
+## Ask the Fold → Data notebook
+
+"Ask the Fold" has two panes. **Sources** is the conversation over this workspace's reading, answered by a model in the tab (unchanged). **Data notebook** (`holodeck-notebook.js`) is for your own data: several conversations in tabs, each flagged chat / generate / notebook (the flag changes only the drawing, and the change is recorded); **⑂ fork** on any cell or answer opens a tab that begins with the parent's exact entries, seal for seal, and does not carry the parent's promotions; one workspace **dataset** of everything ingested and everything generated in any tab (generated items are labelled and never counted as evidence); learned analyses as **skills** you can switch off (a reason and your name are recorded; a switched-off method is never used and nothing is written around it) with an **audit** from claim to method to author to admission runs to every switch; **⤓ Bundle** (notebook + data + helper library + `run_all.py`, which re-runs in a clean `python3` and compares every `#finding`/`#result` line); and a **Methods** paragraph in the Generate view written from the ledger.
+
+It runs on a notebook server **on your machine** — Python, the ledgers and the ant colony live there; the page draws and asks, and re-verifies every hash chain it is shown with the vendored eoreader7 code (a chain that does not verify is shown as CHAIN BROKEN, whatever the server says). From an eoreader7 checkout, with `python3` and `numpy`:
+
+```bash
+node native/the-fold/surface/holodeck.mjs --by human:<your name>      # 127.0.0.1:8900; loopback origins only
+node native/the-fold/surface/holodeck.mjs --by human:<you> --allow-origin https://<where this page is served>
+```
+
+A page served from somewhere other than localhost must be named with `--allow-origin`: the server runs code as you, so it refuses every other website. There is no in-browser (Pyodide) mode yet; without the server the pane says so. Tests: `node --test holodeck-notebook.test.mjs`. The falsification run (F1–F9, in a real Chromium): `node tools/notebook-falsify.mjs` — see `NOTEBOOK-FALSIFICATION.md`.
+
 ## The engine reads first
 
 Each added document is posted to eoreader7's `POST /v1/read` (model-free; tries `localStorage hd:engine`, then `127.0.0.1:11436`, then `:11476`). The replay draws the engine's own events under an **Engine** stage, and its beings are a *witness* beside the Holodeck's finder: it adds lowercase names and recurring descriptions the local finder cannot see (`kutuzov`, `the contractor`, `the camp`), after the same hygiene every local name passes, and Fort gets an `engine` ant that votes *real* when the engine also admitted a name and stays silent otherwise. If the proxy is down the document is read locally and the Added card says so.
