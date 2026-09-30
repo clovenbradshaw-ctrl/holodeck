@@ -5,7 +5,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { parseLedger, cellsOf, startDocument, readLedger, newJobId, DoorError, doorControls, topicControl } from './holodeck-doors.js';
+import { isFunctionWord } from '../eoreader7/native/the-fold/pos-prior.js';
+import { parseLedger, cellsOf, startDocument, readLedger, newJobId, DoorError, doorControls, topicControl, claimSentences } from './holodeck-doors.js';
 
 const TEXT = fs.readFileSync(new URL('./fixtures/er7-document-ledger.jsonl', import.meta.url), 'utf8');
 const { rows } = parseLedger(TEXT);
@@ -127,6 +128,7 @@ test('an ungrounded disclosure that never reaches the projection is refuted (rea
 // Final ledgers of two unrelated jobs run 2026-09-30 through POST /v1/documents (gemma2:2b, no web, no workspace):
 // fixtures/er7-freewheel-* ("How a bicycle freewheel ...") and fixtures/er7-ungrounded-* ("Why a spinning top ...").
 const load = n => ({ jobId: n, rows: parseLedger(fs.readFileSync(new URL(`./fixtures/er7-${n}-ledger.jsonl`, import.meta.url), 'utf8')).rows, projection: JSON.parse(fs.readFileSync(new URL(`./fixtures/er7-${n}-poll.json`, import.meta.url), 'utf8')).projection });
+const FW = { isFunctionWord };
 const pair = [load('freewheel'), load('ungrounded')];
 
 test("the pipeline's whole piece supersedes the plan's cells and is not counted a stray", () => {
@@ -139,12 +141,34 @@ test("the pipeline's whole piece supersedes the plan's cells and is not counted 
 });
 
 test('refuted on real bytes: both whole pieces drift off their tasks onto the same stale material', () => {
-  const v = topicControl(pair);
+  const v = topicControl(pair, FW);
   assert.deepEqual(v.map(x => x.ok), [false, false]);
   for (const j of pair) { const t = cellsOf(j.rows).whole[0].text.toLowerCase(); assert.ok(/magazine/.test(t) && /plastic gun/.test(t)); }
 });
 
 test('the topic control passes when a whole piece is about its task, so it is not a constant', () => {
   const fixed = pair.map(j => ({ ...j, rows: j.rows.map(r => r.giver === 'eoreader7:pipeline' ? { ...r, text: j.rows.find(x => x.role === 'plan').text } : r) }));
-  assert.deepEqual(topicControl(fixed).map(x => x.ok), [true, true]);
+  assert.deepEqual(topicControl(fixed, FW).map(x => x.ok), [true, true]);
+});
+
+// Two jobs run 2026-09-30 through the FIXED proxy (charter out of the vocabulary) with the same real workspace, one file
+// (katherine-johnson-body.txt), web off: fixtures/er7-ground-on-* (task about Katherine Johnson at NASA) and
+// fixtures/er7-ground-off-* (task about a bicycle freewheel). Both finished `unsatisfied`; neither pasted a document.
+const gpair = [load('ground-on'), load('ground-off')];
+
+test('REFUTED on real bytes: a bicycle answer built from an unrelated handed-over file is mostly about the file', () => {
+  const v = topicControl(gpair, FW);
+  assert.equal(v[0].ok, true, 'the on-topic job says more about Katherine Johnson: ' + v[0].detail);
+  assert.equal(v[1].ok, false, 'the off-topic job does not: ' + v[1].detail);
+  assert.ok(claimSentences(gpair[1].projection).some(x => /freewheel/.test(x)), 'it did write one bicycle sentence');
+});
+
+test('the same control passes the off-topic job once the file\'s sentences are removed, so it is not a constant', () => {
+  const kept = gpair[1].projection.split('\n').filter(l => !/Johnson|NASA|Katherine/.test(l)).join('\n');
+  assert.equal(topicControl([gpair[0], { ...gpair[1], projection: kept }], FW)[1].ok, true);
+});
+
+test('footnotes and quoted excerpt bullets are shown ground, never counted as what the piece says', () => {
+  const c = claimSentences(gpair[0].projection);
+  assert.ok(!c.some(x => /Jump to content|Footnotes|katherine-johnson-body\.txt/.test(x)));
 });

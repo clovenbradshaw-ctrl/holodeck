@@ -92,16 +92,31 @@ export function doorControls(poll, ledger) {
 // Topic words of a plan: its words minus those every other plan also has, so the void template cancels itself out.
 const words = t => new Set(String(t || '').toLowerCase().match(/[a-z][a-z-]{2,}/g) || []);
 export function topicWords(planText, otherPlanTexts) { const own = words(planText); for (const o of otherPlanTexts) for (const w of words(o)) own.delete(w); return own; }
-// The null is the other jobs: a fold-out must share more of its own topic words than of any other job's.
-export function topicControl(jobs) {
+// The null is the other jobs. What the piece SAYS is counted sentence by sentence — footnotes and quoted excerpt bullets
+// are shown ground, not the answer's claims — and a piece is about its own task only if more of its sentences carry its
+// own topic words than carry any other job's. (Counting words over the whole projection passed a bicycle answer that was
+// four sentences about Katherine Johnson and one about bicycles, 8 words against 7: the count must be of sentences.)
+export function claimSentences(text) {
+  const body = String(text || '').split(/^## Footnotes/m)[0];
+  return body.split(/\n+/).filter(l => !/^\s*-\s*["\u201c]/.test(l)).join('\n').split(/(?<=[.!?])\s+|\n+/).map(x => x.trim()).filter(x => x.split(/\s+/).length >= 4);
+}
+export function topicControl(jobs, { isFunctionWord = () => false } = {}) {
   const plans = jobs.map(j => (j.rows.find(r => r.role === 'plan') || {}).text || '');
   const pieceOf = j => { const w = cellsOf(j.rows).whole; return w.length ? w[w.length - 1].text : j.projection; };
+  const tokens = t => new Set(String(t || '').toLowerCase().match(/[a-z][a-z-]{2,}/g) || []);
   return jobs.map((j, i) => {
-    const pw = words(pieceOf(j)); const hits = ws => [...ws].filter(w => pw.has(w)).length;
-    const own = topicWords(plans[i], plans.filter((_, k) => k !== i)); const ownHits = hits(own);
-    const others = plans.map((p, k) => k === i ? null : hits(topicWords(p, plans.filter((_, m) => m !== k)))).filter(x => x != null);
-    const ok = !pieceOf(j).trim() || !own.size ? null : ownHits > Math.max(...others);
-    return { name: 'the whole piece is about its own task, not another job\'s', ok, detail: 'own topic words found ' + ownHits + ' of ' + own.size + ' (' + [...own].slice(0, 6).join(', ') + '); other jobs\' found ' + others.join(', ') };
+    const sents = claimSentences(pieceOf(j)).map(tokens);
+    const carry = ws => sents.filter(t => [...ws].some(w => t.has(w))).length;
+    // A function word is no topic ("the" belongs to one task phrase and matches 147 of 211 sentences of any English text):
+    // the engine's own isFunctionWord decides, injected because it needs node:fs and this module also runs in the page.
+    const strip = ws => new Set([...ws].filter(w => !isFunctionWord(w)));
+    const own = strip(topicWords(plans[i], plans.filter((_, k) => k !== i))); const ownN = carry(own);
+    const others = plans.map((p, k) => k === i ? null : carry(strip(topicWords(p, plans.filter((_, m) => m !== k))))).filter(x => x != null);
+    // "About its task" is defined as: most of what the piece says carries its own topic words, and more than any other
+    // job's do. Limit, stated: an essay that names its subject in under half its sentences (pronouns, anaphora) reads as
+    // off-topic here; the doorway's pieces are short and explicit, and a false alarm is the safe side of a falsifier.
+    const ok = !sents.length || !own.size ? null : ownN * 2 > sents.length && ownN > Math.max(0, ...others);
+    return { name: 'the piece is about its own task: most of its sentences carry it, and more than carry another job\'s', ok, detail: ownN + ' of ' + sents.length + ' sentences carry its own topic words (' + [...own].slice(0, 5).join(', ') + '); ' + others.join(', ') + ' carry another job\'s' };
   });
 }
 // Two jobs with different tasks must not ship the same whole piece. Exact identity: no threshold to tune.
