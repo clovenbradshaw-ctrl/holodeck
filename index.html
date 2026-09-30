@@ -6,6 +6,7 @@
 <script src="./support.js"></script>
 <script src="./holodeck-region.js"></script>
 <script src="./holodeck-hang.js"></script>
+<script src="./holodeck-echo.js"></script>
 </head>
 <body>
 <x-dc>
@@ -152,7 +153,15 @@ select option{background:var(--s1);color:var(--ink)}
               <sc-if value="{{ just.oddMore }}" hint-placeholder-val="{{ false }}"><button onClick="{{ just.onOddAll }}" style="all:unset;cursor:pointer;font:400 13px 'Hanken Grotesk';color:var(--dim)" style-hover="color:var(--ink)">{{ just.oddMore }}</button></sc-if>
             </div>
           </sc-if>
-          <sc-if value="{{ just.hasNote }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--dim);max-width:75ch">{{ just.noteLine }}</span></sc-if>
+          <sc-for list="{{ just.noteLines }}" as="nl" hint-placeholder-count="1"><span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--dim);max-width:75ch">{{ nl.text }}</span></sc-for>
+          <sc-for list="{{ just.noteGroups }}" as="g" hint-placeholder-count="1">
+            <details style="font:400 13px/1.45 'Hanken Grotesk';color:var(--dim);max-width:80ch">
+              <summary style="cursor:pointer;color:var(--mut)">From {{ g.repo }} · {{ g.count }}</summary>
+              <div style="display:flex;flex-wrap:wrap;gap:2px 16px;padding-top:6px;font:400 12px 'JetBrains Mono',ui-monospace,monospace;color:var(--dim)">
+                <sc-for list="{{ g.files }}" as="f" hint-placeholder-count="3"><span>{{ f.path }}</span></sc-for>
+              </div>
+            </details>
+          </sc-for>
           <div style="display:flex;gap:4px 18px;flex-wrap:wrap;padding-top:2px">
             <sc-if value="{{ justSeen }}" hint-placeholder-val="{{ false }}"><button onClick="{{ justKeep }}" style="all:unset;cursor:pointer;font:600 14px 'Hanken Grotesk';color:var(--acc)" style-hover="color:var(--ink)">Keep as a source</button></sc-if>
             <button onClick="{{ just.onRead }}" style="all:unset;cursor:pointer;font:600 14px 'Hanken Grotesk';color:var(--acc)" style-hover="color:var(--ink)">Read it →</button>
@@ -1397,7 +1406,6 @@ select option{background:var(--s1);color:var(--ink)}
             </div>
             <div style="display:flex;gap:6px;flex-wrap:wrap">
               <sc-if value="{{ orb.canBack }}" hint-placeholder-val="{{ false }}"><button onClick="{{ orb.back }}" style="display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:8px;border:1px solid var(--line);background:var(--s1);color:var(--ink);font:500 13px 'Hanken Grotesk';cursor:pointer" style-hover="border-color:#8b5cf6">Back to topic</button></sc-if>
-
             </div>
           </div>
           <div style="border-radius:10px;background:var(--bg);border:1px solid var(--line)">{{ graphEl }}</div>
@@ -2170,30 +2178,76 @@ select option{background:var(--s1);color:var(--ink)}
 </div>
   <sc-if value="{{ showAdd }}" hint-placeholder-val="{{ false }}">
     <div onClick="{{ closeAddBg }}" style="position:fixed;inset:0;z-index:50;background:rgba(6,5,12,.75);display:flex;align-items:center;justify-content:center;padding:20px">
-      <div style="width:100%;max-width:620px;background:var(--s1);border:1px solid var(--line2);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:12px">
+      <div style="width:100%;max-width:720px;max-height:calc(100vh - 40px);overflow:auto;box-sizing:border-box;background:var(--s1);border:1px solid var(--line2);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:14px">
         <div style="display:flex;justify-content:space-between;align-items:center">
-          <h2 style="margin:0;font:500 24px 'Newsreader',serif">Add content</h2>
+          <h2 style="margin:0;font:500 24px 'Newsreader',serif">Add sources</h2>
           <button onClick="{{ closeAdd }}" style="background:none;border:0;color:var(--mut);cursor:pointer;font-size:16px">✕</button>
         </div>
-        <p style="margin:0;color:var(--mut);font-size:13px">Anything works — PDFs, Word, slides, spreadsheets, web pages, data files, notes, transcripts. It's added to “{{ corpusName }}” and linked to everything already there. Nothing leaves your browser.</p>
-        <div style="display:flex;gap:10px;align-items:center;padding-bottom:12px;border-bottom:1px solid var(--line)">
-          <input value="{{ srcAskVal }}" onChange="{{ onSrcAskVal }}" onKeyDown="{{ onSrcAskKey }}" placeholder="Ask anything, and let it find the sources for you" style="flex:1 1 260px;min-width:0;background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:9px 12px;outline:none">
-          <button onClick="{{ findSources }}" style="flex:none;background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:9px 16px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Find sources</button>
+        <p style="margin:0;color:var(--mut);font-size:13px;text-wrap:pretty">Search, paste a link, or drop files. Whatever you add is read and linked to everything already in “{{ corpusName }}”.</p>
+        <div style="display:flex;gap:8px;align-items:center;background:var(--bg);border:1px solid var(--line2);border-radius:12px;padding:6px 6px 6px 8px">
+          <select value="{{ add.scope }}" onChange="{{ add.onScope }}" style="flex:none;background:var(--s2);border:1px solid var(--line2);border-radius:8px;color:var(--ink);font:500 13px 'Hanken Grotesk';padding:7px 8px;cursor:pointer;outline:none">
+            <sc-for list="{{ add.scopes }}" as="o" hint-placeholder-count="6"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
+          </select>
+          <input defaultValue="{{ add.q }}" onChange="{{ add.onQ }}" onKeyDown="{{ add.onKey }}" placeholder="{{ add.placeholder }}" style="flex:1;min-width:0;background:none;border:0;outline:none;color:var(--ink);font:400 15px 'Hanken Grotesk';padding:6px 4px">
+          <button onClick="{{ add.onSearch }}" title="Search" style="flex:none;background:#8b5cf6;border:0;color:#fff;border-radius:8px;width:36px;height:34px;cursor:pointer;font:600 16px 'Hanken Grotesk'" style-hover="background:#7c3aed">→</button>
         </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <input value="{{ draftTitle }}" onChange="{{ onDraftTitle }}" placeholder="Title" style="flex:1 1 260px;background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:9px 12px;outline:none">
-          <input value="{{ draftYear }}" onChange="{{ onDraftYear }}" placeholder="Year (optional)" style="flex:0 1 140px;background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:9px 12px;outline:none">
-        </div>
-        <textarea value="{{ draftText }}" onChange="{{ onDraftText }}" placeholder="Paste text here…" rows="9" style="background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:10px 12px;outline:none;font:400 15px/1.5 'Newsreader',serif;resize:vertical"></textarea>
-        <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--mut)">or upload text files <input type="file" multiple="{{ true }}" onChange="{{ onFiles }}" style="color:var(--mut)"></label>
-        <div style="display:flex;gap:10px;align-items:center;border-top:1px solid var(--line);padding-top:10px">
-          <input value="{{ repoVal }}" onChange="{{ onRepoVal }}" placeholder="…or a GitHub repo: owner/repo" style="flex:1 1 260px;min-width:0;background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:9px 12px;outline:none;font:400 13px 'JetBrains Mono'"></input>
-          <button onClick="{{ addRepo }}" style="flex:none;background:none;border:1px solid var(--line2);border-radius:8px;padding:9px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Pull from repo</button>
-        </div>
-        <div style="display:flex;gap:10px;align-items:center">
-          <button onClick="{{ addDraft }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:9px 18px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Add</button>
+        <sc-if value="{{ add.hasPanel }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <span style="font:500 13px 'JetBrains Mono';color:var(--mut);flex:1;min-width:0">{{ add.resultsLine }}</span>
+              <sc-if value="{{ add.hasPending }}" hint-placeholder-val="{{ false }}"><button onClick="{{ add.onAll }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">{{ add.allLabel }}</button></sc-if>
+              <button onClick="{{ add.onClear }}" style="background:none;border:0;color:var(--mut);cursor:pointer;font:500 13px 'Hanken Grotesk'">Clear</button>
+            </div>
+            <sc-for list="{{ add.rows }}" as="r" hint-placeholder-count="3">
+              <div style="display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:10px 12px">
+                <sc-if value="{{ r.hasThumb }}" hint-placeholder-val="{{ false }}"><div style="{{ r.thumbStyle }}"></div></sc-if>
+                <div style="flex:1 1 180px;min-width:0;display:flex;flex-direction:column;gap:3px">
+                  <span style="font:600 14px/1.35 'Hanken Grotesk';color:var(--ink);text-wrap:pretty">{{ r.title }}</span>
+                  <span style="font:500 12px 'JetBrains Mono';color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.line }}</span>
+                  <sc-if value="{{ r.hasSnippet }}" hint-placeholder-val="{{ true }}"><span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--mut);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">{{ r.snippet }}</span></sc-if>
+                </div>
+                <button onClick="{{ r.onAdd }}" style="flex:none;margin-left:auto;background:{{ r.addBg }};border:1px solid {{ r.addBd }};color:{{ r.addCol }};border-radius:8px;padding:6px 14px;cursor:pointer;font:600 13px 'Hanken Grotesk';white-space:nowrap">{{ r.addLabel }}</button>
+              </div>
+            </sc-for>
+            <sc-if value="{{ add.hasMore }}" hint-placeholder-val="{{ false }}"><button onClick="{{ add.onMore }}" style="align-self:center;background:none;border:1px solid var(--line2);border-radius:8px;padding:7px 18px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">{{ add.moreLabel }}</button></sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{ add.hasError }}" hint-placeholder-val="{{ false }}"><span style="font:400 14px/1.45 'Hanken Grotesk';color:var(--bad);text-wrap:pretty">{{ add.error }}</span></sc-if>
+        <sc-if value="{{ add.hasStatus }}" hint-placeholder-val="{{ false }}"><span style="font:500 13px 'JetBrains Mono';color:var(--mut)">{{ add.status }}</span></sc-if>
+        <sc-if value="{{ add.showIntake }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <label style="display:inline-flex;align-items:center;border:1px solid var(--line2);border-radius:999px;padding:8px 16px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)">Upload files<input type="file" multiple="{{ true }}" onChange="{{ onFiles }}" style="display:none"></label>
+              <button onClick="{{ add.onLinkPill }}" style="border:1px solid var(--line2);background:{{ add.linkBg }};border-radius:999px;padding:8px 16px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)">Link</button>
+              <button onClick="{{ add.onTextPill }}" style="border:1px solid var(--line2);background:{{ add.textBg }};border-radius:999px;padding:8px 16px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)">Paste text</button>
+            </div>
+            <sc-if value="{{ add.paneLink }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <textarea onChange="{{ add.onLinks }}" rows="4" placeholder="Paste links, one per line — web pages, PDFs, YouTube videos, GitHub repositories" defaultValue="{{ add.links }}" style="background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:10px 12px;outline:none;font:400 14px/1.5 'JetBrains Mono',monospace;resize:vertical"></textarea>
+                <button onClick="{{ add.onAddLinks }}" style="align-self:flex-start;background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:9px 18px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Add links</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ add.paneText }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                  <input value="{{ draftTitle }}" onChange="{{ onDraftTitle }}" placeholder="Title" style="flex:1 1 260px;background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:9px 12px;outline:none">
+                  <input value="{{ draftYear }}" onChange="{{ onDraftYear }}" placeholder="Year (optional)" style="flex:0 1 140px;background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:9px 12px;outline:none">
+                </div>
+                <textarea value="{{ draftText }}" onChange="{{ onDraftText }}" placeholder="Paste text here…" rows="8" style="background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:10px 12px;outline:none;font:400 15px/1.5 'Newsreader',serif;resize:vertical"></textarea>
+                <button onClick="{{ addDraft }}" style="align-self:flex-start;background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:9px 18px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Add text</button>
+              </div>
+            </sc-if>
+            <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;border:1.5px dashed var(--line2);border-radius:12px;padding:26px 18px;cursor:pointer" style-hover="border-color:var(--acc)">
+              <span style="font:500 15px 'Hanken Grotesk';color:var(--ink)">Drop files here, or click to choose</span>
+              <span style="font:400 13px/1.5 'Hanken Grotesk';color:var(--mut);max-width:520px;text-wrap:pretty">PDFs, Word, slides, spreadsheets, audio, video, images, web pages, data and notes. Links and text can be dropped anywhere on the page.</span>
+              <input type="file" multiple="{{ true }}" onChange="{{ onFiles }}" style="display:none">
+            </label>
+          </div>
+        </sc-if>
+        <div style="display:flex;gap:10px;align-items:center;border-top:1px solid var(--line);padding-top:12px">
           <span style="flex:1;font-size:13px;color:var(--mut)">{{ customNote }}</span>
           <sc-if value="{{ hasCustom }}" hint-placeholder-val="{{ false }}"><button onClick="{{ clearCustom }}" style="background:none;border:0;color:var(--bad);cursor:pointer;font:500 14px 'Hanken Grotesk'">Remove what you added</button></sc-if>
+          <button onClick="{{ closeAdd }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:7px 16px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Done</button>
         </div>
       </div>
     </div>
@@ -2667,7 +2721,7 @@ function analyze(corpus, htmlMap) {
     const y = st.dates.find(x => x.year);
     st.year = d.year || (y ? y.year : null);
     st.ownDate = st.dates.length > 0;
-    const words = st.text.toLowerCase().match(/[a-z]{4,}/g) || [];
+    const words = st.text.replace(/https?:\/\/\S+/g, ' ').toLowerCase().match(/[a-z]{4,}/g) || [];
     const nameWords = new Set(st.names.join(' ').toLowerCase().split(/\s+/));
     st.topics = [...new Set(words.filter(w => !STOP.has(w) && !nameWords.has(w) && !MONTHS.has(w[0].toUpperCase() + w.slice(1))).map(w => w.length > 4 ? w.replace(/(ies)$/, 'y').replace(/([^s])s$/, '$1') : w))];
   });
@@ -2676,22 +2730,27 @@ function analyze(corpus, htmlMap) {
   { const DM = new Map(docs.map(x => [x.id, x])); sts.forEach(st => { st.where = whereOf(DM.get(st.doc), st.s); }); }
   const furn = {}; docs.forEach(d => { const set = new Set(); const nt = t => clean(t).toLowerCase().replace(/[^a-z0-9]/g, ''); if (d.title) set.add(nt(d.title)); (d.heads || []).forEach(h => set.add(nt(h.text))); const H = d.heads || []; const back = []; H.forEach((h, i) => { if (!/^(external links|references|further reading|notes|citations|sources|bibliography|see also|footnotes|works cited|general and cited references)\b/i.test(h.text)) return; let e = Infinity; for (let j = i + 1; j < H.length; j++) if (H[j].lv <= h.lv) { e = H[j].o; break; } back.push([h.o, e]); }); furn[d.id] = { set, nt, back }; });
   const aboutDocs = new Set(docs.filter(d => d.aboutOnly).map(d => d.id));
-  sts.forEach(st => { st.ref = isJunk(st, furn[st.doc]) || aboutDocs.has(st.doc); const w = clean(st.text).match(/[A-Za-z]{2,}/g) || []; st.claimy = !st.ref && w.length >= 8 && VERB_RE.test(st.text); if (hdF(st.doc)) hdT('junk', st.ref ? 'ref' : st.claimy ? 'claim' : 'thin', st.ref ? 'Set aside as reference matter: \u201c' + hdCut(st.text, 50) + '\u201d' : st.claimy ? 'Kept as a claim (8+ words and a verb)' : 'Kept, but too thin to count as a claim', { doc: st.doc, id: st.id }); });
-  const EB = 48; const hsh = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
-  const vecs = sts.map(st => { const v = new Float64Array(EB); st.topics.forEach(w => { v[hsh(w) % EB] += 1; }); st.names.forEach(n => { v[hsh('n:' + n) % EB] += 2; }); let nn = 0; for (let i = 0; i < EB; i++) nn += v[i] * v[i]; nn = Math.sqrt(nn) || 1; const q = new Uint8Array(EB); for (let i = 0; i < EB; i++) q[i] = Math.round(v[i] / nn * 255); st.echo = q; st.shadow = [st.frame, [...new Set(st.names.map(n => (names[n] || {}).type))].sort().join('+'), [...new Set(st.figs.map(g => g.unit))].sort().join('+'), st.dates.length ? 'dated' : ''].join('|'); return q; });
-  const cos = (a, b, off) => { let s = 0, na = 0, nb = 0; for (let i = 0; i < EB; i++) { const x = a[i], y = b[(i + (off || 0)) % EB]; s += x * y; na += x * x; nb += y * y; } return na && nb ? s / Math.sqrt(na * nb) : 0; };
+  sts.forEach(st => { st.ref = isJunk(st, furn[st.doc]) || aboutDocs.has(st.doc); const w = clean(st.text).replace(/https?:\/\/\S+/g, ' ').match(/[A-Za-z]{2,}/g) || []; st.claimy = !st.ref && w.length >= 8 && VERB_RE.test(st.text); if (hdF(st.doc)) hdT('junk', st.ref ? 'ref' : st.claimy ? 'claim' : 'thin', st.ref ? 'Set aside as reference matter: \u201c' + hdCut(st.text, 50) + '\u201d' : st.claimy ? 'Kept as a claim (8+ words and a verb)' : 'Kept, but too thin to count as a claim', { doc: st.doc, id: st.id }); });
+  sts.forEach(st => { st.shadow = [st.frame, [...new Set(st.names.map(n => (names[n] || {}).type))].sort().join('+'), [...new Set(st.figs.map(g => g.unit))].sort().join('+'), st.dates.length ? 'dated' : ''].join('|'); });
   // a measured doc's sentences are our own description of an image, sound or score: their wording is a template, so they
   // would echo each other (and anything sharing the template words) by form, not content. They stay out of echo matching.
   const measuredD = new Set(docs.filter(d => d.measured).map(d => d.id));
-  const byD = {}; sts.forEach((st, i) => { if (!st.ref && st.claimy && !measuredD.has(st.doc)) (byD[st.doc] = byD[st.doc] || []).push(i); });
+  // a record (provenance sidecar, manifest, data table, URL list) is fields, not sentences: its rows echo prose only by
+  // sharing the workspace's subject words, so it stays out of echo matching. Exact structure tests, no threshold.
+  const recordD = new Set(docs.filter(d => { const ext = ((String(d.url || '').split(/[?#]/)[0].match(/\.([a-z0-9]+)$/i) || [])[1] || d.type || '').toLowerCase(); if (/^(json|jsonl|ndjson|csv|tsv|xml|ya?ml)$/.test(ext)) return true; const ls = String(d.text || '').split(/\r?\n/).filter(l => l.trim()); if (ls.length && ls.every(l => /^https?:\/\/\S+$/.test(l.trim()))) return true; try { const j = JSON.parse(d.text); return !!j && typeof j === 'object'; } catch (e) { return false; } }).map(d => d.id));
+  if (HD_TR && docs.some(d => hdF(d.id) && recordD.has(d.id))) hdT('echo', 'skip', 'Left ' + docs.filter(d => hdF(d.id) && recordD.has(d.id)).length + ' record file(s) out of echo matching: their rows are fields, not sentences, so any echo would be of shared subject words, not content');
+  const byD = {}; sts.forEach((st, i) => { if (!st.ref && st.claimy && !measuredD.has(st.doc) && !recordD.has(st.doc)) (byD[st.doc] = byD[st.doc] || []).push(i); });
   if (HD_TR && docs.some(d => hdF(d.id) && d.measured)) hdT('echo', 'skip', 'Left the measured description out of echo matching: its sentences are our template, so any echo would be of wording, not content');
   const lists = Object.values(byD); const IX = []; for (let r = 0; IX.length < 1600 && lists.some(l => r < l.length); r++) lists.forEach(l => { if (r < l.length && IX.length < 1600) IX.push(l[r]); });
-  const N = IX.length; const nullS = [];
-  for (let k = 0; k < 800 && N > 1; k++) { const i = IX[(k * 7919) % N], j = IX[(k * 104729 + 13) % N]; if (i === j || sts[i].doc === sts[j].doc) continue; nullS.push(cos(vecs[i], vecs[j], 1 + (k % (EB - 1)))); }
-  nullS.sort((a, b) => a - b); const echoFloor = Math.max(0.35, nullS.length ? nullS[Math.floor(nullS.length * 0.99)] : 0.5);
-  if (HD_TR && HD_TR.focus.size) { const mine = sts.filter(st => hdF(st.doc) && st.claimy && !st.ref).length, inIX = IX.filter(i => hdF(sts[i].doc)).length; hdT('echo', 'vectors', 'Hashed each claim\u2019s topic words and names into a ' + EB + '-slot vector; ' + inIX + ' of your ' + mine + ' claims are among the ' + N + ' compared', { n: N, mine, inIX }); hdT('echo', 'null', 'Null: ' + nullS.length + ' cross-source pairs with one vector rotated; 99th percentile ' + (nullS.length ? nullS[Math.floor(nullS.length * 0.99)].toFixed(3) : 'n/a') + ' \u2192 echo floor ' + echoFloor.toFixed(3) + (echoFloor === 0.35 ? ' (the 0.35 minimum)' : ''), { floor: echoFloor, nullN: nullS.length, hist: nullS.filter((_, k) => k % Math.max(1, Math.floor(nullS.length / 80)) === 0) }); }
+  const N = IX.length;
+  // exact sparse vectors, no hashing: a topic word counts by how rare it is among the claims compared, a name twice that (holodeck-echo.js)
+  const dfT = new Map(); IX.forEach(i => { sts[i].topics.forEach(w => dfT.set(w, (dfT.get(w) || 0) + 1)); sts[i].names.forEach(n => dfT.set('n:' + n, (dfT.get('n:' + n) || 0) + 1)); });
+  const wt = (k, m) => m * Math.log(1 + N / dfT.get(k));
+  const EC = N > 1 ? HDEcho.echoPairs(IX.map(i => { const t = new Map(); sts[i].topics.forEach(w => t.set(w, wt(w, 1))); sts[i].names.forEach(n => t.set('n:' + n, wt('n:' + n, 2))); return { doc: sts[i].doc, terms: t }; })) : { pairs: [], floor: 1, maxima: [] };
+  const echoFloor = EC.floor;
+  if (HD_TR && HD_TR.focus.size) { const mine = sts.filter(st => hdF(st.doc) && st.claimy && !st.ref).length, inIX = IX.filter(i => hdF(sts[i].doc)).length; hdT('echo', 'vectors', 'Weighted each claim\u2019s topic words (rarer words count more) and names (twice) into an exact word vector, with no hashing; ' + inIX + ' of your ' + mine + ' claims are among the ' + N + ' compared', { n: N, mine, inIX }); hdT('echo', 'null', 'Null: the same words shuffled across the claims ' + EC.maxima.length + ' times; the largest cosine each claim reached to another source in any draw is its own floor (lowest ' + EC.floor.toFixed(3) + ', shortest claims highest)', { floor: EC.floor, nullN: EC.maxima.length, hist: EC.maxima }); }
   const echoes = {};
-  for (let ii = 0; ii < N; ii++) for (let jj = ii + 1; jj < N; jj++) { const i = IX[ii], j = IX[jj]; if (sts[i].doc === sts[j].doc) continue; const s = cos(vecs[i], vecs[j]); if (s >= echoFloor && sts[i].text !== sts[j].text) { (echoes[sts[i].id] = echoes[sts[i].id] || []).push({ id: sts[j].id, sim: s }); (echoes[sts[j].id] = echoes[sts[j].id] || []).push({ id: sts[i].id, sim: s }); } }
+  EC.pairs.forEach(({ a, b, sim, ab, ba }) => { const i = IX[a], j = IX[b]; if (sts[i].text === sts[j].text) return; if (ab) (echoes[sts[i].id] = echoes[sts[i].id] || []).push({ id: sts[j].id, sim }); if (ba) (echoes[sts[j].id] = echoes[sts[j].id] || []).push({ id: sts[i].id, sim }); });
   Object.values(echoes).forEach(l => { l.sort((a, b) => b.sim - a.sim); l.length = Math.min(l.length, 4); });
   if (HD_TR && HD_TR.focus.size) { const byIdE = new Map(sts.map(x => [x.id, x])); const dt = id => (docs.find(x => x.id === id) || {}).title || id; sts.forEach(st => { if (!hdF(st.doc)) return; (echoes[st.id] || []).forEach(e => { const o = byIdE.get(e.id); hdT('echo', 'pair', 'Echo ' + e.sim.toFixed(2) + ' with \u201c' + hdCut(o.text, 50) + '\u201d in ' + hdCut(dt(o.doc), 40), { doc: st.doc, id: st.id, other: e.id, otherDoc: o.doc, otherTitle: dt(o.doc), sim: e.sim, mine: hdF(o.doc) }); }); }); }
   const stsByDoc = {}; sts.forEach(s => { (stsByDoc[s.doc] = stsByDoc[s.doc] || []).push(s); });
@@ -2973,13 +3032,23 @@ function faithfulHtml(raw, url) {
 const fetchT = (u, ms) => { const c = new AbortController(); const id = setTimeout(() => c.abort(), ms); return fetch(u, { signal: c.signal }).finally(() => clearTimeout(id)); };
 async function fetchAnySite(url) {
   const titleOf = raw => { const x = ((raw.match(/<title[^>]*>([^<]*)/i) || [])[1] || ''); return new DOMParser().parseFromString('<p>' + x + '</p>', 'text/html').body.textContent.replace(/\s+/g, ' ').trim(); };
+  const FILE_EXT = /\.(pdf|docx|pptx|xlsx|odt|odp|ods|epub|csv|json|txt)$/i;
+  const viaHost = async r => {
+    if (!r.ok) throw 0;
+    const buf = await r.arrayBuffer(), h = new Uint8Array(buf.slice(0, 5)); let path = ''; try { path = new URL(url).pathname; } catch (e) {}
+    const pdf = h[0] === 0x25 && h[1] === 0x50 && h[2] === 0x44 && h[3] === 0x46 && h[4] === 0x2d, byExt = FILE_EXT.test(path) && h[0] !== 0x3c;
+    if (pdf || byExt) { const name = decodeURIComponent(path.split('/').pop() || 'document') + (pdf && !/\.pdf$/i.test(path) ? '.pdf' : ''); return { file: new File([buf], name, { type: pdf ? 'application/pdf' : '' }), format: 'file', title: name.replace(/\.[^.]+$/, ''), note: null }; }
+    const raw = new TextDecoder().decode(buf); if (raw.length < 200) throw 0;
+    return { html: faithfulHtml(raw, url), format: 'page', title: titleOf(raw), note: null };
+  };
   const tries = [
-    async () => { const r = await fetchT(url, 8000); if (!r.ok) throw 0; const raw = await r.text(); return { html: faithfulHtml(raw, url), format: 'page', title: titleOf(raw), note: null }; },
-    async () => { const r = await fetchT('https://holodeck-proxy.prometheoid.workers.dev/raw?url=' + encodeURIComponent(url), 8000); if (!r.ok) throw 0; const raw = await r.text(); if (raw.length < 200) throw 0; return { html: faithfulHtml(raw, url), format: 'page', title: titleOf(raw), note: null }; },
+    async () => viaHost(await fetchT(url, 8000)),
+    async () => viaHost(await fetchT('https://holodeck-proxy.prometheoid.workers.dev/raw?url=' + encodeURIComponent(url), 8000)),
+    async () => viaHost(await fetchT('https://n8n.intelechia.com/webhook/feed?url=' + encodeURIComponent(url), 12000)),
     async () => { const r = await fetchT('https://r.jina.ai/' + url, 7000); if (!r.ok) throw 0; const md = await r.text(); const tm = md.match(/^Title:\s*(.+)$/m); const body = md.includes('Markdown Content:') ? md.split('Markdown Content:').slice(1).join('Markdown Content:') : md; return { html: sanitizeHtml(mdToHtml(body), url), title: tm ? tm[1].trim() : '', note: 'Fetched through a public reader (r.jina.ai); layout is simplified.' }; }
   ];
   const variants = [url]; try { const u = new URL(url); if (!/^www\./.test(u.hostname) && u.hostname.split('.').length === 2) { u.hostname = 'www.' + u.hostname; variants.push(u.href); } } catch (e) {}
-  for (const v of variants) { url = v; for (const f of tries) { try { const g = await f(); if (g.html && pageText(g.html, g.format).trim().length > 40) return { ...g, url: v }; } catch (e) {} } }
+  for (const v of variants) { url = v; for (const f of tries) { try { const g = await f(); if (g.file || (g.html && pageText(g.html, g.format).trim().length > 40)) return { ...g, url: v }; } catch (e) {} } }
   throw new Error('unreachable');
 }
 async function fetchWiki(title) {
@@ -2993,6 +3062,58 @@ function stripHtml(s) { return s.replace(/<(script|style|head)[\s\S]*?<\/\1>/gi,
 function jsonText(s) { try { const out = []; (function walk(v, k) { if (typeof v === 'string') out.push((k && isNaN(k) ? k + ': ' : '') + v); else if (typeof v === 'number' && k && isNaN(k)) out.push(k + ': ' + v); else if (v && typeof v === 'object') Object.entries(v).forEach(([kk, vv]) => walk(vv, kk)); })(JSON.parse(s)); return out.map(x => /[.!?]$/.test(x) ? x : x + '.').join('\n'); } catch (e) { return s; } }
 function csvText(s) { const lines = s.split(/\r?\n/).filter(l => l.trim()); if (lines.length < 2) return s; const sep = lines[0].includes('\t') ? '\t' : ','; const sp = l => l.split(sep).map(x => x.replace(/^"|"$/g, '').trim()); const h = sp(lines[0]); return lines.slice(1).map(l => { const c = sp(l); return h.map((k, i) => c[i] ? k + ': ' + c[i] : '').filter(Boolean).join('; ') + '.'; }).join('\n'); }
 function loadScript(src) { return new Promise((res, rej) => { if (document.querySelector('script[src="' + src + '"]')) { const w = () => window.JSZip ? res() : setTimeout(w, 50); return w(); } const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('could not load reader')); document.head.appendChild(s); }); }
+// ── Universal intake: search any source, add any address ────────────────────────────────────────
+// A repo, a video, an article and a web page differ only in what their address resolves to, so none
+// of them gets a control of its own. Web, News and YouTube go through the Cloudflare Worker
+// (holodeck-proxy), because a static page cannot read those sites itself. GitHub, Wikipedia and the
+// Internet Archive allow browser requests, so they are asked directly.
+const HD_PROXY = 'https://holodeck-proxy.prometheoid.workers.dev';
+const hdProxy = () => { let u = null; try { u = localStorage.getItem('hd:proxy'); } catch (e) {} return (u || HD_PROXY).replace(/\/+$/, ''); };
+const SEARCH_SCOPES = [
+  { id: 'web', label: 'Web', ask: 'Search the web for sources' },
+  { id: 'news', label: 'News', ask: 'Search recent news' },
+  { id: 'youtube', label: 'YouTube', ask: 'Search YouTube videos' },
+  { id: 'github', label: 'GitHub', ask: 'Search GitHub repositories' },
+  { id: 'wikipedia', label: 'Wikipedia', ask: 'Search Wikipedia articles' },
+  { id: 'archive', label: 'Internet Archive', ask: 'Search books, documents and recordings' },
+];
+function githubRepoOf(url) {
+  const m = String(url).match(/^https?:\/\/(?:www\.)?github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?(?:[?#].*)?$/i);
+  return m && !/^(?:orgs|topics|sponsors|marketplace|settings|features|about|pricing|login|search|explore|collections|events|issues|pulls|notifications|new|organizations)$/i.test(m[1]) ? { owner: m[1], repo: m[2] } : null;
+}
+function youtubeIdOf(url) { const m = String(url).match(/^https?:\/\/(?:www\.|m\.|music\.)?(?:youtube\.com\/(?:watch\?(?:[^#]*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([\w-]{11})/i); return m ? m[1] : null; }
+const plainText = s => new DOMParser().parseFromString('<p>' + String(s || '') + '</p>', 'text/html').body.textContent.replace(/\s+/g, ' ').trim();
+async function searchSources(scope, q, page) {
+  const getJson = async (url, who) => {
+    let r; try { r = await fetchT(url, 30000); } catch (e) { throw new Error(who + ' did not answer' + (e && e.name === 'AbortError' ? ' in time.' : '.')); }
+    let j = null; try { j = await r.json(); } catch (e) {}
+    return { r, j };
+  };
+  if (scope === 'web' || scope === 'news' || scope === 'youtube') {
+    const { r, j } = await getJson(hdProxy() + '/search?scope=' + scope + '&q=' + encodeURIComponent(q), 'The search relay');
+    if (!r.ok || !j || !j.results) {
+      console.warn('search relay:', r.status, j && (j.detail || j.error));
+      throw new Error(scope === 'web' ? 'Web search is busy right now — the search engines limit shared relays. Try again in a moment, or search another kind of source.' : 'The ' + scope + ' search is unavailable right now (' + ((j && (j.detail || j.error)) || r.status) + ').');
+    }
+    return { results: j.results.map(x => ({ ...x, kind: scope })), more: false, engine: j.engine };
+  }
+  if (scope === 'github') {
+    const { r, j } = await getJson('https://api.github.com/search/repositories?per_page=30&page=' + (page + 1) + '&q=' + encodeURIComponent(q), 'GitHub');
+    if (r.status === 403 || r.status === 429) throw new Error('GitHub is limiting searches from this browser. Wait a minute and try again.');
+    if (!r.ok || !j) throw new Error('GitHub answered ' + r.status + '.');
+    const k = n => n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, '') + 'k' : String(n);
+    return { results: (j.items || []).map(x => ({ title: x.full_name, url: x.html_url, snippet: x.description || '', source: 'GitHub', meta: ['★ ' + k(x.stargazers_count), x.language, x.pushed_at ? 'updated ' + x.pushed_at.slice(0, 4) : ''].filter(Boolean).join(' · '), kind: 'github' })), more: (page + 1) * 30 < Math.min(j.total_count || 0, 1000), engine: 'GitHub' };
+  }
+  if (scope === 'wikipedia') {
+    const { r, j } = await getJson('https://en.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srlimit=20&sroffset=' + page * 20 + '&srsearch=' + encodeURIComponent(q), 'Wikipedia');
+    if (!r.ok || !j) throw new Error('Wikipedia answered ' + r.status + '.');
+    return { results: ((j.query && j.query.search) || []).map(x => ({ title: x.title, url: 'https://en.wikipedia.org/wiki/' + encodeURIComponent(x.title.replace(/ /g, '_')), snippet: plainText(x.snippet), source: 'Wikipedia', meta: x.wordcount ? x.wordcount.toLocaleString() + ' words' : '', kind: 'wikipedia' })), more: !!j.continue, engine: 'Wikipedia' };
+  }
+  const { r, j } = await getJson('https://archive.org/advancedsearch.php?output=json&rows=20&page=' + (page + 1) + '&q=' + encodeURIComponent(q) + ['identifier', 'title', 'description', 'mediatype', 'year', 'creator'].map(f => '&fl%5B%5D=' + f).join(''), 'The Internet Archive');
+  if (!r.ok || !j || !j.response) throw new Error('The Internet Archive answered ' + r.status + '.');
+  const first = v => (Array.isArray(v) ? v[0] : v) || '';
+  return { results: j.response.docs.map(d => ({ title: first(d.title) || d.identifier, url: 'https://archive.org/details/' + d.identifier, snippet: plainText(Array.isArray(d.description) ? d.description.join(' ') : d.description).slice(0, 300), source: first(d.creator) || 'Internet Archive', meta: [d.mediatype, d.year].filter(Boolean).join(' · '), thumb: 'https://archive.org/services/img/' + d.identifier, kind: 'archive' })), more: page * 20 + j.response.docs.length < (j.response.numFound || 0), engine: 'Internet Archive' };
+}
 let _hdFort = null; try { import(new URL('holodeck-fort.js', location.href).href).then(M => { _hdFort = M; }).catch(() => {}); } catch (e) {}
 let _hdMed = null; const hdMedia = () => _hdMed || (_hdMed = import(new URL('holodeck-media.js', location.href).href));
 const hdTr = (a, b, c, x) => hdT(a, b, c, x);
@@ -3094,7 +3215,7 @@ const whenOf = (st, d) => d.pubLabel || (d.year ? String(d.year) : 'Undated');
 const assertLine = (st, A) => { const d = A.docById[st.doc]; const w = whoSays(st, A); return (w ? w.who + (w.how === 'quoted' ? ' (quoted)' : w.how === 'publisher' ? '' : ' (' + w.how + ')') + ' · ' : '') + d.title + ' · ' + whenOf(st, d); };
 
 class Component extends DCLogic {
-  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, draftTitle: '', draftYear: '', draftText: '', fw: {}, repoVal: '', note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true } };
+  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, draftTitle: '', draftYear: '', draftText: '', fw: {}, note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true } };
   _html = {};
 
   componentDidMount() {
@@ -3162,7 +3283,10 @@ class Component extends DCLogic {
     this.addDocs([{ title: title || short(text.replace(/\s+/g, ' '), 48), year: year || new Date().getFullYear(), type: title ? 'Text' : 'Dropped text', text }]);
   }
   async ingestUrl(url, opt) {
-    opt = opt || {}; const wt = wikiTitleOf(url); hdTraceStart(url); hdT('bytes', 'fetch', 'Fetching ' + url + (wt ? ' (Wikipedia article API)' : ''));
+    opt = opt || {};
+    const gh = githubRepoOf(url); if (gh) return this.pullRepo(gh.owner, gh.repo, opt);
+    const yt = youtubeIdOf(url); if (yt) return this.addVideo(url, yt, opt);
+    const wt = wikiTitleOf(url); hdTraceStart(url); hdT('bytes', 'fetch', 'Fetching ' + url + (wt ? ' (Wikipedia article API)' : ''));
     this.setState({ busy: 'Fetching ' + (opt.title || (wt ? wt.replace(/_/g, ' ') : 'link')) + '…' });
     try {
       let html, title = opt.title, type = 'Web page', fmt = 'html';
@@ -3170,15 +3294,16 @@ class Component extends DCLogic {
       let note = null;
       if (!wt) {
         const got = await fetchAnySite(url);
+        if (got.file) { hdT('bytes', 'fetched', 'Received ' + got.file.size.toLocaleString() + ' bytes of ' + got.file.name); const d = await readAny(got.file); return this.addDocs([{ ...d, title: opt.title || d.title, year: opt.year || d.year, url: got.url || url }], { open: opt.open, keepOpen: opt.keepOpen }); }
         html = got.html; note = got.note; title = title || got.title || url; fmt = got.format || 'html'; url = got.url || url;
       }
       hdT('bytes', 'fetched', 'Received ' + (html || '').length.toLocaleString() + ' characters of HTML' + (note ? ' \u2014 ' + note : ''));
       const doc = { title, year: opt.year || new Date().getFullYear(), type, format: fmt, html, url, note };
-      if (opt.collect) opt.collect.push(doc); else this.addDocs([doc], { open: opt.open });
+      if (opt.collect) opt.collect.push(doc); else this.addDocs([doc], { open: opt.open, keepOpen: opt.keepOpen });
     } catch (e) {
       hdT('bytes', 'fail', 'Fetch failed: ' + e.message + (opt.fallback ? '; using the saved excerpt' : ''));
-      if (opt.fallback) this.addDocs([{ title: opt.title || url, year: opt.year, type: wt ? 'Wikipedia article (excerpt)' : 'Text', text: opt.fallback, url, note: 'Couldn’t reach the live page, so a saved excerpt was used.' }], { open: opt.open });
-      else this.addDocs([{ title: url, year: new Date().getFullYear(), type: 'Link', text: '', url, note: 'That site doesn’t let its page be read from here — open it, then drag or paste its text instead.' }]);
+      if (opt.fallback) this.addDocs([{ title: opt.title || url, year: opt.year, type: wt ? 'Wikipedia article (excerpt)' : 'Text', text: opt.fallback, url, note: 'Couldn’t reach the live page, so a saved excerpt was used.' }], { open: opt.open, keepOpen: opt.keepOpen });
+      else this.addDocs([{ title: url, year: new Date().getFullYear(), type: 'Link', text: '', url, note: 'That site doesn’t let its page be read from here — open it, then drag or paste its text instead.' }], { keepOpen: opt.keepOpen });
     }
   }
   async autoResearch(q) {
@@ -3199,40 +3324,156 @@ class Component extends DCLogic {
     clearTimeout(this._omniT); this._askLive = '';
     this.setState(s => ({ q, askVal: '', showAdd: false, qDraft: undefined, view: 'search', readDoc: null, srN: 25, qaN: 0, prevView: s.view === 'search' || s.view === 'reader' ? (s.prevView || 'summary') : s.view }));
   }
-  async addRepo() {
-    const v = (this.state.repoVal || '').trim();
-    const m = v.match(/^https?:\/\/(?:www\.)?github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?(?:\/|$)/) || v.match(/^([\w.-]+)\/([\w.-]+)$/);
-    if (!m) { this.setState({ note: 'Give it as owner/repo or a github.com URL.' }); return; }
-    const owner = m[1], repo = m[2];
-    const api = 'https://api.github.com/repos/' + encodeURIComponent(owner) + '/' + encodeURIComponent(repo);
+  // ── An address that resolves to a repository. Not a special case in the interface: ingestUrl calls this
+  // for any github.com/owner/repo address, wherever it came from. No file-count or file-size limit; text files
+  // only, and vendored directories are skipped. Admitted with one addDocs, since each call re-reads the workspace.
+  async pullRepo(owner, repo, opt) {
+    opt = opt || {}; const A = this.addState();
+    const say = m => { A.status = m; this.setState({ busy: m }); };
+    const fail = m => { A.error = m; A.status = ''; this.setState({ busy: '' }); };
+    hdTraceStart(owner + '/' + repo); say('Listing ' + owner + '/' + repo + '…');
     let tree = [];
     try {
-      const r = await fetch(api + '/git/trees/HEAD?recursive=1', { headers: { Accept: 'application/vnd.github+json' } });
-      if (!r.ok) throw new Error(r.status === 403 ? 'GitHub rate limit — wait a minute and try again.' : 'GitHub said ' + r.status);
+      const r = await fetch('https://api.github.com/repos/' + encodeURIComponent(owner) + '/' + encodeURIComponent(repo) + '/git/trees/HEAD?recursive=1', { headers: { Accept: 'application/vnd.github+json' } });
+      if (!r.ok) throw new Error(r.status === 403 || r.status === 429 ? 'GitHub is limiting requests from this browser — wait a minute and try again.' : r.status === 404 ? 'no such repository, or it is private.' : 'GitHub said ' + r.status + '.');
       tree = (await r.json()).tree || [];
-    } catch (e) { this.setState({ note: 'Couldn’t list that repo: ' + e.message }); return; }
+    } catch (e) { return fail('Couldn’t list ' + owner + '/' + repo + ': ' + (e.message || e)); }
     const textRe = /\.(md|markdown|mdown|txt|text|json|jsonl|ndjson|csv|tsv|html?|xml|yaml|yml|org|rst|adoc|log|ini|conf|cfg|toml|py|js|ts|rb|go|rs|java|c|h|cpp|hpp|sh|sql|r|jl|ipynb)$/i;
-    const skipDir = /(^|\/)(node_modules|vendor|dist|build|\.git|coverage|target|\.venv|venv|__pycache__|\.next|\.cache)(\/|$)/i;
-    const files = tree.filter(x => x.type === 'blob' && textRe.test(x.path) && !skipDir.test(x.path)).slice(0, 400);
-    if (!files.length) { this.setState({ note: 'No text files found in that repo.' }); return; }
-    this.setState({ busy: 'Pulling ' + owner + '/' + repo + '…' });
+    const skipDir = /(^|\/)(node_modules|vendor|dist|build|\.git|coverage|target|\.venv|venv|__pycache__|\.next|\.cache|\.ipynb_checkpoints)(\/|$)/i;
+    const files = tree.filter(x => x.type === 'blob' && textRe.test(x.path) && !skipDir.test(x.path));
+    if (!files.length) return fail('No text files found in ' + owner + '/' + repo + '.');
     const rawBase = 'https://raw.githubusercontent.com/' + owner + '/' + repo + '/HEAD/';
-    const docs = [];
-    for (let i = 0; i < files.length; i++) {
-      try {
-        const r = await fetch(rawBase + files[i].path, { cache: 'no-cache' });
-        if (!r.ok) continue;
-        const t = await r.text();
-        if (t.length < 40 || t.length > 2000000) continue;
-        const parts = files[i].path.split('/');
-        const title = parts.length > 1 ? parts.slice(-2).join('/') : parts[0].replace(/\.[^.]+$/, '');
-        docs.push({ title, year: null, type: 'Repo file', text: t, url: 'https://github.com/' + owner + '/' + repo + '/blob/HEAD/' + files[i].path, note: 'From ' + owner + '/' + repo + ' · ' + files[i].path });
-      } catch (e) {}
-      if ((i + 1) % 10 === 0) this.setState({ busy: 'Pulling ' + owner + '/' + repo + ' · ' + (i + 1) + ' / ' + files.length + ' files…' });
+    const docs = new Array(files.length); let next = 0, done = 0;
+    const lane = async () => {
+      for (;;) {
+        const i = next++; if (i >= files.length) return;
+        try {
+          const r = await fetch(rawBase + files[i].path.split('/').map(encodeURIComponent).join('/'), { cache: 'no-cache' });
+          if (r.ok) {
+            const t = await r.text();
+            if (t.trim().length >= 40) { const parts = files[i].path.split('/'); docs[i] = { title: parts.length > 1 ? parts.slice(-2).join('/') : parts[0].replace(/\.[^.]+$/, ''), year: null, type: 'Repo file', text: t, url: 'https://github.com/' + owner + '/' + repo + '/blob/HEAD/' + files[i].path, note: 'From ' + owner + '/' + repo + ' · ' + files[i].path }; }
+          }
+        } catch (e) {}
+        if (++done % 10 === 0 || done === files.length) say('Pulling ' + owner + '/' + repo + ' · ' + done + ' / ' + files.length + ' files…');
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(6, files.length) }, lane));
+    const list = docs.filter(Boolean);
+    if (!list.length) return fail('Nothing readable came back from ' + owner + '/' + repo + '.');
+    A.status = 'Pulled ' + plural(list.length, 'file') + ' from ' + owner + '/' + repo + '.';
+    if (opt.collect) { opt.collect.push(...list); this.setState({ busy: '' }); } else await this.addDocs(list, { keepOpen: opt.keepOpen });
+  }
+  // ── An address that resolves to a YouTube video: its title, description and caption transcript, read by the
+  // Worker (a static page cannot read them). With captions it becomes the same timed transcript document local
+  // transcription makes; without, the title and description are kept and it says so.
+  async addVideo(url, id, opt) {
+    opt = opt || {}; hdTraceStart(url); hdT('bytes', 'fetch', 'Asking the relay for the video and its captions');
+    this.setState({ busy: 'Fetching ' + (opt.title || 'the video') + '…' });
+    let j = null;
+    try {
+      const r = await fetchT(hdProxy() + '/yt?v=' + id, 30000);
+      j = await r.json().catch(() => null);
+      if (!r.ok || !j || !j.title) throw new Error((j && (j.detail || j.error)) || 'the relay answered ' + r.status);
+    } catch (e) { hdT('bytes', 'fail', 'Video lookup failed: ' + (e.message || e)); j = null; }
+    const link = 'https://www.youtube.com/watch?v=' + id, title = (j && j.title) || opt.title || link;
+    const segs = j && j.parsed !== false ? (j.segments || []).map(g => ({ start: g.start, end: g.start + (g.dur || 0), text: g.text })) : [];
+    const by = j && j.author ? 'By ' + j.author + '. ' : '', desc = ((j && j.description) || opt.snippet || '').trim();
+    const media = { kind: 'youtube', id, url: link, segN: segs.length, ...(segs.length ? { model: 'YouTube captions' + (j.track && j.track.kind === 'asr' ? ' (auto-generated)' : '') } : {}) };
+    let item;
+    if (segs.length) {
+      const P = TAG_STYLE.P ? ' style="' + TAG_STYLE.P + '"' : '';
+      const intro = (by + desc).trim() ? '<p' + P + '><em>' + esc((by + desc).trim()).replace(/\n/g, '<br>') + '</em></p>\n' : '';
+      item = { title, url: link, format: 'html', html: ohsSegmentsHtml(segs, title).replace('</h1>\n', '</h1>\n' + intro), type: 'YouTube video', extra: { format: 'html', media, kind: 'Recording', medium: 'Video', transcribed: true } };
+    } else item = { title, url: link, type: 'YouTube video', text: title + '. ' + by + desc, note: j ? (j.note || 'This video has no captions, so only its title and description were read.') : 'Only the link was captured — the relay could not read this video.', extra: { media, kind: 'Recording', medium: 'Video' } };
+    hdT('bytes', 'fetched', segs.length ? plural(segs.length, 'caption cue') + ' and a ' + desc.length.toLocaleString() + '-character description' : 'No captions came back');
+    if (opt.collect) { opt.collect.push(item); this.setState({ busy: '' }); } else return this.addDocs([item], { open: opt.open, keepOpen: opt.keepOpen });
+  }
+
+  // ── Add sources: one dialog for searching, links, files and text ─────────────────────────────────────────────
+  addState() {
+    if (!this._add) {
+      let scope = 'web'; try { const s = localStorage.getItem('hd:add-scope'); if (SEARCH_SCOPES.some(x => x.id === s)) scope = s; } catch (e) {}
+      this._add = { scope, q: '', pane: '', results: null, page: 0, more: false, loading: false, error: '', status: '', links: '', engine: '', ticket: 0, adding: {}, all: false };
     }
-    if (!docs.length) { this.setState({ busy: '', note: 'Nothing readable came back from that repo.' }); return; }
-    this.addDocs(docs);
-    this.setState({ repoVal: '', note: 'Pulled ' + plural(docs.length, 'file') + ' from ' + owner + '/' + repo + ' into this workspace.' });
+    return this._add;
+  }
+  async addSearch(more) {
+    const A = this.addState(), q = (A.q || '').trim();
+    if (!q || A.loading) return;
+    const ticket = ++A.ticket, page = more ? A.page + 1 : 0;
+    A.loading = true; A.error = ''; A.status = ''; if (!more) A.results = null; this.forceUpdate();
+    try {
+      const got = await searchSources(A.scope, q, page);
+      if (A.ticket !== ticket) return;
+      const have = more && A.results ? A.results : [];
+      A.results = have.concat(got.results.filter(r => !have.some(x => x.url === r.url)));
+      A.page = page; A.more = !!got.more; A.engine = got.engine || '';
+      if (!A.results.length) { A.error = 'Nothing found for “' + q + '”.'; A.results = null; }
+    } catch (e) { if (A.ticket !== ticket) return; A.error = e.message || String(e); if (!more) A.results = null; }
+    A.loading = false; this.forceUpdate();
+  }
+  isAdded(r, known) {
+    const u = (r.url || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
+    if ((r.id && known.has(r.id)) || known.has(u)) return true;
+    if (r.kind === 'github') { const p = u + '/'; for (const k of known) if (typeof k === 'string' && k.startsWith(p)) return true; }
+    return false;
+  }
+  addOpts(r, extra) { return { keepOpen: true, snippet: r.snippet, title: r.kind === 'github' ? undefined : r.title, ...extra }; }
+  async addResult(r) {
+    const A = this.addState(); if (A.adding[r.url]) return;
+    A.adding[r.url] = 1; this.forceUpdate();
+    try { await this.ingestUrl(r.url, this.addOpts(r)); } catch (e) { A.error = 'Couldn’t add “' + r.title + '”: ' + (e.message || e); }
+    delete A.adding[r.url]; this.forceUpdate();
+  }
+  async addAllResults() {
+    const A = this.addState(); if (A.all) return;
+    const known = this.knownIds(this.analysis()), todo = (A.results || []).filter(r => !this.isAdded(r, known) && !A.adding[r.url]);
+    if (!todo.length) return;
+    A.all = true; const got = [];
+    for (let i = 0; i < todo.length; i++) {
+      A.adding[todo[i].url] = 1; A.status = 'Reading ' + (i + 1) + ' of ' + todo.length + '…'; this.forceUpdate();
+      try { await this.ingestUrl(todo[i].url, this.addOpts(todo[i], { collect: got })); } catch (e) {}
+    }
+    if (got.length) await this.addDocs(got, { keepOpen: true });
+    todo.forEach(r => { delete A.adding[r.url]; });
+    A.status = got.length ? 'Added ' + plural(got.length, 'source') + '.' : ''; A.all = false; this.forceUpdate();
+  }
+  async addLinks() {
+    const A = this.addState(), urls = [...new Set(((A.links || '').match(/https?:\/\/[^\s<>"']+/g) || []).map(u => u.replace(/[.,;:!?)\]]+$/, '')))];
+    if (!urls.length) { A.error = 'Paste one or more links first.'; this.forceUpdate(); return; }
+    A.error = ''; const got = [];
+    for (let i = 0; i < urls.length; i++) { A.status = 'Reading ' + (i + 1) + ' of ' + urls.length + '…'; this.forceUpdate(); try { await this.ingestUrl(urls[i], { collect: got, keepOpen: true }); } catch (e) {} }
+    if (got.length) await this.addDocs(got, { keepOpen: true });
+    A.status = got.length ? 'Added ' + plural(got.length, 'source') + '.' : ''; A.links = ''; A.pane = ''; this.forceUpdate();
+  }
+  addVals() {
+    const S = this.addState(), sc = SEARCH_SCOPES.find(x => x.id === S.scope) || SEARCH_SCOPES[0], known = this.knownIds(this.analysis());
+    const rows = (S.results || []).map(r => {
+      const on = this.isAdded(r, known), busy = !!S.adding[r.url];
+      const th = r.thumb && /^https:\/\//.test(r.thumb) ? r.thumb.replace(/['"()\\\s]/g, c => encodeURIComponent(c)) : '';
+      return {
+        title: r.title || r.url, snippet: r.snippet || '', hasSnippet: !!r.snippet,
+        line: [r.source, r.meta, r.published ? String(r.published).slice(0, 10) : ''].filter(Boolean).join(' · '),
+        hasThumb: !!th, thumbStyle: th ? "flex:none;width:96px;height:54px;border-radius:6px;background:var(--s2) url('" + th + "') center/cover no-repeat" : '',
+        addLabel: on ? 'Added ✓' : busy ? 'Adding…' : 'Add', addBg: on ? 'transparent' : '#8b5cf6', addCol: on ? 'var(--ok)' : '#fff', addBd: on ? 'var(--line2)' : '#8b5cf6',
+        onAdd: () => { if (!on && !busy) this.addResult(r); },
+      };
+    });
+    const pending = (S.results || []).filter(r => !this.isAdded(r, known)).length, reset = () => { S.ticket++; S.loading = false; S.results = null; S.error = ''; S.status = ''; S.more = false; };
+    return {
+      scopes: SEARCH_SCOPES.map(x => ({ id: x.id, label: x.label })), scope: S.scope,
+      onScope: e => { S.scope = e.target.value; reset(); try { localStorage.setItem('hd:add-scope', S.scope); } catch (er) {} if ((S.q || '').trim()) this.addSearch(); else this.forceUpdate(); },
+      q: S.q, placeholder: sc.ask + '…', onQ: e => { S.q = e.target.value; }, onKey: e => { if (e.key === 'Enter') { S.q = e.target.value; this.addSearch(); } }, onSearch: () => this.addSearch(),
+      loading: S.loading, rows, hasPanel: !!(S.loading || S.results), showIntake: !(S.loading || S.results),
+      resultsLine: S.loading && !S.results ? 'Searching ' + sc.label + '…' : plural(rows.length, 'result') + (S.engine ? ' · ' + S.engine : ''),
+      hasMore: !!S.more, onMore: () => this.addSearch(true), moreLabel: S.loading ? 'Loading…' : 'More results',
+      hasPending: pending > 0 && !S.loading, allLabel: 'Add all ' + pending, onAll: () => this.addAllResults(), onClear: () => { reset(); this.forceUpdate(); },
+      error: S.error, hasError: !!S.error, status: S.status, hasStatus: !!S.status && !S.error,
+      paneLink: S.pane === 'link', paneText: S.pane === 'text',
+      onLinkPill: () => { S.pane = S.pane === 'link' ? '' : 'link'; this.forceUpdate(); }, onTextPill: () => { S.pane = S.pane === 'text' ? '' : 'text'; this.forceUpdate(); },
+      linkBg: S.pane === 'link' ? 'var(--sel2)' : 'transparent', textBg: S.pane === 'text' ? 'var(--sel2)' : 'transparent',
+      links: S.links, onLinks: e => { S.links = e.target.value; }, onAddLinks: () => this.addLinks(),
+    };
   }
   async loadHtml() {
     const id = this.corpusId(); const docs = this.baseDocs(id).concat(this.state.added[id] || []);
@@ -3247,7 +3488,7 @@ class Component extends DCLogic {
       this._html[d.id] = h || null;
     }
     this.setState(s => ({ htmlVer: s.htmlVer + 1, busy: '' }));
-    const stale = (this.state.added[id] || []).filter(d => d.url && d.type !== 'Link' && !wikiTitleOf(d.url) && (d.format !== 'page' || !this._html[d.id]) && d.format !== 'pdf' && !this._upg?.[d.id]);
+    const stale = (this.state.added[id] || []).filter(d => d.url && d.type !== 'Link' && !wikiTitleOf(d.url) && (d.format !== 'page' || !this._html[d.id]) && d.format !== 'pdf' && d.type !== 'Repo file' && !(d.media && d.media.kind === 'youtube') && !this._upg?.[d.id]);
     this._upg = this._upg || {};
     for (const d of stale) { this._upg[d.id] = 1; try { const g = await fetchAnySite(d.url); if (g.format === 'page' && g.html) { this._html[d.id] = g.html; idbPut('html:' + d.id, g.html).catch(() => {}); const added = { ...this.state.added, [id]: this.state.added[id].map(x => x.id === d.id ? { ...x, format: 'page' } : x) }; this.saveAdded(added); this.setState(s => ({ added, htmlVer: s.htmlVer + 1 })); } } catch (e) {} }
   }
@@ -4675,7 +4916,7 @@ class Component extends DCLogic {
     const ids = nd.map(d => d.id); try { this.hdFinish(T, A, prev, ids); } catch (e) { console.warn('ingest trace', e); HD_TR = null; } const odd = (T && T.odd) || []; const sts = A.sts.filter(s => ids.includes(s.doc));
     const nm = [...new Set(sts.flatMap(s => s.names))];
     const echoN = sts.filter(s => (A.echoes[s.id] || []).some(e => !ids.includes(A.byId[e.id].doc))).length;
-    this.setState({ added, just: { ids, title: nd.length === 1 ? nd[0].title : plural(nd.length, 'item'), n: sts.length, linked: nm.filter(n => prev.names[n]), fresh: nm.filter(n => !prev.names[n]), echoN, odd, notes: list.map(x => x.note).concat(engNote).filter(Boolean), first: nd[0].id }, view: aopt && aopt.open ? 'reader' : 'summary', sel: aopt && aopt.open ? { type: 'doc', id: nd[0].id } : null, f: {}, q: '', readDoc: aopt && aopt.open ? nd[0].id : null, readMode: 'original', draftTitle: '', draftYear: '', draftText: '', showAdd: false, busy: '', note: '' });
+    this.setState({ added, just: { ids, title: nd.length === 1 ? nd[0].title : plural(nd.length, 'item'), n: sts.length, linked: nm.filter(n => prev.names[n]), fresh: nm.filter(n => !prev.names[n]), echoN, odd, notes: list.map(x => x.note).concat(engNote).filter(Boolean), first: nd[0].id }, view: aopt && aopt.open ? 'reader' : 'summary', sel: aopt && aopt.open ? { type: 'doc', id: nd[0].id } : null, f: {}, q: '', readDoc: aopt && aopt.open ? nd[0].id : null, readMode: 'original', draftTitle: '', draftYear: '', draftText: '', showAdd: !!(aopt && aopt.keepOpen), busy: '', note: '' });
   }
 
   // The time strip: how the statements every OTHER filter leaves are spread over time, on the chosen clock.
@@ -5316,7 +5557,8 @@ class Component extends DCLogic {
       return { title: J.title, summary: [plural(J.n, 'statement'), J.linked.length ? plural(J.linked.length, 'name') + ' already here' : '', J.echoN ? plural(J.echoN, 'echo', 'echoes') : ''].filter(Boolean).join(' · '),
         hasOdd: !!(J.odd && J.odd.some(o => o.standing === 'stands')), odd: (J.odd || []).filter(o => o.standing === 'stands').slice(0, 3).map(o => ({ tag: 'Odd', label: o.subject, why: o.short, onInspect: () => player(o.at), onCorrect: () => this.fileCorrection(o.subject, '"' + o.subject + '" is not a name') })),
         oddMore: (() => { const st = (J.odd || []).filter(o => o.standing === 'stands').length, ct = (J.odd || []).filter(o => o.standing === 'contested').length; const parts = [st > 3 ? (st - 3) + ' more odd' : '', ct ? ct + ' disputed' : ''].filter(Boolean); return parts.length ? parts.join(', ') + ', in the replay' : ''; })(), onOddAll: () => { const f = (J.odd || [])[0]; if (f) player(f.at); },
-        hasNames: names.length > 0, names, hasNote: J.notes.length > 0, noteLine: J.notes.join(' '),
+        hasNames: names.length > 0, names, ...(() => { const groups = new Map(), lines = []; J.notes.forEach(n => { const m = /^From (\S+) · (.+)$/.exec(n); if (m) { if (!groups.has(m[1])) groups.set(m[1], []); groups.get(m[1]).push({ path: m[2] }); } else lines.push({ text: n }); });
+          return { noteLines: lines, noteGroups: [...groups].map(([repo, files]) => ({ repo, count: plural(files.length, 'file'), files })) }; })(),
         hasReplay: !!tr, onReplay: () => tr && import(new URL('holodeck-ingest-player.js', location.href).href).then(M => M.open(tr)),
         onRead: () => this.read(J.first), onConnections: () => this.go('connections'), onPatterns: () => this.go('patterns') }; })() : { names: [] };
     const allYears = [...new Set(A.docs.map(d => d.year).filter(Boolean))].sort();
@@ -5484,7 +5726,7 @@ class Component extends DCLogic {
         return { show: !!S.showRepo, name: 'ohs', open: () => this.setState({ showRepo: true, repoMsg: '' }), close: () => this.setState({ showRepo: false }), closeBg: e => { if (e.target === e.currentTarget) this.setState({ showRepo: false }); },
           dot: ci.from ? 'var(--ok)' : 'var(--mut)', title: 'Read-only source store',
           corpusLine, wsLine, rebuild: () => { this.setState({ showRepo: false }); this.rebuildLive(); }, msg: '', hasMsg: false }; })(),
-      openAdd: () => this.setState({ showAdd: true }), closeAdd: () => this.setState({ showAdd: false }),
+      openAdd: () => { this._add = null; this.setState({ showAdd: true }); }, closeAdd: () => this.setState({ showAdd: false }),
       openNewWs: () => this.createWorkspace(), openTask: () => this.go('ingest'),
       closeAddBg: e => { if (e.target === e.currentTarget) this.setState({ showAdd: false }); },
       goSummary: () => this.go('summary'), summaryBtn: hi(view === 'summary'),
@@ -5550,10 +5792,7 @@ class Component extends DCLogic {
         return pf.has || view === 'draft' || view === 'profile' ? { ...det, ...side, hasSel: false, noSel: true, pf } : { ...det, ...side, pf }; })(),
       showAdd: S.showAdd, draftTitle: S.draftTitle, draftYear: S.draftYear, draftText: S.draftText,
       onDraftTitle: e => this.setState({ draftTitle: e.target.value }), onDraftYear: e => this.setState({ draftYear: e.target.value }), onDraftText: e => this.setState({ draftText: e.target.value }),
-      repoVal: S.repoVal, onRepoVal: e => this.setState({ repoVal: e.target.value }), addRepo: () => this.addRepo(),
-      srcAskVal: S.askVal || '', onSrcAskVal: e => { this._askLive = e.target.value; this.setState({ askVal: e.target.value }); },
-      findSources: () => { const v = (this._askLive || S.askVal || '').trim(); if (v) this.autoResearch(v); },
-      onSrcAskKey: e => { if (e.key === 'Enter') { const v = e.target.value.trim(); if (v) this.autoResearch(v); } },
+      add: S.showAdd ? this.addVals() : undefined,
       addDraft: () => { const t = S.draftText.trim(); if (!t) { this.setState({ note: 'Paste some text first.' }); return; } this.addDocs([{ title: S.draftTitle.trim(), year: parseInt(S.draftYear) || null, text: t }]); },
       onFiles: e => this.ingest({ files: e.target.files, getData: () => '' }),
       customNote: S.note || (addN(cid) ? plural(addN(cid), 'item') + ' added here' : ''),
