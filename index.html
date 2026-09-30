@@ -42,7 +42,9 @@ select option{background:var(--s1);color:var(--ink)}
           <option value="{{ o.id }}">{{ o.name }}</option>
         </sc-for>
       </select>
+      <sc-if value="{{ hasContent }}" hint-placeholder-val="{{ true }}">
       <button onClick="{{ openAdd }}" style="width:100%;box-sizing:border-box;background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:8px 10px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Add source</button>
+      </sc-if>
 
     </div>
     <nav style="display:flex;flex-direction:column;gap:2px">
@@ -115,6 +117,7 @@ select option{background:var(--s1);color:var(--ink)}
         <sc-if value="{{ omniPending }}" hint-placeholder-val="{{ false }}"><button onClick="{{ omniGo }}" style="margin:3px;border:0;background:var(--acc2);color:#fff;border-radius:6px;padding:4px 12px;cursor:pointer;font:600 13px 'Hanken Grotesk';white-space:nowrap">Search ↵</button></sc-if>
         <sc-if value="{{ omniUrl }}" hint-placeholder-val="{{ false }}"><button onClick="{{ omniOpen }}" style="margin:3px;border:0;background:var(--acc2);color:#fff;border-radius:6px;padding:4px 12px;cursor:pointer;font:600 14px 'Hanken Grotesk'">Open page ↵</button></sc-if>
       </div>
+      <button onClick="{{ openSettings }}" title="Settings — account, sync and sharing" style="flex:none;display:flex;align-items:center;gap:8px;background:none;border:1px solid var(--line2);border-radius:999px;padding:5px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)"><span style="width:8px;height:8px;border-radius:50%;background:{{ acctOn ? 'var(--ok)' : 'var(--dim)' }}"></span>{{ acctLabel }} <span style="font-size:15px">⚙</span></button>
     </div>
   </header>
 
@@ -124,10 +127,16 @@ select option{background:var(--s1);color:var(--ink)}
     <main style="flex:1 1 520px;min-width:0;display:flex;flex-direction:column;gap:16px">
 
       <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
-        <div style="border:1px dashed var(--line2);border-radius:14px;padding:48px 32px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px">
-          <h1 style="margin:0;font:500 28px 'Newsreader',serif">Nothing here yet</h1>
-          <p style="margin:0;max-width:460px;color:var(--mut)">Paste or upload any text — reports, articles, notes, transcripts, emails. It's split into statements, and every name, figure and date is traced back to where it appears. Or describe what you want to learn and let the workspace go fetch it.</p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button onClick="{{ openAdd }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:10px 18px;cursor:pointer;font:600 14px 'Hanken Grotesk'">+ Add content</button><button onClick="{{ openTask }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:10px 18px;cursor:pointer;font:600 14px 'Hanken Grotesk';color:var(--ink)">Set a research task →</button></div>
+        <div style="padding:56px 16px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px">
+          <h1 style="margin:0;font:500 32px 'Newsreader',serif">What do you want to understand?</h1>
+          <p style="margin:0;max-width:480px;color:var(--mut);text-wrap:pretty">Ask a question and the workspace finds sources for it, or add your own. Every claim is traced back to where it appears.</p>
+          <div style="width:100%;max-width:620px;display:flex;align-items:center;border:1px solid var(--line2);border-radius:12px;background:var(--s1);padding:4px">
+            <input ref="{{ heroRef }}" onKeyDown="{{ onHeroKey }}" placeholder="Ask a question, paste a link, or paste text" style="flex:1;min-width:0;background:transparent;border:0;color:var(--ink);font:400 16px 'Hanken Grotesk';padding:12px 14px;outline:none">
+            <button onClick="{{ onHeroGo }}" style="flex:none;border:0;background:#8b5cf6;color:#fff;border-radius:9px;padding:10px 16px;cursor:pointer;font:600 15px 'Hanken Grotesk'">Ask ↵</button>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+            <button onClick="{{ openAdd }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:8px 16px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">Upload or paste a file</button>
+          </div>
         </div>
       </sc-if>
 
@@ -787,56 +796,6 @@ select option{background:var(--s1);color:var(--ink)}
       <sc-if value="{{ ing.on }}" hint-placeholder-val="{{ false }}">
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px;align-items:start">
           <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
-            <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">1 · Matrix account</span>
-            <sc-if value="{{ ing.notSignedIn }}" hint-placeholder-val="{{ true }}">
-              <span style="font:400 14px/1.5 'Hanken Grotesk';color:var(--mut)">Anyone can read a public workspace as a guest. Publishing and your private room need an account on the homeserver.</span>
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <input defaultValue="{{ ing.server }}" onChange="{{ ing.onServer }}" placeholder="hyphae.social" style="flex:1 1 140px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font:500 14px 'JetBrains Mono';color:var(--ink);outline:none"></input>
-                <input onChange="{{ ing.onUser }}" placeholder="username" autocomplete="username" style="flex:1 1 120px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font:500 14px 'Hanken Grotesk';color:var(--ink);outline:none"></input>
-                <input type="password" onChange="{{ ing.onPass }}" placeholder="password" autocomplete="current-password" style="flex:1 1 120px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font:500 14px 'Hanken Grotesk';color:var(--ink);outline:none"></input>
-              </div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap"><button onClick="{{ ing.onLogin }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 14px;cursor:pointer;font:600 14px 'Hanken Grotesk'">Sign in</button><button onClick="{{ ing.onGuest }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)">Continue as guest</button></div>
-            </sc-if>
-            <sc-if value="{{ ing.signedIn }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><span style="font:500 14px 'JetBrains Mono';color:var(--ink)">{{ ing.who }}</span><button onClick="{{ ing.onLogout }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--mut)">Sign out</button></div></sc-if>
-            <sc-if value="{{ ing.isTemp }}" hint-placeholder-val="{{ false }}">
-              <div style="border:1px dashed var(--line2);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px">
-                <span style="font:400 13px/1.5 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">{{ ing.tempNote }}</span>
-                <div style="display:flex;gap:8px;flex-wrap:wrap"><input onChange="{{ ing.onKeepName }}" placeholder="your name" style="flex:1 1 120px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:5px 10px;font:500 13px 'Hanken Grotesk';color:var(--ink);outline:none"></input><input type="password" onChange="{{ ing.onKeepPw }}" placeholder="new password" autocomplete="new-password" style="flex:1 1 120px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:5px 10px;font:500 13px 'Hanken Grotesk';color:var(--ink);outline:none"></input><button onClick="{{ ing.onKeep }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2);white-space:nowrap">Keep this account</button></div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap"><input onChange="{{ ing.onMergeU }}" placeholder="existing username" style="flex:1 1 120px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:5px 10px;font:500 13px 'Hanken Grotesk';color:var(--ink);outline:none"></input><input type="password" onChange="{{ ing.onMergeP }}" placeholder="its password" style="flex:1 1 120px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:5px 10px;font:500 13px 'Hanken Grotesk';color:var(--ink);outline:none"></input><button onClick="{{ ing.onMerge }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2);white-space:nowrap">Merge into it</button></div>
-              </div>
-            </sc-if>
-            <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut);padding-top:8px">2 · Public room for this workspace</span>
-            <sc-if value="{{ ing.hasPub }}" hint-placeholder-val="{{ false }}"><span style="font:500 13px 'JetBrains Mono';color:var(--ink2);overflow-wrap:anywhere">{{ ing.pub }}</span></sc-if>
-            <sc-if value="{{ ing.noPub }}" hint-placeholder-val="{{ true }}">
-              <span style="font:400 14px/1.5 'Hanken Grotesk';color:var(--mut)">Workspaces are private until you make one public. A public room is readable by anyone; every item published to it is a block that carries the sha256 of the block before.</span>
-              <div style="display:flex;gap:8px;flex-wrap:wrap"><sc-if value="{{ ing.canWrite }}" hint-placeholder-val="{{ false }}"><button onClick="{{ ing.onCreatePub }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 14px;cursor:pointer;font:600 14px 'Hanken Grotesk'">Make this workspace public</button></sc-if><input onChange="{{ ing.onJoinAlias }}" placeholder="#room:hyphae.social" style="flex:1 1 180px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font:500 13px 'JetBrains Mono';color:var(--ink);outline:none"></input><button onClick="{{ ing.onJoin }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)">Join</button></div>
-            </sc-if>
-            <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut);padding-top:8px">3 · Your private room</span>
-            <sc-if value="{{ ing.noPriv }}" hint-placeholder-val="{{ true }}"><span style="font:400 14px/1.5 'Hanken Grotesk';color:var(--mut)">Your pins, drafts, filters and reading history sync here. Only people you invite can see it.</span><sc-if value="{{ ing.canWrite }}" hint-placeholder-val="{{ false }}"><button onClick="{{ ing.onCreatePriv }}" style="align-self:flex-start;background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)">Create private room</button></sc-if></sc-if>
-            <sc-if value="{{ ing.hasPriv }}" hint-placeholder-val="{{ false }}">
-              <span style="font:400 13px 'Hanken Grotesk';color:var(--mut)">{{ ing.privAt }}</span>
-              <div style="display:flex;gap:8px;flex-wrap:wrap"><input onChange="{{ ing.onInviteId }}" placeholder="@someone:hyphae.social" style="flex:1 1 180px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font:500 13px 'JetBrains Mono';color:var(--ink);outline:none"></input><button onClick="{{ ing.onInvite }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)">Invite</button><button onClick="{{ ing.onLoadPriv }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)">Load my work from it</button></div>
-              <button onClick="{{ ing.onShare }}" style="align-self:flex-start;background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 14px;cursor:pointer;font:600 14px 'Hanken Grotesk'">Copy a share link</button>
-              <span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">The link carries a ready-made account already invited to this room, so the recipient opens it signed in. Anyone holding the link can use that account.</span>
-              <sc-if value="{{ ing.hasShare }}" hint-placeholder-val="{{ false }}"><input readOnly="{{ true }}" value="{{ ing.share }}" style="background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:5px 10px;font:500 12px 'JetBrains Mono';color:var(--ink2);outline:none"></input></sc-if>
-            </sc-if>
-          </section>
-          <section style="background:var(--sel);border:1px solid #8b5cf6;border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
-            <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">Research task · fill this workspace</span>
-            <span style="font:400 14px/1.5 'Hanken Grotesk';color:var(--ink2)">Describe what this workspace should learn and run it. Seed URLs below are fetched first; web, Wikipedia and YouTube search land next. Nothing leaves your browser except the searches and page fetches themselves.</span>
-            <textarea onChange="{{ ing.task.onBrief }}" rows="3" placeholder="e.g. What caused the Key Bridge collapse, who found it, and what the replacement will cost and when it opens?" style="background:var(--s1);border:1px solid var(--line2);border-radius:8px;resize:vertical;font:400 14px/1.5 'Hanken Grotesk';color:var(--ink);outline:none;padding:8px 10px" defaultValue="{{ ing.task.brief }}"></textarea>
-            <div style="display:flex;gap:14px;flex-wrap:wrap;font:500 13px 'Hanken Grotesk';color:var(--ink2)">
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" checked="{{ ing.task.wantWeb }}" onChange="{{ ing.task.onWeb }}">Web search</label>
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" checked="{{ ing.task.wantWiki }}" onChange="{{ ing.task.onWiki }}">Wikipedia</label>
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" checked="{{ ing.task.wantYt }}" onChange="{{ ing.task.onYt }}">YouTube</label>
-              <label style="display:flex;align-items:center;gap:6px">Target <input value="{{ ing.task.wantN }}" onChange="{{ ing.task.onN }}" style="width:52px;background:var(--s1);border:1px solid var(--line2);border-radius:6px;padding:3px 8px;color:var(--ink);outline:none"> sources</label>
-            </div>
-            <textarea onChange="{{ ing.task.onUrls }}" rows="2" placeholder="Seed URLs, one per line (optional) — always fetched first" defaultValue="{{ ing.task.urls }}"></textarea>
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button onClick="{{ ing.task.onRun }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 14px;cursor:pointer;font:600 14px 'Hanken Grotesk'">{{ ing.task.runLabel }}</button><span style="font:400 13px 'Hanken Grotesk';color:var(--mut)">{{ ing.task.status }}</span></div>
-            <sc-if value="{{ ing.task.hasQueries }}" hint-placeholder-val="{{ false }}"><span style="font:400 12px 'JetBrains Mono';color:var(--mut)">Queries: {{ ing.task.queries }}</span></sc-if>
-            <sc-if value="{{ ing.task.hasLog }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:3px;border-top:1px solid var(--line);padding-top:8px"><sc-for list="{{ ing.task.log }}" as="l" hint-placeholder-count="3"><span style="font:400 12px/1.4 'JetBrains Mono';color:{{ l.col }}">{{ l.t }} {{ l.msg }}</span></sc-for></div></sc-if>
-          </section>
-          <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
             <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Find new material</span>
             <span style="font:400 14px/1.5 'Hanken Grotesk';color:var(--mut)">Watches are saved in the public room, so they belong to this workspace. Browsers can’t query search engines directly; searches go through a SearXNG instance you run or trust.</span>
             <sc-for list="{{ ing.watches }}" as="w" hint-placeholder-count="1"><div style="display:flex;gap:10px;align-items:baseline"><span style="font:600 12px 'JetBrains Mono';color:var(--acc)">{{ w.kind }}</span><span style="flex:1;font:500 14px 'Hanken Grotesk';color:var(--ink)">{{ w.q }}</span><button onClick="{{ w.onRemove }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--dim)">Remove</button></div></sc-for>
@@ -854,6 +813,7 @@ select option{background:var(--s1);color:var(--ink)}
             <textarea onChange="{{ ing.onPaste }}" rows="3" placeholder="One URL per line. YouTube links become video sources; each link is also sent to archive.org’s Save Page Now." style="background:var(--s2);border:1px solid var(--line);border-radius:8px;resize:vertical;font:400 14px/1.5 'JetBrains Mono';color:var(--ink);outline:none;padding:8px 10px"></textarea>
             <button onClick="{{ ing.onAddPasted }}" style="align-self:flex-start;background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)">Add links</button>
           </section>
+          <sc-if value="{{ ing.showTx }}" hint-placeholder-val="{{ false }}">
           <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
             <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Transcribe in this browser</span>
             <span style="font:400 14px/1.5 'Hanken Grotesk';color:var(--mut)">{{ ing.webgpu }} Whisper runs locally; the recording never leaves your machine. Browsers can’t pull audio from YouTube, so choose the downloaded file.</span>
@@ -864,6 +824,7 @@ select option{background:var(--s1);color:var(--ink)}
               <sc-for list="{{ ing.txNeeded }}" as="t" hint-placeholder-count="2"><div style="display:flex;gap:10px;align-items:baseline;border-top:1px solid var(--line);padding-top:6px"><span style="flex:1;min-width:0;font:400 14px/1.4 'Hanken Grotesk';color:var(--ink)">{{ t.title }}</span><label style="cursor:pointer;font:600 13px 'Hanken Grotesk';color:var(--acc);white-space:nowrap">Choose its file<input type="file" accept="audio/*,video/*" onChange="{{ t.onPick }}" style="display:none"></input></label></div></sc-for>
             </sc-if>
           </section>
+          </sc-if>
           <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
             <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-right:auto">Public record</span><button onClick="{{ ing.onRefresh }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--mut)">Refresh</button><button onClick="{{ ing.onLoadRoom }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2)">Load into workspace</button></div>
             <sc-if value="{{ ing.canPubAll }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:8px"><button onClick="{{ ing.onPubAll }}" style="align-self:flex-start;background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 14px;cursor:pointer;font:600 14px 'Hanken Grotesk'">{{ ing.pubAllLabel }}</button><span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">{{ ing.pubAllLine }}</span></div></sc-if>
@@ -2176,6 +2137,48 @@ select option{background:var(--s1);color:var(--ink)}
 
   </div>
 </div>
+  <sc-if value="{{ showSettings }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeSettingsBg }}" style="position:fixed;inset:0;z-index:55;background:rgba(6,5,12,.75);display:flex;justify-content:flex-end">
+      <div style="width:min(460px,100%);height:100%;overflow:auto;box-sizing:border-box;background:var(--s1);border-left:1px solid var(--line2);padding:20px 22px;display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0;font:500 24px 'Newsreader',serif">Settings</h2><button onClick="{{ closeSettings }}" style="background:none;border:0;color:var(--mut);cursor:pointer;font-size:16px">✕</button></div>
+          <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
+            <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Account &amp; sync</span>
+            <sc-if value="{{ ing.notSignedIn }}" hint-placeholder-val="{{ true }}">
+              <span style="font:400 14px/1.5 'Hanken Grotesk';color:var(--mut)">Your work stays in this browser until you sign in. Signing in lets you sync it and share it.</span>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <input defaultValue="{{ ing.server }}" onChange="{{ ing.onServer }}" placeholder="hyphae.social" style="flex:1 1 140px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font:500 14px 'JetBrains Mono';color:var(--ink);outline:none"></input>
+                <input onChange="{{ ing.onUser }}" placeholder="username" autocomplete="username" style="flex:1 1 120px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font:500 14px 'Hanken Grotesk';color:var(--ink);outline:none"></input>
+                <input type="password" onChange="{{ ing.onPass }}" placeholder="password" autocomplete="current-password" style="flex:1 1 120px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font:500 14px 'Hanken Grotesk';color:var(--ink);outline:none"></input>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap"><button onClick="{{ ing.onLogin }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 14px;cursor:pointer;font:600 14px 'Hanken Grotesk'">Sign in</button></div>
+            </sc-if>
+            <sc-if value="{{ ing.signedIn }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><span style="font:500 14px 'JetBrains Mono';color:var(--ink)">{{ ing.who }}</span><button onClick="{{ ing.onLogout }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--mut)">Sign out</button></div></sc-if>
+            <sc-if value="{{ ing.isTemp }}" hint-placeholder-val="{{ false }}">
+              <div style="border:1px dashed var(--line2);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px">
+                <span style="font:400 13px/1.5 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">{{ ing.tempNote }}</span>
+                <div style="display:flex;gap:8px;flex-wrap:wrap"><input onChange="{{ ing.onKeepName }}" placeholder="your name" style="flex:1 1 120px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:5px 10px;font:500 13px 'Hanken Grotesk';color:var(--ink);outline:none"></input><input type="password" onChange="{{ ing.onKeepPw }}" placeholder="new password" autocomplete="new-password" style="flex:1 1 120px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:5px 10px;font:500 13px 'Hanken Grotesk';color:var(--ink);outline:none"></input><button onClick="{{ ing.onKeep }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2);white-space:nowrap">Keep this account</button></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap"><input onChange="{{ ing.onMergeU }}" placeholder="existing username" style="flex:1 1 120px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:5px 10px;font:500 13px 'Hanken Grotesk';color:var(--ink);outline:none"></input><input type="password" onChange="{{ ing.onMergeP }}" placeholder="its password" style="flex:1 1 120px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:5px 10px;font:500 13px 'Hanken Grotesk';color:var(--ink);outline:none"></input><button onClick="{{ ing.onMerge }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2);white-space:nowrap">Merge into it</button></div>
+              </div>
+            </sc-if>
+            <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut);padding-top:8px">Public room for this workspace</span>
+            <sc-if value="{{ ing.hasPub }}" hint-placeholder-val="{{ false }}"><span style="font:500 13px 'JetBrains Mono';color:var(--ink2);overflow-wrap:anywhere">{{ ing.pub }}</span></sc-if>
+            <sc-if value="{{ ing.noPub }}" hint-placeholder-val="{{ true }}">
+              <span style="font:400 14px/1.5 'Hanken Grotesk';color:var(--mut)">Workspaces are private until you make one public. A public room is readable by anyone; every item published to it is a block that carries the sha256 of the block before.</span>
+              <div style="display:flex;gap:8px;flex-wrap:wrap"><sc-if value="{{ ing.canWrite }}" hint-placeholder-val="{{ false }}"><button onClick="{{ ing.onCreatePub }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 14px;cursor:pointer;font:600 14px 'Hanken Grotesk'">Make this workspace public</button></sc-if><input onChange="{{ ing.onJoinAlias }}" placeholder="#room:hyphae.social" style="flex:1 1 180px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font:500 13px 'JetBrains Mono';color:var(--ink);outline:none"></input><button onClick="{{ ing.onJoin }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)">Join</button></div>
+            </sc-if>
+            <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut);padding-top:8px">Your private room</span>
+            <sc-if value="{{ ing.noPriv }}" hint-placeholder-val="{{ true }}"><span style="font:400 14px/1.5 'Hanken Grotesk';color:var(--mut)">Your pins, drafts, filters and reading history sync here. Only people you invite can see it.</span><sc-if value="{{ ing.canWrite }}" hint-placeholder-val="{{ false }}"><button onClick="{{ ing.onCreatePriv }}" style="align-self:flex-start;background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)">Create private room</button></sc-if></sc-if>
+            <sc-if value="{{ ing.hasPriv }}" hint-placeholder-val="{{ false }}">
+              <span style="font:400 13px 'Hanken Grotesk';color:var(--mut)">{{ ing.privAt }}</span>
+              <div style="display:flex;gap:8px;flex-wrap:wrap"><input onChange="{{ ing.onInviteId }}" placeholder="@someone:hyphae.social" style="flex:1 1 180px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font:500 13px 'JetBrains Mono';color:var(--ink);outline:none"></input><button onClick="{{ ing.onInvite }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)">Invite</button><button onClick="{{ ing.onLoadPriv }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)">Load my work from it</button></div>
+              <button onClick="{{ ing.onShare }}" style="align-self:flex-start;background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 14px;cursor:pointer;font:600 14px 'Hanken Grotesk'">Copy a share link</button>
+              <span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">The link carries a ready-made account already invited to this room, so the recipient opens it signed in. Anyone holding the link can use that account.</span>
+              <sc-if value="{{ ing.hasShare }}" hint-placeholder-val="{{ false }}"><input readOnly="{{ true }}" value="{{ ing.share }}" style="background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:5px 10px;font:500 12px 'JetBrains Mono';color:var(--ink2);outline:none"></input></sc-if>
+            </sc-if>
+          </section>
+      </div>
+    </div>
+  </sc-if>
   <sc-if value="{{ showAdd }}" hint-placeholder-val="{{ false }}">
     <div onClick="{{ closeAddBg }}" style="position:fixed;inset:0;z-index:50;background:rgba(6,5,12,.75);display:flex;align-items:center;justify-content:center;padding:20px">
       <div style="width:100%;max-width:720px;max-height:calc(100vh - 40px);overflow:auto;box-sizing:border-box;background:var(--s1);border:1px solid var(--line2);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:14px">
@@ -3045,7 +3048,7 @@ async function fetchAnySite(url) {
     async () => viaHost(await fetchT(url, 8000)),
     async () => viaHost(await fetchT('https://holodeck-proxy.prometheoid.workers.dev/raw?url=' + encodeURIComponent(url), 8000)),
     async () => viaHost(await fetchT('https://n8n.intelechia.com/webhook/feed?url=' + encodeURIComponent(url), 12000)),
-    async () => { const r = await fetchT('https://r.jina.ai/' + url, 7000); if (!r.ok) throw 0; const md = await r.text(); const tm = md.match(/^Title:\s*(.+)$/m); const body = md.includes('Markdown Content:') ? md.split('Markdown Content:').slice(1).join('Markdown Content:') : md; return { html: sanitizeHtml(mdToHtml(body), url), title: tm ? tm[1].trim() : '', note: 'Fetched through a public reader (r.jina.ai); layout is simplified.' }; }
+    async () => { const r = await fetchT('https://r.jina.ai/' + url, 7000); if (!r.ok) throw 0; const md = await r.text(); const tm = md.match(/^Title:\s*(.+)$/m); const body = md.includes('Markdown Content:') ? md.split('Markdown Content:').slice(1).join('Markdown Content:') : md; return { html: sanitizeHtml(mdToHtml(body), url), title: tm ? tm[1].trim() : '', note: null }; }
   ];
   const variants = [url]; try { const u = new URL(url); if (!/^www\./.test(u.hostname) && u.hostname.split('.').length === 2) { u.hostname = 'www.' + u.hostname; variants.push(u.href); } } catch (e) {}
   for (const v of variants) { url = v; for (const f of tries) { try { const g = await f(); if (g.file || (g.html && pageText(g.html, g.format).trim().length > 40)) return { ...g, url: v }; } catch (e) {} } }
@@ -3215,10 +3218,11 @@ const whenOf = (st, d) => d.pubLabel || (d.year ? String(d.year) : 'Undated');
 const assertLine = (st, A) => { const d = A.docById[st.doc]; const w = whoSays(st, A); return (w ? w.who + (w.how === 'quoted' ? ' (quoted)' : w.how === 'publisher' ? '' : ' (' + w.how + ')') + ' · ' : '') + d.title + ' · ' + whenOf(st, d); };
 
 class Component extends DCLogic {
-  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, draftTitle: '', draftYear: '', draftText: '', fw: {}, note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true } };
+  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, showSettings: false, draftTitle: '', draftYear: '', draftText: '', fw: {}, note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true } };
   _html = {};
 
   componentDidMount() {
+    setTimeout(() => { try { this.netInit(); } catch (e) {} }, 800);
     setTimeout(() => this.measureHdr(), 400);
     this.applyTheme(); this._c = 0; import(new URL('holodeck-match.js', location.href).href).then(M => { this._mt = M; this._qc = null; this.forceUpdate(); }).catch(() => {}); this.loadHtml(); if (typeof location !== 'undefined' && /fx-share=/.test(location.hash)) { this.netInit(); this.setState({ view: 'draft' }); }
     this._onRz = () => { this.measureHdr(); if ((window.innerWidth < SIDE_PANEL_MIN_VW) !== this._narrow) this.forceUpdate(); }; window.addEventListener('resize', this._onRz);
@@ -3307,20 +3311,17 @@ class Component extends DCLogic {
     }
   }
   async autoResearch(q) {
-    this.setState({ busy: 'Searching Wikipedia for “' + q.slice(0, 60) + '”…' });
-    try {
-      const r = await fetch('https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=' + encodeURIComponent(q) + '&utf8=&format=json&origin=*&srlimit=3');
-      if (r.ok) {
-        const j = await r.json();
-        const results = (j.query && j.query.search) || [];
-        const got = [];
-        for (const p of results.slice(0, 2)) {
-          const url = 'https://en.wikipedia.org/wiki/' + encodeURIComponent(p.title.replace(/ /g, '_'));
-          await this.ingestUrl(url, { title: p.title, collect: got });
-        }
-        if (got.length) await this.addDocs(got); else this.setState({ busy: '' });
-      }
-    } catch (e) { this.setState({ busy: '' }); }
+    // A question is the whole brief: ask the relay's web and news search and Wikipedia at once, then read the best few.
+    const N = 6, say = m => this.setState({ busy: m });
+    say('Finding sources for “' + q.slice(0, 60) + '”…');
+    const found = await Promise.all(['web', 'news', 'wikipedia'].map(sc => searchSources(sc, q, 0).then(r => r.results.slice(0, 5)).catch(e => { console.warn('research', sc, e && e.message); return []; })));
+    // interleave so one kind cannot crowd out the others; web first, since it answers most questions
+    const seen = new Set(), pick = [];
+    for (let k = 0; k < 5 && pick.length < N; k++) for (const list of found) { const x = list[k]; if (!x || !x.url || seen.has(x.url)) continue; seen.add(x.url); pick.push(x); if (pick.length >= N) break; }
+    const got = []; let i = 0;
+    for (const x of pick) { i++; say('Reading source ' + i + ' of ' + pick.length + ' — ' + hdCut(x.title || x.url, 50)); try { await this.ingestUrl(x.url, { title: x.title, collect: got }); } catch (e) {} }
+    const usable = got.filter(d => d && ((d.text && d.text.trim().length > 40) || (d.html && d.html.length > 200)));
+    if (usable.length) await this.addDocs(usable); else this.setState({ busy: '', note: 'No sources could be read for that question. Try rephrasing it, or add your own.' });
     clearTimeout(this._omniT); this._askLive = '';
     this.setState(s => ({ q, askVal: '', showAdd: false, qDraft: undefined, view: 'search', readDoc: null, srN: 25, qaN: 0, prevView: s.view === 'search' || s.view === 'reader' ? (s.prevView || 'summary') : s.view }));
   }
@@ -4279,9 +4280,9 @@ class Component extends DCLogic {
     } catch (e) { this.ilog('Publish all: ' + e.message, 'bad'); } finally { this._pubAll = null; this.forceUpdate(); }
   }
   netVals(A, view) {
-    if (view !== 'ingest') return { ing: { on: false } }; this.netInit(); const S = this.state; const n = this._net || {}; const s = n.s; const R = this.wsRooms(); const cfg = this.netCfg(); const W = (n.cfg && n.cfg.watches) || [];
+    if (view !== 'ingest' && !this.state.showSettings) return { ing: { on: false } }; this.netInit(); const S = this.state; const n = this._net || {}; const s = n.s; const R = this.wsRooms(); const cfg = this.netCfg(); const W = (n.cfg && n.cfg.watches) || [];
     const txNeeded = A.docs.filter(d => d.media && d.media.kind === 'youtube' && !d.media.segN && !d.lazy).slice(0, 20);
-    return { ing: { on: true, busy: S.netBusy || '', isBusy: !!S.netBusy,
+    return { ing: { on: view === 'ingest', showTx: txNeeded.length > 0 || !!(n.asr && n.asr.stage !== 'done'), busy: S.netBusy || '', isBusy: !!S.netBusy,
       signedIn: !!s, notSignedIn: !s, isGuest: !!(s && s.guest), canWrite: !!(s && !s.guest), isTemp: !!(s && s.ephemeral) || !!n.shareTemp, who: s ? (s.ephemeral ? 'Temporary account on this device' : s.user + (s.guest ? ' · guest (read only)' : '')) : '', tempNote: n.shareTemp ? 'You opened a shared link while signed in as ' + (s && s.user) + '. Merge it to bring the shared rooms into this account.' : 'You were given this account by a shared link, so you can read and add without signing up. Keep it, merge it into an account you already have, or leave it on this device.',
       onKeepPw: e => { this._kp = e.target.value; }, onKeepName: e => { this._kn = e.target.value; }, onKeep: () => this.keepAccount(this._kp, this._kn), onMergeU: e => { this._mu = e.target.value; }, onMergeP: e => { this._mp = e.target.value; }, onMerge: () => this.mergeAccount(this._mu, this._mp),
       onShare: () => this.makeShare(), share: n.share || '', hasShare: !!n.share, server: cfg.server || 'hyphae.social',
@@ -4916,7 +4917,7 @@ class Component extends DCLogic {
     const ids = nd.map(d => d.id); try { this.hdFinish(T, A, prev, ids); } catch (e) { console.warn('ingest trace', e); HD_TR = null; } const odd = (T && T.odd) || []; const sts = A.sts.filter(s => ids.includes(s.doc));
     const nm = [...new Set(sts.flatMap(s => s.names))];
     const echoN = sts.filter(s => (A.echoes[s.id] || []).some(e => !ids.includes(A.byId[e.id].doc))).length;
-    this.setState({ added, just: { ids, title: nd.length === 1 ? nd[0].title : plural(nd.length, 'item'), n: sts.length, linked: nm.filter(n => prev.names[n]), fresh: nm.filter(n => !prev.names[n]), echoN, odd, notes: list.map(x => x.note).concat(engNote).filter(Boolean), first: nd[0].id }, view: aopt && aopt.open ? 'reader' : 'summary', sel: aopt && aopt.open ? { type: 'doc', id: nd[0].id } : null, f: {}, q: '', readDoc: aopt && aopt.open ? nd[0].id : null, readMode: 'original', draftTitle: '', draftYear: '', draftText: '', showAdd: !!(aopt && aopt.keepOpen), busy: '', note: '' });
+    this.setState({ added, just: { ids, title: nd.length === 1 ? nd[0].title : plural(nd.length, 'item'), n: sts.length, linked: nm.filter(n => prev.names[n]), fresh: nm.filter(n => !prev.names[n]), echoN, odd, notes: list.map(x => x.note).filter(Boolean), first: nd[0].id }, view: aopt && aopt.open ? 'reader' : 'summary', sel: aopt && aopt.open ? { type: 'doc', id: nd[0].id } : null, f: {}, q: '', readDoc: aopt && aopt.open ? nd[0].id : null, readMode: 'original', draftTitle: '', draftYear: '', draftText: '', showAdd: !!(aopt && aopt.keepOpen), busy: '', note: '' });
   }
 
   // The time strip: how the statements every OTHER filter leaves are spread over time, on the chosen clock.
@@ -5790,6 +5791,10 @@ class Component extends DCLogic {
         const colPad = !panelOpen ? '' : narrow ? 'padding-bottom:48vh' : 'padding-right:' + SIDE_PANEL_W + 'px';
         const side = { sidePanelStyle, pfSide, colPad, pfClose: () => this.setState({ sel: null }) };
         return pf.has || view === 'draft' || view === 'profile' ? { ...det, ...side, hasSel: false, noSel: true, pf } : { ...det, ...side, pf }; })(),
+      heroRef: r => { this._hero = r; }, onHeroKey: e => { if (e.key === 'Enter') { const v = (e.target.value || '').trim(); if (v) { if (isOmniUrl(v)) omniOpen(v); else omniGo(v); } } },
+      onHeroGo: () => { const v = ((this._hero && this._hero.value) || '').trim(); if (v) { if (isOmniUrl(v)) omniOpen(v); else omniGo(v); } },
+      showSettings: S.showSettings, openSettings: () => this.setState({ showSettings: true }), closeSettings: () => this.setState({ showSettings: false }), closeSettingsBg: e => { if (e.target === e.currentTarget) this.setState({ showSettings: false }); },
+      acctLabel: (this._net && this._net.s && !this._net.s.guest) ? (this._net.s.ephemeral ? 'Temporary' : this._net.s.user) : 'Local', acctOn: !!(this._net && this._net.s && !this._net.s.guest),
       showAdd: S.showAdd, draftTitle: S.draftTitle, draftYear: S.draftYear, draftText: S.draftText,
       onDraftTitle: e => this.setState({ draftTitle: e.target.value }), onDraftYear: e => this.setState({ draftYear: e.target.value }), onDraftText: e => this.setState({ draftText: e.target.value }),
       add: S.showAdd ? this.addVals() : undefined,
