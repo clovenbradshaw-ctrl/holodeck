@@ -6,7 +6,7 @@
 const STAGES = {
   bytes: ['Bytes', '--dim'], decode: ['Decode', '--pink'], text: ['Text', '--blue'], sentences: ['Statements', '--ink2'],
   names: ['Names', '--acc'], figures: ['Figures', '--amber'], dates: ['Dates', '--date'], frame: ['Frame', '--green'],
-  canon: ['Identity', '--acc2'], junk: ['Keep or set aside', '--mut'], echo: ['Echoes', '--blue'], store: ['Store', '--mut'],
+   canon: ['Identity', '--acc2'], junk: ['Keep or set aside', '--mut'], echo: ['Echoes', '--blue'], store: ['Store', '--mut'], hang: ['Hang', '--date'],
   holograph: ['Holograph', '--acc'], null: ['Null', '--amber'], fort: ['Fort', '--amber'], paradigm: ['Paradigm', '--pink'], engine: ['Engine', '--acc2'],
 };
 const REAL_SPEEDS = [[1, '1×'], [0.1, '1/10×'], [0.01, '1/100×'], [0.001, '1/1,000×'], [1e-4, '1/10,000×'], [1e-5, '1/100,000×']];

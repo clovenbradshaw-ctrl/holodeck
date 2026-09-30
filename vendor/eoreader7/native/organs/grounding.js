@@ -48,7 +48,16 @@ async function __loadCanonGround() {
   }
   return __canonGround;
 }
-const __groundingGround = __isNode ? (await __loadCanonGround()).mechanics.find((m) => m.id === "grounding") : null;
+// canon-ground.mjs is not part of this vendoring (see VENDORING.md's Ask-the-Fold
+// row): under Node it is loaded best-effort, and any failure -- missing file,
+// missing canon data on disk, a parse error -- degrades to the same "ground is
+// simply absent" state the browser path already has, rather than crashing the
+// whole module at import time.
+let __groundingGround = null;
+if (__isNode) {
+  try { __groundingGround = (await __loadCanonGround()).mechanics.find((m) => m.id === "grounding") ?? null; }
+  catch (e) { __groundingGround = null; }
+}
 export const GROUND = __groundingGround ? __groundingGround.ground : null;
 export const GROUND_REF = __groundingGround ? __groundingGround.ref : null;
 //

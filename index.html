@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
 <script src="./holodeck-region.js"></script>
+<script src="./holodeck-hang.js"></script>
 </head>
 <body>
 <x-dc>
@@ -52,6 +53,7 @@ select option{background:var(--s1);color:var(--ink)}
           </button>
         </sc-for>
       </div>
+      <sc-if value="{{ hasContent }}" hint-placeholder-val="{{ false }}">
       <div style="display:flex;flex-direction:column;gap:1px;padding:10px 0 12px;border-top:1px solid var(--line)">
         <span style="font:600 12px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--acc);padding:2px 12px 6px">{{ navRead.label }}</span>
         <sc-for list="{{ navRead.items }}" as="g" hint-placeholder-count="3">
@@ -99,6 +101,7 @@ select option{background:var(--s1);color:var(--ink)}
           </sc-for>
         </div>
       </sc-for>
+      </sc-if>
     </nav>
     </sc-if>
   </div>
@@ -568,75 +571,144 @@ select option{background:var(--s1);color:var(--ink)}
             </sc-if>
             <sc-if value="{{ ak.showCells }}" hint-placeholder-val="{{ true }}">
             <sc-for list="{{ ak.turns }}" as="t" hint-placeholder-count="0">
-              <div style="display:flex;flex-direction:column" data-cell="{{ t.i }}">
-                <div style="display:flex;gap:10px;align-items:baseline;background:var(--s2);border:1px solid var(--line);border-bottom:0;border-radius:12px 12px 0 0;padding:9px 16px;flex-wrap:wrap">
-                  <span style="font:600 11px 'JetBrains Mono';color:var(--acc);white-space:nowrap">In [{{ t.n }}]</span>
-                  <sc-if value="{{ ak.mChat }}" hint-placeholder-val="{{ true }}"><span style="font:500 18px/1.35 'Newsreader',serif;color:var(--ink);text-wrap:pretty;min-width:0;flex:1">{{ t.q }}</span></sc-if>
-                  <sc-if value="{{ ak.mNb }}" hint-placeholder-val="{{ false }}">
-                    <textarea defaultValue="{{ t.q }}" rows="1" title="Edit, then Run to re-ask with this text" style="flex:1;min-width:0;background:var(--s1);border:1px solid var(--line2);border-radius:6px;resize:vertical;font:400 14px/1.4 'JetBrains Mono';color:var(--ink);outline:none;padding:4px 8px"></textarea>
-                    <button onClick="{{ t.onRun }}" title="Run this cell — re-asks with the text above" style="flex:none;background:#8b5cf6;border:0;color:#fff;border-radius:6px;padding:4px 12px;cursor:pointer;font:600 13px 'Hanken Grotesk'">Run</button>
-                  </sc-if>
-                </div>
-                <section style="background:var(--s1);border:1px solid var(--line);border-radius:0 0 14px 14px;padding:14px 18px 16px;display:flex;flex-direction:column;gap:12px">
-                  <sc-if value="{{ t.hasRes }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ t.resLines }}" as="x" hint-placeholder-count="0"><span style="font:500 12px 'JetBrains Mono';color:{{ x.col }}">{{ x.t }}</span></sc-for></sc-if>
-                  <sc-if value="{{ t.hasNotesLine }}" hint-placeholder-val="{{ false }}">
-                    <details style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:8px 12px">
-                      <summary style="cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2)"><span style="font:600 11px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc);margin-right:8px">What the model was given</span>{{ t.notesLine }}</summary>
-                      <sc-if value="{{ t.hasNotes }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:2px;padding-top:8px"><sc-for list="{{ t.notesLines }}" as="x" hint-placeholder-count="0"><span style="font:400 13px/1.5 'JetBrains Mono';color:var(--ink2)">{{ x.l }}</span></sc-for></div></sc-if>
-                    </details>
-                  </sc-if>
-                  <sc-if value="{{ t.hasRd }}" hint-placeholder-val="{{ false }}">
-                    <div style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">
-                      <span style="font:600 11px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">From the reader’s pass over the corpus, not the model</span>
-                      <sc-for list="{{ t.rdLines }}" as="x" hint-placeholder-count="0"><button onClick="{{ x.onClick }}" style="all:unset;cursor:pointer;font:400 14px/1.45 'Hanken Grotesk';color:var(--ink2)" style-hover="color:var(--acc)">{{ x.t }}</button></sc-for>
-                    </div>
-                  </sc-if>
-                  <sc-if value="{{ t.hasComp }}" hint-placeholder-val="{{ false }}">
-                    <div style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">
-                      <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><span style="font:600 11px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">Counted from Records, not by the model</span><button onClick="{{ t.onComp }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="text-decoration:underline">Open in Records →</button></div>
-                      <span style="font:600 14px 'Hanken Grotesk';color:var(--ink)">{{ t.compHead }}</span>
-                      <sc-for list="{{ t.compLines }}" as="x" hint-placeholder-count="0"><span style="font:400 13px 'JetBrains Mono';color:var(--ink2)">{{ x.l }}</span></sc-for>
-                      <span style="font:400 12px 'Hanken Grotesk';color:var(--dim)">{{ t.compSaid }}</span>
-                    </div>
-                  </sc-if>
-                  <p style="margin:0;font:400 17px/1.65 'Newsreader',serif;color:var(--ink);text-wrap:pretty"><sc-for list="{{ t.sents }}" as="x" hint-placeholder-count="3"><span style="text-decoration:{{ x.deco }};text-underline-offset:4px;text-decoration-thickness:1px">{{ x.t }}</span><sc-if value="{{ x.hasSrc }}" hint-placeholder-val="{{ false }}"><button onClick="{{ x.onSrc }}" title="Read the passage this sentence matches" style="all:unset;cursor:pointer;vertical-align:super;font:600 11px 'JetBrains Mono';color:var(--acc);margin:0 4px 0 -2px" style-hover="text-decoration:underline">{{ x.n }}</button></sc-if></sc-for></p>
-                  <sc-if value="{{ t.hasBad }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px 'Hanken Grotesk';color:var(--amber)">Not in the material: {{ t.bad }}</span></sc-if>
-                  <sc-if value="{{ t.noMaterial }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px 'Hanken Grotesk';color:var(--mut)">No passage shared a word with the question, so the model answered without material. Nothing here carries an address.</span></sc-if>
-                  <sc-if value="{{ t.hasSrcs }}" hint-placeholder-val="{{ false }}">
-                    <div style="display:flex;flex-direction:column">
-                      <sc-for list="{{ t.srcs }}" as="x" hint-placeholder-count="2">
-                        <div style="display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px 10px;border-top:1px solid var(--line);padding:10px 0">
-                          <span style="font:600 12px 'JetBrains Mono';color:var(--acc)">{{ x.n }}</span>
-                          <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
-                            <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline"><span style="font:600 14px/1.35 'Hanken Grotesk';color:var(--ink);min-width:0">{{ x.title }}</span><span style="font:500 12px 'JetBrains Mono';color:var(--mut);white-space:nowrap">{{ x.date }}</span></div>
-                            <span style="font:400 15px/1.5 'Newsreader',serif;color:var(--ink2);text-wrap:pretty">{{ x.text }}</span>
-                            <div style="display:flex;gap:14px"><sc-if value="{{ x.canPin }}" hint-placeholder-val="{{ false }}"><button onClick="{{ x.onPin }}" style="all:unset;cursor:pointer;font:600 13px 'Hanken Grotesk';color:{{ x.pinColor }}" style-hover="text-decoration:underline">{{ x.pinLabel }}</button></sc-if><button onClick="{{ x.onRead }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="text-decoration:underline">Read in context →</button></div>
-                          </div>
-                        </div>
-                      </sc-for>
-                    </div>
-                  </sc-if>
-                  <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px">
-                    <span style="font:500 12px 'JetBrains Mono';color:var(--ink2);flex:1;min-width:0">{{ t.rec }}</span>
-                    <sc-if value="{{ t.canGen }}" hint-placeholder-val="{{ false }}"><button onClick="{{ t.onGen }}" title="Turn this answer’s cited passages into a Draft document" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="border-color:var(--acc)">Generate a document →</button></sc-if>
+              <sc-if value="{{ ak.mChat }}" hint-placeholder-val="{{ false }}">
+                <!-- Chat mode: Claude-style bubbles, no cell numbering -->
+                <div style="display:flex;flex-direction:column;gap:6px" data-cell="{{ t.i }}">
+                  <div style="display:flex;justify-content:flex-end;padding:2px 0">
+                    <div style="background:#8b5cf6;color:#fff;border-radius:20px 20px 4px 20px;padding:11px 16px;max-width:85%;font:400 16px/1.5 ‘Hanken Grotesk’;word-break:break-word">{{ t.q }}</div>
                   </div>
-                  <span style="font:400 12px 'JetBrains Mono';color:var(--dim)">Folded to: {{ t.fold }}</span>
-                  <span style="font:400 12px 'JetBrains Mono';color:var(--dim)">{{ t.meter }} · {{ t.meta }}</span>
-                </section>
-              </div>
+                  <div style="display:flex;flex-direction:column;gap:12px;padding:6px 0 14px 2px">
+                    <sc-if value="{{ t.hasRes }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ t.resLines }}" as="x" hint-placeholder-count="0"><span style="font:500 12px ‘JetBrains Mono’;color:{{ x.col }}">{{ x.t }}</span></sc-for></sc-if>
+                    <sc-if value="{{ t.hasNotesLine }}" hint-placeholder-val="{{ false }}">
+                      <details style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:8px 12px">
+                        <summary style="cursor:pointer;font:500 13px ‘Hanken Grotesk’;color:var(--ink2)"><span style="font:600 11px ‘JetBrains Mono’;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);margin-right:8px">What the model was given</span>{{ t.notesLine }}</summary>
+                        <sc-if value="{{ t.hasNotes }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:2px;padding-top:8px"><sc-for list="{{ t.notesLines }}" as="x" hint-placeholder-count="0"><span style="font:400 13px/1.5 ‘JetBrains Mono’;color:var(--ink2)">{{ x.l }}</span></sc-for></div></sc-if>
+                      </details>
+                    </sc-if>
+                    <sc-if value="{{ t.hasRd }}" hint-placeholder-val="{{ false }}">
+                      <div style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">
+                        <span style="font:600 11px ‘JetBrains Mono’;letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">From the reader’s pass over the corpus, not the model</span>
+                        <sc-for list="{{ t.rdLines }}" as="x" hint-placeholder-count="0"><button onClick="{{ x.onClick }}" style="all:unset;cursor:pointer;font:400 14px/1.45 ‘Hanken Grotesk’;color:var(--ink2)" style-hover="color:var(--acc)">{{ x.t }}</button></sc-for>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ t.hasComp }}" hint-placeholder-val="{{ false }}">
+                      <div style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">
+                        <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><span style="font:600 11px ‘JetBrains Mono’;letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">Counted from Records, not by the model</span><button onClick="{{ t.onComp }}" style="all:unset;cursor:pointer;font:500 13px ‘Hanken Grotesk’;color:var(--acc)" style-hover="text-decoration:underline">Open in Records →</button></div>
+                        <span style="font:600 14px ‘Hanken Grotesk’;color:var(--ink)">{{ t.compHead }}</span>
+                        <sc-for list="{{ t.compLines }}" as="x" hint-placeholder-count="0"><span style="font:400 13px ‘JetBrains Mono’;color:var(--ink2)">{{ x.l }}</span></sc-for>
+                        <span style="font:400 12px ‘Hanken Grotesk’;color:var(--dim)">{{ t.compSaid }}</span>
+                      </div>
+                    </sc-if>
+                    <p style="margin:0;font:400 17px/1.65 ‘Newsreader’,serif;color:var(--ink);text-wrap:pretty"><sc-for list="{{ t.sents }}" as="x" hint-placeholder-count="3"><span style="text-decoration:{{ x.deco }};text-underline-offset:4px;text-decoration-thickness:1px">{{ x.t }}</span><sc-if value="{{ x.hasSrc }}" hint-placeholder-val="{{ false }}"><button onClick="{{ x.onSrc }}" title="Read the passage this sentence matches" style="all:unset;cursor:pointer;vertical-align:super;font:600 11px ‘JetBrains Mono’;color:var(--acc);margin:0 4px 0 -2px" style-hover="text-decoration:underline">{{ x.n }}</button></sc-if></sc-for></p>
+                    <sc-if value="{{ t.hasBad }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px ‘Hanken Grotesk’;color:var(--amber)">Not in the material: {{ t.bad }}</span></sc-if>
+                    <sc-if value="{{ t.noMaterial }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px ‘Hanken Grotesk’;color:var(--mut)">No passage shared a word with the question, so the model answered without material. Nothing here carries an address.</span></sc-if>
+                    <sc-if value="{{ t.hasSrcs }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;flex-direction:column">
+                        <sc-for list="{{ t.srcs }}" as="x" hint-placeholder-count="2">
+                          <div style="display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px 10px;border-top:1px solid var(--line);padding:10px 0">
+                            <span style="font:600 12px ‘JetBrains Mono’;color:var(--acc)">{{ x.n }}</span>
+                            <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+                              <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline"><span style="font:600 14px/1.35 ‘Hanken Grotesk’;color:var(--ink);min-width:0">{{ x.title }}</span><span style="font:500 12px ‘JetBrains Mono’;color:var(--mut);white-space:nowrap">{{ x.date }}</span></div>
+                              <span style="font:400 15px/1.5 ‘Newsreader’,serif;color:var(--ink2);text-wrap:pretty">{{ x.text }}</span>
+                              <div style="display:flex;gap:14px"><sc-if value="{{ x.canPin }}" hint-placeholder-val="{{ false }}"><button onClick="{{ x.onPin }}" style="all:unset;cursor:pointer;font:600 13px ‘Hanken Grotesk’;color:{{ x.pinColor }}" style-hover="text-decoration:underline">{{ x.pinLabel }}</button></sc-if><button onClick="{{ x.onRead }}" style="all:unset;cursor:pointer;font:500 13px ‘Hanken Grotesk’;color:var(--acc)" style-hover="text-decoration:underline">Read in context →</button></div>
+                            </div>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                    <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;padding-top:4px">
+                      <span style="font:500 12px ‘JetBrains Mono’;color:var(--dim);flex:1;min-width:0">{{ t.rec }}</span>
+                      <sc-if value="{{ t.canGen }}" hint-placeholder-val="{{ false }}"><button onClick="{{ t.onGen }}" title="Turn this answer’s cited passages into a Draft document" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:4px 12px;cursor:pointer;font:500 13px ‘Hanken Grotesk’;color:var(--acc)" style-hover="border-color:var(--acc)">Generate a document →</button></sc-if>
+                    </div>
+                    <span style="font:400 12px ‘JetBrains Mono’;color:var(--dim)">{{ t.fold }}</span>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ ak.mNb }}" hint-placeholder-val="{{ true }}">
+                <!-- Notebook mode: current cell structure with In[n] header -->
+                <div style="display:flex;flex-direction:column" data-cell="{{ t.i }}">
+                  <div style="display:flex;gap:10px;align-items:baseline;background:var(--s2);border:1px solid var(--line);border-bottom:0;border-radius:12px 12px 0 0;padding:9px 16px;flex-wrap:wrap">
+                    <span style="font:600 11px ‘JetBrains Mono’;color:var(--acc);white-space:nowrap">In [{{ t.n }}]</span>
+                    <textarea defaultValue="{{ t.q }}" rows="1" title="Edit, then Run to re-ask with this text" style="flex:1;min-width:0;background:var(--s1);border:1px solid var(--line2);border-radius:6px;resize:vertical;font:400 14px/1.4 ‘JetBrains Mono’;color:var(--ink);outline:none;padding:4px 8px"></textarea>
+                    <button onClick="{{ t.onRun }}" title="Run this cell — re-asks with the text above" style="flex:none;background:#8b5cf6;border:0;color:#fff;border-radius:6px;padding:4px 12px;cursor:pointer;font:600 13px ‘Hanken Grotesk’">Run</button>
+                  </div>
+                  <section style="background:var(--s1);border:1px solid var(--line);border-radius:0 0 14px 14px;padding:14px 18px 16px;display:flex;flex-direction:column;gap:12px">
+                    <sc-if value="{{ t.hasRes }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ t.resLines }}" as="x" hint-placeholder-count="0"><span style="font:500 12px ‘JetBrains Mono’;color:{{ x.col }}">{{ x.t }}</span></sc-for></sc-if>
+                    <sc-if value="{{ t.hasNotesLine }}" hint-placeholder-val="{{ false }}">
+                      <details style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:8px 12px">
+                        <summary style="cursor:pointer;font:500 13px ‘Hanken Grotesk’;color:var(--ink2)"><span style="font:600 11px ‘JetBrains Mono’;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);margin-right:8px">What the model was given</span>{{ t.notesLine }}</summary>
+                        <sc-if value="{{ t.hasNotes }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:2px;padding-top:8px"><sc-for list="{{ t.notesLines }}" as="x" hint-placeholder-count="0"><span style="font:400 13px/1.5 ‘JetBrains Mono’;color:var(--ink2)">{{ x.l }}</span></sc-for></div></sc-if>
+                      </details>
+                    </sc-if>
+                    <sc-if value="{{ t.hasRd }}" hint-placeholder-val="{{ false }}">
+                      <div style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">
+                        <span style="font:600 11px ‘JetBrains Mono’;letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">From the reader’s pass over the corpus, not the model</span>
+                        <sc-for list="{{ t.rdLines }}" as="x" hint-placeholder-count="0"><button onClick="{{ x.onClick }}" style="all:unset;cursor:pointer;font:400 14px/1.45 ‘Hanken Grotesk’;color:var(--ink2)" style-hover="color:var(--acc)">{{ x.t }}</button></sc-for>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ t.hasComp }}" hint-placeholder-val="{{ false }}">
+                      <div style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">
+                        <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><span style="font:600 11px ‘JetBrains Mono’;letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">Counted from Records, not by the model</span><button onClick="{{ t.onComp }}" style="all:unset;cursor:pointer;font:500 13px ‘Hanken Grotesk’;color:var(--acc)" style-hover="text-decoration:underline">Open in Records →</button></div>
+                        <span style="font:600 14px ‘Hanken Grotesk’;color:var(--ink)">{{ t.compHead }}</span>
+                        <sc-for list="{{ t.compLines }}" as="x" hint-placeholder-count="0"><span style="font:400 13px ‘JetBrains Mono’;color:var(--ink2)">{{ x.l }}</span></sc-for>
+                        <span style="font:400 12px ‘Hanken Grotesk’;color:var(--dim)">{{ t.compSaid }}</span>
+                      </div>
+                    </sc-if>
+                    <p style="margin:0;font:400 17px/1.65 ‘Newsreader’,serif;color:var(--ink);text-wrap:pretty"><sc-for list="{{ t.sents }}" as="x" hint-placeholder-count="3"><span style="text-decoration:{{ x.deco }};text-underline-offset:4px;text-decoration-thickness:1px">{{ x.t }}</span><sc-if value="{{ x.hasSrc }}" hint-placeholder-val="{{ false }}"><button onClick="{{ x.onSrc }}" title="Read the passage this sentence matches" style="all:unset;cursor:pointer;vertical-align:super;font:600 11px ‘JetBrains Mono’;color:var(--acc);margin:0 4px 0 -2px" style-hover="text-decoration:underline">{{ x.n }}</button></sc-if></sc-for></p>
+                    <sc-if value="{{ t.hasBad }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px ‘Hanken Grotesk’;color:var(--amber)">Not in the material: {{ t.bad }}</span></sc-if>
+                    <sc-if value="{{ t.noMaterial }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px ‘Hanken Grotesk’;color:var(--mut)">No passage shared a word with the question, so the model answered without material. Nothing here carries an address.</span></sc-if>
+                    <sc-if value="{{ t.hasSrcs }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;flex-direction:column">
+                        <sc-for list="{{ t.srcs }}" as="x" hint-placeholder-count="2">
+                          <div style="display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px 10px;border-top:1px solid var(--line);padding:10px 0">
+                            <span style="font:600 12px ‘JetBrains Mono’;color:var(--acc)">{{ x.n }}</span>
+                            <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+                              <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline"><span style="font:600 14px/1.35 ‘Hanken Grotesk’;color:var(--ink);min-width:0">{{ x.title }}</span><span style="font:500 12px ‘JetBrains Mono’;color:var(--mut);white-space:nowrap">{{ x.date }}</span></div>
+                              <span style="font:400 15px/1.5 ‘Newsreader’,serif;color:var(--ink2);text-wrap:pretty">{{ x.text }}</span>
+                              <div style="display:flex;gap:14px"><sc-if value="{{ x.canPin }}" hint-placeholder-val="{{ false }}"><button onClick="{{ x.onPin }}" style="all:unset;cursor:pointer;font:600 13px ‘Hanken Grotesk’;color:{{ x.pinColor }}" style-hover="text-decoration:underline">{{ x.pinLabel }}</button></sc-if><button onClick="{{ x.onRead }}" style="all:unset;cursor:pointer;font:500 13px ‘Hanken Grotesk’;color:var(--acc)" style-hover="text-decoration:underline">Read in context →</button></div>
+                            </div>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                    <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px">
+                      <span style="font:500 12px ‘JetBrains Mono’;color:var(--ink2);flex:1;min-width:0">{{ t.rec }}</span>
+                      <sc-if value="{{ t.canGen }}" hint-placeholder-val="{{ false }}"><button onClick="{{ t.onGen }}" title="Turn this answer’s cited passages into a Draft document" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:4px 12px;cursor:pointer;font:500 13px ‘Hanken Grotesk’;color:var(--acc)" style-hover="border-color:var(--acc)">Generate a document →</button></sc-if>
+                    </div>
+                    <span style="font:400 12px ‘JetBrains Mono’;color:var(--dim)">Folded to: {{ t.fold }}</span>
+                    <span style="font:400 12px ‘JetBrains Mono’;color:var(--dim)">{{ t.meter }} · {{ t.meta }}</span>
+                  </section>
+                </div>
+              </sc-if>
             </sc-for>
             <sc-if value="{{ ak.hasPending }}" hint-placeholder-val="{{ false }}">
-              <div data-cell="pending" style="display:flex;flex-direction:column">
-                <div style="display:flex;gap:10px;align-items:baseline;background:var(--s2);border:1px solid #8b5cf6;border-bottom:0;border-radius:12px 12px 0 0;padding:9px 16px;flex-wrap:wrap">
-                  <span style="font:600 11px 'JetBrains Mono';color:var(--acc);white-space:nowrap">In [{{ ak.nextN }}]</span>
-                  <span style="font:500 18px/1.35 'Newsreader',serif;color:var(--ink);text-wrap:pretty;min-width:0;flex:1">{{ ak.pendingQ }}</span>
+              <sc-if value="{{ ak.mChat }}" hint-placeholder-val="{{ false }}">
+                <!-- Chat mode pending -->
+                <div data-cell="pending" style="display:flex;flex-direction:column;gap:6px">
+                  <div style="display:flex;justify-content:flex-end;padding:2px 0">
+                    <div style="background:#8b5cf6;color:#fff;border-radius:20px 20px 4px 20px;padding:11px 16px;max-width:85%;font:400 16px/1.5 ‘Hanken Grotesk’">{{ ak.pendingQ }}</div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:8px;padding:6px 0 14px 2px">
+                    <sc-if value="{{ ak.hasPendComp }}" hint-placeholder-val="{{ false }}"><span style="font:500 13px ‘JetBrains Mono’;color:var(--acc)">Counted from Records · {{ ak.pendComp }}</span></sc-if>
+                    <sc-if value="{{ ak.hasStream }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font:400 17px/1.6 ‘Newsreader’,serif;color:var(--ink2);white-space:pre-wrap;text-wrap:pretty">{{ ak.stream }}</p></sc-if>
+                    <span style="font:500 13px ‘Hanken Grotesk’;color:var(--mut)">{{ ak.stage }}</span>
+                  </div>
                 </div>
-                <section style="background:var(--s1);border:1px solid #8b5cf6;border-radius:0 0 14px 14px;padding:14px 18px 16px;display:flex;flex-direction:column;gap:10px">
-                  <sc-if value="{{ ak.hasPendComp }}" hint-placeholder-val="{{ false }}"><span style="font:500 13px 'JetBrains Mono';color:var(--acc)">Counted from Records · {{ ak.pendComp }}</span></sc-if>
-                  <sc-if value="{{ ak.hasStream }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font:400 17px/1.6 'Newsreader',serif;color:var(--ink2);white-space:pre-wrap;text-wrap:pretty">{{ ak.stream }}</p></sc-if>
-                  <span style="font:500 13px 'Hanken Grotesk';color:var(--mut)">{{ ak.stage }}</span>
-                </section>
-              </div>
+              </sc-if>
+              <sc-if value="{{ ak.mNb }}" hint-placeholder-val="{{ true }}">
+                <!-- Notebook mode pending -->
+                <div data-cell="pending" style="display:flex;flex-direction:column">
+                  <div style="display:flex;gap:10px;align-items:baseline;background:var(--s2);border:1px solid #8b5cf6;border-bottom:0;border-radius:12px 12px 0 0;padding:9px 16px;flex-wrap:wrap">
+                    <span style="font:600 11px ‘JetBrains Mono’;color:var(--acc);white-space:nowrap">In [{{ ak.nextN }}]</span>
+                    <span style="font:500 18px/1.35 ‘Newsreader’,serif;color:var(--ink);text-wrap:pretty;min-width:0;flex:1">{{ ak.pendingQ }}</span>
+                  </div>
+                  <section style="background:var(--s1);border:1px solid #8b5cf6;border-radius:0 0 14px 14px;padding:14px 18px 16px;display:flex;flex-direction:column;gap:10px">
+                    <sc-if value="{{ ak.hasPendComp }}" hint-placeholder-val="{{ false }}"><span style="font:500 13px ‘JetBrains Mono’;color:var(--acc)">Counted from Records · {{ ak.pendComp }}</span></sc-if>
+                    <sc-if value="{{ ak.hasStream }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font:400 17px/1.6 ‘Newsreader’,serif;color:var(--ink2);white-space:pre-wrap;text-wrap:pretty">{{ ak.stream }}</p></sc-if>
+                    <span style="font:500 13px ‘Hanken Grotesk’;color:var(--mut)">{{ ak.stage }}</span>
+                  </section>
+                </div>
+              </sc-if>
             </sc-if>
             <sc-if value="{{ ak.hasErr }}" hint-placeholder-val="{{ false }}"><span style="font:400 14px 'Hanken Grotesk';color:var(--bad)">{{ ak.err }}</span></sc-if>
             <div id="ak-composer" style="position:sticky;bottom:0;z-index:12;background:var(--hdr);backdrop-filter:blur(8px);padding:10px 0 2px;border-top:1px solid var(--line)">
@@ -716,14 +788,14 @@ select option{background:var(--s1);color:var(--ink)}
           <section style="background:var(--sel);border:1px solid #8b5cf6;border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
             <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">Research task · fill this workspace</span>
             <span style="font:400 14px/1.5 'Hanken Grotesk';color:var(--ink2)">Describe what this workspace should learn and run it. Seed URLs below are fetched first; web, Wikipedia and YouTube search land next. Nothing leaves your browser except the searches and page fetches themselves.</span>
-            <textarea onChange="{{ ing.task.onBrief }}" rows="3" placeholder="e.g. What caused the Key Bridge collapse, who found it, and what the replacement will cost and when it opens?" style="background:var(--s1);border:1px solid var(--line2);border-radius:8px;resize:vertical;font:400 14px/1.5 'Hanken Grotesk';color:var(--ink);outline:none;padding:8px 10px">{{ ing.task.brief }}</textarea>
+            <textarea onChange="{{ ing.task.onBrief }}" rows="3" placeholder="e.g. What caused the Key Bridge collapse, who found it, and what the replacement will cost and when it opens?" style="background:var(--s1);border:1px solid var(--line2);border-radius:8px;resize:vertical;font:400 14px/1.5 'Hanken Grotesk';color:var(--ink);outline:none;padding:8px 10px" defaultValue="{{ ing.task.brief }}"></textarea>
             <div style="display:flex;gap:14px;flex-wrap:wrap;font:500 13px 'Hanken Grotesk';color:var(--ink2)">
               <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" checked="{{ ing.task.wantWeb }}" onChange="{{ ing.task.onWeb }}">Web search</label>
               <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" checked="{{ ing.task.wantWiki }}" onChange="{{ ing.task.onWiki }}">Wikipedia</label>
               <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" checked="{{ ing.task.wantYt }}" onChange="{{ ing.task.onYt }}">YouTube</label>
               <label style="display:flex;align-items:center;gap:6px">Target <input value="{{ ing.task.wantN }}" onChange="{{ ing.task.onN }}" style="width:52px;background:var(--s1);border:1px solid var(--line2);border-radius:6px;padding:3px 8px;color:var(--ink);outline:none"> sources</label>
             </div>
-            <textarea onChange="{{ ing.task.onUrls }}" rows="2" placeholder="Seed URLs, one per line (optional) — always fetched first">{{ ing.task.urls }}</textarea>
+            <textarea onChange="{{ ing.task.onUrls }}" rows="2" placeholder="Seed URLs, one per line (optional) — always fetched first" defaultValue="{{ ing.task.urls }}"></textarea>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button onClick="{{ ing.task.onRun }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 14px;cursor:pointer;font:600 14px 'Hanken Grotesk'">{{ ing.task.runLabel }}</button><span style="font:400 13px 'Hanken Grotesk';color:var(--mut)">{{ ing.task.status }}</span></div>
             <sc-if value="{{ ing.task.hasQueries }}" hint-placeholder-val="{{ false }}"><span style="font:400 12px 'JetBrains Mono';color:var(--mut)">Queries: {{ ing.task.queries }}</span></sc-if>
             <sc-if value="{{ ing.task.hasLog }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:3px;border-top:1px solid var(--line);padding-top:8px"><sc-for list="{{ ing.task.log }}" as="l" hint-placeholder-count="3"><span style="font:400 12px/1.4 'JetBrains Mono';color:{{ l.col }}">{{ l.t }} {{ l.msg }}</span></sc-for></div></sc-if>
@@ -3102,9 +3174,10 @@ class Component extends DCLogic {
     let text = (dt.getData('text/plain') || '').trim(); const html = dt.getData('text/html') || '';
     if (!text) text = ((dt.getData('text/uri-list') || '').split('\n').find(l => l && l[0] !== '#') || '').trim();
     const title = dt.getData('application/x-fold-title'); const year = +dt.getData('application/x-fold-year') || null; const fallback = dt.getData('application/x-fold-fallback') || null;
-    if (text || html) hdTraceStart(/^https?:\/\/\S+$/.test(text) ? text : 'pasted text'); if (text || html) hdT('bytes', 'paste', 'Received ' + (html && html.length > text.length * 0.8 ? html.length.toLocaleString() + ' characters of HTML' : text.length.toLocaleString() + ' characters of plain text'));
+    if (text || html) hdTraceStart(/^https?:\/\/\S+$/.test(text) ? text : 'pasted text'); if (text || html) hdT('bytes', 'paste', 'Received ' + (html && html.length > text.length ? html.length.toLocaleString() + ' characters of HTML' : text.length.toLocaleString() + ' characters of plain text'));
     if (/^https?:\/\/\S+$/.test(text)) return this.ingestUrl(text, { title, year, fallback });
-    if (html && html.length > text.length * 0.8) { const clean = sanitizeHtml(html); if (htmlToText(clean).trim()) return this.addDocs([{ title: title || short(text.replace(/\s+/g, ' '), 48), year: year || new Date().getFullYear(), type: 'Dropped text', format: 'html', html: clean }]); }
+    // Markup adds bytes, so an HTML flavor carrying formatting exceeds the bare text — structural, no ratio.
+    if (html && html.length > text.length) { const clean = sanitizeHtml(html); if (htmlToText(clean).trim()) return this.addDocs([{ title: title || short(text.replace(/\s+/g, ' '), 48), year: year || new Date().getFullYear(), type: 'Dropped text', format: 'html', html: clean }]); }
     if (!text) return;
     this.addDocs([{ title: title || short(text.replace(/\s+/g, ' '), 48), year: year || new Date().getFullYear(), type: title ? 'Text' : 'Dropped text', text }]);
   }
@@ -3803,7 +3876,7 @@ class Component extends DCLogic {
       modes: (() => { const akMode = S.akMode || 'chat'; const seg = on => ({ bg: on ? 'var(--sel)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)' });
         return [['chat', 'Chat'], ['generate', 'Generate'], ['notebook', 'Notebook']].map(([k, l]) => ({ label: l, ...seg(akMode === k), onClick: () => this.setState({ akMode: k }) })); })(),
       mChat: (S.akMode || 'chat') === 'chat', mGen: S.akMode === 'generate', mNb: S.akMode === 'notebook', showCells: S.akMode !== 'generate',
-      modeNote: S.akMode === 'generate' ? 'Build a sourced document — the answers you ask for, laid out by kind.' : S.akMode === 'notebook' ? 'Every cell can be edited and re-run; the output of each run stays below its cell.' : 'The conversation — every answer checked against its passages.',
+      modeNote: S.akMode === 'generate' ? 'Build a sourced document — the answers you ask for, laid out by kind.' : S.akMode === 'notebook' ? 'Every cell can be edited and re-run; the output of each run stays below its cell.' : 'A conversation over the sources — every sentence traced back to its material.',
       gKinds: [['brief', 'Brief'], ['timeline', 'Timeline']].map(([k, l]) => { const on = (S.gKind || 'brief') === k; return { label: l, bg: on ? 'var(--sel)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)', onClick: () => this.setState({ gKind: k }) }; }),
       gModes: [['mech', 'Quotes'], ['model', 'Model']].map(([k, l]) => { const on = (S.gMode || 'mech') === k; return { label: l, bg: on ? 'var(--sel)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)', onClick: () => this.setState({ gMode: k }) }; }),
       gSubj: S.gSubj != null ? S.gSubj : '', onGSubj: e => this.setState({ gSubj: e.target.value }),
@@ -3924,8 +3997,17 @@ class Component extends DCLogic {
       T.status = 'Fetching ' + urls.length + ' seed URL' + (urls.length === 1 ? '' : 's') + '…';
       let done = 0, failed = 0;
       for (const u of urls) { try { await this.ingestUrl(u, {}); done++; this.taskLog('Added ' + u); } catch (e) { failed++; this.taskLog('Could not fetch ' + u + ' (' + (e.message || e) + ')', 'bad'); } }
-      T.status = 'Added ' + done + ' of ' + urls.length + ' seed URL' + (urls.length === 1 ? '' : 's') + (failed ? ' · ' + failed + ' failed' : '') + '. Search-driven acquisition lands next.';
-    } finally { T.running = false; this.forceUpdate(); }
+      T.status = 'Added ' + done + ' of ' + urls.length + ' seed URL' + (urls.length === 1 ? '' : 's') + (failed ? ' · ' + failed + ' failed' : '') + '. Building holograph…';
+      this.forceUpdate();
+      await new Promise(r => setTimeout(r, 0));
+      const A = this.analysis();
+      const refs = A.referents ? A.referents.length : 0;
+      const edges = A.hyperedges ? A.hyperedges.length : 0;
+      T.status = 'Holograph ready — ' + refs + ' referent' + (refs === 1 ? '' : 's') + ', ' + edges + ' bond' + (edges === 1 ? '' : 's') + '.';
+      this.taskLog('Holograph built: ' + refs + ' referents, ' + edges + ' bonds.');
+      T.running = false; this.forceUpdate();
+      this.go('summary');
+    } finally { if (T.running) { T.running = false; this.forceUpdate(); } }
   }
   pinStatement(stId) {
     const A = this.analysis(); const st = A.byId[stId]; if (!st) return; const d = A.docById[st.doc]; const txt = clean(st.text);
@@ -4466,6 +4548,20 @@ class Component extends DCLogic {
     const id = this.corpusId(); const prev = this.analysis();
     { const nu = u => (u || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '').toLowerCase(); const have = {}; prev.docs.forEach(d => { if (d.url) have[nu(d.url)] = d; }); const dup = list.filter(x => x.url && have[nu(x.url)]); if (dup.length) { list = list.filter(x => !(x.url && have[nu(x.url)])); if (!list.length) { HD_TR = null; this.setState({ busy: '', view: 'reader', readDoc: have[nu(dup[0].url)].id, note: 'Already in this workspace — opened it.' }); return; } } }
     const nd = list.map(x => ({ id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: x.title || 'Untitled', year: x.year || null, type: x.type || 'Text', format: x.format || 'text', hasHtml: !!x.html, url: x.url || null, pages: x.pages || null, ...(x.extra || {}), measured: !!x.measured, text: x.format === 'pdf' ? (x.text || '') : x.html ? pageText(x.html, x.format).slice(0, 60000) : (x.text || '') }));
+    // The hang (holodeck-hang.js): which lens reveals the most meaning here, measured per doc, never assumed.
+    // Directions in localStorage hd:hang-directions can prefer one hang over another; every flip is logged.
+    try {
+      if (typeof HDHang !== 'undefined') {
+        const dirs = HDHang.listDirections();
+        nd.forEach((d, i) => {
+          const h = HDHang.readHanging({ text: d.text || '', type: d.type || list[i].type || 'Text', title: d.title }, { directions: dirs });
+          d.hang = h.hang; d.hangId = h.id; d.hangBasis = h.basis;
+          hdT('hang', h.basis === 'measured' ? 'hung' : h.basis === 'direction' ? 'directed' : h.basis, 'Hung \u201c' + hdCut(d.title, 50) + '\u201d as ' + h.hang + ' (' + h.basis + (h.applied.length ? '; direction ' + h.applied.join(',') : '') + '): ' + h.ledger.slice(-2).join(' \u00b7 '), { doc: d.id, hang: h.hang, basis: h.basis });
+        });
+        const w = HDHang.workspaceHang(nd.map(d => ({ hang: d.hang })));
+        if (w.recommendation === 'small-multiples') hdT('hang', 'workspace', 'Mixed kinds (' + w.hangs.join(', ') + '): one panel per kind \u2014 cross-links only where earned', {});
+      }
+    } catch (e) { hdT('hang', 'fail', 'Hang decision failed (' + e.message + '); proceeding unhung'); }
     nd.forEach(d => { d.status = aopt && aopt.open ? 'seen' : 'source'; });
     T.focus = new Set(nd.map(d => d.id)); nd.forEach(d => hdT('store', 'mint', 'Stored \u201c' + hdCut(d.title, 60) + '\u201d as ' + d.id + (list[nd.indexOf(d)].html ? ' \u00b7 full page kept; ' + d.text.length.toLocaleString() + ' characters indexed for search' + (d.text.length >= 60000 ? ' (the cap; the reading below uses the whole page)' : '') : ' \u00b7 ' + d.text.length.toLocaleString() + ' characters kept'), { doc: d.id }));
     nd.forEach((d, i) => { const x = list[i]; if (x.html) { this._html[d.id] = x.html; idbPut('html:' + d.id, x.html).catch(() => {}); } if (x.pdf) idbPut('pdf:' + d.id, x.pdf).catch(() => {}); if (x.buf) idbPut('media:' + d.id, x.buf).catch(() => {}); });
@@ -4881,6 +4977,7 @@ class Component extends DCLogic {
       : svGroup === 'tabs' ? [{ label: '', hasLabel: false, rows: mkRows(rowsAll.filter(r => svTab === '__all' || FAM(r.group) === svTab)) }]
       : srcGroups.map(g => ({ label: g.label + ' · ' + g.n, hasLabel: true, rows: mkRows(rowsAll.filter(r => r.group === g.label)) }));
     const seg = on => ({ bg: on ? 'var(--sel2)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)' });
+    const meetVals = {};
     const svVals = { ...meetVals, srcHiddenNote: this._srcHidden ? plural(this._srcHidden, 'other source') + ' with nothing in this selection ' + (this._srcHidden === 1 ? 'is' : 'are') + ' hidden' : '', svCards: svMode === 'cards', svTable: svMode === 'table', svTabsOn: svGroup === 'tabs',
       svModes: [['cards', 'Cards'], ['table', 'Table']].map(([k, l]) => ({ label: l, ...seg(svMode === k), onClick: () => this.setState({ svMode: k }) })),
       svGroups: [['tabs', 'Tabs by kind'], ['sections', 'Sections by kind'], ['one', 'One list']].map(([k, l]) => ({ label: l, ...seg(svGroup === k), onClick: () => this.setState({ svGroup: k }) })),
@@ -5029,7 +5126,7 @@ class Component extends DCLogic {
       : view === 'reading' ? { eyebrow: 'The constitutional reading', title: 'Every name, found automatically', sub: 'A mechanical pass over every source (no AI) — every name it found, which spellings it merged into the same person or org as evidence came in, and who keeps turning up together.' }
       : view === 'ingest' ? { eyebrow: 'Ingest and publish', title: 'Bring in more, and make it public', sub: 'Find new material, transcribe it here, and publish what you keep.' }
       : view === 'records' ? { eyebrow: 'Assertions', title: 'The workspace as tables', sub: 'Every source, statement, name, figure and date, linked back to where it came from.', color: 'var(--acc)' }
-      : view === 'ask' ? { eyebrow: 'Ask the Fold', title: 'Ask the sources', sub: 'Answered by a small model running in this tab, from passages found by the question’s own words. Afterwards every sentence is checked: a numbered address where it matches a passage, a dotted line where it is the model’s own, a wavy line where a figure or name is not in the material.', color: 'var(--acc)' }
+      : view === 'ask' ? { eyebrow: 'Ask the Fold', title: 'Ask the sources', sub: 'Answered by a small model running in this tab, from material found by the question\'s own words. Afterwards every sentence is checked: a numbered address where it matches something in the sources, a dotted line where it is the model\'s own, a wavy line where a figure or name is not in the material.', color: 'var(--acc)' }
       : view === 'draft' ? { eyebrow: 'Draft', title: 'Claims and the excerpts behind them', sub: 'Private to this browser — pinned passages keep their source.', color: 'var(--acc)' }
       : c ? { eyebrow: c.row + (this.props.showTerrainNames ? ' · ' + c.terrain : ''), title: c.label, sub: c.question, color: c.color }
       : { eyebrow: 'Overview', title: this.corpusName(), sub: plural(docsIn.length, 'document') + ' · ' + plural(F.length, 'statement') + ' · ' + plural(D.nameList.length, 'name') + ' · ' + plural(figCount, 'figure') + '.', color: 'var(--acc)' };
@@ -5289,7 +5386,7 @@ class Component extends DCLogic {
       repo: (() => { const ci = this._corpusInfo || {}, wi = this._wsInfo || {}; const d8 = x => x ? String(x).slice(0, 16).replace('T', ' ') : '';
         const corpusLine = !ci.from ? 'Loading…' : ci.from === 'repo' ? 'Loaded from the shared store · built ' + d8(ci.builtAt) + ' · ' + plural(ci.n || 0, 'source') + (ci.stale ? ' · the custody manifest is newer than this file' : '') + '.' : 'Not in the store — read directly from ' + plural(ci.n || 0, 'capture') + '.';
         const locN = (S.added.ohs || []).length; const wsLine = (wi.found ? 'In the store · saved ' + d8(wi.savedAt) + (wi.merged ? ' · ' + plural(wi.merged, 'source') + ' merged in' : '') + '. ' : 'Not in the store. ') + 'This browser holds ' + plural(locN, 'added source') + ', ' + plural(Object.keys(this.metaAll().ohs || {}).length, 'decision') + ', ' + plural(Object.keys(this.readLog()).length, 'opened source') + '.';
-        return { show: !!S.showRepo, name: OHS_REPO, open: () => this.setState({ showRepo: true, repoMsg: '' }), close: () => this.setState({ showRepo: false }), closeBg: e => { if (e.target === e.currentTarget) this.setState({ showRepo: false }); },
+        return { show: !!S.showRepo, name: 'ohs', open: () => this.setState({ showRepo: true, repoMsg: '' }), close: () => this.setState({ showRepo: false }), closeBg: e => { if (e.target === e.currentTarget) this.setState({ showRepo: false }); },
           dot: ci.from ? 'var(--ok)' : 'var(--mut)', title: 'Read-only source store',
           corpusLine, wsLine, rebuild: () => { this.setState({ showRepo: false }); this.rebuildLive(); }, msg: '', hasMsg: false }; })(),
       openAdd: () => this.setState({ showAdd: true }), closeAdd: () => this.setState({ showAdd: false }),

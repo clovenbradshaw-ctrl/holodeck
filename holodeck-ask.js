@@ -50,7 +50,16 @@ async function chatWebLLM(id, messages, { onToken, format, maxTokens, signal } =
   } finally { if (signal) signal.removeEventListener('abort', onAbort); }
 }
 export const OLLAMA = 'http://localhost:11434';
-const BASE_PROMPT = 'You are helping a reporter read the documents in their workspace: audits, meeting transcripts, reports, pages and records. Answer the question in plain prose. Where the passages below cover it, answer from them. Where they do not, say what is missing instead of filling it in.';
+const BASE_PROMPT = 'Answer the question from the sources in this workspace. Answer in plain prose. Where the material covers it, answer from it. Where it does not, say what is missing instead of filling it in.';
+
+// Derives a prompt grounded in what the workspace actually contains.
+// The framing emerges from the sources rather than being pre-assigned.
+export function buildBasePrompt(IX, summary) {
+  let prompt = BASE_PROMPT;
+  const topic = summary && summary.topic;
+  if (topic) prompt += ' The conversation so far is about: ' + topic + '.';
+  return prompt;
+}
 
 export async function probe(base = OLLAMA) {
   try {
@@ -112,7 +121,7 @@ export async function turn(conv, IX, question, { base = OLLAMA, model = DEFAULT_
     let sb = [facts ? facts.text : null, raw].filter(Boolean).join('\n\n');
     if (reading && reading.text) sb = (sb ? sb + '\n\n' : '') + 'What the reader established about the names asked about:\n' + reading.text;
     if (computed && computed.text) sb = (sb ? sb + '\n\n' : '') + 'Counted from the workspace records:\n' + computed.text;
-    return FOLD.buildTurnMessages({ basePrompt: BASE_PROMPT, summary: conv.summary, history, question, sourceBlock: sb }); };
+    return FOLD.buildTurnMessages({ basePrompt: buildBasePrompt(IX, conv.summary), summary: conv.summary, history, question, sourceBlock: sb }); };
   let offered = ranked.slice(); let messages = build(offered, factBlock);
   while (offered.length > 1 && approxTokens(messages) > ctx - 760) { offered = offered.slice(0, -1); messages = build(offered, factBlock); }
   if (approxTokens(messages) > ctx - 760 && factBlock && factBlock.lines) { const fb = { ...factBlock, text: factBlock.text.split('\n').slice(0, 14).join('\n') }; messages = build(offered.slice(0, 2).map(c => ({ ...c, text: c.text.slice(0, 500) })), fb); }
