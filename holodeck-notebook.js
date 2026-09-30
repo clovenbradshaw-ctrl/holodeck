@@ -90,9 +90,9 @@ const CSS = `
 .hnb .gen h2{font:500 24px/1.25 'Newsreader',serif;margin:.2em 0}.hnb .gen h6{font:600 11px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc);margin:18px 0 6px}
 .hnb table{border-collapse:collapse;width:100%;font:13px 'Hanken Grotesk'}.hnb td,.hnb th{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top}
 .hnb .cmd{position:sticky;bottom:0;z-index:12;background:var(--hdr);backdrop-filter:blur(8px);padding:8px 0 2px;border-top:1px solid var(--line)}
-.hnb .cmd input{width:100%;background:var(--s1);border:1px solid var(--line2);border-radius:10px;padding:9px 12px;color:var(--ink);font:400 15px 'Hanken Grotesk';outline:none}.hnb .cmd input:focus{border-color:var(--acc)}
+.hnb .cmd textarea{display:block;resize:none;max-height:40vh;overflow:auto;width:100%;background:var(--s1);border:1px solid var(--line2);border-radius:10px;padding:9px 12px;color:var(--ink);font:400 15px 'Hanken Grotesk';outline:none}.hnb .cmd textarea:focus{border-color:var(--acc)}
 .hnb .notice{white-space:pre-wrap;font:12px/1.5 'JetBrains Mono';background:var(--s1);border:1px solid var(--line2);border-radius:10px;padding:8px 12px;max-height:45vh;overflow:auto;position:relative}.hnb .notice.err{border-color:var(--bad);color:var(--bad)}.hnb .notice .x{position:absolute;right:8px;top:4px;cursor:pointer;color:var(--dim)}
-.hnb .drawer{position:fixed;top:0;right:0;bottom:0;width:min(560px,100vw);z-index:60;background:var(--bg);border-left:1px solid var(--line2);display:flex;flex-direction:column;box-shadow:-8px 0 24px #0005}
+.hnb-portal{display:contents}.hnb .drawer{position:fixed;top:0;right:0;bottom:0;width:min(560px,100vw);z-index:60;background:var(--bg);border-left:1px solid var(--line2);display:flex;flex-direction:column;box-shadow:-8px 0 24px #0005}
 .hnb .drawer .hd{display:flex;gap:6px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}.hnb .drawer .bd{overflow:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px}
 .hnb .sk{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--s1)}.hnb .sk.off{opacity:.75}.hnb .sk .row{display:flex;gap:8px;align-items:center}
 .hnb .sw{width:40px;height:22px;border-radius:11px;background:var(--line2);position:relative;border:0;padding:0;flex:none}.hnb .sw.on{background:var(--ok)}.hnb .sw::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:8px;background:#fff;transition:left .12s}.hnb .sw.on::after{left:21px}
@@ -116,8 +116,13 @@ export function mount(el, opts = {}) {
   if (live) { if (live.root.parentNode !== el) { el.innerHTML = ''; el.appendChild(live.root); } return live.api; }
   const F = opts.fetch || ((u, o) => fetch(u, o));
   if (!document.getElementById('hnb-css')) { const s = document.createElement('style'); s.id = 'hnb-css'; s.textContent = CSS; document.head.appendChild(s); }
-  const ui = { c: store.get('hd:nb:c') || '', S: LAST.base === base ? LAST.S : null, err: null, notice: null, noticeErr: false, drawer: null, sel: null, menu: false, why: {}, dsq: '', dsHits: null, busy: '' };
+  const ui = { c: store.get('hd:nb:c') || '', S: !opts.fetch && LAST.base === base ? LAST.S : null /* a pane with its own fetch never starts from another pane's state */, err: null, notice: null, noticeErr: false, drawer: null, sel: null, menu: false, why: {}, dsq: '', dsHits: null, busy: '' };
   const root = document.createElement('div'); root.className = 'hnb'; el.innerHTML = ''; el.appendChild(root);
+  // the drawer lives in a body-level portal: the host page's ancestors (backdrop-filter, transforms) would otherwise turn position:fixed
+  // into position-within-the-column, and on a phone the drawer would be a strip instead of the whole screen
+  const portal = document.createElement('div'); portal.className = 'hnb hnb-portal'; document.body.appendChild(portal);
+  const $q = (sel) => root.querySelector(sel) || portal.querySelector(sel);
+  setInterval(() => { portal.style.display = root.isConnected ? 'contents' : 'none'; }, 400); // the drawer goes when the pane goes (another view)
 
   async function refresh() {
     try { const r = await F(`${base}/notebook/state${ui.c ? `?c=${encodeURIComponent(ui.c)}` : ''}`, { cache: 'no-store' }); if (!r.ok) throw new Error(`the server answered ${r.status}`); ui.S = await r.json(); ui.err = null; ui.c = ui.S.conv.id; store.set('hd:nb:c', ui.c); if (!opts.fetch) { LAST.base = base; LAST.S = ui.S; } }
@@ -207,6 +212,7 @@ ${why != null ? `<div class="why"><input data-why="${esc(k.id)}" placeholder="wh
 
   function draw() {
     if (!ui.S) {
+      portal.innerHTML = '';
       root.innerHTML = `<div class="empty"><span style="font:500 18px 'Newsreader',serif">The data notebook runs on a notebook server on this machine.</span><span class="k" style="text-wrap:pretty">Python, the ledgers and the ant colony live there; this page draws and asks, and re-checks every seal it is shown. It looks for the server at <code>${esc(base)}</code> (set another loopback address with <code>localStorage['hd:notebook']</code>). From an eoreader7 checkout, with python3 and numpy installed:</span><pre class="out">node native/the-fold/surface/holodeck.mjs --by human:&lt;your name&gt;</pre><span class="meta">${ui.err ? esc(ui.err) : 'Connecting…'}</span><button style="align-self:flex-start" data-act="retry">Look again</button></div>`;
       bind(); return;
     }
@@ -222,8 +228,9 @@ ${lineage ? `<div class="lineage" data-lineage>${lineage}</div>` : ''}
 <div class="bar"><span class="k">Draw this conversation as</span><span class="seg" data-flag>${TYPES.map(([k, l]) => `<button class="${k === type ? 'on' : ''}" data-act="retype" data-type="${k}" title="the type flag — changing it is recorded, and changes only the drawing">${l}</button>`).join('')}</span><span style="flex:1"></span><button data-act="rename" title="rename this tab">Rename</button><button data-act="fork" data-at="end">⑂ Fork all</button><button data-act="dl" data-path="ipynb" data-name="${esc(c.id)}.ipynb">⤓ .ipynb</button><button data-act="dl" data-path="bundle" data-name="${esc(c.id)}-bundle.zip" title="notebook + data + helper library + run_all.py — re-runs in a clean python3 and compares every #finding/#result line">⤓ Bundle</button></div>
 ${ui.notice ? `<div class="notice${ui.noticeErr ? ' err' : ''}" data-notice><span class="x" data-act="dismiss">✕</span>${esc(ui.notice)}</div>` : ''}
 <div data-view="${esc(type)}">${main}</div>
-<div class="cmd"><input data-line placeholder="${ui.busy ? 'Working… (' + esc(ui.busy) + ')' : 'Ask about your data in plain words, or /help — /py /claim /check /control /learn /skill /audit /dataset /methods'}" autocomplete="off" spellcheck="false"></div>
-${ui.drawer ? drawerHtml() : ''}`;
+<div class="cmd"><textarea data-cmd rows="1" placeholder="${ui.busy ? 'Working… (' + esc(ui.busy) + ')' : 'Ask about your data in plain words, or /help — /py /claim /check /control /learn /skill /audit /dataset /methods — Enter sends, Shift+Enter adds a line'}" autocomplete="off" spellcheck="false"></textarea></div>
+`;
+    portal.innerHTML = ui.drawer ? drawerHtml() : '';
     bind();
   }
 
@@ -249,18 +256,18 @@ ${ui.drawer ? drawerHtml() : ''}`;
     if (a === 'run-all') return call({ op: 'runmany', which: 'all' });
     if (a === 'add') return call(ds.t === 'code' ? { op: 'add', type: 'code', lang: 'python', source: '' } : { op: 'add', type: ds.t, source: ds.t === 'claim' ? (prompt('The claim, in your words') || '') : 'A note' });
     if (a === 'line') return call({ op: 'line', line: ds.line });
-    if (a === 'gen') { const q = root.querySelector('[data-gen-q]'); if (q && q.value.trim()) return call({ op: 'ask', text: q.value.trim() }); return; }
+    if (a === 'gen') { const q = $q('[data-gen-q]'); if (q && q.value.trim()) return call({ op: 'ask', text: q.value.trim() }); return; }
     if (a === 'switch') { ui.why[ds.id] = ds.on === '1' ? 'on' : 'off'; return draw(); }
     if (a === 'switch-cancel') { delete ui.why[ds.id]; return draw(); }
-    if (a === 'switch-go') { const inp = root.querySelector(`[data-why="${CSS_ESC(ds.id)}"]`); const why = inp ? inp.value.trim() : ''; const onv = ds.on === '1';
+    if (a === 'switch-go') { const inp = $q(`[data-why="${CSS_ESC(ds.id)}"]`); const why = inp ? inp.value.trim() : ''; const onv = ds.on === '1';
       if (!onv && !why) { ui.notice = 'Switching a method off needs a reason — it is what the next person reads.'; ui.noticeErr = true; return draw(); }
       delete ui.why[ds.id]; return call({ op: 'skill', which: ds.id, on: onv, why: why || null }); }
-    if (a === 'ds-search') { const q = (root.querySelector('[data-dsq]') || {}).value || ''; ui.dsq = q; if (!q.trim()) { ui.dsHits = null; return draw(); } const j = await call({ op: 'dataset', query: q }, { quiet: true }); ui.notice = j.notice; ui.noticeErr = !!j.error; ui.dsHits = searchLocal(S.dataset.items, q); return draw(); }
+    if (a === 'ds-search') { const q = ($q('[data-dsq]') || {}).value || ''; ui.dsq = q; if (!q.trim()) { ui.dsHits = null; return draw(); } const j = await call({ op: 'dataset', query: q }, { quiet: true }); ui.notice = j.notice; ui.noticeErr = !!j.error; ui.dsHits = searchLocal(S.dataset.items, q); return draw(); }
   }
   function searchLocal(items, q) { const w = new Set(String(q).toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((x) => x.length > 2).map((x) => x.replace(/(ies|es|s)$/, ''))); return items.map((i) => ({ i, n: String(i.text).toLowerCase().split(/[^\p{L}\p{N}]+/u).map((x) => x.replace(/(ies|es|s)$/, '')).filter((x) => w.has(x)).length })).filter((x) => x.n).sort((a, b) => b.n - a.n).slice(0, 20).map((x) => x.i); }
 
   function bind() {
-    root.querySelectorAll('[data-act]').forEach((b) => { b.onclick = (e) => { e.preventDefault(); e.stopPropagation(); onAct(b.dataset.act, b.dataset); }; });
+    [...root.querySelectorAll('[data-act]'), ...portal.querySelectorAll('[data-act]')].forEach((b) => { b.onclick = (e) => { e.preventDefault(); e.stopPropagation(); onAct(b.dataset.act, b.dataset); }; });
     root.querySelectorAll('textarea[data-src]').forEach((t) => {
       t.onfocus = () => { ui.sel = t.dataset.src; root.querySelectorAll('.cell').forEach((c) => c.classList.toggle('sel', c.dataset.cell === ui.sel || c.dataset.out === ui.sel)); };
       t.onkeydown = async (e) => {
@@ -273,11 +280,12 @@ ${ui.drawer ? drawerHtml() : ''}`;
       };
     });
     root.querySelectorAll('[data-md]').forEach((m) => { m.ondblclick = () => { const t = root.querySelector(`textarea[data-src="${CSS_ESC(m.dataset.md)}"]`); if (!t) return; m.hidden = true; t.hidden = false; t.focus(); }; });
-    const line = root.querySelector('[data-line]'); if (line) { line.onkeydown = async (e) => { if (e.key !== 'Enter' || !line.value.trim()) return; const v = line.value.trim(); line.value = '';
+    const line = root.querySelector("[data-cmd]"); if (line) { line.oninput = () => { line.style.height = 'auto'; line.style.height = line.scrollHeight + 'px'; };
+      line.onkeydown = async (e) => { if (e.key !== 'Enter' || e.shiftKey) return; e.preventDefault(); if (!line.value.trim()) return; const v = line.value.trim(); line.value = '';
       if (/^\/export\b/.test(v)) return onAct('dl', { path: 'ipynb', name: ui.c + '.ipynb' });
       await call({ op: 'line', line: v }); }; }
-    const dsq = root.querySelector('[data-dsq]'); if (dsq) dsq.onkeydown = (e) => { if (e.key === 'Enter') onAct('ds-search', {}); };
-    const gq = root.querySelector('[data-gen-q]'); if (gq) gq.onkeydown = (e) => { if (e.key === 'Enter') onAct('gen', {}); };
+    const dsq = $q('[data-dsq]'); if (dsq) dsq.onkeydown = (e) => { if (e.key === 'Enter') onAct('ds-search', {}); };
+    const gq = $q('[data-gen-q]'); if (gq) gq.onkeydown = (e) => { if (e.key === 'Enter') onAct('gen', {}); };
   }
   // drop a file anywhere on the pane: it is uploaded to the server's ingest (any kind; the reader's gaps are shown, never hidden)
   // stopPropagation: the holodeck page has its own drop-anywhere ingest; a file dropped HERE is data for the notebook, not a source for the reader

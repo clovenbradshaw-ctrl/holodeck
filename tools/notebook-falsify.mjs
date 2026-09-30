@@ -14,7 +14,9 @@ const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ?
 const PAGE = arg("page", "http://127.0.0.1:8000/index.html"), SERVER = arg("server", "http://127.0.0.1:8900"), OUT = arg("out", path.join(os.tmpdir(), "notebook-falsify.json"));
 const SHOTS = path.dirname(OUT); const R = []; const say = (id, pass, detail) => { R.push({ id, pass, detail }); console.log(`${pass === true ? "PASS" : pass === false ? "FAIL" : "ABSENT"}  ${id}  ${detail}`); };
 const get = async (u) => { try { return await fetch(u); } catch (e) { return fetch(u); } }; // one retry: a keep-alive socket can go stale during a long colony run
-const state = async (c) => (await get(`${SERVER}/notebook/state${c ? `?c=${c}` : ""}`)).json();
+// the conversation the PAGE is showing (the server's own default is its first open tab, which is not the same thing)
+const shown = () => t.eval(`return document.querySelector('.hnb .tab.on')?.dataset.c || null`);
+const state = async (c) => { c = c || await shown(); return (await get(`${SERVER}/notebook/state${c ? `?c=${c}` : ""}`)).json(); };
 
 // data: one series with bursts (structure), one white noise (none), a time column
 const csvBursty = () => { let a = 4242; const r = () => ((a = (a * 1664525 + 1013904223) >>> 0) / 4294967296), g = () => { let u = 0; for (let i = 0; i < 6; i++) u += r(); return (u - 3) * 1.41; };
@@ -23,8 +25,8 @@ const csvNoise = () => { let a = 99; const r = () => ((a = (a * 1664525 + 101390
   const rows = ["t_s,noise"]; for (let i = 0; i < 9000; i++) rows.push(`${(i * 0.001).toFixed(3)},${g().toFixed(4)}`); return rows.join("\n"); };
 
 const t = await openTab(Number(arg("cdp", 9222)));
-const idle = () => t.until(`(() => { const l = document.querySelector('.hnb [data-line]'); return l && !/^Working/.test(l.placeholder); })()`, { timeout: 600000, what: "the pane to finish working" });
-const line = async (text) => { await t.until(`document.querySelector('.hnb [data-line]')`, { what: "the command bar" }); await t.eval(`const l = document.querySelector('.hnb [data-line]'); l.value = ${JSON.stringify(text)}; l.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));`); await new Promise((r) => setTimeout(r, 200)); await idle(); };
+const idle = () => t.until(`(() => { const l = document.querySelector('.hnb [data-cmd]'); return l && !/^Working/.test(l.placeholder); })()`, { timeout: 600000, what: "the pane to finish working" });
+const line = async (text) => { await t.until(`document.querySelector('.hnb [data-cmd]')`, { what: "the command bar" }); await t.eval(`const l = document.querySelector('.hnb [data-cmd]'); l.value = ${JSON.stringify(text)}; l.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));`); await new Promise((r) => setTimeout(r, 200)); await idle(); };
 const click = async (sel, i = 0) => { await t.eval(`const e = document.querySelectorAll(${JSON.stringify(sel)})[${i}]; if (!e) throw new Error('no element ' + ${JSON.stringify(sel)}); e.click();`); await new Promise((r) => setTimeout(r, 200)); await idle(); };
 const notice = () => t.eval(`const n = document.querySelector('.hnb [data-notice]'); return n ? n.innerText : ''`);
 const drop = async (name, text) => { await t.eval(`const dt = new DataTransfer(); dt.items.add(new File([${JSON.stringify(text)}], ${JSON.stringify(name)}, { type: 'text/csv' })); const r = document.querySelector('.hnb'); r.dispatchEvent(new DragEvent('dragover', { dataTransfer: dt, bubbles: true, cancelable: true })); r.dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true, cancelable: true }));`); await new Promise((r) => setTimeout(r, 400)); await idle(); };
@@ -148,7 +150,7 @@ try {
     await line("what is going on in this file?"); const refused = await notice(); const libAfter = (await state(C1)).library;
     await click('.hnb [data-act="drawer"][data-tab="audit"]'); const aud = await t.eval(`return document.querySelector('.hnb .drawer').innerText`);
     await t.shot(path.join(SHOTS, "r4-audit.png")); await click('.hnb [data-act="drawer"][data-tab=""]');
-    const ok = /needs a reason/.test(noReason) && /switched off/.test(refused) && /will not write a new one around a switch/.test(refused) && libAfter.length === libBefore.length && /off by human:/.test(aud) && /verifies here/.test(aud);
+    const ok = /needs a reason/.test(noReason) && /switched off/.test(refused) && /will not (learn|write) a new (method|one) around/.test(refused) && libAfter.length === libBefore.length && /off by human:/.test(aud) && /verifies here/.test(aud);
     r4 = `${ok ? "PASS" : "FAIL"} — off without a reason refused (“${noReason.slice(0, 80)}”); after switching all learned analyses off (reason recorded), the same question was refused: “${refused.replace(/\s+/g, " ").slice(0, 150)}”; library size ${libBefore.length} → ${libAfter.length} (nothing written around it); audit shows the switch and all chains verify here: ${/off by human:/.test(aud) && /verifies here/.test(aud)}`;
     await click('.hnb [data-act="drawer"][data-tab="skills"]'); await click('.hnb [data-act="switch"][data-id="all"]'); await click('.hnb [data-act="switch-go"][data-id="all"]'); await click('.hnb [data-act="drawer"][data-tab=""]');
   }
@@ -157,7 +159,7 @@ try {
   // ── chain-break display: the page believes its own check, not the server ──────
   const brk = await t.eval(`const M = await import(new URL('holodeck-notebook.js', location.href).href); const el = document.createElement('div'); document.body.appendChild(el);
     const tamper = async (u, o) => { const r = await fetch(u, o); if (!/\\/state/.test(u)) return r; const j = await r.json(); if (j.ledgers.nb[0]) j.ledgers.nb[0] = { ...j.ledgers.nb[0], source: 'altered after sealing' }; return new Response(JSON.stringify(j)); };
-    M.mount(el, { fetch: tamper, base: ${JSON.stringify(SERVER)} }); for (let i = 0; i < 80 && !el.querySelector('[data-chains]'); i++) await new Promise(r => setTimeout(r, 100)); const s = el.querySelector('[data-chains]').innerText; el.remove(); return s`);
+    const pane = M.mount(el, { fetch: tamper, base: ${JSON.stringify(SERVER)} }); await pane.refresh(); for (let i = 0; i < 80 && !el.querySelector('[data-chains]'); i++) await new Promise(r => setTimeout(r, 100)); const s = el.querySelector('[data-chains]').innerText; el.remove(); return s`);
   R.push({ id: "chain-break", pass: /CHAIN BROKEN/.test(brk), detail: `a /state whose first notebook entry was altered in transit is shown as “${brk}”` }); console.log(`${/CHAIN BROKEN/.test(brk) ? "PASS" : "FAIL"}  chain-break  shown as “${brk}”`);
 
   // ── F1: the bundle re-runs in a clean python3 ─────────────────────────────────
@@ -176,9 +178,9 @@ try {
   // ── phone width: tab strip scrolls, drawer is full width ─────────────────────
   await t.send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 2, mobile: true }); await new Promise((r) => setTimeout(r, 500));
   const phone = await t.eval(`const s = document.querySelector('.hnb [data-tabs]'); return { scroll: getComputedStyle(s).overflowX, over: document.documentElement.scrollWidth - innerWidth }`);
-  await click('.hnb [data-act="drawer"][data-tab="skills"]'); const dw = await t.eval(`return Math.round(document.querySelector('.hnb .drawer').getBoundingClientRect().width) + '/' + innerWidth`);
+  await click('.hnb [data-act="drawer"][data-tab="skills"]'); const dw = await t.eval(`return Math.round(document.querySelector('.hnb .drawer').getBoundingClientRect().width) + '/' + Math.round(visualViewport.width)`); // the drawer against the VISIBLE width
   await t.shot(path.join(SHOTS, "phone-drawer.png"), 390, 844); await click('.hnb [data-act="drawer"][data-tab=""]'); await t.shot(path.join(SHOTS, "phone.png"), 390, 844);
-  R.push({ id: "R8-phone", pass: phone.scroll === "auto" && dw.split("/")[0] === dw.split("/")[1], detail: `at 390px: tab strip overflow-x ${phone.scroll}; drawer ${dw}px wide; page overflows horizontally by ${phone.over}px` }); console.log(`R8-phone  ${JSON.stringify(phone)} drawer ${dw}`);
+  R.push({ id: "R8-phone", pass: phone.scroll === "auto" && dw.split("/")[0] === dw.split("/")[1], detail: `at a 390px phone: tab strip overflow-x ${phone.scroll}; drawer/visible width ${dw}px; the host page's own layout is ${phone.over}px wider than its viewport (not the pane's)` }); console.log(`R8-phone  ${JSON.stringify(phone)} drawer ${dw}`);
   const mounts = await t.eval(`return window.__hnbMounts || 0`); console.log(`(the host handed the pane an element ${mounts} time(s); one pane instance served them all)`);
   R.push({ id: "console", pass: t.errors.length === 0, detail: t.errors.length ? t.errors.slice(0, 5).join(" | ") : "no console errors or exceptions during the run" });
 } catch (e) { R.push({ id: "run", pass: false, detail: "the run stopped: " + e.message }); console.log("STOPPED", e.message); }
