@@ -2,7 +2,8 @@
 // The proxy runs the machine — void plan, per-cell composition, grounding, admission, fold — and keeps the
 // append-only EOT ledger; this file only starts jobs, polls them, and reads that ledger back as cells.
 
-export const ER7_BASE = 'http://127.0.0.1:11436';
+// The proxy this page talks to: the default local address, or one the person stored (a second proxy, another machine).
+export const ER7_BASE = (() => { try { return (typeof localStorage !== 'undefined' && localStorage.getItem('fold-explorer-er7')) || 'http://127.0.0.1:11436'; } catch (e) { return 'http://127.0.0.1:11436'; } })();
 const HOLONS = ['section', 'paragraph', 'sentence'];
 
 export class DoorError extends Error { constructor(message, type, status) { super(message); this.type = type || 'door_error'; this.status = status || 0; } }
@@ -12,10 +13,10 @@ export function newJobId(now = Date.now(), rand = Math.random) { return 'hd-' + 
 
 async function asJson(r) { const t = await r.text(); try { return JSON.parse(t); } catch (e) { throw new DoorError('the proxy answered ' + r.status + ' with no JSON: ' + t.slice(0, 120), 'not_json', r.status); } }
 
-export async function startDocument(base, { task, model, jobId, holonLevel = 'section', webConsent = false }, fetchImpl = fetch) {
+export async function startDocument(base, { task, model, jobId, holonLevel = 'section', webConsent = false, documents }, fetchImpl = fetch) {
   if (!String(task || '').trim()) throw new DoorError('the task is empty', 'empty_task');
   if (!HOLONS.includes(holonLevel)) throw new DoorError('holonLevel must be one of ' + HOLONS.join(', '), 'unknown_holon_level');
-  let r; try { r = await fetchImpl(base + '/v1/documents', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ task: String(task).trim(), model, sessionId: jobId, holonLevel, webConsent }) }); }
+  let r; try { r = await fetchImpl(base + '/v1/documents', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ task: String(task).trim(), model, sessionId: jobId, holonLevel, webConsent, ...(documents && documents.length ? { documents } : {}) }) }); }
   catch (e) { throw new DoorError('eoreader7 is not answering at ' + base, 'unreachable'); }
   const j = await asJson(r);
   if (!r.ok) throw new DoorError((j.error && j.error.message) || 'HTTP ' + r.status, (j.error && j.error.type) || 'http_' + r.status, r.status);
@@ -52,18 +53,21 @@ export function parseLedger(text) {
 // plan, unbound — assigning them to a cell by position would be a guess.
 export function cellsOf(rows) {
   const norm = s => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
-  const sets = []; let cur = null; const unaddressed = []; const whole = []; let orphanParts = 0;
+  const sets = []; let cur = null; const unaddressed = []; const whole = []; const mechanical = []; let orphanParts = 0;
   const supOf = r => Array.isArray(r.supersedes) ? r.supersedes : [];
   for (const r of rows) {
     if (r.role === 'plan') { const qs = String(r.text || '').split('\n').map(l => l.replace(/^\s*-\s*/, '').trim()).filter(Boolean); cur = { planId: r.id, plan: qs, cells: qs.map(q => ({ q, parts: [] })), revisions: [] }; sets.push(cur); }
     else if (r.role === 'part') {
       if (!cur) { orphanParts++; unaddressed.push(r); continue; }
+      // A part the proxy wrote itself, mechanically and with no model (giver eoreader7:ground — "No ground"), answers no
+      // question of the plan and is not a stray: it is the job saying what it could not do.
+      if (/^eoreader7:ground/.test(String(r.giver || ''))) { mechanical.push(r); continue; }
       const t = norm(r.title); const c = cur.cells.find(x => { const q = norm(x.q); return q === t || q.startsWith(t) || t.startsWith(q); });
       if (c) c.parts.push(r); else if (supOf(r).some(id => cur.cells.some(x => x.parts.some(p => p.id === id)))) { whole.push(r); cur.whole = r; } else unaddressed.push(r);
     } else if (r.role === 'revision' && cur) cur.revisions.push(r);
   }
   const current = sets.length ? sets[sets.length - 1] : { planId: null, plan: [], cells: [], revisions: [] };
-  return { sets, current, unaddressed, whole, orphanParts };
+  return { sets, current, unaddressed, whole, mechanical, orphanParts };
 }
 
 // The doorway's claims about itself, checked against its own ledger and projection. Each verdict is true, false,
@@ -79,7 +83,7 @@ export function doorControls(poll, ledger) {
   add('the void plan is committed before any cell is composed', fPart < 0 ? null : fPlan >= 0 && fPlan < fPart, fPart < 0 ? 'no part yet' : 'plan at row ' + fPlan + ', first part at row ' + fPart);
   const C = cellsOf(rows); const nParts = rows.filter(r => r.role === 'part').length;
   const beats = C.unaddressed.filter(r => /^[a-z]+(, [a-z]+)+$/.test(r.title)); const strays = C.unaddressed.filter(r => !beats.includes(r));
-  add('every part answers a question of the plan before it (fold beats excepted)', nParts ? strays.length === 0 : null, nParts ? (nParts - C.unaddressed.length - C.whole.length) + ' addressed, ' + C.whole.length + ' whole pieces, ' + beats.length + ' fold beats, ' + strays.length + ' strays' + (strays.length ? ': ' + strays.map(r => JSON.stringify(String(r.title).slice(0, 60))).join(', ') : '') : 'no part yet');
+  add('every part answers a question of the plan before it (fold beats excepted)', nParts ? strays.length === 0 : null, nParts ? (nParts - C.unaddressed.length - C.whole.length - C.mechanical.length) + ' addressed, ' + C.whole.length + ' whole pieces, ' + C.mechanical.length + ' mechanical, ' + beats.length + ' fold beats, ' + strays.length + ' strays' + (strays.length ? ': ' + strays.map(r => JSON.stringify(String(r.title).slice(0, 60))).join(', ') : '') : 'no part yet');
   const paras = String(poll.projection || '').split(/\n{2,}/).map(norm).filter(p => p.length > 40 && !/^#/.test(p) && !/^\d+\. /.test(p));
   const held = rows.map(r => norm(r.text)).join('\n'); const orphan = paras.filter(p => !held.includes(p.slice(0, 120)));
   add('every projected paragraph is held in the ledger', paras.length ? orphan.length === 0 : null, paras.length ? (paras.length - orphan.length) + ' of ' + paras.length + ' found' + (orphan.length ? '; first orphan: ' + JSON.stringify(orphan[0].slice(0, 90)) : '') : 'nothing projected yet');
@@ -129,4 +133,16 @@ export function identityControl(jobs) {
     out.push({ name: 'different tasks do not ship the same whole piece', pair: [jobs[i].jobId, jobs[k].jobId], ok: !a || !b || pi === pk ? null : a !== b, detail: a && b ? (a === b ? 'byte-identical, ' + a.length + ' chars each' : 'they differ') : 'a job has no whole piece' });
   }
   return out;
+}
+
+// The sources a page holds (name → text) as the documents a job is handed. Empty ones are dropped, never sent.
+export const documentsOf = texts => Object.entries(texts || {}).filter(([, t]) => typeof t === 'string' && t.trim()).map(([name, text]) => ({ name, text }));
+
+// What the job's own ground row says the handed-over material did with the ask: the documents admitted as ground, and
+// the written refusal of each one that did not carry it. The proxy decides; the page only reads it back.
+export function groundOf(rows) {
+  const r = (rows || []).find(x => x.role === 'ground'); if (!r) return null;
+  const m = /sources:\s*(\{[\s\S]*\})\s*$/m.exec(String(r.text || '')); if (!m) return { licensed: /licensed/i.test(r.title) && !/not licensed/i.test(r.title), none: /^no ground/i.test(r.title), docIds: [], carries: null };
+  let src; try { src = JSON.parse(m[1]); } catch (e) { return { licensed: !/not licensed/i.test(r.title), docIds: [], carries: null, unparsed: true }; }
+  return { licensed: !/not licensed|^no ground/i.test(r.title), none: /^no ground/i.test(r.title), docIds: src.docIds || [], carries: src.carries || null, web: src.web || 0 };
 }

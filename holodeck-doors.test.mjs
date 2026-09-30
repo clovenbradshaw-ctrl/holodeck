@@ -6,7 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { isFunctionWord } from '../eoreader7/native/the-fold/pos-prior.js';
-import { parseLedger, cellsOf, startDocument, readLedger, newJobId, DoorError, doorControls, topicControl, claimSentences } from './holodeck-doors.js';
+import { parseLedger, cellsOf, startDocument, readLedger, newJobId, DoorError, doorControls, topicControl, claimSentences, documentsOf, groundOf } from './holodeck-doors.js';
 
 const TEXT = fs.readFileSync(new URL('./fixtures/er7-document-ledger.jsonl', import.meta.url), 'utf8');
 const { rows } = parseLedger(TEXT);
@@ -171,4 +171,62 @@ test('the same control passes the off-topic job once the file\'s sentences are r
 test('footnotes and quoted excerpt bullets are shown ground, never counted as what the piece says', () => {
   const c = claimSentences(gpair[0].projection);
   assert.ok(!c.some(x => /Jump to content|Footnotes|katherine-johnson-body\.txt/.test(x)));
+});
+
+// Two more jobs through the proxy WITH the relevance rule, one two-document workspace (katherine-johnson-body.txt and
+// continuum-hypothesis.txt), web off: fixtures/er7-carry-none-* (a bicycle ask: nothing carries it) and
+// fixtures/er7-carry-some-* (a continuum-hypothesis ask: one document carries it). Both ledgers are the ground row the proxy wrote.
+const ledgerOf = n => parseLedger(fs.readFileSync(new URL(`./fixtures/er7-${n}-ledger.jsonl`, import.meta.url), 'utf8')).rows;
+
+test('a job whose handed-over material does not carry the ask says so, with each refusal and its count', () => {
+  const g = groundOf(ledgerOf('carry-none'));
+  assert.equal(g.licensed, false);
+  assert.deepEqual(g.docIds, []);
+  assert.equal(g.carries.mode, 'not-carried');
+  assert.deepEqual(g.carries.coverage, { carried: 1, total: 8 });
+  assert.equal(g.carries.refused.length, 2);
+  assert.ok(g.carries.refused.every(x => /carries 1 of 8/.test(x.why)));
+});
+
+test('a job whose material carries the ask admits that document and writes the refusal of the other', () => {
+  const g = groundOf(ledgerOf('carry-some'));
+  assert.equal(g.licensed, true);
+  assert.deepEqual(g.docIds, ['continuum-hypothesis.txt']);
+  assert.equal(g.carries.mode, 'carried');
+  assert.deepEqual(g.carries.refused.map(x => x.id), ['katherine-johnson-body.txt']);
+  assert.match(g.carries.refused[0].why, /size, set/, 'the two words it shares are named, and were not enough');
+});
+
+test('groundOf is null when a ledger has no ground row, never a guess', () => { assert.equal(groundOf([]), null); assert.equal(groundOf([{ role: 'part', text: 'x' }]), null); });
+
+test('documentsOf sends what a page holds, drops the empty, and startDocument carries it in the request', async () => {
+  const docs = documentsOf({ 'Budget audit': 'The audit found gaps in the budget records.', 'Blank': '   ', 'Notes': 'Police notes.' });
+  assert.deepEqual(docs.map(d => d.name), ['Budget audit', 'Notes']);
+  let sent; const f = async (u, o) => { sent = JSON.parse(o.body); return new Response(JSON.stringify({ jobId: 'hd-x', status: 'writing' }), { status: 202 }); };
+  await startDocument('http://x', { task: 't', jobId: 'hd-x', documents: docs }, f);
+  assert.deepEqual(sent.documents, docs);
+  await startDocument('http://x', { task: 't', jobId: 'hd-x', documents: [] }, f);
+  assert.equal('documents' in sent, false, 'an empty workspace sends no documents field, so the job is honestly ungrounded');
+});
+
+// hd-ng-1 (2026-09-30): the bicycle ask over a two-document workspace handed over as `documents` (one named
+// "../../../etc/passwd"), web off, run through the proxy with the no-view-from-nowhere stop. The model wrote 0 characters.
+test('a job with no ground writes a mechanical No-ground part, which is named and not a stray', () => {
+  const rows = ledgerOf('noground'); const C = cellsOf(rows);
+  assert.equal(rows.filter(r => r.role === 'part').length, 1);
+  assert.equal(C.mechanical.length, 1);
+  assert.equal(C.mechanical[0].giver, 'eoreader7:ground');
+  assert.equal(C.unaddressed.length, 0, 'not counted a stray');
+  const g = groundOf(rows);
+  assert.equal(g.none, true);
+  assert.equal(g.licensed, false);
+  assert.deepEqual(g.docIds, []);
+});
+
+test('the doorway controls pass on a no-ground job: nothing projected that the ledger does not hold, no stray part', () => {
+  const rows = ledgerOf('noground'); const poll = JSON.parse(fs.readFileSync(new URL('./fixtures/er7-noground-poll.json', import.meta.url), 'utf8'));
+  const v = doorControls(poll, { rows, malformed: 0 });
+  assert.deepEqual(v.filter(x => x.ok === false).map(x => x.name), []);
+  assert.match(poll.projection, /^No ground\./);
+  assert.equal(poll.job.chars, 0, 'the model wrote nothing');
 });
