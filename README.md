@@ -57,6 +57,10 @@ A repo, a report, and a recording don't share affordances, so every ingest is hu
 
 This is the live, ongoing home for this surface — active development happens here going forward, not in a local-only copy.
 
+## Compute workers — Heimdall invites (2026-10-01)
+
+Settings → **Compute workers · Heimdall**: mint a heimdall compute invite under your own Matrix account. The fleet room is born with a short local alias, so the invite link is just `?r=<code>` — something you can actually type by hand on a remote computer (`clovenbradshaw-ctrl.github.io/heimdall/?r=h7q2x`). Record the worker's 6-digit pairing code into the account's `org.heimdall.codes` registry — the same registry the heimdall site confirms acceptance against, so an invite minted here is confirmable there and vice versa. Pure logic in `holodeck-heimdall.js` (the fold's `heimdall-invite.js` pattern); the crossings live in `fold-net.js`.
+
 ## The engine reads first
 
 Each added document is posted to eoreader7's `POST /v1/read` (model-free; tries `localStorage hd:engine`, then `127.0.0.1:11436`, then `:11476`). The replay draws the engine's own events under an **Engine** stage, and its beings are a *witness* beside the Holodeck's finder: it adds lowercase names and recurring descriptions the local finder cannot see (`kutuzov`, `the contractor`, `the camp`), after the same hygiene every local name passes, and Fort gets an `engine` ant that votes *real* when the engine also admitted a name and stays silent otherwise. If the proxy is down the document is read locally and the Added card says so.
