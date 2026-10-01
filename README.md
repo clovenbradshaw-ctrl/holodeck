@@ -64,3 +64,11 @@ Each added document is posted to eoreader7's `POST /v1/read` (model-free; tries 
 It does **not** replace the local finder, because measured on three real workspace documents the engine reader agreed with only 10/81, 9/60 and 18/119 of the local names. Its known defects (for the engine, not for a Holodeck workaround): it breaks names at "of" ("Continuum of Care"), admits months and "on tuesday" as beings, splits "Freddie O'Connell" to "O'Connell", and misses "Lauren Riley" and "Department of Law". Documents already in the workspace are still read locally only.
 
 The vetting of engine additions (month and weekday names, function words) is English-only, like the rest of the local hygiene; other scripts pass through unvetted.
+
+## Penelope (2026-10-01)
+
+App generation lives in the sibling `penelope/` repo now (pipeline,
+organs, layout library, ladder records). Nothing here changes: ingest,
+hang, and the local finder are untouched, and the engine-reader
+relationship above is as measured. Builds that need generated artifacts
+route through Penelope's doors, not through ingest.
