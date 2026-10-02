@@ -5,7 +5,8 @@
   "scripts": {
     "serve": "python3 -m http.server 8813 --bind 127.0.0.1",
     "drive": "node drive-holodeck.mjs",
-    "test:overview": "node --test holodeck-overview.test.mjs"
+    "test:overview": "node --test holodeck-overview.test.mjs",
+    "test:ux": "node tests/calmer-workspace.browser.cjs"
   },
   "dependencies": {
     "playwright": "^1.63.0"
