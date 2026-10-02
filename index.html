@@ -3334,7 +3334,12 @@ function walkText(root, fn) {
       if (tg === 'IMG' || tg === 'SCRIPT' || tg === 'STYLE' || tg === 'NOSCRIPT' || tg === 'TEMPLATE' || tg === 'SVG' || tg === 'svg' || tg === 'HEAD' || tg === 'TITLE') continue;
       rec(c);
       if (tg === 'TD' || tg === 'TH') out += '; ';
-      else if (BLOCK_RE.test(tg) && !out.endsWith('\n')) out += '\n';
+      // A block element ends a paragraph, so separate it from the next with a BLANK line — the
+      // engine's own chunker (chunkProse) cuts passages only at blank lines. A single newline
+      // here would silently fuse a whole document into one passage: retrieval would then have a
+      // single candidate and any question not sharing a word with the entire source would find
+      // nothing. Keep the distinction walkText is the only place to keep: <br> is a single \n.
+      else if (BLOCK_RE.test(tg) && !out.endsWith('\n\n')) out += out.endsWith('\n') ? '\n' : '\n\n';
     } } };
   rec(root); return out;
 }
@@ -3721,7 +3726,25 @@ async function readAny(file) {
     else if (/^(audio|video)\//.test(file.type) || ['wav', 'mp3', 'flac', 'ogg', 'mp4'].includes(kind)) r = await M.readSound(file, await all(), hdTr, /^video\//.test(file.type) || (kind === 'mp4' && !/^audio/.test(file.type)) ? 'Video' : 'Audio');
     if (r) { hdT('decode', 'done', 'Read as ' + r.type + (r.note ? ' — ' + r.note : ''), { type: r.type });
       // An image is only pixels: measure it (above), then read any text in it by OCR, marked as machine-read.
-      if (r.type === 'Image' && hdOcrOn()) { try { const R = await hdRead(); const t = await R.ocrImage(file, p => hdT('decode', 'ocr', 'OCR ' + (p.status || '') + (p.progress != null ? ' ' + Math.round(p.progress * 100) + '%' : ''))); if (t && t.trim().length > 12) { const n = (t.trim().match(/\S+/g) || []).length; r = { ...r, html: r.html + t.split(/\n\s*\n/).map(x => '<p style="' + TAG_STYLE.P + '">' + esc(x.replace(/\s+/g, ' ').trim()) + '</p>').join(''), note: (r.note ? r.note + ' ' : '') + 'OCR read ' + n + ' words from it (a machine reading, not the image’s own text).' }; hdT('decode', 'ocr', 'OCR read the image: ' + n + ' words'); } } catch (e) { hdT('decode', 'ocr-fail', 'OCR could not run (' + e.message + ')'); } }
+      if (r.type === 'Image') {
+        // The image's middle layer: read its 2D model in this tab (flat-region geometry + tesseract
+        // word boxes → elements with region [x,y,w,h], roles, design tokens, typed gaps). This is
+        // what makes an image answer "what is where"; flat OCR alone gives only a string. Falls back
+        // to plain OCR text if the model cannot run.
+        try {
+          const S = await import(new URL('holodeck-screen.js', location.href).href);
+          const bmp = await createImageBitmap(file);
+          const sc = await S.readScreenImage(bmp, { name: title, tr: hdT, tessSrc: (() => { try { return localStorage.getItem('hd:tess') || null; } catch (e) { return null; } })() });
+          if (sc && sc.elements && sc.elements.length) {
+            const words = (sc.text.match(/\S+/g) || []).length;
+            const struct = '<p style="' + TAG_STYLE.P + '">' + esc(sc.text.replace(/\s+/g, ' ').trim()) + '</p>';
+            r = { ...r, html: r.html + struct, screen: sc, note: (r.note ? r.note + ' ' : '') + 'Read for structure: ' + sc.elements.length + ' elements with a region, ' + words + ' words of text (a machine reading from the pixels and OCR boxes, no vision model).' };
+            hdT('screen', 'done', 'The 2D model: ' + sc.elements.length + ' elements, ' + Object.keys(sc.tokens || {}).length + ' token groups');
+            r.text = [r.text, sc.text].filter(Boolean).join('\n\n');
+          }
+        } catch (e) { hdT('screen', 'fail', 'The 2D model did not run (' + e.message + '); falling back to flat OCR'); }
+        if (!r.screen && hdOcrOn()) { try { const R = await hdRead(); const t = await R.ocrImage(file, p => hdT('decode', 'ocr', 'OCR ' + (p.status || '') + (p.progress != null ? ' ' + Math.round(p.progress * 100) + '%' : ''))); if (t && t.trim().length > 12) { const n = (t.trim().match(/\S+/g) || []).length; r = { ...r, html: r.html + t.split(/\n\s*\n/).map(x => '<p style="' + TAG_STYLE.P + '">' + esc(x.replace(/\s+/g, ' ').trim()) + '</p>').join(''), text: [r.text, t].filter(Boolean).join('\n\n'), note: (r.note ? r.note + ' ' : '') + 'OCR read ' + n + ' words from it (a machine reading, not the image’s own text).' }; hdT('decode', 'ocr', 'OCR read the image: ' + n + ' words'); } } catch (e) { hdT('decode', 'ocr-fail', 'OCR could not run (' + e.message + ')'); } }
+      }
       return { title, year, ...r }; }
   } catch (e) { hdT('decode', 'fail', 'Media reader failed (' + e.message + '); falling back to the text readers'); }
   const r = await readText(file, M);
@@ -4714,8 +4737,8 @@ class Component extends DCLogic {
   // they change; the reader is the same organ the engine's /v1/read drives.
   async loadLocalReading() {
     const A = this.analysis();
-    const docs = A.docs.filter(d => !d.ohsId && d.text && d.text.trim());
-    const sig = docs.map(d => d.id).join(',') + ':' + docs.reduce((n, d) => n + String(d.text || '').length, 0);
+    const docs = A.docs.filter(d => !d.ohsId && ((d.text && d.text.trim()) || (d.screen && d.screen.elements && d.screen.elements.length)));
+    const sig = docs.map(d => d.id).join(',') + ':' + docs.reduce((n, d) => n + String(d.text || '').length + ((d.screen && d.screen.elements || []).length), 0);
     if (this._lrixDone === sig) return this._localRix || null;
     if (this._lrixP && this._lrixSig === sig) return this._lrixP;
     this._lrixSig = sig;
@@ -4726,10 +4749,17 @@ class Component extends DCLogic {
         const R = await (await import(new URL('holodeck-reader.js', location.href).href)).makeEngineRelationReader();
         const readings = [];
         for (const d of docs) {
-          const text = String(d.text || '').slice(0, 60000); const passages = M.splitPassages(text);
-          let report = { edges: [] };
-          try { report = R(passages.map(t => ({ ref: d.id, text: t }))) || report; } catch (e) { report = { edges: [] }; }
-          readings.push({ name: d.id, ...M.readDoc(d.id, text, report, { passages: passages.length }) });
+          // An image is read from its measured 2D model (the middle layer): names legible in a box
+          // become referents standing "sighted", each carrying its region. Text sources are read by
+          // the relation reader as before.
+          if (d.screen && d.screen.elements && d.screen.elements.length) {
+            readings.push(M.readSighted(d.id, d.screen.elements, { readingText: d.screen.text }));
+          } else {
+            const text = String(d.text || '').slice(0, 60000); const passages = M.splitPassages(text);
+            let report = { edges: [] };
+            try { report = R(passages.map(t => ({ ref: d.id, text: t }))) || report; } catch (e) { report = { edges: [] }; }
+            readings.push({ name: d.id, ...M.readDoc(d.id, text, report, { passages: passages.length }) });
+          }
           await new Promise(r => setTimeout(r, 0));
         }
         return M.mergeReadings(readings, { from: 'workspace (read in this tab)' });

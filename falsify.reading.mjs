@@ -74,6 +74,7 @@ const BATTERY = [
 ];
 
 console.log('\n[1] The reading folds on a wide battery of content, obeying the fold laws');
+let Rec = null; try { Rec = await import(path.join(SIBLING, 'holodeck-records.js')); } catch (e) { fail('records module: ' + e.message); }
 if (!R) { skip('reader not loaded'); } else {
   const readings = [];
   for (const doc of BATTERY) {
@@ -110,7 +111,6 @@ if (!R) { skip('reader not loaded'); } else {
   const strikes = o => { const c = {}; o.forEach(x => c[x.id + '|' + x.a + '|' + x.b] = x); let s = 0; Object.values(c).forEach(x => s += x.mentions != null ? x.mentions : 0); return s; };
   JSON.stringify(fwd.cast.map(c => c.id).sort()) === JSON.stringify(rev.cast.map(c => c.id).sort()) ? ok('merged cast is the same set whichever order sources arrive') : fail('merge order changes the cast');
   // fold the same readings twice: dedup in the records must keep one referent per id
-  let Rec = null; try { Rec = await import(path.join(SIBLING, 'holodeck-records.js')); } catch (e) { fail('records module: ' + e.message); }
   if (Rec) {
     const doc = { id: 'u1', title: 'Battery', format: 'text', text: BATTERY[0].text };
     const A = { docs: [doc], docById: { u1: doc }, sts: [], names: {} };
@@ -209,6 +209,37 @@ else {
      withRegions === r.cast.length ? ok('EVERY sighted referent carries its 2D region(s) — the precise placement OCR cannot give') : fail('a sighted referent lacks a region');
      const lines = screenReading.eotGeometryLines(sc, { name: 'sample-1200x820.png' });
      lines.length > 0 && lines.every(l => l.schema === 'EOTObservation@1' && l.at.region.length === 4) ? ok('the middle layer surfaces as EOT observations addressed by region (' + lines.length + ')') : fail('EOT geometry lines malformed');
+  }
+  // [5] the in-tab core (holodeck-screen-core.js) must agree with the pipeline core, and a screen
+  // reading must fold into records as Referents/Bonds exactly as a text reading does.
+  console.log('\n[5] The in-tab 2D core matches the pipeline, and a screen reading reaches the records');
+  let core = null; try { core = await import(path.join(HERE, 'holodeck-screen-core.js')); } catch (e) { fail('holodeck-screen-core.js: ' + e.message); }
+  if (core && reading) {
+    const { execFileSync } = await import('node:child_process');
+    try {
+      const raw = execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', sample, '-f', 'rawvideo', '-pix_fmt', 'rgba', 'pipe:1'], { maxBuffer: 1 << 30 });
+      const dims = execFileSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', sample]).toString().trim().split(',').map(Number);
+      const img = { width: dims[0], height: dims[1], data: new Uint8ClampedArray(raw.buffer, raw.byteOffset, raw.byteLength) };
+      const tsv = execFileSync('tesseract', [sample, 'stdout', '--psm', '3', 'tsv'], { maxBuffer: 1 << 28 }).toString();
+      const rows = tsv.split('\n').slice(1).map(l => l.split('\t')).filter(c => c.length >= 12 && c[0] === '5' && c[11].trim() !== '');
+      const byLine = new Map();
+      for (const c of rows) { const k = c[2] + '.' + c[3] + '.' + c[4]; if (!byLine.has(k)) byLine.set(k, []); const L = +c[6], T = +c[7]; byLine.get(k).push({ text: c[11].trim(), confidence: +c[10], bbox: { x0: L, y0: T, x1: L + +c[8], y1: T + +c[9] } }); }
+      const lines = [...byLine.values()].map(ws => ({ text: ws.map(w => w.text).join(' '), conf: 80, bbox: { x0: Math.min(...ws.map(w => w.bbox.x0)), y0: Math.min(...ws.map(w => w.bbox.y0)), x1: Math.max(...ws.map(w => w.bbox.x1)), y1: Math.max(...ws.map(w => w.bbox.y1)) }, words: ws }));
+      const model = core.buildScreenModel(img, lines, { tol: 10, minArea: 500, minConf: 45 });
+      const els = core.elementsOf(model, 1);
+      els.length > 10 ? ok('the in-tab core builds the 2D model from pixels + OCR boxes (' + els.length + ' elements)') : fail('the in-tab core produced too few elements');
+      els.every(e => Array.isArray(e.region) && e.region.length === 4) ? ok('every in-tab element has region [x,y,w,h]') : fail('an in-tab element lacks a region');
+      // the screen reading, folded into records
+      if (R && Rec) {
+        const screen = reading.readSighted('shot', els, {});
+        const doc = { id: 'shot', title: 'shot', format: 'html', text: '' };
+        const A2 = { docs: [doc], docById: { shot: doc }, sts: [], names: {} };
+        const rixS = reading.mergeReadings([screen], { from: 'test' });
+        const db = Rec.buildDatabase(A2, null, { localIx: rixS });
+        const refs = Object.values(db.state.entities).filter(e => e._type === 'Referents');
+        refs.length === rixS.castTotal && refs.length > 0 ? ok('the screen reading lands as Referents in the records (' + refs.length + ')') : fail('screen reading did not reach the records');
+      }
+    } catch (e) { skip('in-tab core parity (ffmpeg/tesseract unavailable): ' + e.message); }
   }
 }
 

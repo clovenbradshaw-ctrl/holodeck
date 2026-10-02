@@ -4,7 +4,7 @@
 // already consume. A hand-made reader report stands in for holodeck-reader.js.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readDoc, mergeReadings, readWorkspace, splitPassages, countSurface, bondKey } from './holodeck-reading.js';
+import { readDoc, mergeReadings, readWorkspace, splitPassages, countSurface, bondKey, readSighted, nameRuns } from './holodeck-reading.js';
 
 const edge = (end1, label, end2, polarity = '+') => ({ end1, label, end2, polarity, refs: [] });
 
@@ -84,6 +84,27 @@ test('readWorkspace reads each doc with the injected reader and skips the textle
   assert.equal(seen.length, 1, 'the textless doc never reaches the reader');
   assert.equal(rix.cast.length, 2);
   assert.equal(rix.bonds.length, 1);
+});
+
+test('a screen reading folds beside a text reading and keeps its 2D regions', () => {
+  const text = { name: 'u1', ...readDoc('u1', 'Acme Labs hired Bob Smith.', { edges: [edge('Acme Labs', 'hired', 'Bob Smith')] }) };
+  const screen = readSighted('img1', [
+    { id: 'e1', role: 'h1', region: [10, 10, 200, 40], text: 'Acme Labs' },
+    { id: 'e2', role: 'p', region: [10, 60, 300, 20], text: 'Acme Labs hired Bob Smith' },
+  ]);
+  const rix = mergeReadings([text, screen], { from: 'test' });
+  assert.deepEqual(rix.order, ['u1', 'img1'], 'a text source and an image fold into one index');
+  const acme = rix.cast.find(c => c.id === 'acme labs');
+  assert.equal(acme.srcN, 2, 'Acme Labs is read in both the text and the image');
+  assert.equal(acme.regions.length, 2, 'the image referent carries its two regions');
+  assert.equal(acme.standing, 'sighted');
+  assert.deepEqual(rix.cast.find(c => c.id === 'bob smith').regions, [[10, 60, 300, 20]]);
+});
+
+test('nameRuns reads a box\'s name phrase and drops furniture and lone stop words', () => {
+  assert.deepEqual(nameRuns('Acme Labs'), ['Acme Labs']);
+  assert.deepEqual(nameRuns('Contact'), []);
+  assert.deepEqual(nameRuns('Acme Labs hired Bob Smith'), ['Acme Labs', 'Bob Smith']);
 });
 
 test('the projected shape carries every key the OHS index consumers read', () => {
