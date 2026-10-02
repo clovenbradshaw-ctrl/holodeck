@@ -127,7 +127,7 @@ async function main() {
     else if (r.verdict === "bound") { mark = "FAIL"; boundWrong++; note = `BOUND THE WRONG ENTITY (${got}) — another thing's material would be presented`; }
     else { mark = "SAFE"; safe++; note = r.verdict + (r.identity?.candidate ? ` — live candidate ${r.identity.candidate}` : ""); }
     if (client(m.lang).gaveUp429 && r.verdict === "not-found") { mark = "429"; note = "rate-limited by Wikimedia — not a verdict; rerun when the limit clears"; }
-    rows.push({ mark, lang: m.lang, title: m.title, got, truth: m.qid, support: (r.identity?.supportRefs ?? []).join(","), note });
+    rows.push({ mark, lang: m.lang, title: manifest.title, got, truth: m.qid, support: (r.identity?.supportRefs ?? []).join(","), note });
   }
 
   console.log("mark".padEnd(6) + "lang".padEnd(5) + "referent".padEnd(30) + "got".padEnd(12) + "truth".padEnd(8) + "corroboration");

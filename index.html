@@ -153,10 +153,11 @@ select option{background:var(--s1);color:var(--ink)}
     <div style="max-width:1230px;margin:0 auto;padding:0 20px 8px;display:flex;align-items:center;gap:8px;position:relative;flex-wrap:wrap">
       <button onClick="{{ stripToggleSources }}" title="Sources — what is admitted" style="display:flex;align-items:center;gap:7px;background:var(--s1);border:1px solid var(--line2);border-radius:8px;padding:4px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2);white-space:nowrap;position:relative;z-index:56" style-hover="border-color:var(--acc)"><span style="font:500 13px 'JetBrains Mono';color:var(--acc)">▦</span><b style="font-weight:600;color:var(--ink)">{{ stripSourcesLabel }}</b><span style="color:var(--dim);font-size:11px">▾</span></button>
       <button onClick="{{ stripToggleSegment }}" title="Segment — filter and cut the sources" style="display:flex;align-items:center;gap:7px;background:var(--s1);border:1px solid var(--line2);border-radius:8px;padding:4px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2);white-space:nowrap;position:relative;z-index:56" style-hover="border-color:var(--acc)"><span style="font:500 13px 'JetBrains Mono';color:var(--acc)">⑃</span><b style="font-weight:600;color:var(--ink)">{{ stripSegLabel }}</b><span style="color:var(--dim);font-size:11px">▾</span></button>
-      <button onClick="{{ stripToggleRead }}" title="Read as — what × where × scale" style="display:flex;align-items:center;gap:7px;background:var(--s1);border:1px solid {{ readingTint }};border-radius:8px;padding:4px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2);white-space:nowrap;position:relative;z-index:56" style-hover="border-color:var(--acc)"><span style="font:500 13px 'JetBrains Mono';color:{{ readingTint }}">◫</span><b style="font-weight:600;color:var(--ink)">{{ stripReadLabel }}</b><span style="color:var(--dim);font-size:11px">▾</span></button>
-      <span id="hd-reading" title="{{ stripAutoWhy }}" style="display:flex;align-items:baseline;gap:7px;min-width:0;overflow:hidden;white-space:nowrap;margin-left:2px">
+      <button onClick="{{ stripToggleRead }}" title="Read as — what × where × scale" style="display:flex;align-items:center;gap:7px;background:var(--s1);border:1px solid {{ stripChipBorder }};border-radius:8px;padding:4px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2);white-space:nowrap;position:relative;z-index:56" style-hover="border-color:var(--acc)"><span style="font:500 13px 'JetBrains Mono';color:{{ stripGlyphColor }}">◫</span><sc-if value="{{ stripManual }}" hint-placeholder-val="{{ false }}"><span style="background:{{ readingTint }};color:#141126;border-radius:5px;padding:1px 6px;font:700 10px 'JetBrains Mono';letter-spacing:.08em">MANUAL</span></sc-if><b style="font-weight:600;color:var(--ink)">{{ stripReadLabel }}</b><span style="color:var(--dim);font-size:11px">▾</span></button>
+      <span id="hd-reading" title="{{ stripAutoWhy }}" style="display:flex;align-items:baseline;gap:7px;min-width:0;overflow:hidden;white-space:nowrap;margin-left:2px;position:relative;z-index:56">
         <span style="font:400 11px 'JetBrains Mono';color:var(--dim)">{{ stripReadFine }}</span>
-        <sc-if value="{{ readingAuto }}" hint-placeholder-val="{{ false }}"><span style="font:600 10px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:{{ readingTint }}">auto</span></sc-if>
+        <sc-if value="{{ readingAuto }}" hint-placeholder-val="{{ false }}"><span style="font:400 11px 'Hanken Grotesk';color:var(--dim)">auto</span></sc-if>
+        <sc-if value="{{ stripManual }}" hint-placeholder-val="{{ false }}"><span style="font:600 11px 'Hanken Grotesk';color:{{ readingTint }}">manual</span><button onClick="{{ stripAutoToggle }}" style="cursor:pointer;border:1px solid var(--line2);border-radius:6px;padding:1px 8px;background:var(--s1);font:500 11px 'Hanken Grotesk';color:var(--ink2)">back to auto</button></sc-if>
       </span>
       <sc-if value="{{ stripAnyOpen }}" hint-placeholder-val="{{ false }}"><div onClick="{{ stripClose }}" style="position:fixed;inset:0;z-index:55"></div></sc-if>
       <sc-if value="{{ stripOpenSources }}" hint-placeholder-val="{{ false }}">
@@ -206,8 +207,8 @@ select option{background:var(--s1);color:var(--ink)}
           <div style="padding:10px 14px;border-bottom:1px solid var(--line);font:600 13px 'Hanken Grotesk'">Read as <span style="font:400 12px 'Hanken Grotesk';color:var(--mut)">what × where × scale → one perspective</span></div>
           <div style="padding:10px 12px;display:flex;flex-direction:column;gap:7px">
             <div style="display:flex;align-items:center;gap:9px;padding-bottom:2px">
-              <button onClick="{{ stripAutoToggle }}" style="cursor:pointer;border:1px solid {{ stripAutoOn ? '#8b5cf6' : 'var(--line2)' }};border-radius:999px;padding:3px 11px;font:600 11px 'JetBrains Mono';letter-spacing:.06em;text-transform:uppercase;background:{{ stripAutoOn ? '#8b5cf6' : 'transparent' }};color:{{ stripAutoOn ? '#fff' : 'var(--mut)' }}">Auto</button>
-              <span style="font:400 11px 'Hanken Grotesk';color:var(--mut)">{{ stripAutoWhy }}</span>
+              <button onClick="{{ stripAutoToggle }}" title="Auto reads the scope and picks the cell with the most signal; picking any field takes over" style="cursor:pointer;display:flex;align-items:center;gap:7px;border:1px solid {{ stripAutoBorder }};border-radius:8px;padding:4px 11px;background:{{ stripAutoBg }};font:600 12px 'Hanken Grotesk';color:var(--ink)"><span style="width:9px;height:9px;border-radius:50%;border:1px solid {{ readingTint }};background:{{ stripAutoDotBg }}"></span>Auto <span style="font:400 10px 'JetBrains Mono';color:{{ stripAutoStateColor }}">{{ stripAutoState }}</span></button>
+              <span style="font:400 11px 'Hanken Grotesk';color:var(--mut)">{{ stripAutoHint }}</span>
             </div>
             <sc-for list="{{ stripReadRows }}" as="r" hint-placeholder-count="3">
               <div style="display:grid;grid-template-columns:92px minmax(0,1fr);gap:9px;align-items:center">
@@ -5940,7 +5941,16 @@ class Component extends DCLogic {
       stripReadLabel: STRIP_VOCAB[op + '|' + r.grain],
       stripReadFine: op + '·' + r.grain + ' · terrain ' + STRIP_TERRAIN[r.domain][r.grain] + ' · stance ' + STRIP_STANCE[r.mode][r.grain],
       stripAutoOn: !!S.stripReadAuto,
+      stripManual: !S.stripReadAuto,
+      stripChipBorder: S.stripReadAuto ? 'var(--line2)' : (MODE_TINT[r.mode] || 'var(--acc)'),
+      stripGlyphColor: S.stripReadAuto ? 'var(--mut)' : (MODE_TINT[r.mode] || 'var(--acc)'),
+      stripAutoState: S.stripReadAuto ? 'ON' : 'OFF',
+      stripAutoBorder: S.stripReadAuto ? (MODE_TINT[r.mode] || 'var(--acc)') : 'var(--line2)',
+      stripAutoBg: S.stripReadAuto ? 'var(--sel)' : 'var(--s1)',
+      stripAutoDotBg: S.stripReadAuto ? (MODE_TINT[r.mode] || 'var(--acc)') : 'transparent',
+      stripAutoStateColor: S.stripReadAuto ? (MODE_TINT[r.mode] || 'var(--acc)') : 'var(--dim)',
       stripAutoWhy: whyText,
+      stripAutoHint: S.stripReadAuto ? whyText : 'manual — pick any field, or switch Auto back on',
       stripAutoToggle: () => this.setState({ stripReadAuto: !S.stripReadAuto }),
       hasReading: inScope.length > 0,
       readingName: STRIP_VOCAB[op + '|' + r.grain],
