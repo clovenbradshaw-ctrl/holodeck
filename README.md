@@ -28,7 +28,7 @@ python3 -m http.server 8000
 
 ## Content
 
-The workspace starts empty — there are no built-in sample corpora. Add anything: paste text, drop files, point the omni bar at any URL, or give the Add panel a GitHub repo (`owner/repo` or a `github.com` URL) and its text files are pulled in and read. Everything you add lives in a browser-local "Your content" workspace. There is no relay of our own: a page is fetched **directly** from its own site first. Genuinely unrelated content you bring in can be split into its own workspace with "Fork" once it's recognized as a separate topic, rather than staying mixed in with everything else.
+The workspace starts empty — there are no built-in sample corpora. Add anything: paste text, drop files, **drop a whole folder or choose one in the Add panel** (its files, and any nested folders, are read in place), point the omni bar at any URL, or give the Add panel a GitHub repo (`owner/repo` or a `github.com` URL) and its text files are pulled in and read. Everything you add lives in a browser-local "Your content" workspace. There is no relay of our own: a page is fetched **directly** from its own site first. Genuinely unrelated content you bring in can be split into its own workspace with "Fork" once it's recognized as a separate topic, rather than staying mixed in with everything else.
 
 ## Reading a page that blocks being read
 
@@ -61,6 +61,27 @@ Measured against three blind graders (90–95% agreement) on 150 held-out OHS na
 
 Known misses: generic headings made of ordinary words, OCR slips outside its confusion table, and run-togethers where one side is a single word.
 
+## Reading every kind of source
+
+The OHS corpus was read to a depth its own captures earned — attribution from the page's
+own metadata, the article rather than the page chrome, captions as time-addressed lines,
+scanned pages through OCR. `holodeck-read.js` is that reading, generalised, so any source
+a person adds is read the same way:
+
+- **A page** — the article's own text, with the page's own account of **who wrote it, when
+  and where** (author, published date, publisher) taken from its metadata, never inferred.
+  Those facts now name the giver in every "who says" line, for a dropped file or a live URL.
+- **Captions and transcripts** (`.srt`, `.vtt`, segment JSON) — read as time-addressed
+  paragraphs, each carrying its second, so a line is seekable when the recording is linked.
+- **Email** (`.eml`) — the headers are received facts (sender, recipients, date, subject);
+  quoted-printable and base64 bodies are decoded.
+- **Tables** (`.csv`, `.tsv`) — shown as a table *and* each row stated as a sentence, so
+  cells reach the holograph the way spreadsheet cells already did.
+- **A scan or a photo of a page** — a PDF with no text layer, and an image, are read by a
+  local WASM OCR engine loaded on demand (no relay); the recognized text is marked as a
+  machine reading, never as the document's own words. Turn it off with
+  `localStorage hd:ocr = 'off'`.
+
 ## What counts as normal
 
 Whether something is unusual depends on where it is. A capitalised "Contractor" is normal in a contract that defines it; "Label:" lines are a form's furniture. `holodeck-region.js` answers "is this normal here?" against the smallest region that can be told apart from its surroundings. The ladder runs from the document, to documents of the same kind, to the workspace, to **General English** from `live_priors` (8 books, 31 encyclopedia articles and 27 statutes, received with their file list and cached in the browser), and finally to eoreader7's English part-of-speech prior. At each step the region is compared against 199 same-size draws from the next region out. It sets the normal only when it falls outside every draw; otherwise the question moves outward. The workspace can override General English only where it measurably differs, so a corpus full of junk can't declare its junk normal.
@@ -77,6 +98,14 @@ A repo, a report, and a recording don't share affordances, so every ingest is hu
 
 This is the live, ongoing home for this surface — active development happens here going forward, not in a local-only copy. It is **the fold**, the reading/research surface of The Fold, and inherits the former `the-fold` repo's surface role.
 
+## DeepSeek experiment (result: not in-tab)
+
+Tried putting DeepSeek in the browser. WebLLM only prebuilds the R1-Distill **reasoning** models (`DeepSeek-R1-Distill-Llama-8B`, `DeepSeek-R1-Distill-Qwen-7B`), and a reasoning model is the wrong tool here: the fold does the reasoning itself and wants the answer only. Asked something trivial ("hi"), an R1 model over-thinks, loops, and can spend the whole token budget before it ever reaches the answer. Hiding the thinking trace does not fix that — the compute is still spent. So no DeepSeek is offered in-tab.
+
+DeepSeek's non-reasoning option is the MoE (V2-Lite / Coder-V2-Lite, 16 B total but 2.4 B active per token). It has no published webgpu `.wasm`, so it runs through the Ollama lane (`deepseek-coder-v2:lite`) instead — non-reasoning, minimal per-token compute, and it flows through the identical full pipeline (listed in the model dropdown automatically when Ollama is up).
+
+The roster filters reasoning models out of **both** lanes, by name (`isThinkingModel` in `holodeck-ask.js`): `deepseek-r1`, `qwq`, `qwen3` (thinks by default), and the `*-reasoning` / `*thinker` family. A reasoner over-thinks a simple prompt, loops, and can spend the whole budget before answering — the opposite of the fold, which does the reasoning itself. `qwen3-coder` and `deepseek-coder-v2` are not thinking models and stay.
+
 ## Compute workers — Heimdall invites (2026-10-01)
 
 Settings → **Compute workers · Heimdall**: mint a heimdall compute invite under your own Matrix account. The fleet room is born with a short local alias, so the invite link is just `?r=<code>` — something you can actually type by hand on a remote computer (`clovenbradshaw-ctrl.github.io/heimdall/?r=h7q2x`). Record the worker's 6-digit pairing code into the account's `org.heimdall.codes` registry — the same registry the heimdall site confirms acceptance against, so an invite minted here is confirmable there and vice versa. Pure logic in `holodeck-heimdall.js` (the fold's `heimdall-invite.js` pattern); the crossings live in `fold-net.js`.
@@ -88,6 +117,10 @@ Each added document is posted to eoreader7's `POST /v1/read` (model-free; tries 
 It does **not** replace the local finder, because measured on three real workspace documents the engine reader agreed with only 10/81, 9/60 and 18/119 of the local names. Its known defects (for the engine, not for a Holodeck workaround): it breaks names at "of" ("Continuum of Care"), admits months and "on tuesday" as beings, splits "Freddie O'Connell" to "O'Connell", and misses "Lauren Riley" and "Department of Law". Documents already in the workspace are still read locally only.
 
 The vetting of engine additions (month and weekday names, function words) is English-only, like the rest of the local hygiene; other scripts pass through unvetted.
+
+## The record, and the constitution
+
+`docs/FOLD-CONSTITUTION.md` is the one document that governs what The Fold may put in front of a person, at every surface. `docs/LEGACY-RECORD.md` is the index to the instrument's own accumulated knowledge about itself — the refused list and policies in the archived former `the-fold` repo, and the living ledgers (the khora's `content-rules.json`, heimdall's derived rules). Read the legacy record before proposing a "new" idea: it names the dead ends.
 
 ## Penelope (2026-10-01)
 

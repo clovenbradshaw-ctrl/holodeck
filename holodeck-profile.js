@@ -142,6 +142,156 @@ export function buildFromTriples(triples, { beings = null, exposureFloor = 2, ki
   return buildEntityProfiles(by, { referents, exposureFloor, kindMethod, kindOptions: { population: 'holodeck', draws, alpha, seed } });
 }
 
+/** summaryProps(profile, built, opts) — the profile's own propositions, one
+ *  per parameter: the relation, whether the induced kind marked it
+ *  characteristic (★), the standing the kind earned, and the witnessed values
+ *  (`raw` as the corpus asserted it, `text` as a person sees it, `n` = the
+ *  statements that carried it). Join with provenanceFor(A, name) on
+ *  `${rel}\u0001${raw}` to cite every value to the source statements that
+ *  carried it. Instant: the profile is already built — no model call. */
+export function summaryProps(profile, built, { maxValues = 4 } = {}) {
+  if (!profile || !profile.parameters || !profile.parameters.length) return [];
+  const label = (v) => built?.surfaceOfId?.get(v) ?? String(v);
+  return profile.parameters.map((p) => ({
+    rel: p.rel,
+    star: !!p.kindCharacteristic,
+    standing: p.standing,
+    weight: p.informationWeight,
+    vals: p.values.slice(0, maxValues).map((v) => ({ raw: v.value, text: label(v.value), n: v.count })),
+    more: Math.max(0, p.values.length - maxValues),
+  }));
+}
+
+/** provenanceFor(A, name) — Map<`${rel}\u0001${value}`, statement[]> — every
+ *  (relation, value) a name holds, resolved to the EXACT source statements that
+ *  carried it: `{ id, doc, docTitle, date, where, text }`. The name-level
+ *  relations (typed · also written · said with · named in) are cited to every
+ *  statement the name appears in; the per-statement relations (figure · year ·
+ *  about · appears with) to exactly the statements that carried each value. The
+ *  same walk triplesFromAnalysis runs, deterministic from the analysis alone —
+ *  full provenance without a model. */
+export function provenanceFor(A, name) {
+  const out = new Map();
+  const n = A && A.names && A.names[name];
+  if (!n) return out;
+  const provOf = (st) => {
+    const d = (A.docById || {})[st.doc] || {};
+    return { id: st.id, doc: st.doc, docTitle: d.title || '', date: d.pubLabel || (d.year ? String(d.year) : st.year || ''), where: st.where || '', text: clean(st.text) };
+  };
+  const add = (rel, value, st) => {
+    if (!rel || value == null || value === '' || !st || !st.id) return;
+    const k = rel + '\u0001' + String(value);
+    let list = out.get(k);
+    if (!list) { list = []; out.set(k, list); }
+    if (!list.some((x) => x.id === st.id)) list.push(provOf(st));
+  };
+  const sts = (n.sts || []).map((id) => (A.byId || {})[id]).filter(Boolean);
+  for (const st of sts) {
+    add('typed', n.type || 'other', st);
+    for (const al of n.aliases || []) add('also written', al, st);
+    add('said with', st.frame || 'fact', st);
+    add('named in', st.doc, st);
+  }
+  for (const st of sts) {
+    for (const g of st.figs || []) { const raw = g.raw || (g.value != null ? String(g.value) : null); if (raw) add('figure', clean(raw).slice(0, 40), st); }
+    for (const g of st.dates || []) if (g.year) add('year', String(g.year), st);
+    for (const w of st.topics || []) add('about', w, st);
+    for (const o of st.names || []) if (o !== name) add('appears with', o, st);
+  }
+  return out;
+}
+
+/** provenanceFromObservations(lines) — the same map for the corpus's own
+ *  per-referent observations (referents.eot.jsonl), keyed like provenanceFor
+ *  and resolved to the observation line's `source` (the source material) and
+ *  `ts`. */
+export function provenanceFromObservations(lines = []) {
+  const out = new Map();
+  const add = (rel, value, id, docTitle, date, text) => {
+    if (!rel || value == null || value === '' || !id) return;
+    const k = rel + '\u0001' + String(value);
+    let list = out.get(k);
+    if (!list) { list = []; out.set(k, list); }
+    if (!list.some((x) => x.id === id)) list.push({ id, doc: docTitle, docTitle, date: date || '', where: '', text: clean(text || '') });
+  };
+  for (const l of lines) {
+    if (!l || !l.id) continue;
+    if (l.schema === 'observe') {
+      for (const [k, v] of Object.entries(l.fields || {})) {
+        if (v == null || v === '') continue;
+        add(k, String(v), l.id, l.source || '', l.ts, l.snippet || String(v));
+      }
+    } else if (l.schema === 'alias' && l.surface) {
+      add('also written', l.surface, l.id, l.source || '', l.ts, l.surface);
+    }
+  }
+  return out;
+}
+
+const SUMMARIZE_STANDING = { fixed: 'fixed', 'one-at-a-time': 'one at a time', 'many-valued': 'varies', 'time-unknown': 'time unknown', unexposed: 'unexposed', unknown: null };
+
+/** summaryText(profile, built, { size, provenance }) — the summary as prose,
+ *  ground-up from the profile's own propositions. `small` is one line (kind +
+ *  the key relations); `medium` a paragraph (kind + the key relations with
+ *  their leading values); `full` every proposition, each value's source
+ *  statement count appended when `provenance` (provenanceFor's map) is given.
+ *  Returns null when the profile asserts nothing. */
+export function summaryText(profile, built, { size = 'medium', provenance = null } = {}) {
+  if (!profile || !profile.parameters || !profile.parameters.length) return null;
+  const props = summaryProps(profile, built);
+  const name = built?.surfaceOfId?.get(profile.id) || profile.id;
+  const kind = (profile.kinds || []).map((k) => (k.signatures || []).slice(0, 4).join(' · ') || k.kindKey).join(' / ');
+  const read = kind ? `is read as ${kind}` : 'has no established kind';
+  const keyed = props.filter((p) => p.star);
+  const cite = (p, v) => (provenance && provenance.get(p.rel + '\u0001' + String(v.raw)) || []).length;
+  const stmtN = (c) => c + ' source statement' + (c === 1 ? '' : 's');
+  if (size === 'small') {
+    const lead = (keyed.length ? keyed : props.slice(0, 3)).map((p) => p.rel).join(', ');
+    return `${name} ${read} — key: ${lead} · ${props.length} parameter${props.length === 1 ? '' : 's'}.`;
+  }
+  if (size === 'full') {
+    const sents = [`${name} ${read}, its ${props.length} parameter${props.length === 1 ? '' : 's'} induced from the collection's own relations.`];
+    for (const p of props) {
+      const st = SUMMARIZE_STANDING[p.standing];
+      const vals = p.vals.map((v) => {
+        const c = cite(p, v);
+        return v.text + (v.n > 1 ? ' ×' + v.n : '') + (c ? ' · ' + stmtN(c) : '');
+      }).join(', ');
+      sents.push(`${p.star ? 'key ' : ''}${p.rel}${st ? ' (' + st + ')' : ''}: ${vals}${p.more ? ' +' + p.more : ''}.`);
+    }
+    return sents.join('\n');
+  }
+  const heads = keyed.length ? keyed : props.slice(0, 2);
+  const part = heads.map((p) => p.rel + ': ' + p.vals.slice(0, 3).map((v) => v.text + (v.n > 1 ? ' ×' + v.n : '')).join(', ') + (p.more ? ' +' + p.more : '')).join('; ');
+  const more = props.length > heads.length ? ` · ${props.length - heads.length} more parameter${props.length - heads.length === 1 ? '' : 's'}` : '';
+  return `${name} ${read}. ${part}${more}.`;
+}
+
+/** renderSummary(built, name, opts) — the summary as an expandable HTML block:
+ *  one line collapsed, the full propositions with their source counts
+ *  expanded. Pass `provenance` (provenanceFor's map) and an `onCite` renderer
+ *  (statement → label or HTML) to make each value's provenance clickable. */
+export function renderSummary(built, name, { title = 'What it is about', provenance = null, onCite = null } = {}) {
+  const p = built && (built.byId.get(name) || built.byId.get(built.idOfSurface?.get(String(name).toLowerCase())));
+  if (!p || !p.parameters || !p.parameters.length) return '';
+  const line = summaryText(p, built, { size: 'small', provenance }) || '';
+  const para = summaryText(p, built, { size: 'medium', provenance }) || '';
+  const props = summaryProps(p, built).map((x) => {
+    const vals = x.vals.map((v) => {
+      const prov = (provenance && provenance.get(x.rel + '\u0001' + String(v.raw)) || []);
+      const cite = prov[0] && onCite ? onCite(prov[0]) : '';
+      return `<span class="hp-sval">${esc(v.text)}${v.n > 1 ? `<i>×${v.n}</i>` : ''}${prov.length ? `<i class="hp-scite">${prov.length} stmt${prov.length === 1 ? '' : 's'}</i>` : ''}${cite ? `<i class="hp-slink">${cite}</i>` : ''}</span>`;
+    }).join('');
+    return `<div class="hp-sprop"><span class="hp-srel">${x.star ? '<b class="hp-star">★</b>' : ''}${esc(x.rel)}</span><span class="hp-svals">${vals}${x.more ? `<span class="hp-more">+${x.more}</span>` : ''}</span></div>`;
+  }).join('');
+  return `<div class="hp-summary">
+  <div class="hp-sum-head"><span class="hp-sum-title">${esc(title)}</span><span class="hp-sum-count">${p.parameters.length} parameter${p.parameters.length === 1 ? '' : 's'}</span>
+  <button type="button" class="hp-sum-toggle" onclick="var s=this.parentNode.parentNode;s.classList.toggle('hp-full');this.textContent=s.classList.contains('hp-full')?'collapse':'expand'">expand</button></div>
+  <div class="hp-sum-line">${esc(line)}</div>
+  <div class="hp-sum-more"><p class="hp-sum-para">${esc(para)}</p><div class="hp-sum-props">${props}</div></div>
+</div>`;
+}
+
 /** profileFor(built, name) — the profile of the referent a surface name names. */
 export function profileFor(built, name) {
   if (!built || !name) return null;
@@ -174,8 +324,10 @@ export function profileText(profile, built) {
 }
 
 /** renderPanel(built, name) — a self-contained holodeck-styled panel (for a
- *  surface that renders HTML rather than binding rows). */
-export function renderPanel(built, name, { title = null } = {}) {
+ *  surface that renders HTML rather than binding rows). The summary rides
+ *  above the parameter rows, expandable to every proposition; pass
+ *  `provenance` and `onCite` for full citations to the source material. */
+export function renderPanel(built, name, { title = null, provenance = null, onCite = null } = {}) {
   const p = profileFor(built, name);
   if (!p) return '';
   const kind = p.kinds.map((k) => k.signatures.slice(0, 4).join(' · ') || k.kindKey).join(' / ');
@@ -186,7 +338,8 @@ export function renderPanel(built, name, { title = null } = {}) {
     `<div class="hp-row"><span class="hp-rel">${r.star ? `<b class="hp-star">★</b>` : ''}${esc(r.rel)}</span>`
     + `<span class="hp-st ${r.cls}">${esc(r.standing)}</span>`
     + `<span class="hp-vals">${r.values.map((v) => `<span class="hp-val">${esc(v.text)}${v.n > 1 ? `<i>×${v.n}</i>` : ''}</span>`).join('')}${r.more ? `<span class="hp-more">${esc(r.more)}</span>` : ''}</span></div>`).join('');
-  return `<div class="hp-panel" data-entity="${esc(p.id)}">${head}${rows ? `<div class="hp-rows">${rows}</div>` : `<p class="hp-empty">no relations witnessed — nothing to profile</p>`}</div>`;
+  const sum = renderSummary(built, name, { title: 'What it is about', provenance, onCite });
+  return `<div class="hp-panel" data-entity="${esc(p.id)}">${head}${sum}${rows ? `<div class="hp-rows">${rows}</div>` : `<p class="hp-empty">no relations witnessed — nothing to profile</p>`}</div>`;
 }
 
 export function mountPanel(host, built, name, opts) { if (host) host.innerHTML = renderPanel(built, name, opts); }
@@ -210,4 +363,23 @@ export const PROFILE_CSS = `
 .hp-val i{color:var(--mut);font-style:normal;font-size:10px;margin-left:2px}
 .hp-more{color:var(--mut);font-size:11px}
 .hp-empty{color:var(--mut);margin:4px 0 0;font-size:12px}
+.hp-summary{border-top:1px solid var(--line);margin-top:8px;padding-top:8px}
+.hp-sum-head{display:flex;align-items:baseline;gap:8px;margin-bottom:3px}
+.hp-sum-title{font:600 11px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.hp-sum-count{font:500 10px 'JetBrains Mono';color:var(--dim)}
+.hp-sum-toggle{margin-left:auto;background:none;border:1px solid var(--line2);border-radius:99px;padding:1px 9px;cursor:pointer;font:500 10px 'JetBrains Mono';color:var(--ink2)}
+.hp-sum-toggle:hover{border-color:var(--acc);color:var(--acc)}
+.hp-sum-line{font:400 13px/1.5 'Newsreader',serif;color:var(--ink2);text-wrap:pretty}
+.hp-sum-more{display:none}
+.hp-summary.hp-full .hp-sum-more{display:block}
+.hp-sum-para{font:400 13px/1.5 'Newsreader',serif;color:var(--ink2);margin:4px 0 6px;text-wrap:pretty}
+.hp-sum-props{display:flex;flex-direction:column}
+.hp-sprop{display:flex;gap:8px;align-items:baseline;padding:4px 0;border-top:1px solid var(--line)}
+.hp-sprop:first-child{border-top:0}
+.hp-srel{font-weight:600;flex:none;min-width:0}
+.hp-svals{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;min-width:0}
+.hp-sval{background:var(--s2);border-radius:5px;padding:0 6px;font:500 11px 'Hanken Grotesk';max-width:18ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hp-sval i{color:var(--mut);font-style:normal;font-size:10px;margin-left:2px}
+.hp-scite{color:var(--dim)!important}
+.hp-slink{color:var(--acc)!important;cursor:pointer;text-decoration:underline}
 `;

@@ -34,13 +34,14 @@ pre{background:var(--s1);border:1px solid var(--line);border-radius:10px;padding
   </div>
 </div>
 <script type="module">
-import { buildFromTriples, triplesFromObservations, paramRows, profileText, renderPanel, PROFILE_CSS } from './holodeck-profile.js';
+import { buildFromTriples, triplesFromObservations, provenanceFromObservations, paramRows, profileText, renderPanel, PROFILE_CSS } from './holodeck-profile.js';
 const style = document.createElement('style'); style.textContent = PROFILE_CSS; document.head.appendChild(style);
 
 const lines = (await fetch('./fixtures/ohs-referents.eot.jsonl').then(r => r.text())).trim().split('\n').map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
 const triples = triplesFromObservations(lines);
 const beings = [...new Set(triples.map(t => t.subject))];
 const built = buildFromTriples(triples, { beings, exposureFloor: 2, draws: 99, alpha: 0.05, seed: 5 });
+const prov = provenanceFromObservations(lines);
 
 const d = built.diagnostics;
 document.getElementById('stat').innerHTML =
@@ -50,7 +51,7 @@ const all = [...built.byId.values()].sort((a, b) => (b.established - a.establish
 const list = document.getElementById('list');
 function show(id) {
   const p = built.byId.get(id);
-  document.getElementById('panel').innerHTML = renderPanel(built, id, { title: id });
+  document.getElementById('panel').innerHTML = renderPanel(built, id, { title: id, provenance: prov, onCite: st => st.docTitle || st.doc });
   document.getElementById('text').textContent = profileText(p, built).join('\n');
   for (const el of list.children) el.classList.toggle('on', el.dataset.id === id);
 }

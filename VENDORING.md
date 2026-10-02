@@ -1,6 +1,18 @@
 repo: clovenbradshaw-ctrl/ohs-custody
 branch: main
 
+## Vendored reading fixture (2026-10-02, delink from clovenbradshaw at runtime)
+
+`fixtures/reading/f3affd2e11370118-causalTextPerceiver_reviseTextFold_refresh25.jsonl.index.json`
+and its `.cursor` are vendored byte-identical from `ohs-custody` `ground-readings/`. The
+reading view (`reading-worker.js`) now reads the pre-built `FoldReadingIndex@2` beside the
+app instead of fetching `raw.githubusercontent.com/clovenbradshaw-ctrl/ohs-custody` at
+runtime, so the view survives the migration's clovenbradshaw delink (FOLD-MIGRATION Step 4:
+"vendor the fixture, or gate the view on absence"). Only the index and cursor are vendored;
+the 7.7 MB `.jsonl.zst` is left upstream — the pre-built index is the path actually used,
+and the `.zst` path is only the key the index sits beside. `localStorage hd:reading`
+overrides the source with any absolute `.jsonl.zst` (or sibling `.index.json`) URL.
+
 ## Last sync
 date: 2026-09-25T19:46:51Z
 
@@ -20,6 +32,8 @@ date: 2026-09-25T19:46:51Z
 
 | Fold Explorer v7.dc.html — Records (holodeck-records.js) | clovenbradshaw-ctrl/bare-metal-eo-matrix-app: src/fold.js, public/data-chat.js (vendored unchanged under vendor/bare-metal/; src/operators.js replaced by a local no-network shim) |
 | Fold Explorer v7.dc.html — Ask the Fold (holodeck-ask.js, holodeck-reader.js) | clovenbradshaw-ctrl/the-fold: fold.js, holon.js (surf-and-fold wiring, ported); eoreader7: native/the-fold/reader-bundle.js (ported to fetch-loaded priors), native/organs/{source,measure,cite,grounding,web,speaker,hypergraph,fact-block,aposiopesis,cast,asserted,heard-surfaces,kind-standing}.js, native/adapters/text/{priors,spans,surfaces,pronouns,relations-language,relations-gfp,relations-positional,clause-spans,grain-typing,wordclass,morphology}.js, native/{memory,kernel}/*, native/priors/{pos,morphology}-eng.json (vendored unchanged) |
+| Referent links (holodeck-links.js) — arrow-of-time gate | eoreader7: native/organs/regime.js (vendored byte-identical under vendor/eoreader7/native/organs/; its only import, native/kernel/cube.js `GRAINS`, was already vendored). The identity gate's arrow-of-time check rides Kelsen's validity-window precedence (step 1 of the fixed order), never a re-derived temporal rule |
+| Omnilingual summary lens (holodeck-lang.js) — UniMorph priors | eoreader7: native/priors/declension-rus.json (vendored byte-identical under vendor/eoreader7/native/priors/; the English irregular tail morphology-eng.json and pos-eng.json were already vendored). Loaded as data, injected via `setPriors` — never a model |
 
 ## Sync history
 - 2026-09-25T19:11:34Z · ohs-custody @40cf318 — no upstream changes; same-bytes badges, Ingest & publish view
