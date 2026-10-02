@@ -3364,7 +3364,8 @@ function purgeLegacyHistory() {
   } catch (e) {}
   try { if (navigator.storage && navigator.storage.getDirectory) navigator.storage.getDirectory().then(async root => { try { await root.removeEntry('ohs-custody', { recursive: true }); } catch (e) {} }).catch(() => {}); } catch (e) {}
   try {
-    const r = indexedDB.open('fold-explorer', 1);
+    const r = indexedDB.open('fold-explorer', 2);
+    r.onupgradeneeded = () => { const db = r.result; if (!db.objectStoreNames.contains('blobs')) db.createObjectStore('blobs'); };
     r.onsuccess = () => { try { const db = r.result; const tx = db.transaction('blobs', 'readwrite'); const st = tx.objectStore('blobs'); const keys = st.getAllKeys(); keys.onsuccess = () => { (keys.result || []).forEach(k => { const s = String(k); if (s === 'meet:ohs' || s.startsWith('html:ohs-') || s.startsWith('pdf:ohs-') || s.startsWith('wiki5:kb')) { try { st.delete(k); } catch (e) {} } }); }; } catch (e) {} };
   } catch (e) {}
 }
@@ -3512,7 +3513,7 @@ function docxToHtml(xml) {
 let _pdfjs = null;
 async function pdfLib() { if (_pdfjs) return _pdfjs; const m = await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.mjs'); m.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs'; _pdfjs = m; return m; }
 const PDF_MAX_PAGES = 300;
-function idbOpen() { return new Promise((res, rej) => { const r = indexedDB.open('fold-explorer', 1); r.onupgradeneeded = () => r.result.createObjectStore('blobs'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+function idbOpen() { return new Promise((res, rej) => { const r = indexedDB.open('fold-explorer', 2); r.onupgradeneeded = () => { const db = r.result; if (!db.objectStoreNames.contains('blobs')) db.createObjectStore('blobs'); }; r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
 async function idbPut(k, v) { const db = await idbOpen(); return new Promise((res, rej) => { const tx = db.transaction('blobs', 'readwrite'); tx.objectStore('blobs').put(v, k); tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); }); }
 async function idbGet(k) { const db = await idbOpen(); return new Promise((res, rej) => { const q = db.transaction('blobs', 'readonly').objectStore('blobs').get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); }
 function wikiTitleOf(url) { const m = String(url).match(/^https?:\/\/en\.(?:m\.)?wikipedia\.org\/wiki\/([^#?]+)/); return m ? decodeURIComponent(m[1]) : null; }
