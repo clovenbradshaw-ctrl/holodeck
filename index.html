@@ -4303,7 +4303,62 @@ class Component extends DCLogic {
       if (r.verdict === 'source' || r.verdict === 'contested' || r.verdict === 'superseded') { src++; if (r.verdict === 'contested') cont++; c.pins = [...new Set([...keep, ...r.sts.map(st => this.ensurePin(D, A, st))])]; }
       else { auth++; c.pins = keep; }
       c.g = { verdict: keep.length && r.verdict === 'author' ? 'source' : r.verdict, why: r.why, shape: r.shape, closest: r.closest, con: conIds, conWhy, nSrc: r.nSrc || 0, at: Date.now(), ack: false, text: c.text }; }); return D; });
-    if (n) this.toast(n === 1 ? (src ? (cont ? 'Grounded, but contested' : 'Grounded') : 'Attributed to you') : src + ' of ' + n + ' grounded' + (cont ? ', ' + cont + ' contested' : '') + (auth ? ', ' + auth + ' attributed to you' : '')); }
+    if (n) this.toast(n === 1 ? (src ? (cont ? 'Grounded, but contested' : 'Grounded') : 'Attributed to you') : src + ' of ' + n + ' grounded' + (cont ? ', ' + cont + ' contested' : '') + (auth ? ', ' + auth + ' attributed to you' : ''));
+    // The check above is mechanical and closed: names, figures, and a short verb
+    // list. A position ("is pro Y") has neither a figure nor a verb on that list,
+    // so it came back "attributed to you" even when a source states it. The same
+    // relation reader the Ask surface uses and the holograph's own passages are
+    // run over the kept sources here, and the claim is judged as one of its own
+    // claims (see engineGroundClaims).
+    this.engineGroundClaims(only).catch(() => {}); }
+  // ── reading the claim through the holograph and the hyperlexicon ───────────
+  // The reader hears a copula position ("is pro", "is against") and equates a
+  // stance with its own paraphrases, so "is pro palestine" meets a source's
+  // "tweeted in support of the Palestinian people". The verdict decides the
+  // status: bound -> Grounded (Contested when the material states both ways),
+  // contradicted -> Held otherwise, unbound -> the closest the material does
+  // state (offered as "Use closest"), and a claim the reader cannot hear is
+  // disclosed as its own, never as proof the sources are silent.
+  engReader() { if (!this._engR) this._engR = import(new URL('holodeck-reader.js', location.href).href).then(M => M.makeEngineRelationReader()); return this._engR; }
+  engEdge(e) { return (e.end1 || '') + ' —' + (e.label || '') + '→ ' + (e.end2 || ''); }
+  engSts(A, IX, spans) { const out = [];
+    (spans || []).forEach(sp => { const name = String(sp.ref || '').split('#')[0]; const docId = IX.docOf && IX.docOf[name]; if (!docId) return;
+      const src = A.docById[docId]; const hit = A.sts.find(st => st.doc === docId && (st.text === sp.text || (sp.text && sp.text.length > 12 && st.text.indexOf(sp.text) >= 0)));
+      if (hit) { out.push(hit); return; }
+      const ch = (IX.chunks || []).find(c => c.ref === sp.ref); const base = ch ? ch.start : 0; const s = base + (sp.start || 0);
+      out.push({ id: 'eng:' + sp.ref + ':' + (sp.start || 0), doc: docId, s, e: base + (sp.end != null ? sp.end : (sp.start || 0)), text: sp.text || (src ? src.text.slice(s, s + 200) : '') }); });
+    const seen = new Set(); return out.filter(st => !seen.has(st.id) && seen.add(st.id)); }
+  async engineGroundClaims(only) {
+    let A; try { A = this.analysis(); } catch (e) { return; }
+    const docs = (A.docs || []).filter(d => String(d.text || '').length >= 40); if (!docs.length) return;
+    let M, R; try { M = await this.askMod(); R = await this.engReader(); } catch (e) { return; }
+    const key = docs.map(d => d.id + ':' + (d.text || '').length).join(',');
+    let cache = this._engCache;
+    if (!cache || cache.key !== key) { try { cache = this._engCache = { key, IX: M.index(docs) }; } catch (e) { return; } }
+    const IX = cache.IX;
+    const ids = this.pinData().claims.filter(c => c.kind !== 'heading' && (c.text || '').trim() && (!only || only.includes(c.id))).map(c => c.id); if (!ids.length) return;
+    this.setPinData(D => { D.claims.forEach(c => {
+      if (!ids.includes(c.id)) return;
+      // The engine only fills the gap the mechanical check left. A claim it
+      // already grounded or held otherwise (names, figures, its verb list)
+      // stands as it is; a claim it marked its own — or never checked — is the
+      // one this reader was added to judge.
+      const prev = c.g; if (prev && prev.text === c.text && prev.verdict && prev.verdict !== 'author' && prev.verdict !== 'untried') return;
+      // The claim is read against the passages its own words retrieve, the same
+      // door the Ask surface uses — never the whole corpus at once.
+      let jc = null; try { const ranked = M.retrieve(IX.chunks, c.text, 12); jc = (R(ranked.length ? ranked : IX.chunks.slice(0, 12)).read(c.text).claims || [])[0]; } catch (e) { return; }
+      const keep = (c.pins || []).filter(pid => { const p = D.pins.find(q => q.id === pid); return p && (!p.auto || (c.fixed || []).includes(pid)); });
+      let r;
+      if (!jc) r = { verdict: 'author', why: 'The relation reader heard no claim here — a limit of the reading, not proof the sources are silent.', shape: '', sts: [], closest: null };
+      else if (jc.verdict === 'bound') r = { verdict: (jc.contested && jc.contested.length) ? 'contested' : 'source', why: 'The sources state it: ' + this.engEdge(jc) + '.', shape: this.engEdge(jc), sts: this.engSts(A, IX, jc.spans), closest: null };
+      else if (jc.verdict === 'contradicted') r = { verdict: 'refuted', why: 'The sources hold it otherwise: ' + (jc.bound || []).map(e => this.engEdge(e)).join('; ') + '.', shape: this.engEdge(jc), sts: this.engSts(A, IX, (jc.bound || []).reduce((a, e) => a.concat(e.spans || []), [])), closest: null };
+      else if (jc.verdict === 'unbound') { const near = (jc.nearest || [])[0]; const nearSpans = near ? this.engSts(A, IX, near.spans) : [];
+        const closest = nearSpans[0] || null; r = { verdict: 'author', why: near ? 'No source states it as written. What they do state: ' + (jc.nearest || []).slice(0, 3).map(e => this.engEdge(e)).join('; ') + '.' : 'No source states this relation.', shape: this.engEdge(jc), sts: [], closest: closest ? closest.id : null }; }
+      else r = { verdict: 'author', why: (jc.reason || 'A limit of the relation reader, not proof the sources are silent.'), shape: this.engEdge(jc), sts: [], closest: null };
+      if (r.verdict === 'source' || r.verdict === 'contested') c.pins = [...new Set([...keep, ...r.sts.map(st => this.ensurePin(D, A, st))])];
+      else c.pins = keep;
+      c.g = { verdict: keep.length && r.verdict === 'author' ? 'source' : r.verdict, why: r.why, shape: r.shape, closest: r.closest, con: [], conWhy: {}, nSrc: r.sts.length, at: Date.now(), ack: false, text: c.text };
+    }); return D; }); }
   groundWriting() { const A = this.analysis(); const t = (this._wText || '').trim(); if (!t) return;
     const sents = (t.replace(/\s+/g, ' ').match(/[^.!?]+(?:[.!?]+["”’)]*|$)/g) || []).map(s => s.trim()).filter(s => s.split(' ').length >= 3);
     const ids = []; this.setPinData(D => { sents.forEach(s => { const c = { id: 'claim-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text: s, pins: [], by: 'writer' }; ids.push(c.id); D.claims.push(c); }); return D; });
