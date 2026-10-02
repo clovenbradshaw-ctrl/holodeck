@@ -61,7 +61,33 @@ export function buildLog(A, rix, opts = {}) {
       ins(a, type, vals); con(a, docA(r.doc), 'found in');
       r.cells.forEach(c => { const n = nameKey.get(clean(c).toLowerCase()); if (n) con(a, nameA(n), 'mentions'); }); });
   }
+  filterTupleEvents(ev, opts.filterFrames, opts.savedFolds);
   return { events, found, counts: { figures: nf, dates: nd } };
+}
+
+// Filter tuple as operator log: every active filter is INS its frame entity,
+// DEF its read frame (value + for-whom giver/question), EVA its coverage result
+// (criterion = the for-whom's question, result = matched/total + relevance).
+// Order is hard: INS → DEF → EVA, or the fold records missing_ins /
+// criterionless_judgment violations. One REC per saved fold: saving a filter as
+// a fold is the re-zero — a new frame. No REC per bare filter.
+function filterTupleEvents(ev, frames = [], folds = []) {
+  for (const fr of frames) {
+    const a = 'filter:' + fr.key;
+    ev('ins', { anchor: a, entity_type: 'FilterFrames', payload: {} });
+    ev('def', { anchor: a, path: 'label', value: cut(fr.label, 160) });
+    ev('def', { anchor: a, path: 'filter', value: cut(fr.key, 60) });
+    ev('def', { anchor: a, path: 'value', value: cut(fr.value, 300) });
+    ev('def', { anchor: a, path: 'giver', value: cut(fr.giver, 120) });
+    ev('def', { anchor: a, path: 'question', value: cut(fr.question, 300) });
+    ev('def', { anchor: a, path: 'matched', value: fr.matched });
+    ev('def', { anchor: a, path: 'total', value: fr.total });
+    ev('def', { anchor: a, path: 'relevance', value: fr.relevance });
+    ev('eva', { anchor: a, criterion: cut(fr.question, 300), result: fr.matched + '/' + fr.total + ' match, relevance ' + fr.relevance, note: 'for ' + fr.giver } );
+  }
+  for (const fo of folds) {
+    ev('rec', { kind: 'fold', label: cut(fo.label, 160), filters: fo.f || {}, question: cut(fo.q || '', 300), sources: fo.n || 0 });
+  }
 }
 
 // Tables that already exist inside the material: <table> elements in captured pages, and whole delimited
@@ -105,7 +131,17 @@ export function tablesInSources(A) {
 // Read the schema off the folded state. Every conclusion carries the count it was drawn from.
 const LABELS = ['title', 'name', 'label', 'body'];
 export function inferSchema(state) {
-  const byType = new Map(); for (const e of Object.values(state.entities)) { const t = e._type; if (!t) continue; (byType.get(t) || byType.set(t, []).get(t)).push(e); }
+  const byType = new Map();
+  if (state.entitiesByType) {
+    for (const [t, anchors] of Object.entries(state.entitiesByType)) {
+      if (!t) continue;
+      const rows = [];
+      for (const a of anchors) { const e = state.entities[a]; if (e) rows.push(e); }
+      if (rows.length) byType.set(t, rows);
+    }
+  } else {
+    for (const e of Object.values(state.entities)) { const t = e._type; if (!t) continue; (byType.get(t) || byType.set(t, []).get(t)).push(e); }
+  }
   const tables = [...byType.entries()].sort((a, b) => b[1].length - a[1].length);
   const fields = {}, label = {}, tableInfo = [];
   for (const [t, rows] of tables) {

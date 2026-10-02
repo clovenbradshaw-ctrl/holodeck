@@ -20,6 +20,8 @@ date: 2026-09-25T19:46:51Z
 
 | Fold Explorer v7.dc.html — Records (holodeck-records.js) | clovenbradshaw-ctrl/bare-metal-eo-matrix-app: src/fold.js, public/data-chat.js (vendored unchanged under vendor/bare-metal/; src/operators.js replaced by a local no-network shim) |
 | Fold Explorer v7.dc.html — Ask the Fold (holodeck-ask.js, holodeck-reader.js) | clovenbradshaw-ctrl/the-fold: fold.js, holon.js (surf-and-fold wiring, ported); eoreader7: native/the-fold/reader-bundle.js (ported to fetch-loaded priors), native/organs/{source,measure,cite,grounding,web,speaker,hypergraph,fact-block,aposiopesis,cast,asserted,heard-surfaces,kind-standing}.js, native/adapters/text/{priors,spans,surfaces,pronouns,relations-language,relations-gfp,relations-positional,clause-spans,grain-typing,wordclass,morphology}.js, native/{memory,kernel}/*, native/priors/{pos,morphology}-eng.json (vendored unchanged) |
+| Referent links (holodeck-links.js) — arrow-of-time gate | eoreader7: native/organs/regime.js (vendored byte-identical under vendor/eoreader7/native/organs/; its only import, native/kernel/cube.js `GRAINS`, was already vendored). The identity gate's arrow-of-time check rides Kelsen's validity-window precedence (step 1 of the fixed order), never a re-derived temporal rule |
+| Omnilingual summary lens (holodeck-lang.js) — UniMorph priors | eoreader7: native/priors/declension-rus.json (vendored byte-identical under vendor/eoreader7/native/priors/; the English irregular tail morphology-eng.json and pos-eng.json were already vendored). Loaded as data, injected via `setPriors` — never a model |
 
 ## Sync history
 - 2026-09-25T19:11:34Z · ohs-custody @40cf318 — no upstream changes; same-bytes badges, Ingest & publish view
