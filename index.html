@@ -22,11 +22,19 @@ button,input,select,textarea{font:inherit;color:inherit}
 button{white-space:nowrap}
 select option{background:var(--s1);color:var(--ink)}
 ::selection{background:#4c3a8f}
+.hd-disclosure{border-top:1px solid var(--line);padding:12px 0;color:var(--mut)}
+.hd-disclosure>summary{cursor:pointer;font:500 13px 'Hanken Grotesk',sans-serif;min-height:24px;line-height:24px}
+.hd-disclosure[open]>summary{margin-bottom:12px;color:var(--ink)}
+.hd-disclosure button{max-width:100%}
+button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+.hd-source-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:14px}
+.hd-source-card{background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:10px}
+@media(max-width:720px){.hd-shell{flex-direction:column}.hd-rail{position:relative!important;flex:none!important;width:100%;height:auto!important;border-right:0!important;border-bottom:1px solid var(--line);padding:12px!important;gap:10px!important}.hd-column{width:100%}.hd-primary{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px!important}.hd-primary button{padding:8px 4px!important;justify-content:center!important}.hd-primary .hd-count{display:none}.hd-content{padding:18px 14px!important}.hd-workspace{display:grid!important;grid-template-columns:minmax(0,1fr) auto;padding:4px 0!important;border:0!important}.hd-workspace>span{display:none}.hd-scope{font-size:12px!important}.hd-rail .hd-disclosure{padding:8px 0}.hd-source-card{padding:16px}}
 </style>
 </helmet>
 <div style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Hanken Grotesk',sans-serif;font-size:14px;line-height:1.5">
-<div style="display:flex;align-items:flex-start;min-height:100vh">
-  <div style="{{ railStyle }}">
+<div class="hd-shell" style="display:flex;align-items:flex-start;min-height:100vh">
+  <div class="hd-rail" style="{{ railStyle }}">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding:2px 2px 2px 10px">
       <sc-if value="{{ railOpen }}" hint-placeholder-val="{{ true }}"><div style="display:flex;align-items:center;gap:10px;min-width:0"><span style="width:12px;height:12px;border-radius:3px;background:#8b5cf6;flex:none"></span><span style="font:600 13px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);white-space:nowrap">Holodeck</span></div></sc-if>
       <div style="display:flex;align-items:center;gap:4px;flex:none">
@@ -35,7 +43,7 @@ select option{background:var(--s1);color:var(--ink)}
       </div>
     </div>
     <sc-if value="{{ railOpen }}" hint-placeholder-val="{{ true }}">
-    <div style="display:flex;flex-direction:column;gap:8px;padding:10px 2px 4px;border-top:1px solid var(--line)">
+    <div class="hd-workspace" style="display:flex;flex-direction:column;gap:8px;padding:10px 2px 4px;border-top:1px solid var(--line)">
       <span style="font:600 12px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--acc);padding:0 10px">Workspace</span>
       <select value="{{ corpusId }}" onChange="{{ onCorpus }}" style="width:100%;box-sizing:border-box;background:var(--s2);border:1px solid var(--line2);border-radius:8px;color:var(--ink);font:500 14px 'Hanken Grotesk';padding:7px 10px;cursor:pointer;outline:none">
         <sc-for list="{{ corpusOptions }}" as="o" hint-placeholder-count="4">
@@ -47,18 +55,19 @@ select option{background:var(--s1);color:var(--ink)}
       </sc-if>
 
     </div>
-    <nav style="display:flex;flex-direction:column;gap:2px">
-      <div style="display:flex;flex-direction:column;gap:1px;padding:10px 0 12px;border-top:1px solid var(--line)">
+    <nav aria-label="Workspace navigation" style="display:flex;flex-direction:column;gap:2px">
+      <div class="hd-primary" style="display:flex;flex-direction:column;gap:4px;padding:10px 0 12px">
         <sc-for list="{{ navTop }}" as="g" hint-placeholder-count="2">
           <button onClick="{{ g.onClick }}" style="white-space:normal;text-align:left;cursor:pointer;padding:5px 12px 5px 20px;border-radius:8px;background:{{ g.bg }};border:1px solid {{ g.bd }};display:flex;justify-content:space-between;align-items:baseline;gap:10px" style-hover="background:var(--s2)">
             <span style="font:{{ g.weight }} 14px 'Hanken Grotesk';color:var(--ink2)">{{ g.label }}</span>
-            <span style="font:500 12px 'JetBrains Mono';color:var(--mut);white-space:nowrap">{{ g.count }}</span>
+            <span class="hd-count" style="font:500 12px 'JetBrains Mono';color:var(--mut);white-space:nowrap">{{ g.count }}</span>
           </button>
         </sc-for>
       </div>
       <sc-if value="{{ hasContent }}" hint-placeholder-val="{{ false }}">
       <div style="display:flex;flex-direction:column;gap:1px;padding:10px 0 12px;border-top:1px solid var(--line)">
         <span style="font:600 12px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--acc);padding:2px 12px 6px">Topics</span>
+        <sc-if value="{{ !hasTopics && !hasTopicsNote }}"><span style="padding:0 12px;font-size:12px;color:var(--mut)">Topics appear as sources connect.</span></sc-if>
         <sc-if value="{{ hasTopics }}" hint-placeholder-val="{{ false }}">
           <span style="font:400 11px 'Hanken Grotesk';color:var(--mut);padding:0 12px 4px;text-wrap:pretty">{{ topicsNote }}</span>
           <sc-for list="{{ topicsList }}" as="t" hint-placeholder-count="2">
@@ -76,6 +85,8 @@ select option{background:var(--s1);color:var(--ink)}
           </button>
         </sc-if>
       </div>
+      <details class="hd-disclosure" open="{{ toolsOpen }}">
+        <summary>Explore &amp; manage</summary>
       <div style="display:flex;flex-direction:column;gap:1px;padding:10px 0 12px;border-top:1px solid var(--line)">
         <span style="font:600 12px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--acc);padding:2px 12px 6px">{{ navRead.label }}</span>
         <sc-for list="{{ navRead.items }}" as="g" hint-placeholder-count="3">
@@ -123,11 +134,12 @@ select option{background:var(--s1);color:var(--ink)}
           </sc-for>
         </div>
       </sc-for>
+      </details>
       </sc-if>
     </nav>
     </sc-if>
   </div>
-  <div style="flex:1 1 0;min-width:0;box-sizing:border-box;{{ colPad }}">
+  <div class="hd-column" style="flex:1 1 0;min-width:0;box-sizing:border-box;{{ colPad }}">
 
   <header ref="{{ hdrRef }}" style="position:sticky;top:0;z-index:20;background:var(--hdr);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)">
     <div style="max-width:1230px;padding:8px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
@@ -139,46 +151,28 @@ select option{background:var(--s1);color:var(--ink)}
       <button onClick="{{ openSettings }}" title="Settings — account, sync and sharing" style="flex:none;display:flex;align-items:center;gap:8px;background:none;border:1px solid var(--line2);border-radius:999px;padding:5px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)"><span style="width:8px;height:8px;border-radius:50%;background:{{ acctOn ? 'var(--ok)' : 'var(--dim)' }}"></span>{{ acctLabel }} <span style="font-size:15px">⚙</span></button>
     </div>
     <sc-if value="{{ scope.show }}" hint-placeholder-val="{{ false }}">
-      <div style="max-width:1230px;margin:0 auto;padding:0 20px 8px;display:flex;align-items:flex-start;gap:6px 18px;flex-wrap:wrap;font:400 12px 'Hanken Grotesk';color:var(--mut)">
-        <span style="display:flex;align-items:center;gap:6px;min-width:0">
-          <span style="font:600 11px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--dim);flex:none">Sources</span>
-          <button onClick="{{ scope.onAll }}" title="Open the Sources surface" style="all:unset;cursor:pointer;color:var(--ink2);font-weight:600;white-space:nowrap" style-hover="color:var(--acc)">{{ scope.sourcesLine }}</button>
-          <span style="display:flex;align-items:center;gap:4px;min-width:0;overflow:hidden">
-            <sc-for list="{{ scope.sourceItems }}" as="s" hint-placeholder-count="2">
-              <button onClick="{{ s.onClick }}" title="Read this source" style="all:unset;cursor:pointer;background:var(--s2);border:1px solid var(--line2);border-radius:999px;padding:1px 8px;color:var(--ink2);max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:none" style-hover="border-color:var(--acc)">{{ s.label }}</button>
-            </sc-for>
-            <sc-if value="{{ scope.hasMoreSources }}" hint-placeholder-val="{{ false }}"><button onClick="{{ scope.onMoreSources }}" style="all:unset;cursor:pointer;color:var(--acc);white-space:nowrap;flex:none" style-hover="text-decoration:underline">+{{ scope.moreSources }} more →</button></sc-if>
-          </span>
-        </span>
-        <span style="display:flex;align-items:center;gap:6px;min-width:0">
-          <span style="font:600 11px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--dim);flex:none">Segments</span>
-          <sc-if value="{{ scope.hasSegment }}" hint-placeholder-val="{{ false }}">
-            <span style="display:flex;align-items:center;gap:5px;background:var(--sel);border:1px solid #8b5cf6;border-radius:999px;padding:1px 6px 1px 10px;color:var(--ink);white-space:nowrap"><b style="font-weight:600">{{ scope.segmentLabel }}</b><button onClick="{{ scope.onClearSegment }}" title="Show all sources" style="all:unset;cursor:pointer;color:var(--mut);font-size:11px;padding:2px" style-hover="color:var(--ink)">✕</button></span>
-          </sc-if>
-          <sc-else>
-            <span style="display:flex;align-items:center;gap:4px;min-width:0;overflow:hidden">
-              <sc-for list="{{ scope.segments }}" as="t" hint-placeholder-count="2">
-                <button onClick="{{ t.onJump }}" title="Segment the workspace to this topic's sources" style="all:unset;cursor:pointer;background:var(--s2);border:1px solid var(--line2);border-radius:999px;padding:1px 8px;color:var(--ink2);white-space:nowrap;flex:none" style-hover="border-color:var(--acc)">{{ t.label }} <span style="color:var(--mut)">{{ t.n }}</span></button>
-              </sc-for>
-              <sc-if value="{{ scope.hasStray }}" hint-placeholder-val="{{ false }}"><button onClick="{{ scope.onStray }}" title="Segment to the sources that belong to no topic" style="all:unset;cursor:pointer;background:var(--s2);border:1px solid var(--line2);border-radius:999px;padding:1px 8px;color:var(--mut);white-space:nowrap;flex:none" style-hover="border-color:var(--acc)">not in any topic <span style="color:var(--dim)">{{ scope.strayN }}</span></button></sc-if>
-            </span>
-          </sc-else>
-        </span>
-        <span style="display:flex;align-items:center;gap:6px;min-width:0">
-          <span style="font:600 11px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--dim);flex:none">Perspective</span>
-          <span style="color:var(--ink2);font-weight:600;white-space:nowrap">{{ scope.viewLabel }}</span>
-          <sc-if value="{{ scope.hasLens }}" hint-placeholder-val="{{ false }}"><span style="background:var(--s2);border:1px solid var(--line2);border-radius:999px;padding:1px 8px;color:var(--ink2);white-space:nowrap">lens · {{ scope.lens }}</span></sc-if>
-          <span style="display:flex;align-items:center;gap:4px;min-width:0;overflow:hidden">
-            <sc-for list="{{ scope.filters }}" as="ch" hint-placeholder-count="1">
-              <button onClick="{{ ch.onClear }}" title="Remove this filter" style="display:flex;align-items:center;gap:5px;background:var(--s2);border:1px solid var(--line2);border-radius:999px;padding:1px 5px 1px 9px;cursor:pointer;color:var(--ink);white-space:nowrap;flex:none" style-hover="border-color:#8b5cf6"><span style="color:var(--dim)">{{ ch.k }}</span><b style="font-weight:600">{{ ch.v }}</b><span style="font-size:9px;color:var(--mut)">✕</span></button>
-            </sc-for>
-          </span>
-        </span>
+      <div class="hd-scope" style="padding:0 20px 10px;display:flex;gap:6px 14px;align-items:baseline;flex-wrap:wrap;font:400 12px 'Hanken Grotesk';color:var(--mut)">
+        <button onClick="{{ scope.onAll }}" style="all:unset;cursor:pointer;color:var(--ink2)">{{ scope.sourcesLine }}</button>
+        <span>View: {{ scope.viewLabel }}</span>
+        <sc-if value="{{ scope.hasLens }}"><span>Lens: {{ scope.lens }}</span></sc-if>
+        <sc-if value="{{ scope.hasSegment }}"><button onClick="{{ scope.onClearSegment }}" style="all:unset;cursor:pointer;color:var(--acc)">{{ scope.segmentLabel }} · clear ×</button></sc-if>
+        <sc-for list="{{ scope.filters }}" as="ch"><button onClick="{{ ch.onClear }}" style="all:unset;cursor:pointer;color:var(--acc)">{{ ch.k }}: {{ ch.v }} ×</button></sc-for>
+        <details style="margin-left:auto;max-width:100%">
+          <summary style="cursor:pointer">Scope details</summary>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;padding:10px 0">
+            <sc-for list="{{ scope.sourceItems }}" as="s"><button onClick="{{ s.onClick }}" style="background:var(--s1);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;cursor:pointer">{{ s.label }}</button></sc-for>
+            <sc-if value="{{ scope.hasMoreSources }}"><button onClick="{{ scope.onMoreSources }}" style="background:none;border:0;color:var(--acc);cursor:pointer">+{{ scope.moreSources }} more</button></sc-if>
+          </div>
+          <sc-if value="{{ hasTopics }}"><div style="display:flex;flex-wrap:wrap;gap:8px;padding-bottom:8px">
+            <span>Topics:</span><sc-for list="{{ scope.segments }}" as="t"><button onClick="{{ t.onJump }}" style="background:none;border:0;color:var(--acc);cursor:pointer">{{ t.label }} ({{ t.n }})</button></sc-for>
+            <sc-if value="{{ scope.hasStray }}"><button onClick="{{ scope.onStray }}" style="background:none;border:0;color:var(--acc);cursor:pointer">Outside these topics ({{ scope.strayN }})</button></sc-if>
+          </div></sc-if>
+        </details>
       </div>
     </sc-if>
   </header>
 
-  <div style="max-width:1230px;padding:20px;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+  <div class="hd-content" style="max-width:1230px;padding:28px;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
 
 
     <main style="flex:1 1 520px;min-width:0;display:flex;flex-direction:column;gap:16px">
@@ -204,6 +198,10 @@ select option{background:var(--s1);color:var(--ink)}
             <span style="font:400 13px 'Hanken Grotesk';color:var(--dim)">{{ just.summary }}</span>
             <button onClick="{{ dismissJust }}" title="Dismiss" aria-label="Dismiss" style="all:unset;margin-left:auto;cursor:pointer;color:var(--dim);font-size:13px;padding:0 4px" style-hover="color:var(--ink)">✕</button>
           </div>
+          <sc-if value="{{ justSeen }}" hint-placeholder-val="{{ false }}"><button onClick="{{ justKeep }}" style="all:unset;cursor:pointer;font:600 14px 'Hanken Grotesk';color:var(--acc)" style-hover="color:var(--ink)">Keep as a source</button></sc-if>
+          <button onClick="{{ just.onRead }}" style="all:unset;cursor:pointer;align-self:flex-start;color:var(--acc);font-weight:600">Read source →</button>
+          <details class="hd-disclosure" open="{{ just.hasOdd }}" style="border:0;padding:0">
+            <summary>Reading details</summary>
           <sc-if value="{{ just.hasNames }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;gap:2px 14px;flex-wrap:wrap">
               <sc-for list="{{ just.names }}" as="x" hint-placeholder-count="3">
@@ -229,12 +227,12 @@ select option{background:var(--s1);color:var(--ink)}
             </details>
           </sc-for>
           <div style="display:flex;gap:4px 18px;flex-wrap:wrap;padding-top:2px">
-            <sc-if value="{{ justSeen }}" hint-placeholder-val="{{ false }}"><button onClick="{{ justKeep }}" style="all:unset;cursor:pointer;font:600 14px 'Hanken Grotesk';color:var(--acc)" style-hover="color:var(--ink)">Keep as a source</button></sc-if>
             <button onClick="{{ just.onRead }}" style="all:unset;cursor:pointer;font:600 14px 'Hanken Grotesk';color:var(--acc)" style-hover="color:var(--ink)">{{ just.readLabel }}</button>
             <sc-if value="{{ just.hasReplay }}" hint-placeholder-val="{{ false }}"><button onClick="{{ just.onReplay }}" style="all:unset;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink)">Watch it being read</button></sc-if>
             <button onClick="{{ just.onConnections }}" style="all:unset;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink)">Connections</button>
             <button onClick="{{ just.onPatterns }}" style="all:unset;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink)">Patterns</button>
           </div>
+          </details>
         </div>
       </sc-if>
       <sc-if value="{{ showDropStrip }}" hint-placeholder-val="{{ false }}">
@@ -271,7 +269,9 @@ select option{background:var(--s1);color:var(--ink)}
             </sc-if>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)">
+        <details class="hd-disclosure" open="{{ timeFilterActive }}">
+          <summary>{{ timeControlLabel }}</summary>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)">
           <div style="display:flex;align-items:center;gap:6px 14px;flex-wrap:wrap">
             <span style="font:600 11px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--dim)">Time</span>
             <div style="display:inline-flex;gap:2px">
@@ -298,6 +298,7 @@ select option{background:var(--s1);color:var(--ink)}
           </sc-if>
           <sc-if value="{{ ts.empty }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px 'Hanken Grotesk';color:var(--dim)">{{ ts.empty }}</span></sc-if>
         </div>
+        </details>
         <sc-if value="{{ hasFilters }}" hint-placeholder-val="{{ false }}">
           <div style="display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap;margin-top:6px;padding:8px 10px;background:var(--sel);border:1px solid #8b5cf6;border-radius:10px">
             <span style="font:600 14px 'Hanken Grotesk';color:var(--ink);white-space:nowrap">{{ filterCount }}</span>
@@ -1162,14 +1163,17 @@ select option{background:var(--s1);color:var(--ink)}
             </sc-for>
           </div>
         </sc-if>
+        <details class="hd-disclosure" open="{{ sourceOptionsActive }}">
+          <summary>{{ sourceOptionsLabel }}</summary>
         <sc-if value="{{ svTabsOn }}" hint-placeholder-val="{{ true }}">
           <div style="display:flex;gap:2px 18px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--line2)">
-            <sc-for list="{{ svTabs }}" as="t" hint-placeholder-count="5"><button onClick="{{ t.onClick }}" style="all:unset;cursor:pointer;display:flex;gap:6px;align-items:baseline;padding:8px 0;border-bottom:2px solid {{ t.bd }};margin-bottom:-1px;font:500 14px 'Hanken Grotesk';color:{{ t.col }};white-space:nowrap">{{ t.label }}<span style="font:500 12px 'JetBrains Mono';color:var(--dim)">{{ t.n }}</span></button></sc-for>
+            <sc-if value="{{ sourceKindsUseful }}"><sc-for list="{{ svTabs }}" as="t" hint-placeholder-count="5"><button onClick="{{ t.onClick }}" style="all:unset;cursor:pointer;display:flex;gap:6px;align-items:baseline;padding:8px 0;border-bottom:2px solid {{ t.bd }};margin-bottom:-1px;font:500 14px 'Hanken Grotesk';color:{{ t.col }};white-space:nowrap">{{ t.label }}<span style="font:500 12px 'JetBrains Mono';color:var(--dim)">{{ t.n }}</span></button></sc-for></sc-if>
             <span style="flex:1"></span>
             <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;margin:4px 0"><sc-for list="{{ svModes }}" as="k" hint-placeholder-count="2"><button onClick="{{ k.onClick }}" style="border:0;background:{{ k.bg }};color:{{ k.col }};padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';white-space:nowrap">{{ k.label }}</button></sc-for></div>
           </div>
           <sc-if value="{{ srcHiddenNote }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px 'Hanken Grotesk';color:var(--dim);margin-top:6px">{{ srcHiddenNote }}</span></sc-if>
         </sc-if>
+        </details>
         <sc-if value="{{ svTable }}" hint-placeholder-val="{{ false }}">
           <sc-for list="{{ svTables }}" as="tb" hint-placeholder-count="1">
             <section style="display:flex;flex-direction:column;gap:6px">
@@ -1201,26 +1205,36 @@ select option{background:var(--s1);color:var(--ink)}
         <sc-if value="{{ svCards }}" hint-placeholder-val="{{ true }}">
         <sc-for list="{{ srcGroups }}" as="g" hint-placeholder-count="2">
           <section style="display:flex;flex-direction:column;gap:8px">
-            <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+            <sc-if value="{{ showSourceGroupLabels }}"><div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
               <span style="font:600 16px 'Hanken Grotesk';color:var(--ink)">{{ g.label }}</span>
               <span style="font:500 13px 'JetBrains Mono';color:var(--mut)">{{ g.n }}</span>
               <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">{{ g.desc }}</span>
               
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px">
+            </div></sc-if>
+            <div class="hd-source-grid">
               <sc-for list="{{ g.items }}" as="d" hint-placeholder-count="2">
-                <div style="background:var(--s1);border:1px solid {{ d.bd }};border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+                <div class="hd-source-card" style="border-color:{{ d.bd }}">
                   <sc-if value="{{ d.isVid }}" hint-placeholder-val="{{ false }}"><button onClick="{{ d.onRead }}" title="Watch with the transcript beside it" style="all:unset;cursor:pointer;position:relative;display:block;margin:-14px -16px 2px;border-radius:12px 12px 0 0;overflow:hidden;aspect-ratio:16/9;background:#000"><span style="position:absolute;inset:0;background-image:{{ d.thumbBg }};background-size:cover;background-position:center;opacity:.9"></span><span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:56px;height:40px;border-radius:10px;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;color:#fff;font:600 18px 'Hanken Grotesk'">▶</span></button></sc-if>
-                  <button onClick="{{ d.onSelect }}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;gap:2px">
+                  <button onClick="{{ d.onRead }}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;gap:2px">
                     <span style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><span style="font:500 19px/1.25 'Newsreader',serif;color:var(--ink)">{{ d.title }}</span><sc-if value="{{ d.isNew }}" hint-placeholder-val="{{ false }}"><span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;color:var(--ok);border:1px solid var(--ok);border-radius:4px;padding:0 5px">NEW</span></sc-if></span>
                     <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">{{ d.meta }}</span>
                   </button>
+                  <span style="font:400 14px 'Hanken Grotesk';color:var(--ink2)">{{ d.stats }}</span>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px">
+                    <sc-if value="{{ d.isSeen }}" hint-placeholder-val="{{ false }}">
+                      <button onClick="{{ d.onKeep }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:5px 12px;cursor:pointer;font:600 14px 'Hanken Grotesk'">Keep as a source</button>
+                      <button onClick="{{ d.onDiscard }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--bad)">Discard</button>
+                    </sc-if>
+                    <button onClick="{{ d.onRead }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">{{ d.readLabel }}</button>
+                  </div>
+                  <details class="hd-disclosure" style="padding:8px 0 0;margin-top:auto">
+                    <summary>Source details &amp; actions</summary>
+                    <div style="display:flex;flex-direction:column;gap:8px">
                   <sc-if value="{{ d.hasBadges }}" hint-placeholder-val="{{ false }}">
                     <div style="display:flex;gap:5px;flex-wrap:wrap">
                       <sc-for list="{{ d.badges }}" as="b" hint-placeholder-count="2"><span style="display:flex;align-items:center;gap:5px;font:500 12px 'Hanken Grotesk';color:var(--ink2);border:1px solid var(--line2);border-radius:5px;padding:0 7px"><span style="width:7px;height:7px;border-radius:50%;background:{{ b.color }}"></span>{{ b.label }}</span></sc-for>
                     </div>
                   </sc-if>
-                  <span style="font:400 14px 'Hanken Grotesk';color:var(--ink2)">{{ d.stats }}</span>
                   <sc-if value="{{ d.hasDistinct }}" hint-placeholder-val="{{ false }}"><span style="font:500 14px 'Hanken Grotesk';color:var(--acc)">{{ d.distinct }}</span></sc-if>
                   <sc-if value="{{ d.hasFold }}" hint-placeholder-val="{{ false }}"><span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">{{ d.fold }}</span></sc-if>
                   <div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 10px;align-items:center;font:400 13px 'Hanken Grotesk';color:var(--mut)">
@@ -1230,15 +1244,13 @@ select option{background:var(--s1);color:var(--ink)}
                       
                     </sc-if>
                   </div>
-                  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px">
-                    <sc-if value="{{ d.isSeen }}" hint-placeholder-val="{{ false }}">
-                      <button onClick="{{ d.onKeep }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:5px 12px;cursor:pointer;font:600 14px 'Hanken Grotesk'">Keep as a source</button>
-                      <button onClick="{{ d.onDiscard }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--bad)">Discard</button>
-                    </sc-if>
-                    <button onClick="{{ d.onRead }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">{{ d.readLabel }}</button>
+                      <button onClick="{{ d.onSelect }}" style="all:unset;cursor:pointer;color:var(--acc)">Inspect source</button>
+                      <div style="display:flex;gap:8px;flex-wrap:wrap">
                     <sc-if value="{{ d.isKept }}" hint-placeholder-val="{{ true }}"><button onClick="{{ d.onFocus }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">Only this source</button></sc-if>
                     <sc-if value="{{ d.canUnkeep }}" hint-placeholder-val="{{ false }}"><button onClick="{{ d.onUnkeep }}" style="background:none;border:0;padding:5px 4px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink)">Set aside</button></sc-if>
-                  </div>
+                      </div>
+                    </div>
+                  </details>
                 </div>
               </sc-for>
             </div>
@@ -1246,13 +1258,10 @@ select option{background:var(--s1);color:var(--ink)}
           </section>
         </sc-for>
         </sc-if>
-        <h2 style="margin:12px 0 0;font:600 16px 'Hanken Grotesk'">What's missing</h2>
+        <sc-if value="{{ hasGaps }}"><h2 style="margin:12px 0 0;font:600 16px 'Hanken Grotesk'">What to check</h2><p style="margin:0;color:var(--mut);font-size:13px">Gaps in these sources, not proof that something is absent.</p></sc-if>
         <sc-for list="{{ gaps }}" as="g" hint-placeholder-count="3">
-          <div style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:12px 16px;display:flex;flex-direction:column;gap:6px">
-            <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline">
-              <span style="font:600 14px 'Hanken Grotesk'">{{ g.label }}</span>
-              <span style="font:500 13px 'JetBrains Mono';color:var(--amber)">{{ g.n }}</span>
-            </div>
+          <details class="hd-disclosure" style="padding:10px 0">
+            <summary>{{ g.label }} · {{ g.n }}</summary>
             <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">{{ g.desc }}</span>
             <div style="display:flex;gap:6px;flex-wrap:wrap">
               <sc-for list="{{ g.items }}" as="x" hint-placeholder-count="2">
@@ -1260,7 +1269,7 @@ select option{background:var(--s1);color:var(--ink)}
               </sc-for>
             </div>
             <sc-if value="{{ g.hasMore }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button onClick="{{ g.onMore }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">{{ g.moreLabel }}</button><span style="font:400 13px 'Hanken Grotesk';color:var(--dim)">{{ g.shown }}</span></div></sc-if><sc-if value="{{ g.canLess }}" hint-placeholder-val="{{ false }}"><button onClick="{{ g.onLess }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink)">Show fewer</button></sc-if>
-          </div>
+          </details>
         </sc-for>
       </sc-if>
 
@@ -5768,7 +5777,7 @@ class Component extends DCLogic {
       const dd = distinctOf[d.id]; const inF = this._fold.length ? all.filter(s => this.inFold(s)).length : 0;
       const badges = [...(d.medium ? [{ label: d.medium === 'Video' || d.medium === 'Audio' ? d.medium + (d.transcribed ? ' · machine transcript' : ' · not transcribed') : d.medium, color: MEDIUM_C[d.medium] || 'var(--mut)' }] : []), ...(d.standing ? [{ label: d.standing, color: STANDING_C[d.standing] || 'var(--mut)' }] : []), ...((d.recordings || []).map(r => ({ label: 'Video linked · not transcribed', color: 'var(--date)' }))), ...(d.sameAs ? [{ label: 'Same bytes as ' + short(d.sameAsTitle || '', 36), color: 'var(--amber)' }] : []), ...(d.custodyStatus && d.custodyStatus !== 'captured' ? [{ label: d.custody, color: /missing|failed|not-located|no-text/.test(d.custodyStatus) ? 'var(--bad)' : 'var(--amber)' }] : [])];
       const vid = !!(d.media && d.media.kind === 'youtube');
-      return { ...c, op: 1, isVid: vid, noVid: !vid, thumbBg: vid ? 'url(https://i.ytimg.com/vi/' + d.media.id + '/hqdefault.jpg)' : 'none', readLabel: 'View', ...(vid ? { onSelect: () => this.read(d.id) } : {}), badges, hasBadges: badges.length > 0, hasDistinct: !!dd, distinct: dd ? dd.label + ' · ' + pct(dd.a) + ' of its statements vs ' + pct(dd.b) + ' elsewhere' : '', hasFold: this._fold.length > 0, fold: inF + ' of ' + all.length + ' statements touch the topic', stats: (narrowed ? ((FbyDoc[d.id] || []).length).toLocaleString() + ' of ' + plural(all.length, 'statement') + ' in this selection' : plural(all.length, 'statement')) + ' · ' + plural(nm.size, 'name'), isSeen: m.status === 'seen', isKept: m.status !== 'seen', canUnkeep: m.status !== 'seen' && !this.baseDocs(this.corpusId()).some(x => x.id === d.id),
+      return { ...c, op: 1, isVid: vid, noVid: !vid, thumbBg: vid ? 'url(https://i.ytimg.com/vi/' + d.media.id + '/hqdefault.jpg)' : 'none', readLabel: 'Open source', ...(vid ? { onSelect: () => this.read(d.id) } : {}), badges, hasBadges: badges.length > 0, hasDistinct: !!dd, distinct: dd ? dd.label + ' · ' + pct(dd.a) + ' of its statements vs ' + pct(dd.b) + ' elsewhere' : '', hasFold: this._fold.length > 0, fold: inF + ' of ' + all.length + ' statements touch the topic', stats: (narrowed ? ((FbyDoc[d.id] || []).length).toLocaleString() + ' of ' + plural(all.length, 'statement') + ' in this selection' : plural(all.length, 'statement')) + ' · ' + plural(nm.size, 'name'), isSeen: m.status === 'seen', isKept: m.status !== 'seen', canUnkeep: m.status !== 'seen' && !this.baseDocs(this.corpusId()).some(x => x.id === d.id),
         ...(() => { const on = this._inf[d.id] || null;
           return { originText: on ? on.why + ' ' + short(A.docById[on.of].title, 40) : 'Independent · shares no claims or outlet with another source', originDep: !!on, originCol: on ? 'var(--amber)' : 'var(--mut)' }; })(),
         drawsX: 0, drawOptions: drawOpts,
@@ -5845,9 +5854,9 @@ class Component extends DCLogic {
     const undatedDocs = A.docs.filter(d => !d.year);
     const noDateSt = F.filter(st => !st.ownDate);
     const gaps = [
-      { label: 'No one named', desc: 'Statements that name no person or organisation and quote no one — who is responsible is left unsaid.', list: unattributed.map(st => ({ label: short(st.text, 70), onClick: selSt(st) })) },
+      { label: 'No one named', desc: 'Statements with no detected named person or organisation and no quotation. Open the passage to check its context.', list: unattributed.map(st => ({ label: short(st.text, 70), onClick: selSt(st) })) },
       { label: 'No date of its own', desc: 'Statements dated only by the document they appear in.', list: noDateSt.map(st => ({ label: short(st.text, 70), onClick: selSt(st) })) },
-      { label: 'Mentioned by only one source', desc: 'Names nothing else in the collection confirms.', list: single.map(n => ({ label: n.name, onClick: selN(n.name) })) },
+      { label: 'Mentioned by only one source', desc: 'Names detected in only one source in this collection. This does not establish whether the source is correct.', list: single.map(n => ({ label: n.name, onClick: selN(n.name) })) },
       { label: 'Undated documents', desc: 'Sources with no year, so they can’t be placed in time.', list: undatedDocs.map(d => ({ label: d.title, onClick: () => this.sel('doc', d.id) })) }
     ].filter(g => g.list.length).map(g => ({ ...g, n: String(g.list.length), ...this.capL('gap:' + g.label, g.list, 6) }));
 
@@ -6079,7 +6088,7 @@ class Component extends DCLogic {
     const scopeSourceItems = inScopeDocs.slice(0, 6).map(d => ({ label: short(d.title, 26), onClick: () => this.read(d.id) }));
     const scope = {
       show: !isEmpty,
-      sourcesLine: plural(this._cnt ? this._cnt.size : 0, 'source') + ' of ' + plural(A.docs.length, 'source'),
+      sourcesLine: (this._cnt && this._cnt.size !== A.docs.length) ? this._cnt.size + ' of ' + plural(A.docs.length, 'source') + ' in scope' : plural(A.docs.length, 'source') + ' in scope',
       sourceItems: scopeSourceItems, hasMoreSources: inScopeDocs.length > scopeSourceItems.length, moreSources: String(inScopeDocs.length - scopeSourceItems.length),
       onMoreSources: () => this.go('sources'), onAll: () => this.go('sources'),
       hasSegment: !!scopeSeg, segmentLabel: scopeSeg ? scopeSeg.label : '', onClearSegment: scopeSeg ? scopeSeg.onClear : null,
@@ -6135,7 +6144,7 @@ class Component extends DCLogic {
     ];
     const gHi = on => ({ bg: on ? 'var(--sel)' : 'transparent', bd: on ? '#8b5cf6' : 'transparent', weight: on ? 600 : 500 });
     const goalNav = [{ id: 'summary', label: 'Start here', count: '' }, { id: 'draft', label: 'Draft', count: this.activePins().length ? String(this.activePins().length) : '' }, { id: 'ask', label: 'Ask the Fold', count: this._conv && this._conv.turns && this._conv.turns.length ? String(this._conv.turns.length) : '' }, { id: 'records', label: 'Records', count: this._db ? String(this._db.schema.tables.length) : '' }, { id: 'ingest', label: 'Ingest & publish', count: (this._net && this._net.chain && this._net.chain.length) ? String(this._net.chain.length) : '' }, ...GOALS.map(g => ({ id: g[0], label: g[1], count: counts[g[0]] }))].map(g => ({ ...g, ...gHi(view === g.id), onClick: () => this.go(g.id) }));
-    const NAVG = [['', [['summary', 'Start here'], ['ask', 'Ask the Fold']]], ['Read', [['sources', 'Sources'], ['names', 'Names'], ['records', 'Assertions']]], ['Explore', [['connections', 'Connections']]], ['Your work', [['draft', 'Draft'], ['ingest', 'Add & publish']]]];
+    const NAVG = [['', [['summary', 'Overview'], ['sources', 'Sources'], ['ask', 'Ask'], ['draft', 'Draft']]], ['Read closely', [['names', 'Names'], ['records', 'Assertions']]], ['Explore', [['connections', 'Connections']]], ['Manage', [['ingest', 'Add & publish']]]];
     const countFor = id => ({
       sources: String(A.docs.filter(d => this.counted(d)).length), names: String(D.nameList.length), records: String(F.length),
       connections: String(D.edgeList.length),
@@ -6143,7 +6152,7 @@ class Component extends DCLogic {
       ingest: (this._net && this._net.chain && this._net.chain.length) ? String(this._net.chain.length) : '',
       ask: (this._conv && this._conv.turns && this._conv.turns.length) ? String(this._conv.turns.length) : '',
     }[id] || '');
-    const navGroups = NAVG.map(([label, items]) => ({ label, hasLabel: !!label, items: items.map(([id, lab]) => ({ label: lab, count: countFor(id), ...gHi(view === id), onClick: () => this.go(id) })) }));
+    const navGroups = NAVG.map(([label, items]) => ({ label, hasLabel: !!label, items: items.map(([id, lab]) => ({ label: lab, count: countFor(id), ...gHi(view === id), onClick: () => this.setState({ view: id, readDoc: null, sel: null }) })) }));
     // split so Folds can sit right under The reading / Connections, inside Explore
     const navTop = navGroups[0].items; const navRead = navGroups[1]; const navExplore = navGroups[2]; const navRest = navGroups.slice(3);
     const goalCards = GOALS.map(g => ({ label: g[1], question: g[2], count: counts[g[0]], headline: heads[g[0]], examples: ex[g[0]], onClick: () => this.go(g[0]) }));
@@ -6256,7 +6265,9 @@ class Component extends DCLogic {
     _m('header+chips+extra');
     return {
       ...this._extra,
-...svVals, hasFacets: false, srcGroups: svVals.svCardGroups.map(g => ({ ...g, ...this.capL('sg:' + g.label, g.items, 60) })), srcFacets,
+      ...svVals,
+      sourceKindsUseful: tabs.length > 2, sourceOptionsActive: svTab !== '__all' || svMode !== 'cards', sourceOptionsLabel: 'Source options' + (svTab !== '__all' ? ' · ' + svTab : '') + (svMode !== 'cards' ? ' · Table' : ''), showSourceGroupLabels: svVals.svCardGroups.length > 1, hasGaps: gaps.length > 0, toolsOpen: ['names', 'records', 'connections', 'ingest'].includes(view), timeFilterActive: !!f.range, timeControlLabel: f.range ? 'Time filter · active' : 'Filter by time',
+      hasFacets: false, srcGroups: svVals.svCardGroups.map(g => ({ ...g, ...this.capL('sg:' + g.label, g.items, 60) })), srcFacets,
       topic: topicStr, hasTopic: this._fold.length > 0, onTopic: e => this.setMeta('__topic', e.target.value),
       inferredTopic: inferred ? inferred.name : '', topicPlaceholder: inferred ? 'e.g. ' + inferred.name : 'e.g. the bridge collapse',
       canAdopt: !this._fold.length && !!inferred, adoptTopic: () => inferred && this.setMeta('__topic', inferred.name),
@@ -6276,7 +6287,7 @@ class Component extends DCLogic {
       toggleTheme: () => { const th = S.theme === 'dark' ? 'light' : 'dark'; try { localStorage.setItem('fold-explorer-theme', th); } catch (e) {} this.setState({ theme: th }); },
       railOpen: S.railOpen, railIcon: S.railOpen ? '‹' : '›', railTitle: S.railOpen ? 'Collapse' : 'Expand',
       railStyle: S.railOpen
-        ? 'flex:0 0 250px;position:sticky;top:0;height:100vh;overflow:auto;box-sizing:border-box;border-right:1px solid var(--line);background:var(--s1);padding:16px 12px 20px;display:flex;flex-direction:column;gap:18px'
+        ? 'flex:0 0 220px;position:sticky;top:0;height:100vh;overflow:auto;box-sizing:border-box;border-right:1px solid var(--line);background:var(--s1);padding:16px 12px 20px;display:flex;flex-direction:column;gap:18px'
         : 'flex:0 0 40px;position:sticky;top:0;height:100vh;overflow:hidden;box-sizing:border-box;border-right:1px solid var(--line);background:var(--s1);padding:16px 8px 20px;display:flex;flex-direction:column;gap:18px',
       toggleRail: () => { const open = !S.railOpen; try { localStorage.setItem('fold-explorer-rail', open ? '1' : '0'); } catch (e) {} this.setState({ railOpen: open }); },
       themeIcon: S.theme === 'dark' ? '☀' : '☾', themeTitle: S.theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode',
