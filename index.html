@@ -643,6 +643,13 @@ select option{background:var(--s1);color:var(--ink)}
                 <sc-for list="{{ ak.modes }}" as="m" hint-placeholder-count="3"><button onClick="{{ m.onClick }}" style="border:0;background:{{ m.bg }};color:{{ m.col }};padding:5px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';white-space:nowrap">{{ m.label }}</button></sc-for>
               </div>
             </div>
+            <sc-if value="{{ ak.mNb }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <button onClick="{{ ak.nbExport }}" title="Download this notebook as a real .ipynb — every cell and its output, with the fold record in each cell's metadata" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Download .ipynb</button>
+                <button onClick="{{ ak.nbOpenLog }}" title="Open the workspace source that is the log of this notebook" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="border-color:var(--acc)">Open the log source →</button>
+                <span style="font:400 12px 'JetBrains Mono';color:var(--dim);text-wrap:pretty">{{ ak.nbLogLine }}</span>
+              </div>
+            </sc-if>
             <sc-if value="{{ ak.showCells }}" hint-placeholder-val="{{ true }}">
             <sc-if value="{{ ak.notGen }}" hint-placeholder-val="{{ true }}">
             <sc-for list="{{ ak.turns }}" as="t" hint-placeholder-count="0">
@@ -3892,7 +3899,7 @@ const MODE_TINT = { Differentiate: '#fbbf24', Relate: '#6fb0dc', Generate: '#a78
 const STRIP_VOCAB = { 'NUL|Ground': 'Clearing the ground', 'NUL|Figure': 'Inspecting a thing', 'NUL|Pattern': 'Breaking down a category', 'SIG|Ground': "Tracking what's present", 'SIG|Figure': 'Naming a thing', 'SIG|Pattern': 'Grouping the categories', 'INS|Ground': 'Setting new ground', 'INS|Figure': 'Creating a thing', 'INS|Pattern': 'Applying a procedure', 'SEG|Ground': 'Splitting the field', 'SEG|Figure': 'Cutting a link', 'SEG|Pattern': 'Breaking the network', 'CON|Ground': 'Maintaining the field', 'CON|Figure': 'Connecting two things', 'CON|Pattern': 'Following the network', 'SYN|Ground': 'Consolidating the field', 'SYN|Figure': 'Merging links', 'SYN|Pattern': 'Building a network', 'DEF|Ground': 'Clearing the context', 'DEF|Figure': 'Checking a lens', 'DEF|Pattern': 'Breaking the paradigm', 'EVA|Ground': 'Reading the context', 'EVA|Figure': 'Testing through a lens', 'EVA|Pattern': 'Comparing paradigms', 'REC|Ground': 'Resetting the context', 'REC|Figure': 'Revising a reading', 'REC|Pattern': 'Rewriting the paradigm' };
 
 class Component extends DCLogic {
-  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, showSettings: false, draftTitle: '', draftYear: '', draftText: '', fw: {}, note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), topicsQ: '', topicsPage: 0, dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true }, stripOpen: null, stripDocs: null, stripGroup: 'fold', stripEO: '', stripGaps: [], stripRead: { mode: 'Relate', domain: 'Interpretation', grain: 'Pattern' }, stripReadAuto: true, stripConds: [], stripConn: 'all', stripSegTab: 'conditions' };
+  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, showSettings: false, draftTitle: '', draftYear: '', draftText: '', fw: {}, note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), topicsQ: '', topicsPage: 0, dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true }, wsRenaming: false, wsNameDraft: '', stripOpen: null, stripDocs: null, stripGroup: 'fold', stripEO: '', stripGaps: [], stripRead: { mode: 'Relate', domain: 'Interpretation', grain: 'Pattern' }, stripReadAuto: true, stripConds: [], stripConn: 'all', stripSegTab: 'conditions' };
   _html = {};
 
   componentDidMount() {
@@ -4819,7 +4826,7 @@ class Component extends DCLogic {
   tabBtn(on) { return { bg: on ? 'var(--sel)' : 'transparent', bd: on ? '#8b5cf6' : 'var(--line2)', fw: on ? 600 : 500 }; }
   // ---------- Ask the Fold: The Fold's grounded conversation over this workspace, answered by a model on this machine ----------
   askMod() { if (!this._askP) this._askP = import(new URL('holodeck-ask.js', location.href).href).then(M => { this._askM = M; return M; }); return this._askP; }
-  akModels() { const M = this._askM; const wl = M ? M.WEBLLM_MODELS.map(m => ({ v: 'webllm:' + m.id, label: m.label + ' · ' + m.size, size: m.size, name: m.label.replace(/ · in this tab$/, '') })) : []; const ol = (this._oll && this._oll.ok ? this._oll.models || [] : []).map(m => ({ v: m.name, label: m.name + ' · Ollama', name: m.name })); return [...wl, ...ol]; }
+  akModels() { const M = this._askM; const think = n => !!(M && M.isThinkingModel && M.isThinkingModel(n)); const wl = M ? M.WEBLLM_MODELS.filter(m => !think(m.id)).map(m => ({ v: 'webllm:' + m.id, label: m.label + ' · ' + m.size, size: m.size, name: m.label.replace(/ · in this tab$/, '') })) : []; const ol = (this._oll && this._oll.ok ? this._oll.models || [] : []).filter(m => !think(m.name)).map(m => ({ v: m.name, label: m.name + ' · Ollama', name: m.name })); return [...wl, ...ol]; }
   akModel() { const S = this.state; const ms = this.akModels(); let saved = null; try { saved = localStorage.getItem('fold-explorer-ak-model'); } catch (e) {} const want = S.akModel || saved; if (want && ms.some(m => m.v === want)) return want; return 'webllm:gemma-2-2b-it-q4f16_1-MLC'; }
   llmOk() { const m = this.akModel(); const M = this._askM; if (m.startsWith('webllm:')) return !!(M && M.webgpu()); return !!(this._oll && this._oll.ok); }
   async akLoad() { const M = await this.askMod(); const m = this.akModel(); if (!m.startsWith('webllm:') || M.webllmLoaded(m.slice(7))) return true; if (!M.webgpu()) { this.setState({ akErr: 'This browser has no WebGPU, so a model can’t run in this tab. Chrome or Edge with hardware acceleration on can.' }); return false; }
@@ -4912,6 +4919,7 @@ class Component extends DCLogic {
     const q = String(qIn ?? this.state.akQ ?? '').trim(); if (!q || this.state.akBusy) return;
     const A0 = this.analysis();
     if (!A0.docs.some(d => this.counted(d))) { this.setState({ akRefuse: { q }, akQ: '', akPending: '' }); return; }
+    if (this._akFold) { try { this._akFold.abort(); } catch (e) {} this._akFold = null; }
     const M = await this.askMod(); if (!this._conv) this._conv = M.emptyConv();
     if (!this.llmOk()) { this.setState({ akErr: this.akModel().startsWith('webllm:') ? 'This browser has no WebGPU, so the model can’t run in this tab.' : 'Ollama isn’t reachable on this machine.', akQ: q }); return; }
     this.setState({ akPending: q, akQ: '', akRefuse: null }); if (!(await this.akLoad())) { this.setState({ akPending: '', akQ: q }); return; }
@@ -4924,8 +4932,10 @@ class Component extends DCLogic {
     let reading = null; try { reading = M.readingBlock(this._rix, retrievalQ); } catch (e) {}
     const ac = new AbortController(); this._akAbort = ac; let last = 0;
     this.setState({ akBusy: 'retrieving', akQ: '', akStream: '', akPending: q, akErr: '', akComputed: computed });
-    try { const r = await M.turn(this._conv, this._ix, q, { model: this.akModel(), computed, reading, retrievalQ, resolved, signal: ac.signal, onStage: st => this.setState({ akBusy: st }), onToken: t => { const now = Date.now(); if (now - last > 50) { last = now; this.setState({ akStream: t }); } } });
+    try { const r = await M.turn(this._conv, this._ix, q, { model: this.akModel(), computed, reading, retrievalQ, resolved, signal: ac.signal, onStage: st => this.setState({ akBusy: st }), onToken: t => { const now = Date.now(); if (now - last > 50) { last = now; this.setState({ akStream: t }); } }, deferFold: true, onFold: (folded, ref) => { if (this._conv !== r.conv) return; r.conv.summary = folded; r.turn.refresh = ref; this.saveConv(); this.forceUpdate(); } });
+      this._akFold = r.fold ? { abort: () => r.fold.abort(), conv: r.conv } : null;
       this._conv = r.conv; this._lastMsgs = r.turn.messages; this.saveConv(); this.setState({ akBusy: '', akStream: '', akPending: '', akComputed: null });
+      if ((this.state.akMode || 'chat') === 'notebook') { try { await this.syncNotebookLog(); } catch (e) {} }
     } catch (e) { this.setState({ akBusy: '', akStream: '', akPending: '', akComputed: null, akErr: ac.signal.aborted ? 'Stopped before the answer finished.' : String(e && e.message || e), akQ: q }); }
   }
   askToDraft(t) {
@@ -5072,6 +5082,9 @@ class Component extends DCLogic {
         return [['chat', 'Chat'], ['generate', 'Generate'], ['notebook', 'Notebook']].map(([k, l]) => ({ label: l, ...seg(akMode === k), onClick: () => this.setState({ akMode: k }) })); })(),
       mChat: (S.akMode || 'chat') !== 'notebook', mGen: S.akMode === 'generate', mNb: S.akMode === 'notebook', showCells: true,
       modeNote: S.akMode === 'generate' ? 'Build a sourced document — the answers you ask for, laid out by kind.' : S.akMode === 'notebook' ? 'Every cell can be edited and re-run; the output of each run stays below its cell.' : 'A conversation over the sources — every sentence traced back to its material.',
+      nbExport: () => this.nbExport(), nbOpenLog: () => this.nbOpenLog(),
+      nbHasLog: !!this.notebookLogDoc(),
+      nbLogLine: this.notebookLogDoc() ? 'Kept as a source in this workspace — ask about this notebook in Chat.' : 'Run a cell and its log is kept here as a source you can read and ask about.',
       gKinds: [['brief', 'Brief'], ['timeline', 'Timeline']].map(([k, l]) => { const on = (S.gKind || 'brief') === k; return { label: l, bg: on ? 'var(--sel)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)', onClick: () => this.setState({ gKind: k }) }; }),
       gModes: [['mech', 'Quotes'], ['model', 'Model']].map(([k, l]) => { const on = (S.gMode || 'mech') === k; return { label: l, bg: on ? 'var(--sel)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)', onClick: () => this.setState({ gMode: k }) }; }),
       gSubj: S.gSubj != null ? S.gSubj : '', onGSubj: e => this.setState({ gSubj: e.target.value }),
@@ -5082,7 +5095,7 @@ class Component extends DCLogic {
       busy: !!S.akBusy, stage: stageL[S.akBusy] || '', pendingQ: S.akPending || '', hasPending: !!S.akPending, stream: S.akStream || '', hasStream: !!S.akStream,
       pendComp: S.akComputed ? S.akComputed.head : '', hasPendComp: !!S.akComputed,
       err: S.akErr || '', hasErr: !!S.akErr, q: S.akQ || '', onQ: e => this.setState({ akQ: e.target.value }), onKey: e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); isGen ? this.genSend() : this.askSend(); } }, send: () => isGen ? this.genSend() : this.askSend(), canSend: this.llmOk() && !S.akBusy, stop: () => { if (this._akAbort) this._akAbort.abort(); },
-      reset: () => { if (M) { this._conv = M.emptyConv(); this.saveConv(); } this._lastMsgs = null; this.setState({ akErr: '', akShowSent: false }); },
+      reset: () => { if (this._akFold) { try { this._akFold.abort(); } catch (e) {} this._akFold = null; } if (M) { this._conv = M.emptyConv(); this.saveConv(); } this._lastMsgs = null; this.setState({ akErr: '', akShowSent: false }); },
       sm: { topic: sm.topic || '—', flow: sm.flow || '', entities: (sm.entities || []).join(' · '), context: sm.context || '', hasFlow: !!sm.flow, hasEnt: !!(sm.entities || []).length, hasCtx: !!sm.context },
       recs, hasRecs: recs.length > 0, meter: 'Next turn carries about ' + nextChars.toLocaleString() + ' characters plus the new passages. The transcript it stands in for is ' + trChars.toLocaleString() + '.',
       canSent: !!this._lastMsgs, sentOpen: !!S.akShowSent && !!this._lastMsgs, toggleSent: () => this.setState({ akShowSent: !S.akShowSent }), sentLabel: S.akShowSent ? 'Hide what was sent' : 'Show exactly what the last turn sent',
@@ -5821,6 +5834,33 @@ class Component extends DCLogic {
   go(view) { this.setState({ view, readDoc: null }); }
   read(docId, stId) { const S0 = this.state; if (S0.view !== 'reader' || docId !== S0.readDoc || (S0.sel && S0.sel.type === 'name')) this.pushHist(); this.markRead(docId); const live = this.isLiveDoc(this.analysis().docById[docId]); if (docId !== this.state.readDoc) { this.state.seekT = 0; this._faithFound = null; } this.setState({ view: 'reader', readDoc: docId, sel: stId ? { type: 'statement', id: stId } : { type: 'doc', id: docId }, ...(live ? { readMode: 'original' } : {}) }); }
   saveAdded(added) { try { localStorage.setItem('fold-explorer-added', JSON.stringify(added)); } catch (e) {} }
+  // The Notebook is kept two ways from the same conversation: a real .ipynb you can download, and a plain
+  // log kept as a source in this workspace, so what happened in the notebook can be read and asked about.
+  notebookLogDoc() { const cid = this.corpusId(); return (this.state.added[cid] || []).find(d => d.id === 'nb-log') || null; }
+  notebookMeta() { const nm = this.corpusName(); return { title: 'Notebook — ' + nm, workspace: nm, generated: new Date().toLocaleString() }; }
+  async nbExport() {
+    const M = await this.askMod(); const conv = this._conv || M.emptyConv();
+    if (!(conv.turns || []).length) { this.toast('Run a cell first — the notebook is empty.'); return; }
+    const ipynb = M.toIpynb(conv, this.notebookMeta());
+    const blob = new Blob([JSON.stringify(ipynb, null, 1)], { type: 'application/x-ipynb+json' });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a');
+    a.href = url; a.download = (this.corpusName().replace(/[^\w-]+/g, '-').slice(0, 60) || 'notebook') + '.ipynb';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+    this.toast('Downloaded ' + a.download + ' — ' + plural(ipynb.cells.length, 'cell') + ', folded.');
+  }
+  async syncNotebookLog(opts) {
+    const M = this._askM || await this.askMod(); const conv = this._conv;
+    if (!conv || !(conv.turns || []).length) return null;
+    const cid = this.corpusId(); const text = M.notebookLog(conv, this.notebookMeta());
+    const list = this.state.added[cid] || []; const has = list.some(d => d.id === 'nb-log');
+    const doc = { id: 'nb-log', title: 'Notebook log — ' + this.corpusName(), year: new Date().getFullYear(), type: 'Notebook log', format: 'text', text, status: 'source', updated: Date.now() };
+    const added = { ...this.state.added, [cid]: has ? list.map(d => d.id === 'nb-log' ? { ...d, ...doc } : d) : [...list, doc] };
+    this.saveAdded(added);
+    this._ix = null; this._db = null; this._gi = null; this._infKey = null; this._qa = null; this._hl = null;
+    this.setState({ added, htmlVer: this.state.htmlVer + 1, ...(opts && opts.toast ? { note: opts.toast } : {}) });
+    return doc;
+  }
+  nbOpenLog() { const d = this.notebookLogDoc(); if (d) { this.read(d.id); return; } if (!(this._conv && (this._conv.turns || []).length)) { this.toast('Run a cell first — the notebook is empty.'); return; } this.syncNotebookLog({ toast: 'Keeping the notebook’s log as a source…' }); }
   // Fold the new statements into the holograph by the surprise view's own rules (holoKit), recording each step,
   // then hand the trace to the replay player. The picture before is everything else in the workspace.
   hdFinish(T, A, prev, ids) {
