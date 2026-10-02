@@ -2938,7 +2938,7 @@ function analyze(corpus, htmlMap) {
   sts.forEach(st => st.rawNames.forEach(n => { const w = n.name.split(' '); const l = w[w.length - 1]; if (w.length > 1 && !ORG.has(l) && !PLACE.has(l)) (lastMap[l] = lastMap[l] || new Set()).add(n.name); }));
   const allRaw = [...new Set(sts.flatMap(st => st.rawNames.map(n => n.name)))];
   const nest = (short, long) => { const a = short.split(' '), b = long.split(' '); if (b.length <= a.length) return false; return a.every((w, i) => b[i] === w) || a.every((w, i) => b[b.length - a.length + i] === w); };
-  const canonMemo = new Map(); const canonOf = nm => { let v = canonMemo.get(nm); if (v === undefined) { v = canonOf0(nm); canonMemo.set(nm, v); } return v; };
+  const canonMemo = new Map(); const canonFold = nm => { let v = canonMemo.get(nm); if (v === undefined) { v = canonOf0(nm); canonMemo.set(nm, v); } return v; };
   const byFirst = new Map(), byLast = new Map(); allRaw.forEach(o => { if (!o.includes(' ')) return; const w = o.split(' '); const f0 = w[0], l0 = w[w.length - 1]; (byFirst.get(f0) || byFirst.set(f0, []).get(f0)).push(o); (byLast.get(l0) || byLast.set(l0, []).get(l0)).push(o); });
   // a longer name may absorb a shorter one only if the longer one recurs itself (2+ statements, the bar holoName uses):
   // otherwise one stray capitalised run (measured: word salad's “Office The Brookmeade Park”) renames a real place everywhere
@@ -2948,6 +2948,63 @@ function analyze(corpus, htmlMap) {
     if (nm.includes(' ')) { const w = nm.split(' '); const pool = [...new Set([...(byFirst.get(w[0]) || []), ...(byLast.get(w[w.length - 1]) || [])])]; const c = pool.filter(o => nest(nm, o)).sort((x, y) => y.length - x.length); if (c.length && c.every(o => o === c[0] || nest(o, c[0])) && (rawN.get(c[0]) || 0) >= 2) return c[0]; return nm; }
     return lastMap[nm] && lastMap[nm].size === 1 && (rawN.get([...lastMap[nm]][0]) || 0) >= 2 ? [...lastMap[nm]][0] : nm;
   };
+  // ── REFERENT IDENTITY ──────────────────────────────────────────────────────
+  // A surface is a spelling; a referent is what the SOURCE means by it. Surfaces
+  // the source itself gives as one being fold together; identity is never
+  // guessed from a shared token. Four evidence sources:
+  //   1. the fold this workspace already holds (a parenthetical alias, containment
+  //      into a recurring fuller name, a surname with exactly one full bearer);
+  //   2. the source's own hyperlink target — the same <a href> means the same
+  //      referent, the link being the source's own disambiguation (nameLinks);
+  //   3. an appositive alias ("born X", "née X", "known as X", "aka X",
+  //      "formerly X") marrying the named form to the statement's own subject;
+  //   4. a bare surname a document's own title gives to one full name — but only
+  //      when EVERY document using that surname agrees on the same full form, so
+  //      the surname is SINGULAR. Two full names sharing it stay apart.
+  // SCOPE (disclosed, not hidden): this module reads English — capitalised name
+  // runs and the English/French alias cues below. A language that names without
+  // case, or states a birth name another way, is not folded here; that gap is
+  // the material's to close, never this rule's to guess.
+  const parent = new Map(); allRaw.forEach(n => { if (!parent.has(n)) parent.set(n, n); });
+  const find = x => { let r = x; while (parent.get(r) !== r) r = parent.get(r); return r; };
+  const union = (a, b) => { if (!parent.has(a) || !parent.has(b)) return; const ra = find(a), rb = find(b); if (ra !== rb) parent.set(ra, rb); };
+  allRaw.forEach(nm => { const c = canonFold(nm); if (c !== nm) union(nm, c); });
+  { const linkOf = {}; docs.forEach(d => { linkOf[d.id] = d.links || []; });
+    const byHref = new Map();
+    sts.forEach(st => { const L = linkOf[st.doc]; if (!L || !L.length) return;
+      st.rawNames.forEach(n => { const a0 = st.s + n.s, b0 = st.s + n.e; const hit = L.find(lk => lk.s < b0 && lk.e > a0); if (!hit) return; let g = byHref.get(hit.href); if (!g) byHref.set(hit.href, g = new Set()); g.add(n.name); }); });
+    byHref.forEach(set => { const a = [...set]; for (let i = 1; i < a.length; i++) union(a[0], a[i]); }); }
+  // ALIAS_GAP: a name and its appositive sit in one clause — the marker ("born",
+  // "known professionally as", …) follows the name across punctuation and a short
+  // aside, never a sentence. Named, not buried, so the reach is auditable.
+  const ALIAS_GAP = 40;
+  { const AKA = /\b(?:born|née|nee|known(?: professionally)? as|aka|formerly)\s+((?:[A-Z][A-Za-z'’.-]+)(?:\s+[A-Z][A-Za-z'’.-]+){0,3})/g;
+    sts.forEach(st => { let m; AKA.lastIndex = 0;
+      while ((m = AKA.exec(st.text))) { const nm = m[1].replace(/[.,;:]+$/, '').trim(); if (!parent.has(nm)) continue;
+        // the alias marries the name it FOLLOWS — the nearest raw name ending just before
+        // the marker — never the sentence's lead, which may belong to someone else.
+        let anchor = null, gap = Infinity;
+        st.rawNames.forEach(x => { if (x.e > m.index) return; const d = m.index - x.e; if (d < gap) { gap = d; anchor = x.name; } });
+        if (anchor && anchor !== nm && gap <= ALIAS_GAP && parent.has(anchor)) union(nm, anchor); } }); }
+  { const low = t => String(t || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    const byLow = new Map(); allRaw.forEach(n => { const k = low(n); if (!byLow.has(k)) byLow.set(k, n); });
+    // a PERSONAL name is 2–3 capitalised tokens (a surname needs a token before it; beyond three it is a title, not a name)
+    const titleFull = new Map(); docs.forEach(d => { const t = byLow.get(low(d.title)); if (t && t.split(' ').length >= 2 && t.split(' ').length <= 3) titleFull.set(d.id, t); });
+    const cand = new Map();
+    sts.forEach(st => { const t = titleFull.get(st.doc); if (!t) return; const parts = t.split(' ');
+      st.rawNames.forEach(n => { if (n.name.includes(' ')) return; const full = byLow.get(low(n.name)); if (!full) return;
+        if (full !== parts[parts.length - 1]) return;                 // a surname is the title's last token
+        if (PLACE.has(full) || ORG.has(full)) return;                 // a place or org head is not a person's surname
+        let s = cand.get(full); if (!s) cand.set(full, s = new Set()); s.add(t); }); });
+    cand.forEach((fulls, bare) => { if (fulls.size === 1) union(bare, [...fulls][0]); }); }
+  // THE CANONICAL SURFACE of a referent is its most descriptive and singular
+  // spelling: most tokens, then most mentions, then longest. Every other surface
+  // is carried as its alias.
+  const members = new Map(); allRaw.forEach(n => { const r = find(n); let a = members.get(r); if (!a) members.set(r, a = []); a.push(n); });
+  const rank = nm => [nm.split(/\s+/).length, rawN.get(nm) || 0, nm.length];
+  const canonicalOf = new Map();
+  members.forEach((ms, r) => { canonicalOf.set(r, ms.slice().sort((x, y) => { const a = rank(x), b = rank(y); return (b[0] - a[0]) || (b[1] - a[1]) || (b[2] - a[2]); })[0]); });
+  const canonOf = nm => canonicalOf.get(find(nm)) || nm;
   const names = {}; const aliasOf = {}; Object.keys(alias).forEach(a => { (aliasOf[alias[a]] = aliasOf[alias[a]] || []).push(a); });
   sts.forEach(st => {
     st.spans = []; const set = new Set();
