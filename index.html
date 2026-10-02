@@ -2421,12 +2421,19 @@ select option{background:var(--s1);color:var(--ink)}
           <button onClick="{{ closeAdd }}" style="background:none;border:0;color:var(--mut);cursor:pointer;font-size:16px">✕</button>
         </div>
         <p style="margin:0;color:var(--mut);font-size:13px;text-wrap:pretty">Search, paste a link, or drop files. Whatever you add is read and linked to everything already in “{{ corpusName }}”.</p>
-        <div style="display:flex;gap:8px;align-items:center;background:var(--bg);border:1px solid var(--line2);border-radius:12px;padding:6px 6px 6px 8px">
-          <select value="{{ add.scope }}" onChange="{{ add.onScope }}" style="flex:none;background:var(--s2);border:1px solid var(--line2);border-radius:8px;color:var(--ink);font:500 13px 'Hanken Grotesk';padding:7px 8px;cursor:pointer;outline:none">
-            <sc-for list="{{ add.scopes }}" as="o" hint-placeholder-count="6"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
-          </select>
-          <input defaultValue="{{ add.q }}" onChange="{{ add.onQ }}" onKeyDown="{{ add.onKey }}" placeholder="{{ add.placeholder }}" style="flex:1;min-width:0;background:none;border:0;outline:none;color:var(--ink);font:400 15px 'Hanken Grotesk';padding:6px 4px">
-          <button onClick="{{ add.onSearch }}" title="Search" style="flex:none;background:#8b5cf6;border:0;color:#fff;border-radius:8px;width:36px;height:34px;cursor:pointer;font:600 16px 'Hanken Grotesk'" style-hover="background:#7c3aed">→</button>
+        <div style="display:flex;flex-direction:column;gap:10px;background:var(--s2);border:1px solid var(--line);border-radius:16px;padding:12px 12px 10px">
+          <input defaultValue="{{ add.q }}" onChange="{{ add.onQ }}" onKeyDown="{{ add.onKey }}" placeholder="{{ add.placeholder }}" style="width:100%;box-sizing:border-box;background:none;border:0;outline:none;color:var(--ink);font:400 16px 'Hanken Grotesk';padding:2px 4px 6px">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <label title="Where to search" style="position:relative;display:inline-flex;align-items:center;gap:6px;background:var(--s1);border:1px solid var(--line);border-radius:999px;padding:6px 28px 6px 12px;cursor:pointer;color:var(--ink2)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c2.6 3 2.6 15 0 18M12 3c-2.6 3-2.6 15 0 18"></path></svg>
+              <select value="{{ add.scope }}" onChange="{{ add.onScope }}" style="appearance:none;-webkit-appearance:none;background:none;border:0;outline:none;color:inherit;font:500 13px 'Hanken Grotesk';cursor:pointer;padding:0;max-width:170px">
+                <sc-for list="{{ add.scopes }}" as="o" hint-placeholder-count="6"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
+              </select>
+              <span style="position:absolute;right:11px;pointer-events:none;color:var(--mut);font-size:11px">⌄</span>
+            </label>
+            <span style="flex:1"></span>
+            <button onClick="{{ add.onSearch }}" title="Search — or paste a link and it is added" style="flex:none;background:none;border:0;color:var(--ink2);cursor:pointer;width:34px;height:34px;border-radius:999px;display:flex;align-items:center;justify-content:center" style-hover="background:var(--s1);color:var(--ink)">→</button>
+          </div>
         </div>
         <sc-if value="{{ add.hasPanel }}" hint-placeholder-val="{{ false }}">
           <div style="display:flex;flex-direction:column;gap:8px">
@@ -2466,12 +2473,11 @@ select option{background:var(--s1);color:var(--ink)}
             </sc-if>
             <sc-if value="{{ add.paneText }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;flex-direction:column;gap:8px">
-                <div style="display:flex;gap:10px;flex-wrap:wrap">
-                  <input value="{{ draftTitle }}" onChange="{{ onDraftTitle }}" placeholder="Title" style="flex:1 1 260px;background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:9px 12px;outline:none">
-                  <input value="{{ draftYear }}" onChange="{{ onDraftYear }}" placeholder="Year (optional)" style="flex:0 1 140px;background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:9px 12px;outline:none">
+                <textarea value="{{ draftText }}" onChange="{{ onDraftText }}" placeholder="Paste text here — the title and date are read from it…" rows="8" style="background:var(--s2);border:1px solid transparent;border-radius:12px;color:var(--ink);padding:12px 14px;outline:none;font:400 15px/1.5 'Newsreader',serif;resize:vertical"></textarea>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                  <button onClick="{{ addDraft }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:9px 18px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Add text</button>
+                  <span style="font:400 12px/1.4 'Hanken Grotesk';color:var(--mut)">No forms — nothing to fill in.</span>
                 </div>
-                <textarea value="{{ draftText }}" onChange="{{ onDraftText }}" placeholder="Paste text here…" rows="8" style="background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:10px 12px;outline:none;font:400 15px/1.5 'Newsreader',serif;resize:vertical"></textarea>
-                <button onClick="{{ addDraft }}" style="align-self:flex-start;background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:9px 18px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Add text</button>
               </div>
             </sc-if>
             <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;border:1.5px dashed var(--line2);border-radius:12px;padding:26px 18px;cursor:pointer" style-hover="border-color:var(--acc)">
@@ -3750,7 +3756,7 @@ const MODE_TINT = { Differentiate: '#fbbf24', Relate: '#6fb0dc', Generate: '#a78
 const STRIP_VOCAB = { 'NUL|Ground': 'Clearing the ground', 'NUL|Figure': 'Inspecting a thing', 'NUL|Pattern': 'Breaking down a category', 'SIG|Ground': "Tracking what's present", 'SIG|Figure': 'Naming a thing', 'SIG|Pattern': 'Grouping the categories', 'INS|Ground': 'Setting new ground', 'INS|Figure': 'Creating a thing', 'INS|Pattern': 'Applying a procedure', 'SEG|Ground': 'Splitting the field', 'SEG|Figure': 'Cutting a link', 'SEG|Pattern': 'Breaking the network', 'CON|Ground': 'Maintaining the field', 'CON|Figure': 'Connecting two things', 'CON|Pattern': 'Following the network', 'SYN|Ground': 'Consolidating the field', 'SYN|Figure': 'Merging links', 'SYN|Pattern': 'Building a network', 'DEF|Ground': 'Clearing the context', 'DEF|Figure': 'Checking a lens', 'DEF|Pattern': 'Breaking the paradigm', 'EVA|Ground': 'Reading the context', 'EVA|Figure': 'Testing through a lens', 'EVA|Pattern': 'Comparing paradigms', 'REC|Ground': 'Resetting the context', 'REC|Figure': 'Revising a reading', 'REC|Pattern': 'Rewriting the paradigm' };
 
 class Component extends DCLogic {
-  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, showSettings: false, draftTitle: '', draftYear: '', draftText: '', fw: {}, note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), topicsQ: '', topicsPage: 0, dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true }, wsRenaming: false, wsNameDraft: '', stripOpen: null, stripDocs: null, stripGroup: 'fold', stripEO: '', stripGaps: [], stripRead: { mode: 'Relate', domain: 'Interpretation', grain: 'Pattern' }, stripReadAuto: true, stripConds: [], stripConn: 'all', stripSegTab: 'conditions' };
+  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, showSettings: false, draftText: '', fw: {}, note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), topicsQ: '', topicsPage: 0, dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true }, wsRenaming: false, wsNameDraft: '', stripOpen: null, stripDocs: null, stripGroup: 'fold', stripEO: '', stripGaps: [], stripRead: { mode: 'Relate', domain: 'Interpretation', grain: 'Pattern' }, stripReadAuto: true, stripConds: [], stripConn: 'all', stripSegTab: 'conditions' };
   _html = {};
 
   componentDidMount() {
@@ -3982,6 +3988,17 @@ class Component extends DCLogic {
     } catch (e) { if (A.ticket !== ticket) return; A.error = e.message || String(e); if (!more) A.results = null; }
     A.loading = false; this.forceUpdate();
   }
+  async addGo() {
+    const A = this.addState(), q = (A.q || '').trim();
+    if (!q || A.loading) return;
+    // A link pasted into the one field is a source, not a query — add it and ask for nothing more.
+    if (/^(https?:\/\/|www\.)\S+$|^[\w-]+(\.[\w-]+)*\.[a-z]{2,}(\/\S*)?$/i.test(q)) {
+      A.q = ''; A.error = ''; this.forceUpdate();
+      try { await this.ingestUrl(/^https?:\/\//.test(q) ? q : 'https://' + q, { keepOpen: true }); } catch (e) { A.error = e.message || String(e); }
+      this.forceUpdate(); return;
+    }
+    return this.addSearch();
+  }
   isAdded(r, known) {
     const u = (r.url || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
     if ((r.id && known.has(r.id)) || known.has(u)) return true;
@@ -4037,7 +4054,7 @@ class Component extends DCLogic {
     return {
       scopes: SEARCH_SCOPES.map(x => ({ id: x.id, label: x.label })), scope: S.scope,
       onScope: e => { S.scope = e.target.value; reset(); try { localStorage.setItem('hd:add-scope', S.scope); } catch (er) {} if ((S.q || '').trim()) this.addSearch(); else this.forceUpdate(); },
-      q: S.q, placeholder: sc.ask + '…', onQ: e => { S.q = e.target.value; }, onKey: e => { if (e.key === 'Enter') { S.q = e.target.value; this.addSearch(); } }, onSearch: () => this.addSearch(),
+      q: S.q, placeholder: sc.ask + '…', onQ: e => { S.q = e.target.value; }, onKey: e => { if (e.key === 'Enter') { S.q = e.target.value; this.addGo(); } }, onSearch: () => this.addGo(),
       loading: S.loading, rows, hasPanel: !!(S.loading || S.results), showIntake: !(S.loading || S.results),
       resultsLine: S.loading && !S.results ? 'Searching ' + sc.label + '…' : plural(rows.length, sc.label.toLowerCase() + ' result') + (S.engine ? ' · ' + S.engine : ''),
       hasMore: !!S.more, onMore: () => this.addSearch(true), moreLabel: S.loading ? 'Loading…' : 'More results',
@@ -5762,7 +5779,7 @@ class Component extends DCLogic {
     const nm = [...new Set(sts.flatMap(s => s.names))];
     const echoN = sts.filter(s => (A.echoes[s.id] || []).some(e => !ids.includes(A.byId[e.id].doc))).length;
     const byId = {}; (added[id] || []).forEach(d => { byId[d.id] = d; }); const firstD = byId[ids[0]] || (added[id] || [])[0] || {};
-    this.setState({ added, just: { ids, title: ids.length === 1 ? (firstD.title || 'Untitled') : plural(ids.length, 'item'), n: sts.length, linked: nm.filter(n => prev.names[n]), fresh: nm.filter(n => !prev.names[n]), echoN, odd, notes, first: ids[0] }, view: aopt && aopt.open ? 'reader' : 'summary', sel: aopt && aopt.open ? { type: 'doc', id: ids[0] } : null, f: {}, q: '', readDoc: aopt && aopt.open ? ids[0] : null, readMode: 'original', draftTitle: '', draftYear: '', draftText: '', showAdd: !!(aopt && aopt.keepOpen), busy: '', note: '' });
+    this.setState({ added, just: { ids, title: ids.length === 1 ? (firstD.title || 'Untitled') : plural(ids.length, 'item'), n: sts.length, linked: nm.filter(n => prev.names[n]), fresh: nm.filter(n => !prev.names[n]), echoN, odd, notes, first: ids[0] }, view: aopt && aopt.open ? 'reader' : 'summary', sel: aopt && aopt.open ? { type: 'doc', id: ids[0] } : null, f: {}, q: '', readDoc: aopt && aopt.open ? ids[0] : null, readMode: 'original', draftText: '', showAdd: !!(aopt && aopt.keepOpen), busy: '', note: '' });
   }
 
   // The time strip: how the statements every OTHER filter leaves are spread over time, on the chosen clock.
@@ -6857,10 +6874,14 @@ class Component extends DCLogic {
       onHeroGo: () => { const v = ((this._hero && this._hero.value) || '').trim(); if (v) { if (isOmniUrl(v)) omniOpen(v); else omniGo(v); } },
       showSettings: S.showSettings, openSettings: () => this.setState({ showSettings: true }), closeSettings: () => this.setState({ showSettings: false }), closeSettingsBg: e => { if (e.target === e.currentTarget) this.setState({ showSettings: false }); },
       acctLabel: (this._net && this._net.s && !this._net.s.guest) ? (this._net.s.ephemeral ? 'Temporary' : this._net.s.user) : 'Local', acctOn: !!(this._net && this._net.s && !this._net.s.guest),
-      showAdd: S.showAdd, draftTitle: S.draftTitle, draftYear: S.draftYear, draftText: S.draftText,
-      onDraftTitle: e => this.setState({ draftTitle: e.target.value }), onDraftYear: e => this.setState({ draftYear: e.target.value }), onDraftText: e => this.setState({ draftText: e.target.value }),
+      showAdd: S.showAdd, draftText: S.draftText,
+      onDraftText: e => this.setState({ draftText: e.target.value }),
       add: S.showAdd ? this.addVals() : undefined,
-      addDraft: () => { const t = S.draftText.trim(); if (!t) { this.setState({ note: 'Paste some text first.' }); return; } this.addDocs([{ title: S.draftTitle.trim(), year: parseInt(S.draftYear) || null, text: t }]); },
+      addDraft: () => { const t = S.draftText.trim(); if (!t) { this.setState({ note: 'Paste a link or some text first.' }); return; }
+        const firstLine = t.split('\n').map(x => x.trim()).find(Boolean) || t;
+        const title = firstLine.length > 90 ? firstLine.slice(0, 90).replace(/\s+\S*$/, '') + '…' : firstLine;
+        const ym = t.match(/\b(1[5-9]\d{2}|20\d{2})\b/);
+        this.addDocs([{ title, year: ym ? +ym[1] : null, text: t }]); },
       onFiles: e => this.ingest({ files: e.target.files, getData: () => '' }),
       customNote: S.note || (() => { const A = this.addState(); const total = addN(cid); const base = A.baseAdded != null ? A.baseAdded : total; const now = Math.max(0, total - base); const name = this.corpusName(); return now ? plural(now, 'source') + ' added just now · ' + plural(total, 'source') + ' in “' + name + '”' : total ? plural(total, 'source') + ' in “' + name + '” · nothing added from this search' : (S.results ? 'Nothing added from this search yet.' : ''); })(),
       hasCustom: addN(cid) > 0,
