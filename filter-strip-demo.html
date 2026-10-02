@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>the fold — filter strip mock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0b16;--s1:#141126;--s2:#1b1735;--sel:#231d45;--line:#2b2450;--line2:#3a3170;
+  --ink:#ece9fb;--ink2:#d8d3f3;--mut:#c2bce0;--dim:#aaa3cc;--acc:#a78bfa;--acc2:#8b5cf6;--acc3:#7c3aed;
+  --amber:#fbbf24;--bad:#f87171;--ok:#4ade80;--blue:#6fb0dc;
+  --sans:'Hanken Grotesk',system-ui,-apple-system,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --serif:'Newsreader',Georgia,serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 14px/1.5 var(--sans)}
+button{font:inherit;color:inherit}
+.appbar{display:flex;align-items:center;gap:12px;padding:8px 14px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px;font:600 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+.brand .dot{width:11px;height:11px;border-radius:3px;background:#8b5cf6}
+.omni{flex:1;display:flex;align-items:center;background:var(--s1);border:1px solid var(--line2);border-radius:9px;min-width:0}
+.omni input{flex:1;background:transparent;border:0;outline:none;color:var(--ink);font:400 14px var(--sans);padding:8px 12px;min-width:0}
+.local{display:flex;align-items:center;gap:7px;border:1px solid var(--line2);border-radius:999px;padding:4px 11px;font:500 12px var(--sans);color:var(--ink2);white-space:nowrap}
+.local i{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.tabs{display:flex;gap:2px;padding:0 10px;border-bottom:1px solid var(--line)}
+.tab{padding:7px 10px;font:500 13px var(--sans);color:var(--mut);border-bottom:2px solid transparent;cursor:default}
+.tab.on{color:var(--ink);border-bottom-color:var(--acc2)}
+.tab small{font:500 11px var(--mono);color:var(--dim);margin-left:5px}
+
+/* ── the strip ─────────────────────────────────────────── */
+.strip{display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(139,92,246,.05),transparent)}
+.chip{display:flex;align-items:center;gap:7px;background:var(--s1);border:1px solid var(--line2);border-radius:8px;padding:4px 10px;cursor:pointer;font:500 13px var(--sans);color:var(--ink2);white-space:nowrap}
+.chip:hover{border-color:var(--acc)}
+.chip.on{border-color:var(--acc2);background:var(--sel)}
+.chip .glyph{font:500 13px var(--mono);color:var(--acc)}
+.chip b{font-weight:600;color:var(--ink)}
+.chip .caret{color:var(--dim);font-size:11px}
+.strip-status{margin-left:auto;font:500 12px var(--mono);color:var(--dim);white-space:nowrap}
+.strip-status b{color:var(--ink2);font-weight:500}
+
+/* ── popovers ──────────────────────────────────────────── */
+#pop{position:absolute;z-index:40;display:none}
+#pop.open{display:block}
+.pop{background:var(--s1);border:1px solid var(--line2);border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.55);overflow:hidden}
+.pop-head{display:flex;align-items:baseline;gap:8px;padding:11px 14px 9px;border-bottom:1px solid var(--line)}
+.pop-head b{font:600 13px var(--sans)}
+.pop-head span{font:400 12px var(--sans);color:var(--mut)}
+.pop-body{padding:10px 12px;max-height:60vh;overflow:auto}
+.pop-foot{display:flex;align-items:center;gap:10px;padding:9px 14px;border-top:1px solid var(--line);font:400 12px var(--sans);color:var(--mut)}
+.link{background:none;border:0;color:var(--acc);cursor:pointer;font:500 12px var(--sans);padding:0}
+.link:hover{color:var(--ink)}
+.btn{background:var(--acc2);border:0;color:#fff;border-radius:7px;padding:5px 12px;cursor:pointer;font:600 12px var(--sans)}
+.btn.ghost{background:none;border:1px solid var(--line2);color:var(--ink2);font-weight:500}
+.btn.ghost:hover{border-color:var(--acc)}
+
+/* sources list */
+.src-row{display:flex;align-items:center;gap:9px;padding:6px 6px;border-radius:8px;cursor:pointer}
+.src-row:hover{background:var(--s2)}
+.src-row input{accent-color:var(--acc2)}
+.src-row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:500 13px var(--sans)}
+.src-row .meta{font:400 11px var(--mono);color:var(--dim);white-space:nowrap}
+.pill{font:500 10px var(--mono);letter-spacing:.04em;text-transform:uppercase;border-radius:999px;padding:1px 7px;border:1px solid var(--line2);color:var(--mut)}
+.pill.anchored{color:var(--ok);border-color:rgba(74,222,128,.4)}
+.pill.kept{color:var(--blue);border-color:rgba(111,176,220,.4)}
+.pill.live{color:var(--amber);border-color:rgba(251,191,36,.4)}
+.hr{height:1px;background:var(--line);margin:8px 0}
+
+/* segment builder */
+.tabbar{display:flex;gap:2px;padding:0 12px;border-bottom:1px solid var(--line)}
+.tabbar button{background:none;border:0;padding:8px 10px;font:500 12px var(--sans);color:var(--mut);border-bottom:2px solid transparent;cursor:pointer}
+.tabbar button.on{color:var(--ink);border-bottom-color:var(--acc2)}
+.tabbar button small{font:400 10px var(--mono);color:var(--dim);margin-left:4px}
+.wrap{width:620px}
+.qline{display:flex;align-items:center;gap:7px;padding:4px 2px 8px;font:400 13px var(--sans);color:var(--mut)}
+.qline select{font:500 13px var(--sans)}
+select,input[type=text],input[type=number]{background:var(--s2);border:1px solid var(--line2);border-radius:7px;color:var(--ink);padding:4px 8px;font:500 12px var(--sans);outline:none}
+select:focus,input:focus{border-color:var(--acc2)}
+.cond{display:flex;align-items:center;gap:7px;padding:3px 0}
+.cond select.opt{max-width:150px}
+.cond input{width:150px}
+.cond .x{background:none;border:0;color:var(--dim);cursor:pointer;font-size:12px;padding:2px 5px;border-radius:6px}
+.cond .x:hover{color:var(--bad)}
+.grp{border:1px solid var(--line);border-left:3px solid var(--line2);border-radius:9px;padding:7px 9px;margin:6px 0 6px 14px;background:rgba(27,23,53,.5)}
+.grp-head{display:flex;align-items:center;gap:7px;font:400 12px var(--sans);color:var(--mut);padding-bottom:3px}
+.grp-actions{display:flex;gap:10px;padding-top:2px}
+.advrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:6px;font:400 12px var(--sans);color:var(--mut)}
+.advrow label{display:flex;align-items:center;gap:5px;white-space:nowrap}
+textarea{width:100%;min-height:170px;background:#0f0d1d;border:1px solid var(--line2);border-radius:9px;color:var(--ink2);font:400 12px/1.6 var(--mono);padding:10px 12px;outline:none;resize:vertical}
+textarea:focus{border-color:var(--acc2)}
+.gaps{display:flex;flex-direction:column;gap:3px;padding-top:7px;font:400 11px var(--mono);color:var(--amber)}
+.legend{display:flex;flex-wrap:wrap;gap:3px 12px;padding-top:8px;font:400 11px var(--mono);color:var(--dim)}
+.legend b{color:var(--mut);font-weight:500}
+
+/* read-as */
+.rrow{display:flex;align-items:center;gap:8px;padding:4px 0}
+.rrow .lab{width:64px;font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.rrow label{display:flex;align-items:center;gap:5px;font:500 12px var(--sans);color:var(--ink2);border:1px solid transparent;border-radius:7px;padding:3px 8px;cursor:pointer;white-space:nowrap}
+.rrow label:hover{border-color:var(--line2)}
+.rrow label.on{border-color:var(--acc2);background:var(--sel);color:var(--ink)}
+.tcaption{font:400 11px var(--sans);color:var(--mut);padding:0 0 8px}
+.trow{display:grid;grid-template-columns:92px minmax(0,1fr) 96px;gap:9px;align-items:center;padding:4px 0}
+.tlab{font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);text-align:right}
+.tfield{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line2);border-radius:8px;overflow:hidden;background:var(--s2)}
+.seg{background:transparent;border:0;border-right:1px solid var(--line2);padding:6px 6px;cursor:pointer;font:500 13px var(--sans);color:var(--ink2);white-space:nowrap;text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.seg:last-child{border-right:0}
+.seg:hover{background:var(--sel)}
+.seg.on{background:var(--acc2);color:#fff;font-weight:600}
+.teo{font:400 11px var(--mono);color:var(--dim);white-space:nowrap}
+.persp{font:500 17px var(--serif);color:var(--ink);padding-bottom:3px}
+.readout{margin-top:8px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--s2);font:400 12px var(--sans);color:var(--mut)}
+.readout b{font:600 13px var(--sans);color:var(--ink)}
+.readout .addr{font:600 13px var(--mono);color:var(--acc)}
+
+/* hero */
+.hero{max-width:1060px;margin:0 auto;padding:34px 20px 60px}
+.hero h1{margin:0 0 6px;font:500 30px/1.2 var(--serif)}
+.hero p.sub{margin:0 0 18px;color:var(--mut);max-width:70ch}
+.notice{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid var(--line2);border-left:3px solid var(--amber);background:rgba(251,191,36,.06);border-radius:9px;padding:8px 12px;margin-bottom:16px;font:400 13px var(--sans);color:var(--ink2)}
+.notice .btn.ghost{padding:3px 9px}
+.notice.calm{border-left-color:var(--acc2);background:rgba(139,92,246,.07)}
+.panels{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.panel{background:var(--s1);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.panel header{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid var(--line)}
+.panel header b{font:600 14px var(--sans)}
+.panel header span{font:500 11px var(--mono);color:var(--mut);white-space:nowrap}
+.panel .row{display:flex;align-items:center;gap:9px;padding:7px 13px;border-top:1px solid var(--line)}
+.panel .row:first-child{border-top:0}
+.panel .row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:500 13px var(--sans)}
+.panel .row .meta{font:400 11px var(--mono);color:var(--dim);white-space:nowrap}
+.panel footer{padding:7px 13px;border-top:1px solid var(--line);font:400 11px var(--mono);color:var(--dim)}
+.foot-note{margin-top:26px;font:400 12px var(--sans);color:var(--dim)}
+</style>
+</head>
+<body>
+
+<header class="appbar">
+  <span class="brand"><span class="dot"></span>Holodeck</span>
+  <div class="omni"><input placeholder="Search, ask, or paste a link — then Enter" spellcheck="false"></div>
+  <span class="local"><i></i>Local ⚙</span>
+</header>
+
+<nav class="tabs">
+  <span class="tab on">Start here</span>
+  <span class="tab">Ask the Fold <small>2</small></span>
+  <span class="tab">Sources <small>8</small></span>
+  <span class="tab">Records <small>1,062</small></span>
+  <span class="tab">Draft</span>
+</nav>
+
+<!-- ── THE STRIP ─────────────────────────────────────────── -->
+<div class="strip" id="strip">
+  <button class="chip" id="chip-sources" title="Sources — what is admitted"><span class="glyph">▦</span><b id="c-sources">All 8 sources</b><span class="caret">▾</span></button>
+  <button class="chip" id="chip-segment" title="Segment — the cut: filter + group the sources"><span class="glyph">⑃</span><b id="c-segment">7 of 8 · by fold</b><span class="caret">▾</span></button>
+  <button class="chip" id="chip-read" title="Read as — what × where × scale"><span class="glyph">◫</span><b id="c-read">Weaving Paradigms</b><span class="caret">▾</span></button>
+  <span class="strip-status" id="strip-status"></span>
+</div>
+
+<main class="hero">
+  <h1 id="hero-title">What do you want to understand?</h1>
+  <p class="sub" id="hero-sub">Nothing here is paraphrased behind your back. Every sentence is traced to the source it came from — and what your sources never say is shown as a gap, not filled in.</p>
+  <div id="notice"></div>
+  <div class="panels" id="panels"></div>
+  <p class="foot-note">Mock only — no data leaves this page. The segment builder mirrors the real <span style="font-family:var(--mono)">data-chat.js</span> engine: same operators, same EO notation.</p>
+</main>
+
+<div id="pop"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ── data ─────────────────────────────────────────────── */
+const SOURCES=[
+ {id:'s1',name:'12/03 Council minutes',kind:'Transcript',year:2025,publisher:'Metro',status:'anchored',stmts:61,names:84,figures:6,fold:'DFR pilot'},
+ {id:'s2',name:'MNPD flight log',kind:'Data',year:2026,publisher:'MNPD',status:'kept',stmts:1021,names:12,figures:210,fold:'DFR pilot'},
+ {id:'s3',name:'Flock marketing page',kind:'Marketing',year:2026,publisher:'Flock',status:'live',stmts:14,names:9,figures:3,fold:'Flock contract'},
+ {id:'s4',name:'OHS audit 12/09',kind:'Audit',year:2025,publisher:'Metro',status:'kept',stmts:122,names:61,figures:9,fold:'Oversight'},
+ {id:'s5',name:'AUD-CTTE-DEC9',kind:'Audit',year:2025,publisher:'Metro',status:'kept',stmts:980,names:122,figures:18,fold:'Oversight'},
+ {id:'s6',name:'AUD-CTTE-BYLAWS',kind:'Audit',year:2024,publisher:'Metro',status:'kept',stmts:410,names:74,figures:12,fold:'Oversight'},
+ {id:'s7',name:'HPC meeting 2020-09-09',kind:'Transcript',year:2020,publisher:'Metro',status:'kept',stmts:220,names:58,figures:7,fold:'Oversight'},
+ {id:'s8',name:'Boston surveillance ordinance',kind:'Ordinance',year:2019,publisher:'Boston',status:'kept',stmts:96,names:40,figures:11,fold:'Flock contract'}
+];
+const FIELDS=[
+ {key:'name',label:'Name',type:'text'},
+ {key:'kind',label:'Kind',type:'select',options:['Transcript','Data','Marketing','Audit','Ordinance']},
+ {key:'year',label:'Year',type:'number'},
+ {key:'publisher',label:'Publisher',type:'select',options:['Metro','MNPD','Flock','Boston']},
+ {key:'status',label:'Status',type:'select',options:['anchored','kept','live']},
+ {key:'stmts',label:'Statements',type:'number'},
+ {key:'figures',label:'Figures',type:'number'},
+ {key:'fold',label:'Fold',type:'select',options:['DFR pilot','Flock contract','Oversight']}
+];
+const OPS={
+ text:[['contains','contains'],['ncontains','does not contain'],['eq','is'],['neq','is not'],['empty','is empty'],['notempty','is not empty']],
+ select:[['eq','is'],['neq','is not'],['empty','is empty'],['notempty','is not empty']],
+ number:[['eq','='],['neq','≠'],['gt','>'],['gte','≥'],['lt','<'],['lte','≤'],['empty','is empty'],['notempty','is not empty']]
+};
+const OPERATOR={
+ Differentiate:{Existence:'NUL',Structure:'SEG',Interpretation:'DEF'},
+ Relate:{Existence:'SIG',Structure:'CON',Interpretation:'EVA'},
+ Generate:{Existence:'INS',Structure:'SYN',Interpretation:'REC'}};
+const TERRAIN={
+ Existence:{Ground:'Void',Figure:'Entity',Pattern:'Kind'},
+ Structure:{Ground:'Field',Figure:'Link',Pattern:'Network'},
+ Interpretation:{Ground:'Atmosphere',Figure:'Lens',Pattern:'Paradigm'}};
+const STANCE={
+ Differentiate:{Ground:'Clearing',Figure:'Dissecting',Pattern:'Unraveling'},
+ Relate:{Ground:'Tending',Figure:'Binding',Pattern:'Tracing'},
+ Generate:{Ground:'Cultivating',Figure:'Making',Pattern:'Composing'}};
+const EO={NUL:['∅','Clear'],SIG:['○','Notice'],INS:['●','Start'],SEG:['｜','Split'],CON:['⤫','Bind'],SYN:['△','Build'],DEF:['⊢','Frame'],EVA:['⊨','Weigh'],REC:['⊛','Rebuild']};
+/* plain words — the public face (wiki: Mode/Domain/Object, Significance not Interpretation) */
+const PLAIN_MODE={Differentiate:'Cut',Relate:'Link',Generate:'Make'};
+const PLAIN_DOMAIN={Existence:'Things',Structure:'Links',Interpretation:'Meanings'};
+const PLAIN_GRAIN={Ground:'Background',Figure:'Figure',Pattern:'Pattern'};
+const ACT_WORD={NUL:'Clear',SIG:'Notice',INS:'Start',SEG:'Split',CON:'Bind',SYN:'Build',DEF:'Frame',EVA:'Weigh',REC:'Rebuild'};
+/* 27 cell words = stance inflected by terrain (proposed vocabulary, 2026-10-02) */
+const VOCAB={
+ 'NUL|Ground':['Emptying','Emptying Voids'],'NUL|Figure':['Dissecting','Dissecting Entities'],'NUL|Pattern':['Unraveling','Unraveling Kinds'],
+ 'SIG|Ground':['Tending','Tending Voids'],'SIG|Figure':['Binding','Binding Entities'],'SIG|Pattern':['Tracing','Tracing Kinds'],
+ 'INS|Ground':['Seeding','Seeding Voids'],'INS|Figure':['Making','Making Entities'],'INS|Pattern':['Composing','Composing Kinds'],
+ 'SEG|Ground':['Clearing','Clearing Fields'],'SEG|Figure':['Severing','Severing Links'],'SEG|Pattern':['Unweaving','Unweaving Networks'],
+ 'CON|Ground':['Tilling','Tilling Fields'],'CON|Figure':['Coupling','Coupling Links'],'CON|Pattern':['Threading','Threading Networks'],
+ 'SYN|Ground':['Cultivating','Cultivating Fields'],'SYN|Figure':['Forging','Forging Links'],'SYN|Pattern':['Wiring','Wiring Networks'],
+ 'DEF|Ground':['Dispersing','Dispersing Atmospheres'],'DEF|Figure':['Fracturing','Fracturing Lenses'],'DEF|Pattern':['Deconstructing','Deconstructing Paradigms'],
+ 'EVA|Ground':['Tuning','Tuning Atmospheres'],'EVA|Figure':['Focusing','Focusing Lenses'],'EVA|Pattern':['Weaving','Weaving Paradigms'],
+ 'REC|Ground':['Brewing','Brewing Atmospheres'],'REC|Figure':['Casting','Casting Lenses'],'REC|Pattern':['Authoring','Authoring Paradigms']};
+
+/* ── state ────────────────────────────────────────────── */
+let uid=1; const nid=()=>'r'+(uid++);
+const state={
+ selected:new Set(SOURCES.map(s=>s.id)),
+ seg:{
+   connector:'all',
+   rows:[{id:nid(),kind:'condition',field:'status',op:'neq',value:'live'}],
+   groupBy:'fold', summarize:'count', sort:'stmts', sortDir:'desc', limit:''
+ },
+ read:{mode:'Relate',domain:'Interpretation',grain:'Pattern'},
+ open:null, tab:'conditions', sqlGaps:[], eoGaps:[]
+};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const opWord=op=>({eq:'is',neq:'is not',contains:'contains',ncontains:'does not contain',gt:'>',gte:'≥',lt:'<',lte:'≤',empty:'is empty',notempty:'is set'}[op]||op);
+
+/* ── evaluation ───────────────────────────────────────── */
+function cmp(v,op,target,type){
+ const isEmpty=v===undefined||v===null||v==='';
+ if(op==='empty')return isEmpty;
+ if(op==='notempty')return !isEmpty;
+ if(isEmpty)return false;
+ if(type==='number'){const a=Number(v),b=Number(target);
+  return op==='eq'?a===b:op==='neq'?a!==b:op==='gt'?a>b:op==='gte'?a>=b:op==='lt'?a<b:op==='lte'?a<=b:false;}
+ const a=String(v).toLowerCase(),b=String(target).toLowerCase();
+ return op==='eq'?a===b:op==='neq'?a!==b:op==='contains'?a.includes(b):op==='ncontains'?!a.includes(b):false;
+}
+function evalRow(row,s){
+ if(row.kind==='condition'){const f=FIELDS.find(x=>x.key===row.field);return cmp(s[row.field],row.op,row.value,f?f.type:'text');}
+ const rs=row.rows.map(r=>evalRow(r,s));
+ return row.connector==='any'?rs.some(Boolean):rs.every(Boolean);
+}
+const selectedSources=()=>SOURCES.filter(s=>state.selected.has(s.id));
+const matchedSources=()=>selectedSources().filter(s=>evalRow(state.seg,s));
+
+/* ── derived read ─────────────────────────────────────── */
+function derived(){const r=state.read;const op=OPERATOR[r.mode][r.domain];
+ return{op,terrain:TERRAIN[r.domain][r.grain],stance:STANCE[r.mode][r.grain],grain:r.grain,
+  pm:PLAIN_MODE[r.mode],pd:PLAIN_DOMAIN[r.domain],pg:PLAIN_GRAIN[r.grain],act:ACT_WORD[op],
+  perspective:VOCAB[op+'|'+r.grain][0],phrase:VOCAB[op+'|'+r.grain][1],r};}
+
+/* ── sql / eoql text ──────────────────────────────────── */
+function condSQL(c){const f=FIELDS.find(x=>x.key===c.field);
+ if(c.op==='empty')return c.field+' IS NULL';
+ if(c.op==='notempty')return c.field+' IS NOT NULL';
+ if(c.op==='contains')return c.field+" LIKE '%"+String(c.value).replace(/'/g,"''")+"%'";
+ if(c.op==='ncontains')return c.field+" NOT LIKE '%"+String(c.value).replace(/'/g,"''")+"%'";
+ const val=(f&&f.type==='number')?c.value:"'"+String(c.value).replace(/'/g,"''")+"'";
+ const m={eq:'=',neq:'!=',gt:'>',gte:'>=',lt:'<',lte:'<='};
+ return c.field+' '+(m[c.op]||c.op)+' '+val;}
+function whereSQL(g){if(!g.rows.length)return'';
+ return g.rows.map(r=>r.kind==='group'?'('+whereSQL(r)+')':condSQL(r)).join(' '+(g.connector==='any'?'OR':'AND')+' ');}
+function sqlText(){let s='SELECT '+(state.seg.groupBy==='whole'?'*':state.seg.groupBy+', COUNT(*) AS sources')+'\nFROM sources';
+ const w=whereSQL(state.seg);if(w)s+='\nWHERE '+w;
+ if(state.seg.groupBy!=='whole')s+='\nGROUP BY '+state.seg.groupBy;
+ if(state.seg.sort)s+='\nORDER BY '+state.seg.sort+' '+state.seg.sortDir.toUpperCase();
+ if(state.seg.limit)s+='\nLIMIT '+state.seg.limit;return s;}
+function summaryLabel(){return state.seg.summarize==='count'?'count of sources':state.seg.summarize==='sum-stmts'?'sum of statements':'average of figures';}
+function eoText(){const L=[];L.push('｜ sources · scope (SEG)');
+ state.seg.rows.forEach(r=>{if(r.kind==='condition')L.push('⊨ '+r.field+' '+opWord(r.op)+' '+r.value+' · filter (EVA)');
+  else L.push('⊨ ('+r.connector+' of '+r.rows.length+') · filter group (EVA)');});
+ if(state.seg.groupBy!=='whole')L.push('⊛ by '+state.seg.groupBy+' · group (REC)');
+ L.push('△ '+summaryLabel()+' · aggregate (SYN)');
+ if(state.seg.sort)L.push('⊢ order by '+state.seg.sort+' '+state.seg.sortDir+' · sort (DEF)');
+ if(state.seg.limit)L.push('⊢ first '+state.seg.limit+' · window (DEF)');
+ return L.join('\n');}
+
+/* ── parsers (supported subset, typed gaps) ───────────── */
+function parseSQLCond(s,gaps){
+ s=s.trim();let m;
+ m=s.match(/^(\w+)\s+IS\s+NOT\s+NULL$/i);if(m)return cond(m[1],'notempty','',gaps);
+ m=s.match(/^(\w+)\s+IS\s+NULL$/i);if(m)return cond(m[1],'empty','',gaps);
+ m=s.match(/^(\w+)\s+(NOT\s+LIKE|LIKE)\s+'%?(.*?)%?'$/i);if(m)return cond(m[1],/NOT/i.test(m[2])?'ncontains':'contains',m[3],gaps);
+ m=s.match(/^(\w+)\s*(=|!=|<>|>=|<=|>|<)\s*'?([^']*)'?$/);if(m){
+  const op={'=':'eq','!=':'neq','<>':'neq','>':'gt','>=':'gte','<':'lt','<=':'lte'}[m[2]];
+  let v=m[3].trim();if(/^-?\d+(\.\d+)?$/.test(v))v=Number(v);
+  return cond(m[1],op,v,gaps);}
+ gaps.push('could not bind: '+s);return null;
+}
+function cond(field,op,value,gaps){const f=FIELDS.find(x=>x.key===field);
+ if(!f){gaps.push('field does not bind: '+field);return null;}
+ if(f.type==='select'&&value!==''&&!f.options.includes(value))gaps.push('value does not bind: '+field+' = '+value);
+ return{id:nid(),kind:'condition',field,op,value};}
+function parseSQL(txt){
+ const gaps=[];const root={connector:'all',rows:[]};
+ const w=(txt.match(/WHERE\s+([\s\S]*?)(?:\s+GROUP\s+BY|\s+ORDER\s+BY|\s+LIMIT|$)/i)||[])[1];
+ if(w){const ors=w.split(/\s+OR\s+/i).map(chunk=>{const ands=chunk.split(/\s+AND\s+/i).map(x=>parseSQLCond(x,gaps)).filter(Boolean);
+   return{id:nid(),kind:'group',connector:'all',rows:ands};});
+  if(ors.length===1)root.rows=ors[0].rows;else{root.connector='any';root.rows=ors;}}
+ let m=txt.match(/GROUP\s+BY\s+(\w+)/i);
+ if(m){if(FIELDS.some(f=>f.key===m[1]))state.seg.groupBy=m[1];else gaps.push('GROUP BY does not bind: '+m[1]);}
+ m=txt.match(/ORDER\s+BY\s+(\w+)(?:\s+(ASC|DESC))?/i);
+ if(m&&FIELDS.some(f=>f.key===m[1])){state.seg.sort=m[1];state.seg.sortDir=(m[2]||'ASC').toLowerCase();}
+ m=txt.match(/LIMIT\s+(\d+)/i);if(m)state.seg.limit=m[1];
+ return{root,gaps};
+}
+function parseEO(txt){
+ const gaps=[];const rows=[];
+ txt.split('\n').map(l=>l.trim()).filter(Boolean).forEach(line=>{
+  let m=line.match(/^(?:⊨|EVA)\s+(.+?)\s+(is not|is empty|is set|contains|is|>|≥|<|≤|=)\s*(.*?)(?:\s+·.*)?$/);
+  if(m){const field=m[1].trim(),ow=m[2].trim(),val=m[3].trim();
+   const op=ow==='is'?'eq':ow==='is not'?'neq':ow==='contains'?'contains':ow==='is empty'?'empty':ow==='is set'?'notempty':ow==='>'?'gt':ow==='≥'?'gte':ow==='<'?'lt':ow==='≤'?'lte':'eq';
+   const c=cond(field,op,val,gaps);if(c)rows.push(c);return;}
+  m=line.match(/^(?:⊛|REC)\s+by\s+(\w+)/);if(m){if(FIELDS.some(f=>f.key===m[1]))state.seg.groupBy=m[1];else gaps.push('group by does not bind: '+m[1]);return;}
+  if(/^(?:｜|SEG)(?:\s|·|$)/.test(line))return;
+  if(/^(?:△|SYN)/.test(line))return;
+  m=line.match(/^(?:⊢|DEF)\s+order\s+by\s+(\w+)\s+(asc|desc)/i);if(m){state.seg.sort=m[1];state.seg.sortDir=m[2].toLowerCase();return;}
+  m=line.match(/^(?:⊢|DEF)\s+first\s+(\d+)/i);if(m){state.seg.limit=m[1];return;}
+  gaps.push('could not bind: '+line);
+ });
+ return{root:{connector:'all',rows},gaps};
+}
+
+/* ── popover rendering ────────────────────────────────── */
+function valControl(c){
+ const f=FIELDS.find(x=>x.key===c.field)||{type:'text'};
+ if(f.type==='select')return '<select class="val" data-act="value">'+['<option value="">choose…</option>'].concat(f.options.map(o=>'<option'+(String(c.value)===o?' selected':'')+'>'+esc(o)+'</option>')).join('')+'</select>';
+ const t=f.type==='number'?'number':'text';
+ return '<input class="val" type="'+t+'" data-act="value" value="'+esc(c.value)+'" placeholder="value">';
+}
+function fieldSelect(c){return '<select data-act="field">'+FIELDS.map(f=>'<option value="'+f.key+'"'+(c.field===f.key?' selected':'')+'>'+esc(f.label)+'</option>').join('')+'</select>';}
+function opSelect(c){const f=FIELDS.find(x=>x.key===c.field)||{type:'text'};
+ return '<select data-act="op">'+(OPS[f.type]||OPS.text).map(o=>'<option value="'+o[0]+'"'+(c.op===o[0]?' selected':'')+'>'+esc(o[1])+'</option>').join('')+'</select>';}
+function rowHTML(r,depth){
+ if(r.kind==='condition')return '<div class="cond" data-id="'+r.id+'">'+fieldSelect(r)+opSelect(r)+valControl(r)+'<button class="x" data-act="remove" title="Remove">✕</button></div>';
+ return '<div class="grp" data-id="'+r.id+'"><div class="grp-head">Where <select data-act="gconn"><option value="all"'+(r.connector==='all'?' selected':'')+'>all</option><option value="any"'+(r.connector==='any'?' selected':'')+'>any</option></select> of the following are true <button class="x" data-act="remove" style="margin-left:auto">✕</button></div>'+
+  r.rows.map(x=>rowHTML(x,depth+1)).join('')+
+  '<div class="grp-actions"><button class="link" data-act="add-cond">+ Condition</button><button class="link" data-act="add-group">+ Group</button></div></div>';
+}
+function conditionsHTML(){
+ let h='<div class="qline">Where <select data-act="conn"><option value="all"'+(state.seg.connector==='all'?' selected':'')+'>all</option><option value="any"'+(state.seg.connector==='any'?' selected':'')+'>any</option></select> of the following are true</div>';
+ h+=state.seg.rows.map(r=>rowHTML(r,0)).join('');
+ h+='<div class="grp-actions" style="padding-top:6px"><button class="link" data-act="add-cond">+ Condition</button><button class="link" data-act="add-group">+ Group</button></div>';
+ h+='<div class="advrow"><label>Group by <select data-act="groupby">'+['whole','fold','kind','year','publisher','status'].map(g=>'<option value="'+g+'"'+(state.seg.groupBy===g?' selected':'')+'>'+g+'</option>').join('')+'</select></label>'+
+   '<label>Summarize <select data-act="summarize">'+[['count','count of sources'],['sum-stmts','sum of statements'],['avg-figures','average of figures']].map(o=>'<option value="'+o[0]+'"'+(state.seg.summarize===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></label>'+
+   '<label>Sort <select data-act="sort">'+FIELDS.filter(f=>f.type==='number'||f.key==='name').map(f=>'<option value="'+f.key+'"'+(state.seg.sort===f.key?' selected':'')+'>'+f.label+'</option>').join('')+'</select>'+
+   '<select data-act="sortdir"><option value="desc"'+(state.seg.sortDir==='desc'?' selected':'')+'>↓</option><option value="asc"'+(state.seg.sortDir==='asc'?' selected':'')+'>↑</option></select></label>'+
+   '<label>Limit <input type="number" data-act="limit" value="'+esc(state.seg.limit)+'" placeholder="—" style="width:58px"></label></div>';
+ return h;
+}
+function sourcesHTML(){
+ let h='<label class="src-row"><input type="checkbox" data-act="all" '+(state.selected.size===SOURCES.length?'checked':'')+'><span class="nm"><b>All sources</b></span><span class="meta">'+SOURCES.length+'</span></label><div class="hr"></div>';
+ h+=SOURCES.map(s=>'<label class="src-row"><input type="checkbox" data-act="one" data-id="'+s.id+'" '+(state.selected.has(s.id)?'checked':'')+'><span class="nm">'+esc(s.name)+'</span><span class="meta">'+esc(s.kind)+' · '+s.year+' · '+s.stmts+' stmts</span><span class="pill '+s.status+'">'+s.status+'</span></label>').join('');
+ return h;
+}
+function readHTML(){
+ const modes=['Differentiate','Relate','Generate'],doms=['Existence','Structure','Interpretation'],grains=['Ground','Figure','Pattern'];
+ const rows=[['mode','WHAT YOU DO',modes,PLAIN_MODE],['domain','WHAT YOU SEE',doms,PLAIN_DOMAIN],['grain','SCALE',grains,PLAIN_GRAIN]];
+ let h='<div class="tcaption">three fields — one pick per line, then the name reads off below</div>';
+ h+=rows.map(([key,lab,vals,words])=>'<div class="trow"><span class="tlab">'+lab+'</span>'+
+  '<span class="tfield" role="radiogroup" aria-label="'+lab+'">'+
+  vals.map(v=>'<button class="seg'+(state.read[key]===v?' on':'')+'" role="radio" aria-checked="'+(state.read[key]===v)+'" data-act="set-read" data-key="'+key+'" data-val="'+v+'" title="'+v+'">'+words[v]+'</button>').join('')+
+  '</span><span class="teo">'+state.read[key]+'</span></div>').join('');
+ const d=derived();
+ h+='<div class="readout"><div class="persp">'+d.phrase+'</div>'+
+  '<div style="color:var(--dim);padding-top:2px">'+d.op+'·'+d.grain+' · terrain '+d.terrain+' · stance '+d.stance+'</div></div>';
+ return h;
+}
+function segmentWrap(inner){
+ const tabs=[['conditions','Conditions'],['sql','SQL'],['eoql','EOQL']];
+ let h='<div class="tabbar">'+tabs.map(t=>'<button data-act="tab" data-tab="'+t[0]+'" class="'+(state.tab===t[0]?'on':'')+'">'+t[1]+'</button>').join('')+'</div><div class="pop-body">';
+ if(state.tab==='conditions'){h+=conditionsHTML();}
+ else if(state.tab==='sql'){h+='<textarea data-act="sql-text" spellcheck="false">'+esc(sqlText())+'</textarea>'+
+   '<div style="display:flex;gap:10px;align-items:center;padding-top:8px"><button class="btn" data-act="apply-sql">Apply SQL</button><span style="font:400 11px var(--mono);color:var(--dim)">supported subset: WHERE/AND/OR, LIKE, IS [NOT] NULL, GROUP BY, ORDER BY, LIMIT — everything else is reported as a gap</span></div>'+
+   (state.sqlGaps.length?'<div class="gaps">'+state.sqlGaps.map(g=>'⚠ '+esc(g)).join('')+'</div>':'');}
+ else{h+='<textarea data-act="eo-text" spellcheck="false">'+esc(eoText())+'</textarea>'+
+   '<div style="display:flex;gap:10px;align-items:center;padding-top:8px"><button class="btn" data-act="apply-eo">Apply EOQL</button><span style="font:400 11px var(--mono);color:var(--dim)">EVA lines rebind the conditions; REC/SYN/DEF rebind group, summarize, sort, limit</span></div>'+
+   (state.eoGaps.length?'<div class="gaps">'+state.eoGaps.map(g=>'⚠ '+esc(g)).join('')+'</div>':'')+
+   '<div class="legend">'+Object.entries(EO).map(([k,v])=>'<span><b>'+v[0]+' '+k+'</b> '+v[1]+'</span>').join('')+'</div>';}
+ return h+'</div>';
+}
+function renderPop(){
+ const pop=$('pop');const m=matchedSources();
+ if(!state.open){pop.classList.remove('open');pop.innerHTML='';document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));return;}
+ const chip=$('chip-'+state.open);chip.classList.add('on');
+ let inner='';
+ if(state.open==='sources'){
+  inner='<div class="pop-head"><b>Sources</b><span>the gate · what is admitted</span></div><div class="pop-body">'+sourcesHTML()+'</div>'+
+   '<div class="pop-foot"><span>'+state.selected.size+' of '+SOURCES.length+' selected</span><span style="margin-left:auto"></span><button class="link" data-act="only-kept">only kept</button><button class="link" data-act="select-all">all</button><button class="link" data-act="invert">invert</button></div>';
+  pop.innerHTML='<div class="pop">'+inner+'</div>';pop.style.width='360px';
+ }
+ if(state.open==='segment'){
+  const label=state.seg.groupBy==='whole'?'whole':(state.seg.groupBy==='fold'?'by fold':'by '+state.seg.groupBy);
+  inner='<div class="pop-head"><b>Segment</b><span>the cut · filter + group · now: '+label+'</span></div>'+segmentWrap()+
+   '<div class="pop-foot"><span><b style="color:var(--ink2)">'+m.length+'</b> of '+state.selected.size+' selected sources match</span><span style="margin-left:auto"></span><button class="link" data-act="clear">clear conditions</button><button class="btn ghost" data-act="close">Done</button></div>';
+  pop.innerHTML='<div class="pop wrap">'+inner+'</div>';pop.style.width='620px';
+ }
+ if(state.open==='read'){
+  inner='<div class="pop-head"><b>Read as</b><span>what × where × scale &rarr; one perspective</span></div><div class="pop-body">'+readHTML()+'</div>';
+  pop.innerHTML='<div class="pop">'+inner+'</div>';pop.style.width='560px';
+ }
+ const r=chip.getBoundingClientRect();
+ pop.style.left=Math.min(r.left,window.innerWidth-640)+'px';
+ pop.style.top=(r.bottom+6)+'px';
+ pop.classList.add('open');
+}
+
+/* ── strip + hero ─────────────────────────────────────── */
+function segLabel(){return state.seg.groupBy==='whole'?'whole':(state.seg.groupBy==='fold'?'by fold':'by '+state.seg.groupBy);}
+function render(){
+ const m=matchedSources();const d=derived();
+ $('c-sources').textContent=(state.selected.size===SOURCES.length?'All '+SOURCES.length:state.selected.size)+' sources';
+ $('c-segment').textContent=m.length+' of '+state.selected.size+' · '+segLabel();
+ $('c-read').textContent=d.phrase;
+ const st=m.reduce((a,s)=>a+s.stmts,0),fg=m.reduce((a,s)=>a+s.figures,0);
+ $('strip-status').innerHTML='<b>'+st.toLocaleString()+'</b> stmts · <b>'+fg.toLocaleString()+'</b> figures · '+m.length+' sources in scope';
+ renderNotice(m,d);renderPanels(m,d);renderPop();
+}
+function renderNotice(m,d){
+ const n=$('notice');let h='';
+ if(state.selected.size===0){h='<div class="notice">No sources selected — nothing can be read. <button class="btn ghost" data-act="select-all">Select all</button></div>';}
+ else if(m.length===0){h='<div class="notice">Nothing matches the current cut — an empty panel is not a finding. <button class="btn ghost" data-act="clear">Clear conditions</button></div>';}
+ else{h='<div class="notice calm">'+m.length+' sources · cut '+segLabel()+' · reading as <b>'+esc(d.phrase)+'</b>.</div>';}
+ n.innerHTML=h;
+}
+function groupItems(m){
+ if(state.seg.groupBy==='whole')return[{label:'Whole selection',items:m}];
+ const map=new Map();
+ m.forEach(s=>{const k=String(s[state.seg.groupBy]||'—');if(!map.has(k))map.set(k,[]);map.get(k).push(s);});
+ return [...map].map(([label,items])=>({label,items})).sort((a,b)=>b.items.length-a.items.length);
+}
+function aggLine(items){
+ if(state.seg.summarize==='sum-stmts')return 'Σ '+items.reduce((a,s)=>a+s.stmts,0).toLocaleString()+' stmts';
+ if(state.seg.summarize==='avg-figures')return '⌀ '+(items.reduce((a,s)=>a+s.figures,0)/items.length).toFixed(1)+' figures';
+ return items.length+(items.length===1?' source':' sources');
+}
+function renderPanels(m,d){
+ const host=$('panels');
+ if(!m.length){host.innerHTML='';return;}
+ const groups=groupItems(m).slice(0,state.seg.limit?Number(state.seg.limit):99);
+ host.innerHTML=groups.map(g=>'<section class="panel"><header><b>'+esc(g.label)+'</b><span>'+aggLine(g.items)+'</span></header>'+
+  g.items.map(s=>'<div class="row"><span class="nm">'+esc(s.name)+'</span><span class="meta">'+esc(s.kind)+' · '+s.year+' · '+s.stmts+' stmts</span></div>').join('')+
+  '<footer>reading as '+esc(d.phrase)+'</footer></section>').join('');
+}
+
+/* ── events ───────────────────────────────────────────── */
+function findRow(id,rows){rows=rows||state.seg.rows;for(const r of rows){if(r.id===id)return r;if(r.kind==='group'){const x=findRow(id,r.rows);if(x)return x;}}return null;}
+function findParent(id,rows){rows=rows||state.seg.rows;for(const r of rows){if(r.kind==='group'){if(r.rows.some(x=>x.id===id))return r;const p=findParent(id,r.rows);if(p)return p;}}return null;}
+document.addEventListener('click',e=>{
+ const act=e.target.closest('[data-act]');
+ const chip=e.target.closest('.chip');
+ if(chip&&!act){state.open=state.open===chip.id.replace('chip-','')?null:chip.id.replace('chip-','');state.tab='conditions';render();return;}
+ if(!act){if(state.open&&!e.target.closest('#pop')){state.open=null;render();}return;}
+ const a=act.getAttribute('data-act');
+ if(a==='close'){state.open=null;render();}
+ else if(a==='remove'){const row=act.closest('[data-id]');const id=row.getAttribute('data-id');const parent=findParent(id);const list=parent?parent.rows:state.seg.rows;const i=list.findIndex(x=>x.id===id);if(i>=0)list.splice(i,1);render();}
+ else if(a==='add-cond'){const id=act.closest('[data-id]')?act.closest('[data-id]').getAttribute('data-id'):null;const list=id?findRow(id).rows:state.seg.rows;list.push({id:nid(),kind:'condition',field:'kind',op:'eq',value:'Audit'});render();}
+ else if(a==='add-group'){const id=act.closest('[data-id]')?act.closest('[data-id]').getAttribute('data-id'):null;const list=id?findRow(id).rows:state.seg.rows;list.push({id:nid(),kind:'group',connector:'all',rows:[{id:nid(),kind:'condition',field:'kind',op:'eq',value:'Audit'}]});render();}
+ else if(a==='tab'){state.tab=act.getAttribute('data-tab');state.sqlGaps=[];state.eoGaps=[];render();}
+ else if(a==='apply-sql'){const txt=document.querySelector('[data-act="sql-text"]').value;const p=parseSQL(txt);if(p.root.rows.length)state.seg.rows=p.root.rows;state.sqlGaps=p.gaps;render();}
+ else if(a==='apply-eo'){const txt=document.querySelector('[data-act="eo-text"]').value;const p=parseEO(txt);if(p.root.rows.length)state.seg.rows=p.root.rows;state.eoGaps=p.gaps;render();}
+ else if(a==='clear'){state.seg.rows=[];state.sqlGaps=[];state.eoGaps=[];render();}
+ else if(a==='select-all'){state.selected=new Set(SOURCES.map(s=>s.id));render();}
+ else if(a==='only-kept'){state.selected=new Set(SOURCES.filter(s=>s.status!=='live').map(s=>s.id));render();}
+ else if(a==='invert'){state.selected=new Set(SOURCES.filter(s=>!state.selected.has(s.id)).map(s=>s.id));render();}
+ else if(a==='set-read'){state.read[act.getAttribute('data-key')]=act.getAttribute('data-val');render();}
+});
+document.addEventListener('change',e=>{
+ const act=e.target.closest('[data-act]');if(!act)return;
+ const a=act.getAttribute('data-act');
+ if(a==='field'){const row=findRow(act.closest('[data-id]').getAttribute('data-id'));row.field=act.value;const f=FIELDS.find(x=>x.key===row.field);row.op=(OPS[f.type]||OPS.text)[0][0];row.value='';render();}
+ else if(a==='op'){const row=findRow(act.closest('[data-id]').getAttribute('data-id'));row.op=act.value;render();}
+ else if(a==='gconn'){const r=findRow(act.closest('[data-id]').getAttribute('data-id'));r.connector=act.value;render();}
+ else if(a==='conn'){state.seg.connector=act.value;render();}
+ else if(a==='groupby'){state.seg.groupBy=act.value;render();}
+ else if(a==='summarize'){state.seg.summarize=act.value;render();}
+ else if(a==='sort'){state.seg.sort=act.value;render();}
+ else if(a==='sortdir'){state.seg.sortDir=act.value;render();}
+ else if(a==='limit'){state.seg.limit=act.value.replace(/[^\d]/g,'');render();}
+ else if(a==='set-read'){const row=act.closest('[data-id]');state.read[act.getAttribute('data-key')]=act.getAttribute('data-val');render();}
+ else if(a==='all'){state.selected=act.checked?new Set(SOURCES.map(s=>s.id)):new Set();render();}
+ else if(a==='one'){const id=act.getAttribute('data-id');if(act.checked)state.selected.add(id);else state.selected.delete(id);render();}
+});
+document.addEventListener('input',e=>{
+ const act=e.target.closest('[data-act]');if(!act)return;
+ if(act.getAttribute('data-act')==='value'&&act.closest('.cond')){const row=findRow(act.closest('.cond').getAttribute('data-id'));if(row){row.value=act.value;render();}}
+ if(act.getAttribute('data-act')==='limit'){state.seg.limit=act.value.replace(/[^\d]/g,'');}
+});
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&state.open){state.open=null;render();return;}
+ if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;
+ const k=e.key.toLowerCase();
+ if(k==='s'){state.open='sources';render();}
+ if(k==='g'){state.open='segment';render();}
+ if(k==='r'){state.open='read';render();}
+});
+
+render();
+})();
+</script>
+</body>
+</html>
