@@ -1,8 +1,14 @@
 {
-  "name": "fold-research-surface",
+  "name": "the-fold-surface",
   "private": true,
+  "description": "the fold \u2014 the reading/research surface of The Fold. No build step; index.html is the app. Playwright is installed only for driving the live page (drive-holodeck.mjs).",
   "scripts": {
+    "serve": "python3 -m http.server 8813 --bind 127.0.0.1",
+    "drive": "node drive-holodeck.mjs",
     "test:overview": "node --test holodeck-overview.test.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.63.0"
   },
   "devDependencies": {
     "linkedom": "^0.18.12"
