@@ -1,0 +1,63 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Holodeck · entity profiles (kind-induced)</title>
+<style>
+:root{--bg:#faf9fc;--s1:#fff;--s2:#f1eefb;--line:#e2ddf3;--line2:#c8bfe8;--ink:#241e3f;--ink2:#3c3560;--mut:#6b6492;--dim:#8f88b3;--acc:#6d4bd8}
+@media(prefers-color-scheme:dark){:root{--bg:#0d0b16;--s1:#141126;--s2:#1b1735;--line:#2b2450;--line2:#3a3170;--ink:#ece9fb;--ink2:#cfc9ee;--mut:#8f88b3;--dim:#6b6492;--acc:#a78bfa}}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 'Hanken Grotesk',system-ui,sans-serif;margin:0}
+header{padding:22px 26px 10px;max-width:1100px;margin:0 auto}
+h1{font:500 26px/1.2 'Newsreader',serif;margin:0 0 4px}
+.sub{color:var(--mut);font-size:13px;max-width:760px}
+.wrap{display:grid;grid-template-columns:260px 1fr;gap:18px;max-width:1100px;margin:12px auto 60px;padding:0 26px}
+.list{border:1px solid var(--line);border-radius:12px;overflow:auto;max-height:78vh;background:var(--s1)}
+.item{display:flex;gap:8px;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line);cursor:pointer}
+.item:hover{background:var(--s2)}
+.item.on{background:var(--s2);box-shadow:inset 3px 0 0 var(--acc)}
+.item b{font-weight:600;font-size:13px}
+.item small{color:var(--mut);font:500 11px 'JetBrains Mono'}
+.detail{display:flex;flex-direction:column;gap:14px}
+.stat{display:flex;gap:18px;flex-wrap:wrap;color:var(--mut);font:500 12px 'JetBrains Mono';border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--s1)}
+.stat b{color:var(--ink);font-weight:600}
+pre{background:var(--s1);border:1px solid var(--line);border-radius:10px;padding:12px;overflow:auto;font:12px/1.5 'JetBrains Mono',monospace;color:var(--ink2)}
+</style>
+<header>
+  <h1>Entity profiles — key parameters, induced per kind</h1>
+  <p class="sub">Every being below gets a profile from eoreader7's kind induction over the corpus's own observations (org · role · amount · status · also written …). No parameter is declared in advance: the kind a being's relation profile earns is what makes a relation key, and each relation carries the standing that kind earned — fixed · one at a time · many-valued · time unknown · unexposed.</p>
+</header>
+<div class="wrap">
+  <div class="list" id="list"></div>
+  <div class="detail">
+    <div class="stat" id="stat"></div>
+    <div id="panel"></div>
+    <pre id="text"></pre>
+  </div>
+</div>
+<script type="module">
+import { buildFromTriples, triplesFromObservations, paramRows, profileText, renderPanel, PROFILE_CSS } from './holodeck-profile.js';
+const style = document.createElement('style'); style.textContent = PROFILE_CSS; document.head.appendChild(style);
+
+const lines = (await fetch('./fixtures/ohs-referents.eot.jsonl').then(r => r.text())).trim().split('\n').map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+const triples = triplesFromObservations(lines);
+const beings = [...new Set(triples.map(t => t.subject))];
+const built = buildFromTriples(triples, { beings, exposureFloor: 2, draws: 99, alpha: 0.05, seed: 5 });
+
+const d = built.diagnostics;
+document.getElementById('stat').innerHTML =
+  `<span>entities <b>${d.entities}</b></span><span>kinds <b>${d.kinds}</b></span><span>established <b>${d.established}</b></span><span>profiled <b>${d.profiled}</b></span><span>exposureFloor <b>${d.exposureFloor}</b></span>`;
+
+const all = [...built.byId.values()].sort((a, b) => (b.established - a.established) || (b.parameters.length - a.parameters.length) || a.id.localeCompare(b.id));
+const list = document.getElementById('list');
+function show(id) {
+  const p = built.byId.get(id);
+  document.getElementById('panel').innerHTML = renderPanel(built, id, { title: id });
+  document.getElementById('text').textContent = profileText(p, built).join('\n');
+  for (const el of list.children) el.classList.toggle('on', el.dataset.id === id);
+}
+for (const p of all) {
+  const el = document.createElement('div'); el.className = 'item'; el.dataset.id = p.id;
+  el.innerHTML = `<b>${p.id}</b><small>${p.established ? p.parameters.length + ' params' : 'no kind'}</small>`;
+  el.onclick = () => show(p.id); list.appendChild(el);
+}
+show(all[0].id);
+</script>
