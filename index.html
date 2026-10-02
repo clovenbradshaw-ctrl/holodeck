@@ -58,6 +58,25 @@ select option{background:var(--s1);color:var(--ink)}
       </div>
       <sc-if value="{{ hasContent }}" hint-placeholder-val="{{ false }}">
       <div style="display:flex;flex-direction:column;gap:1px;padding:10px 0 12px;border-top:1px solid var(--line)">
+        <span style="font:600 12px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--acc);padding:2px 12px 6px">Topics</span>
+        <sc-if value="{{ hasTopics }}" hint-placeholder-val="{{ false }}">
+          <span style="font:400 11px 'Hanken Grotesk';color:var(--mut);padding:0 12px 4px;text-wrap:pretty">{{ topicsNote }}</span>
+          <sc-for list="{{ topicsList }}" as="t" hint-placeholder-count="2">
+            <button onClick="{{ t.onJump }}" title="Segment the whole workspace to this topic's sources" style="white-space:normal;text-align:left;cursor:pointer;padding:5px 12px 5px 20px;border-radius:8px;background:{{ t.bg }};border:1px solid {{ t.bd }};display:flex;justify-content:space-between;align-items:baseline;gap:10px" style-hover="background:var(--s2)">
+              <span style="font:{{ t.weight }} 14px 'Hanken Grotesk';color:var(--ink2)">{{ t.label }}</span>
+              <span style="font:500 12px 'JetBrains Mono';color:var(--mut);white-space:nowrap">{{ t.n }}</span>
+            </button>
+          </sc-for>
+        </sc-if>
+        <sc-if value="{{ hasTopicsNote }}" hint-placeholder-val="{{ false }}"><span style="font:400 11px 'Hanken Grotesk';color:var(--mut);padding:0 12px 4px;text-wrap:pretty">{{ topicsNote }}</span></sc-if>
+        <sc-if value="{{ showTopicsStray }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ onTopicsStray }}" title="Segment to the sources that belong to no topic" style="white-space:normal;text-align:left;cursor:pointer;padding:5px 12px 5px 20px;border-radius:8px;background:transparent;border:0;display:flex;justify-content:space-between;align-items:baseline;gap:10px" style-hover="background:var(--s2)">
+            <span style="font:500 14px 'Hanken Grotesk';color:var(--mut)">Not in any topic</span>
+            <span style="font:500 12px 'JetBrains Mono';color:var(--mut);white-space:nowrap">{{ topicsStrayN }}</span>
+          </button>
+        </sc-if>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1px;padding:10px 0 12px;border-top:1px solid var(--line)">
         <span style="font:600 12px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--acc);padding:2px 12px 6px">{{ navRead.label }}</span>
         <sc-for list="{{ navRead.items }}" as="g" hint-placeholder-count="3">
           <button onClick="{{ g.onClick }}" style="white-space:normal;text-align:left;cursor:pointer;padding:5px 12px 5px 20px;border-radius:8px;background:{{ g.bg }};border:1px solid {{ g.bd }};display:flex;justify-content:space-between;align-items:baseline;gap:10px" style-hover="background:var(--s2)">
@@ -119,6 +138,44 @@ select option{background:var(--s1);color:var(--ink)}
       </div>
       <button onClick="{{ openSettings }}" title="Settings — account, sync and sharing" style="flex:none;display:flex;align-items:center;gap:8px;background:none;border:1px solid var(--line2);border-radius:999px;padding:5px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)"><span style="width:8px;height:8px;border-radius:50%;background:{{ acctOn ? 'var(--ok)' : 'var(--dim)' }}"></span>{{ acctLabel }} <span style="font-size:15px">⚙</span></button>
     </div>
+    <sc-if value="{{ scope.show }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:1230px;margin:0 auto;padding:0 20px 8px;display:flex;align-items:flex-start;gap:6px 18px;flex-wrap:wrap;font:400 12px 'Hanken Grotesk';color:var(--mut)">
+        <span style="display:flex;align-items:center;gap:6px;min-width:0">
+          <span style="font:600 11px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--dim);flex:none">Sources</span>
+          <button onClick="{{ scope.onAll }}" title="Open the Sources surface" style="all:unset;cursor:pointer;color:var(--ink2);font-weight:600;white-space:nowrap" style-hover="color:var(--acc)">{{ scope.sourcesLine }}</button>
+          <span style="display:flex;align-items:center;gap:4px;min-width:0;overflow:hidden">
+            <sc-for list="{{ scope.sourceItems }}" as="s" hint-placeholder-count="2">
+              <button onClick="{{ s.onClick }}" title="Read this source" style="all:unset;cursor:pointer;background:var(--s2);border:1px solid var(--line2);border-radius:999px;padding:1px 8px;color:var(--ink2);max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:none" style-hover="border-color:var(--acc)">{{ s.label }}</button>
+            </sc-for>
+            <sc-if value="{{ scope.hasMoreSources }}" hint-placeholder-val="{{ false }}"><button onClick="{{ scope.onMoreSources }}" style="all:unset;cursor:pointer;color:var(--acc);white-space:nowrap;flex:none" style-hover="text-decoration:underline">+{{ scope.moreSources }} more →</button></sc-if>
+          </span>
+        </span>
+        <span style="display:flex;align-items:center;gap:6px;min-width:0">
+          <span style="font:600 11px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--dim);flex:none">Segments</span>
+          <sc-if value="{{ scope.hasSegment }}" hint-placeholder-val="{{ false }}">
+            <span style="display:flex;align-items:center;gap:5px;background:var(--sel);border:1px solid #8b5cf6;border-radius:999px;padding:1px 6px 1px 10px;color:var(--ink);white-space:nowrap"><b style="font-weight:600">{{ scope.segmentLabel }}</b><button onClick="{{ scope.onClearSegment }}" title="Show all sources" style="all:unset;cursor:pointer;color:var(--mut);font-size:11px;padding:2px" style-hover="color:var(--ink)">✕</button></span>
+          </sc-if>
+          <sc-else>
+            <span style="display:flex;align-items:center;gap:4px;min-width:0;overflow:hidden">
+              <sc-for list="{{ scope.segments }}" as="t" hint-placeholder-count="2">
+                <button onClick="{{ t.onJump }}" title="Segment the workspace to this topic's sources" style="all:unset;cursor:pointer;background:var(--s2);border:1px solid var(--line2);border-radius:999px;padding:1px 8px;color:var(--ink2);white-space:nowrap;flex:none" style-hover="border-color:var(--acc)">{{ t.label }} <span style="color:var(--mut)">{{ t.n }}</span></button>
+              </sc-for>
+              <sc-if value="{{ scope.hasStray }}" hint-placeholder-val="{{ false }}"><button onClick="{{ scope.onStray }}" title="Segment to the sources that belong to no topic" style="all:unset;cursor:pointer;background:var(--s2);border:1px solid var(--line2);border-radius:999px;padding:1px 8px;color:var(--mut);white-space:nowrap;flex:none" style-hover="border-color:var(--acc)">not in any topic <span style="color:var(--dim)">{{ scope.strayN }}</span></button></sc-if>
+            </span>
+          </sc-else>
+        </span>
+        <span style="display:flex;align-items:center;gap:6px;min-width:0">
+          <span style="font:600 11px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--dim);flex:none">Perspective</span>
+          <span style="color:var(--ink2);font-weight:600;white-space:nowrap">{{ scope.viewLabel }}</span>
+          <sc-if value="{{ scope.hasLens }}" hint-placeholder-val="{{ false }}"><span style="background:var(--s2);border:1px solid var(--line2);border-radius:999px;padding:1px 8px;color:var(--ink2);white-space:nowrap">lens · {{ scope.lens }}</span></sc-if>
+          <span style="display:flex;align-items:center;gap:4px;min-width:0;overflow:hidden">
+            <sc-for list="{{ scope.filters }}" as="ch" hint-placeholder-count="1">
+              <button onClick="{{ ch.onClear }}" title="Remove this filter" style="display:flex;align-items:center;gap:5px;background:var(--s2);border:1px solid var(--line2);border-radius:999px;padding:1px 5px 1px 9px;cursor:pointer;color:var(--ink);white-space:nowrap;flex:none" style-hover="border-color:#8b5cf6"><span style="color:var(--dim)">{{ ch.k }}</span><b style="font-weight:600">{{ ch.v }}</b><span style="font-size:9px;color:var(--mut)">✕</span></button>
+            </sc-for>
+          </span>
+        </span>
+      </div>
+    </sc-if>
   </header>
 
   <div style="max-width:1230px;padding:20px;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
@@ -2248,6 +2305,15 @@ select option{background:var(--s1);color:var(--ink)}
               <span style="font:400 12px/1.45 'Hanken Grotesk';color:var(--dim);text-wrap:pretty">The worker reads you its 6-digit code; you record it here. Acceptance is confirmed live by the heimdall site against this same account — the registry is one, whatever surface minted the invite.</span>
             </sc-if>
           </section>
+          <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
+            <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">YouTube captions · yt-dlp on this machine</span>
+            <span style="font:400 13px/1.5 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">The browser cannot read YouTube, and neither can Pyodide — its networking is the browser’s own fetch, under the same CORS rules. <code>tools/ytdl-helper.py</code> runs yt-dlp natively beside eoreader7, so captions are read from your own machine, not a relay. Leave blank for the default <code>http://127.0.0.1:11450</code>.</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <input defaultValue="{{ ing.ytdl }}" onChange="{{ ing.onYtdl }}" placeholder="http://127.0.0.1:11450" style="flex:1 1 200px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font:500 13px 'JetBrains Mono';color:var(--ink);outline:none"></input>
+              <button onClick="{{ ing.ytdlTest }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2);white-space:nowrap">Test</button>
+            </div>
+            <sc-if value="{{ ing.ytdlNote }}" hint-placeholder-val="{{ '' }}"><span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--ink2);text-wrap:pretty">{{ ing.ytdlNote }}</span></sc-if>
+          </section>
       </div>
     </div>
   </sc-if>
@@ -3120,8 +3186,9 @@ function faithfulHtml(raw, url) {
   texts.forEach(n => { if (n.parentElement && n.parentElement.closest('pre,textarea,script,style')) return; n.data = n.data.replace(/\s+/g, ' '); });
   return '<!doctype html>' + doc.documentElement.outerHTML;
 }
-const fetchT = (u, ms) => { const c = new AbortController(); const id = setTimeout(() => c.abort(), ms); return fetch(u, { signal: c.signal }).finally(() => clearTimeout(id)); };
-async function fetchAnySite(url) {
+const fetchT = (u, ms, headers, credentials) => { const c = new AbortController(); const id = setTimeout(() => c.abort(), ms); const o = { signal: c.signal }; if (headers) o.headers = headers; if (credentials) o.credentials = credentials; return fetch(u, o).finally(() => clearTimeout(id)); };
+async function fetchAnySite(url, opts = {}) {
+  const cred = opts.credentials || null;   // 'include' after a person proves themselves, so a cleared challenge is carried back in
   const titleOf = raw => { const x = ((raw.match(/<title[^>]*>([^<]*)/i) || [])[1] || ''); return new DOMParser().parseFromString('<p>' + x + '</p>', 'text/html').body.textContent.replace(/\s+/g, ' ').trim(); };
   const FILE_EXT = /\.(pdf|docx|pptx|xlsx|odt|odp|ods|epub|csv|json|txt)$/i;
   const viaHost = async r => {
@@ -3132,15 +3199,83 @@ async function fetchAnySite(url) {
     const raw = new TextDecoder().decode(buf); if (raw.length < 200) throw 0;
     return { html: faithfulHtml(raw, url), format: 'page', title: titleOf(raw), note: null };
   };
-  // Direct only. Nothing is relayed through a server, so no third party learns the address. When a
-  // site refuses the cross-origin read, the caller offers the bookmarklet (capture from the user's
-  // own browser) instead of trying a proxy.
-  const tries = [
-    async () => viaHost(await fetchT(url, 12000))
+  // Direct first: while the site answers a plain cross-origin read, nothing else is involved. When it
+  // refuses, a small chain of public CORS proxies is tried, in parallel — each is a third party that
+  // fetches the page for this browser, so it sees the address (disclosed in the trace). This only helps
+  // a page that is served statically; a page whose article appears only after its own scripts run is
+  // still not readable this way (a proxy returns bytes, not a rendered page), so it falls through to
+  // the live view and the on-device bookmarklet.
+  const CORS_PROXIES = [
+    u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
+    u => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u),
+    u => 'https://corsproxy.io/?url=' + encodeURIComponent(u),
+    u => 'https://cors.eu.org/' + u,
+    u => 'https://thingproxy.freeboard.io/fetch/' + u,
+    u => 'https://test.cors.workers.dev/?' + u
   ];
+  // A page whose article exists only after its own scripts run cannot be read as HTML — but a reader
+  // that renders it server-side can hand back the TEXT, which is worth more than nothing. r.jina.ai
+  // does this (markdown); it accepts an anonymous request or a key kept in localStorage hd:jina.
+  const TEXT_READERS = [
+    u => 'https://r.jina.ai/' + u,
+    u => 'https://api.microlink.io/?meta=false&text=true&url=' + encodeURIComponent(u)
+  ];
+  // Public archives, when a snapshot exists: the Wayback Machine answers its availability API and
+  // serves the archived page CORS-open, so an archived page reads directly — static, no gate, and no
+  // proxy of ours. archive.today is tried by its "newest" address. Both are no-ops when nothing is
+  // archived, which is the common case for a page published minutes ago.
+  // The anchor loop (DEF → EVA → REC, holodeck-anchor.js): declare the archive gates, ask each for
+  // its Mementos, record the survivor. The gate list is data (archives.json, or a person's own
+  // hd:archives), so it stays current without a code change. No single archive — archive.org in
+  // particular, which rate-limits and often refuses behind a VPN — can stall it; a gate that 429s
+  // is a recorded miss, and if a gate wants a human, the caller offers the button.
+  let anchorMod = null; let challenge = null, rateLimited = null;
+  const anchorOf = async v => { try { anchorMod = anchorMod || await import(new URL('holodeck-anchor.js', location.href).href); return await anchorMod.resolveAnchor(v, { timeout: 7000, credentials: cred }); }
+    catch (e) { if (typeof hdT === 'function') hdT('bytes', 'anchor', 'The anchor loop could not run (' + ((e && e.message) || e) + ') — falling through to the readers'); return { ok: false, anchor: null, challenge: null, rateLimited: null }; } };
+  const viaReader = async target => {
+    const key = (() => { try { return localStorage.getItem('hd:jina') || ''; } catch (e) { return ''; } })();
+    const r = await fetchT(target, 22000, key ? { Authorization: 'Bearer ' + key } : null); if (!r.ok) throw 0;
+    let raw = await r.text(); if (!raw) throw 0; let title = '', t = raw;
+    if (/^\s*\{/.test(t)) { try { const j = JSON.parse(t); t = (j.data && (j.data.text || j.data.content)) || ''; title = (j.data && j.data.title) || ''; } catch (e) {} }
+    else { const tm = t.match(/^Title:\s*(.+)$/m); if (tm) title = tm[1].trim(); if (t.includes('Markdown Content:')) t = t.split('Markdown Content:').slice(1).join('Markdown Content:'); }
+    t = t.trim(); if (t.length < 40) throw 0; let host = ''; try { host = new URL(target).hostname; } catch (e) {}
+    return { text: t, title, format: 'text', note: null, host };
+  };
+  const usable = g => !!(g && (g.file || (g.html && pageText(g.html, g.format).trim().length > 40)));
   const variants = [url]; try { const u = new URL(url); if (!/^www\./.test(u.hostname) && u.hostname.split('.').length === 2) { u.hostname = 'www.' + u.hostname; variants.push(u.href); } } catch (e) {}
-  for (const v of variants) { url = v; for (const f of tries) { try { const g = await f(); if (g.file || (g.html && pageText(g.html, g.format).trim().length > 40)) return { ...g, url: v }; } catch (e) {} } }
-  throw new Error('unreachable');
+  for (const v of variants) {
+    url = v;
+    try { const r = await fetchT(v, 12000, null, cred);
+      if (!r.ok) { if (r.status === 429) { if (!rateLimited) rateLimited = { url: v, status: r.status, gate: 'direct' }; }
+        else if (r.status === 403 || r.status === 503) { if (!challenge) challenge = { url: v, status: r.status, gate: 'direct' }; } }
+      else { const g = await viaHost(r); if (usable(g)) return { ...g, url: v, via: 'direct' }; }
+    } catch (e) {}
+    const attempts = CORS_PROXIES.map(p => (async () => {
+      const target = p(v); const g = await viaHost(await fetchT(target, 11000)); if (!usable(g)) throw 0;
+      let host = ''; try { host = new URL(target).hostname; } catch (e) {}
+      return { g, via: 'a public proxy (' + host + ')' };
+    })());
+    try { const r = await Promise.any(attempts);
+      if (typeof hdT === 'function') hdT('bytes', 'proxy', 'Read “' + v + '” through ' + r.via + ' — a third party fetched the page because the site refused a direct read');
+      return { ...r.g, url: v, via: r.via }; } catch (e) {}
+    const anc = await anchorOf(v);
+    if (anc && anc.challenge && !challenge) challenge = anc.challenge;
+    if (anc && anc.rateLimited && !rateLimited) rateLimited = anc.rateLimited;
+    if (anc && anc.anchor && anc.anchor.uri) {
+      try { const g = await viaHost(await fetchT(anc.anchor.uri, 20000, null, cred));
+        if (usable(g)) { if (typeof hdT === 'function') hdT('bytes', 'anchor', 'Read “' + v + '” from its stable anchor in ' + anc.anchor.label + ': ' + anc.anchor.uri);
+          return { ...g, url: v, via: 'an archive (' + anc.anchor.label + ')', anchor: anc.anchor }; }
+      } catch (e) {}
+    }
+    const readers = TEXT_READERS.map(rd => (async () => {
+      const g = await viaReader(rd(v)); if (!g.text || g.text.trim().length < 40) throw 0;
+      return { g, via: 'a text reader (' + g.host + ')' };
+    })());
+    try { const r = await Promise.any(readers);
+      if (typeof hdT === 'function') hdT('bytes', 'proxy', 'Read the text of “' + v + '” through ' + r.via + ' — a third party fetched and rendered the page because the site refused a direct read');
+      return { ...r.g, url: v, via: r.via }; } catch (e) {}
+  }
+  const err = new Error('unreachable'); err.challenge = challenge; err.rateLimited = rateLimited; throw err;
 }
 async function fetchWiki(title) {
   const slug = title.replace(/ /g, '_'); const r = await fetch('https://en.wikipedia.org/api/rest_v1/page/html/' + encodeURIComponent(slug)); if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -3156,12 +3291,15 @@ function loadScript(src) { return new Promise((res, rej) => { if (document.query
 // ── Universal intake: search any source, add any address ────────────────────────────────────────
 // No server relays a page: a page is fetched directly from the site, and when the site refuses a
 // cross-origin read (most news sites do) it is captured from the user's own browser with the
-// "✦ Explore this page" bookmarklet — so no third party learns what is being read. GitHub, Wikipedia
-// and the Internet Archive answer a browser directly, so only those can be searched.
+// "✦ Explore this page" bookmarklet — so no third party learns what is being read. GitHub, Wikipedia,
+// the Internet Archive, and the open scholarly graph (OpenAlex, Crossref) answer a browser directly
+// with no key, so only those can be searched.
 const SEARCH_SCOPES = [
   { id: 'github', label: 'GitHub', ask: 'Search GitHub repositories' },
   { id: 'wikipedia', label: 'Wikipedia', ask: 'Search Wikipedia articles' },
   { id: 'archive', label: 'Internet Archive', ask: 'Search books, documents and recordings' },
+  { id: 'openalex', label: 'Papers · OpenAlex', ask: 'Search research papers (OpenAlex)' },
+  { id: 'crossref', label: 'Papers · Crossref', ask: 'Search research papers (Crossref)' },
 ];
 function githubRepoOf(url) {
   const m = String(url).match(/^https?:\/\/(?:www\.)?github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?(?:[?#].*)?$/i);
@@ -3169,6 +3307,16 @@ function githubRepoOf(url) {
 }
 function youtubeIdOf(url) { const m = String(url).match(/^https?:\/\/(?:www\.|m\.|music\.)?(?:youtube\.com\/(?:watch\?(?:[^#]*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([\w-]{11})/i); return m ? m[1] : null; }
 const plainText = s => new DOMParser().parseFromString('<p>' + String(s || '') + '</p>', 'text/html').body.textContent.replace(/\s+/g, ' ').trim();
+// A paper's citation line, shared by the OpenAlex and Crossref scopes.
+const shortAuthors = (a, n) => (a && a.length ? (a.length <= n ? a.join(', ') : a.slice(0, n).join(', ') + ' et al.') : '');
+const stripXml = s => String(s || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+// OpenAlex stores the abstract as word -> positions; rebuild it in order.
+function oaAbstract(inv) {
+  if (!inv || typeof inv !== 'object') return '';
+  const pos = [];
+  for (const w of Object.keys(inv)) for (const i of inv[w]) pos[i] = w;
+  return pos.join(' ');
+}
 // The on-device capture bookmarklet. Dragged to the bookmarks bar once, it is clicked on any page the
 // person is already reading; the page's rendered DOM is handed to this surface through the fold-ingest
 // channel. No server fetches anything, so no third party sees the address or the page.
@@ -3198,12 +3346,46 @@ async function searchSources(scope, q, page) {
     if (!r.ok || !j) throw new Error('Wikipedia answered ' + r.status + '.');
     return { results: ((j.query && j.query.search) || []).map(x => ({ title: x.title, url: 'https://en.wikipedia.org/wiki/' + encodeURIComponent(x.title.replace(/ /g, '_')), snippet: plainText(x.snippet), source: 'Wikipedia', meta: x.wordcount ? x.wordcount.toLocaleString() + ' words' : '', kind: 'wikipedia' })), more: !!j.continue, engine: 'Wikipedia' };
   }
+  if (scope === 'openalex') {
+    const { r, j } = await getJson('https://api.openalex.org/works?search=' + encodeURIComponent(q) + '&per-page=20&page=' + (page + 1), 'OpenAlex');
+    if (!r.ok || !j) throw new Error('OpenAlex answered ' + r.status + '.');
+    const results = (j.results || []).map(w => {
+      const src = (w.primary_location && w.primary_location.source && w.primary_location.source.display_name) || '';
+      const auths = (w.authorships || []).map(a => (a.author && a.author.display_name) || '').filter(Boolean);
+      const doi = (w.doi || '').replace(/^https?:\/\/doi\.org\//i, '');
+      const oa = (w.best_oa_location && w.best_oa_location.pdf_url) || null;
+      const landing = w.landing_page_url || (doi ? 'https://doi.org/' + doi : '');
+      return { title: w.title || w.display_name || 'Untitled', url: oa || landing, snippet: oaAbstract(w.abstract_inverted_index).slice(0, 300), source: src || 'OpenAlex',
+        meta: [w.publication_year, w.cited_by_count ? 'cited ' + w.cited_by_count : '', doi ? 'doi:' + doi : ''].filter(Boolean).join(' · ') + (auths.length ? ' · ' + shortAuthors(auths, 3) : ''),
+        kind: 'paper', doi: doi || null, oa: !!oa };
+    });
+    return { results, more: page * 20 + results.length < ((j.meta && j.meta.count) || 0), engine: 'OpenAlex' };
+  }
+  if (scope === 'crossref') {
+    const { r, j } = await getJson('https://api.crossref.org/works?query.bibliographic=' + encodeURIComponent(q) + '&rows=20&offset=' + (page * 20), 'Crossref');
+    if (!r.ok || !j) throw new Error('Crossref answered ' + r.status + '.');
+    const msg = j.message || {};
+    const results = (msg.items || []).map(it => {
+      const doi = it.DOI || '';
+      const year = (it.issued && it.issued['date-parts'] && it.issued['date-parts'][0] && it.issued['date-parts'][0][0]) || '';
+      const auths = (it.author || []).map(a => [a.given, a.family].filter(Boolean).join(' ')).filter(Boolean);
+      const jrn = (it['container-title'] && it['container-title'][0]) || '';
+      return { title: (it.title && it.title[0]) || 'Untitled', url: 'https://doi.org/' + doi, snippet: stripXml(it.abstract || '').slice(0, 300), source: jrn || 'Crossref',
+        meta: [year, it['is-referenced-by-count'] ? 'cited ' + it['is-referenced-by-count'] : '', doi ? 'doi:' + doi : ''].filter(Boolean).join(' · ') + (auths.length ? ' · ' + shortAuthors(auths, 3) : ''),
+        kind: 'paper', doi: doi || null };
+    });
+    return { results, more: msg['total-results'] ? (page + 1) * 20 < Math.min(msg['total-results'], 10000) : false, engine: 'Crossref' };
+  }
   const { r, j } = await getJson('https://archive.org/advancedsearch.php?output=json&rows=20&page=' + (page + 1) + '&q=' + encodeURIComponent(q) + ['identifier', 'title', 'description', 'mediatype', 'year', 'creator'].map(f => '&fl%5B%5D=' + f).join(''), 'The Internet Archive');
   if (!r.ok || !j || !j.response) throw new Error('The Internet Archive answered ' + r.status + '.');
   const first = v => (Array.isArray(v) ? v[0] : v) || '';
   return { results: j.response.docs.map(d => ({ title: first(d.title) || d.identifier, url: 'https://archive.org/details/' + d.identifier, snippet: plainText(Array.isArray(d.description) ? d.description.join(' ') : d.description).slice(0, 300), source: first(d.creator) || 'Internet Archive', meta: [d.mediatype, d.year].filter(Boolean).join(' · '), thumb: 'https://archive.org/services/img/' + d.identifier, kind: 'archive' })), more: page * 20 + j.response.docs.length < (j.response.numFound || 0), engine: 'Internet Archive' };
 }
 let _hdFort = null; try { import(new URL('holodeck-fort.js', location.href).href).then(M => { _hdFort = M; }).catch(() => {}); } catch (e) {}
+// YouTube captions (holodeck-yt.js): yt-dlp on the reader's own machine first, the disclosed
+// public proxies second; in-browser Whisper only when there is no caption track at all. The
+// browser cannot read YouTube and Pyodide cannot either — its networking is the browser's fetch.
+let _hdYt = null; const hdYt = () => _hdYt || (_hdYt = import(new URL('holodeck-yt.js', location.href).href));
 // Entity profiles (holodeck-profile.js): kind-induced key parameters per being,
 // built from the workspace's own relations. Loaded like the other modules.
 let _hdProf = null;
@@ -3386,7 +3568,7 @@ class Component extends DCLogic {
       if (wt) { html = await fetchWiki(wt); fmt = 'page'; title = title || wt.replace(/_/g, ' '); type = 'Wikipedia article'; }
       let note = null;
       if (!wt) {
-        const got = await fetchAnySite(url);
+        const got = await fetchAnySite(url, { credentials: opt.credentials });
         if (got.file) { hdT('bytes', 'fetched', 'Received ' + got.file.size.toLocaleString() + ' bytes of ' + got.file.name); const d = await readAny(got.file); return this.addDocs([{ ...d, title: opt.title || d.title, year: opt.year || d.year, url: got.url || url }], { open: opt.open, keepOpen: opt.keepOpen }); }
         html = got.html; text = got.text || null; note = got.note; title = title || got.title || url; fmt = got.format || (text ? 'text' : 'html'); url = got.url || url;
       }
@@ -3398,6 +3580,8 @@ class Component extends DCLogic {
       const shell = opt.fallback
         ? { title: opt.title || url, year: opt.year, type: wt ? 'Wikipedia article (excerpt)' : 'Text', text: opt.fallback, url, note: 'Couldn’t reach the live page, so a saved excerpt was used.' }
         : { title: opt.title || url, year: new Date().getFullYear(), type: 'Link', text: '', url, note: 'That site blocks being read directly. Open it in this browser and click ✦ Explore this page to capture it as you see it, or paste its text.' };
+      if (e && e.challenge) shell.challenge = e.challenge;
+      if (e && e.rateLimited) shell.rateLimited = e.rateLimited;
       if (opt.collect) opt.collect.push(shell); else this.addDocs([shell], { open: opt.open, keepOpen: opt.keepOpen });
     }
   }
@@ -3474,15 +3658,37 @@ class Component extends DCLogic {
     A.status = 'Pulled ' + plural(list.length, 'file') + ' from ' + owner + '/' + repo + '.';
     if (opt.collect) { opt.collect.push(...list); this.setState({ busy: '' }); } else await this.addDocs(list, { keepOpen: opt.keepOpen });
   }
-  // ── An address that resolves to a YouTube video. Nothing is relayed to read it: the video plays in
-  // the app through YouTube's own embed (a direct iframe), and its page can be captured from the user's
-  // own browser with the bookmarklet. A downloaded audio/video file is transcribed here, in this tab.
+  // ── An address that resolves to a YouTube video. The video plays through YouTube's own embed (a
+  // direct iframe). Captions are read first, by yt-dlp on the reader's own machine (tools/ytdl-helper.py),
+  // then — best-effort — through the same disclosed public proxies used for blocked pages; only when no
+  // caption track exists is the recording offered for in-browser Whisper. Nothing of ours relays it.
   async addVideo(url, id, opt) {
-    opt = opt || {}; hdTraceStart(url); hdT('bytes', 'link', 'A YouTube video — its page can be captured with ✦ Explore this page; nothing is relayed to read it');
-    const link = 'https://www.youtube.com/watch?v=' + id, title = opt.title || link;
+    opt = opt || {}; hdTraceStart(url);
+    const link = 'https://www.youtube.com/watch?v=' + id;
+    let meta = null; try { meta = await (await fetchT('https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent(link), 8000)).json(); } catch (e) {}
+    const author = (meta && meta.author_name) || '';
+    const title = opt.title || (meta && meta.title) || link;
+    const lang = this.state.txLang || 'en';
+    hdT('bytes', 'link', 'A YouTube video — captions first (yt-dlp on your own machine, then the disclosed proxies); Whisper only if no track exists');
+    this.setState({ busy: 'Reading captions for “' + hdCut(title, 40) + '”' + (author ? ' · ' + author : '') + '…' });
+    let cap = null;
+    try { const M = await hdYt(); cap = await M.transcriptFor(id, lang); } catch (e) {}
+    if (cap && cap.segments && cap.segments.length) {
+      const html = ohsSegmentsHtml(cap.segments, title);
+      const media = { kind: 'youtube', id, url: link, segN: cap.segments.length, model: cap.model || 'captions', source: cap.source, via: cap.via, lang: cap.lang || lang, track: cap.kind };
+      const doc = { title, html, format: 'html', text: htmlToText(html), url: link, type: 'YouTube video', extra: { format: 'html', media, kind: 'Meeting recording', medium: 'Video', transcribed: true, author },
+        note: 'Captions read by ' + cap.via + (cap.kind === 'asr' ? ' (auto-captions)' : '') + '. A machine transcript, not checked by a person.' };
+      hdT('bytes', cap.rung === 'helper' ? 'fetched' : 'proxy', 'Captions read: ' + cap.segments.length + ' segments via ' + cap.via);
+      this.setState({ busy: '' });
+      if (opt.collect) opt.collect.push(doc); else return this.addDocs([doc], { open: opt.open, keepOpen: opt.keepOpen });
+      return;
+    }
     const media = { kind: 'youtube', id, url: link, segN: 0 };
-    const item = { title, url: link, type: 'YouTube video', text: title + (opt.snippet ? '. ' + opt.snippet : ''), note: 'Captions are not fetched here (nothing is relayed). Open the video in this browser and click ✦ Explore this page to capture its page, or transcribe a downloaded audio or video file in this tab.', extra: { media, kind: 'Recording', medium: 'Video' } };
-    if (opt.collect) { opt.collect.push(item); this.setState({ busy: '' }); } else return this.addDocs([item], { open: opt.open, keepOpen: opt.keepOpen });
+    const item = { title, url: link, type: 'YouTube video', text: title + (opt.snippet ? '. ' + opt.snippet : '') + (author ? ' Published on YouTube by ' + author + '.' : ''),
+      note: 'No caption track was found (yt-dlp on your own machine found none, and the public proxies did not answer). Start tools/ytdl-helper.py to read captions, or use the recording below — Whisper reads it here, in this tab.',
+      extra: { media, kind: 'Recording', medium: 'Video', author } };
+    this.setState({ busy: '' });
+    if (opt.collect) opt.collect.push(item); else return this.addDocs([item], { open: opt.open, keepOpen: opt.keepOpen });
   }
 
   // ── Add sources: one dialog for searching, links, files and text ─────────────────────────────────────────────
@@ -4471,6 +4677,9 @@ class Component extends DCLogic {
       task: this.taskVals(),
       onFile: e => { const f = e.target.files && e.target.files[0]; if (f) this.transcribeFile(f, null); e.target.value = ''; },
       asr: n.asr ? n.asr.stage + (n.asr.pct != null ? ' ' + n.asr.pct + '%' : '') : '', hasAsr: !!(n.asr && n.asr.stage !== 'done'), webgpu: typeof navigator !== 'undefined' && navigator.gpu ? 'WebGPU available: transcription runs on your graphics card.' : 'No WebGPU in this browser: transcription runs on the CPU and will be slow.',
+      ytdl: (() => { try { return localStorage.getItem('hd:ytdl') || ''; } catch (e) { return ''; } })(),
+      onYtdl: e => { try { const v = (e.target.value || '').trim(); if (v) localStorage.setItem('hd:ytdl', v); else localStorage.removeItem('hd:ytdl'); } catch (x) {} },
+      ytdlTest: () => this.testYtdl(), ytdlNote: this._ytNote || '',
       txNeeded: txNeeded.map(d => ({ title: d.title, onPick: e => { const f = e.target.files && e.target.files[0]; if (f) this.transcribeFile(f, d); e.target.value = ''; } })), hasTx: txNeeded.length > 0,
       chain: (n.chain || []).slice().reverse().slice(0, 40).map(b => ({ title: (b.meta && (b.meta.title || b.meta.filename)) || 'block', kind: (b.meta && b.meta.kind) || '', hash: b.block ? b.block.slice(0, 16) : '', prev: b.prev ? b.prev.slice(0, 10) : 'genesis', by: b.sender || '', ok: b.linked && b.self ? 'linked' : 'broken', okCol: b.linked && b.self ? 'var(--ok)' : 'var(--bad)' })), hasChain: !!(n.chain && n.chain.length), chainLine: n.chain ? plural(n.chain.length, 'block') + ' · ' + (n.chainOk === false ? 'the chain is broken somewhere' : 'every block links to the one before') : '', onLoadRoom: () => this.loadFromRoom(), onRefresh: () => this.netDo('Refresh', () => this.refreshRoom()),
       onPubAll: () => this.publishAll(), pubAllLabel: this._pubAll ? 'Stop publishing' : 'Publish every source', pubAllLine: this._pubAll ? 'Publishing ' + (this._pubAll.done + this._pubAll.skipped + this._pubAll.failed) + ' of ' + this._pubAll.total + ' · ' + this._pubAll.done + ' new, ' + this._pubAll.skipped + ' already in the chain' : 'Adds each source’s original bytes (capture, PDF, transcript) as a block, and sends web sources to archive.org. Sources already in the chain are skipped, so it can be stopped and resumed.', canPubAll: !!(s && !s.guest && R.pub),
@@ -4697,19 +4906,57 @@ class Component extends DCLogic {
     el.innerHTML = ''; const host = (() => { try { return new URL(d.url).hostname.replace(/^www\./, ''); } catch (e) { return d.url; } })();
     const wrap = document.createElement('div'); wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px';
     const bar = document.createElement('div'); bar.style.cssText = "display:flex;gap:6px 14px;align-items:baseline;flex-wrap:wrap;font:400 13px/1.5 'Hanken Grotesk';color:var(--mut);text-wrap:pretty";
+    if (d.challenge) {
+      const ch = document.createElement('div'); ch.style.cssText = 'display:flex;flex-direction:column;gap:8px;background:var(--s2);border:1px solid var(--amber);border-radius:10px;padding:12px 14px';
+      const who = d.challenge.gate && d.challenge.gate !== 'direct' ? 'The ' + d.challenge.gate + ' archive' : host;
+      ch.append(who + ' is asking you to prove you are human (it answered ' + (d.challenge.status || 'a challenge') + '). This is the archive’s own check, not ours — prove it in the tab, then try again here.');
+      const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap';
+      const go = document.createElement('a'); go.href = d.challenge.url || d.url; go.target = '_blank'; go.rel = 'noopener'; go.textContent = 'Prove you are human — open it ↗';
+      go.style.cssText = 'background:var(--amber);color:#1a1205;border-radius:8px;padding:7px 14px;cursor:pointer;font:600 14px \'Hanken Grotesk\';text-decoration:none';
+      const retry = document.createElement('button'); retry.type = 'button'; retry.textContent = 'I’ve proved it — try again';
+      retry.style.cssText = 'background:none;border:1px solid var(--amber);color:var(--amber);border-radius:8px;padding:6px 14px;cursor:pointer;font:600 14px \'Hanken Grotesk\'';
+      retry.onclick = () => this.proveRetry(d);
+      row.appendChild(go); row.appendChild(retry); ch.appendChild(row); wrap.appendChild(ch);
+    } else if (d.rateLimited) {
+      const rl = document.createElement('div'); rl.style.cssText = 'background:var(--s2);border:1px solid var(--line2);border-radius:10px;padding:10px 14px;font:400 13px/1.5 \'Hanken Grotesk\';color:var(--mut)';
+      rl.append('The ' + (d.rateLimited.gate || 'archive') + ' is rate-limiting this reader right now (it answered ' + (d.rateLimited.status || 429) + '). Nothing to prove — try again in a little while, or capture the page with ✦ Explore this page.');
+      wrap.appendChild(rl);
+    }
     bar.append('This page could not be read directly' + (d.note ? ' — ' + d.note : '') + ' It is shown live from ' + host + ' and is not part of the record. To read it into the workspace, open it in this browser, then click ');
-    const a = document.createElement('a'); a.href = d.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Open the page ↗';
+    const a = document.createElement('a'); a.href = d.url + '#fold-capture'; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Open & capture ↗';
+    a.title = 'Opens the page; the fold-capture extension (or ✦ Explore this page) hands its rendered content back.';
     a.style.cssText = "color:var(--acc);text-decoration:none;font:600 13px 'Hanken Grotesk'"; bar.appendChild(a);
     bar.append(' and, on it, ');
     const bm = document.createElement('a'); bm.href = bookmarkletHref(); bm.textContent = '✦ Explore this page';
     bm.title = 'Drag to your bookmarks bar, then click it on the page you are reading'; bm.style.cssText = "color:var(--acc);text-decoration:none;font:600 13px 'Hanken Grotesk';cursor:grab"; bar.appendChild(bm);
-    bar.append(' (drag it to your bookmarks bar first). If the frame below stays blank, the site also blocks embedding.');
+    bar.append(' (drag it to your bookmarks bar first — or install the capture extension for it to happen automatically). If the frame below stays blank, the site also blocks embedding.');
     const f = document.createElement('iframe');
     f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms');
     f.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin'); f.title = d.title || host;
     f.style.cssText = 'width:100%;height:70vh;min-height:520px;border:1px solid var(--line);border-radius:10px;background:#fff';
     f.src = d.url;
     wrap.appendChild(bar); wrap.appendChild(f); el.appendChild(wrap); this._rRoot = el;
+  }
+  // A real person, not a bot: once they clear the archive's own human-check in the tab, read it again
+  // here, now carrying the clearance cookie (credentials: include). The blocked shell is replaced by
+  // the readable source if it went through; if not, the button stays so they can try once more.
+  async proveRetry(d) {
+    const url = d.url; if (!url) return;
+    this.setState({ busy: 'Trying again, carrying your clearance…' });
+    try {
+      const got = await fetchAnySite(url, { credentials: 'include' });
+      if (got && (got.html || got.text || got.file)) {
+        // Update the source in place — same id, so filters and selections hold; the shell becomes the source.
+        if (got.file) { const rd = await readAny(got.file); if (rd.html) { this._html[d.id] = rd.html; idbPut('html:' + d.id, rd.html).catch(() => {}); }
+          this.replaceAddedDoc(d.id, { format: rd.format || 'html', hasHtml: !!rd.html, text: rd.text || d.text, note: rd.note || null, challenge: null }); }
+        else if (got.text && !got.html) this.replaceAddedDoc(d.id, { format: 'text', hasHtml: false, text: got.text, note: got.note || null, challenge: null });
+        else { this._html[d.id] = got.html; idbPut('html:' + d.id, got.html).catch(() => {});
+          this.replaceAddedDoc(d.id, { format: got.format || 'page', hasHtml: true, text: pageText(got.html, got.format || 'page').slice(0, 60000), note: got.note || null, challenge: null }); }
+        this.setState({ busy: '' }); this.toast('Read it — you’re through.');
+        return;
+      }
+      this.setState({ busy: '' }); this.toast('Still blocked — give the archive a moment, then try again.');
+    } catch (e) { this.setState({ busy: '' }); this.toast('Still could not read it.'); }
   }
   async renderFaithful(el, d, R, A, key, q) {
     this._faith = this._faith || {}; let page = d.faithful || this._faith[d.id];
@@ -4800,7 +5047,32 @@ class Component extends DCLogic {
     }
     return frag;
   }
-  async loadLazyBody(d) { this._lazy = this._lazy || {}; if (this._lazy[d.id]) return; this._lazy[d.id] = { html: '<p>No body stored for this source in this browser.</p>', segN: 0, model: '', from: '', bytes: 0 }; this._rKey = null; this.forceUpdate(); }
+  async loadLazyBody(d) {
+    this._lazy = this._lazy || {}; if (this._lazy[d.id] && this._lazy[d.id].loading) return;
+    const yt = d.media && d.media.kind === 'youtube';
+    this._lazy[d.id] = { loading: true, html: '', segN: -1, model: '', from: '', bytes: 0 };
+    this._rKey = null; this.forceUpdate();
+    let cap = null;
+    if (yt) { try { const M = await hdYt(); cap = await M.transcriptFor(d.media.id, d.media.lang || this.state.txLang || 'en'); } catch (e) {} }
+    if (cap && cap.segments && cap.segments.length) {
+      const html = ohsSegmentsHtml(cap.segments, d.title);
+      this._lazy[d.id] = { loading: false, html, segN: cap.segments.length, model: cap.model || 'captions', from: cap.via || '', bytes: html.length };
+      this._html = this._html || {}; this._html[d.id] = html; idbPut('html:' + d.id, html).catch(() => {});
+      const media = { ...d.media, segN: cap.segments.length, model: cap.model || 'captions', source: cap.source, via: cap.via, lang: cap.lang, track: cap.kind };
+      this.replaceAddedDoc(d.id, { lazy: true, format: 'html', html, text: htmlToText(html), media, transcribed: true });
+    } else {
+      const why = yt ? 'No caption track could be read for this video. Start <code>tools/ytdl-helper.py</code> on this machine and reopen, or use the recording below to transcribe it here with Whisper.' : 'No body stored for this source in this browser.';
+      this._lazy[d.id] = { loading: false, html: '<p style="font:400 15px/1.6 \'Hanken Grotesk\';color:var(--mut);text-wrap:pretty">' + why + '</p>', segN: 0, model: '', from: '', bytes: 0 };
+    }
+    this._rKey = null; this.forceUpdate();
+  }
+  async testYtdl() {
+    this._ytNote = 'Checking…'; this.forceUpdate();
+    let ok = false, ver = '';
+    try { const M = await hdYt(); const r = await fetch(M.ytdlBase() + '/health', { signal: AbortSignal.timeout(4000) }); const j = await r.json(); ok = !!(j && j.ok); ver = (j && j.ytdlp) || ''; } catch (e) {}
+    this._ytNote = ok ? 'Reachable — yt-dlp ' + ver + '. Paste a YouTube link in Add sources and its captions are read from this machine.' : 'Not reachable. Start it: python3 tools/ytdl-helper.py — then Test again.';
+    this.forceUpdate();
+  }
   syncReader() {
     const el = this._rEl; const S = this.state; if (!el || S.view !== 'reader' || !S.readDoc || S.readMode === 'plain' || S.readMode === 'restated') return;
     const A = this.analysis(); const d = A.docById[S.readDoc]; if (!d) return;
@@ -5033,6 +5305,9 @@ class Component extends DCLogic {
     const added = { ...this.state.added, [newId]: moving }; this.saveAdded(added);
     saveWorkspaceNames({ ...loadWorkspaceNames(), [newId]: p.label });
     this.setState({ added, corpus: newId, view: 'summary', sel: null, f: {}, q: '', readDoc: null, just: null }); }
+  // a topic segment is a filter over the workspace's own detected groups, not a keyword fold: it keeps only
+  // statements whose SOURCE belongs to the group's member documents (or, inverted, to no detected group).
+  toggleTopicGroup(p) { const cur = this.state.f.topicGroup; const same = cur && cur.label === p.label && !!cur.invert === !!p.invert; const ids = (p.docs || []).map(d => (typeof d === 'string' ? d : d.id)); this.setF('topicGroup', same ? null : { label: p.label, docs: ids, invert: !!p.invert }); }
   sel(type, id) { const S0 = this.state; if (type === 'name' && S0.view === 'reader' && !(S0.sel && S0.sel.type === 'name' && S0.sel.id === id)) this.pushHist(); if (type === 'doc') this.markRead(id); this.setState(s => (s.sel && s.sel.type === type && s.sel.id === id) ? { sel: null, selAll: false, pfIdx: 0, pfAll: false } : { sel: { type, id }, selAll: false, pfIdx: 0, pfAll: false }); }
   go(view) { this.setState({ view, readDoc: null }); }
   read(docId, stId) { const S0 = this.state; if (S0.view !== 'reader' || docId !== S0.readDoc || (S0.sel && S0.sel.type === 'name')) this.pushHist(); this.markRead(docId); const live = this.isLiveDoc(this.analysis().docById[docId]); if (docId !== this.state.readDoc) { this.state.seekT = 0; this._faithFound = null; } this.setState({ view: 'reader', readDoc: docId, sel: stId ? { type: 'statement', id: stId } : { type: 'doc', id: docId }, ...(live ? { readMode: 'original' } : {}) }); }
@@ -5087,7 +5362,7 @@ class Component extends DCLogic {
     const T = hdTraceStart(list.length === 1 ? (list[0].title || 'Untitled') : plural(list.length, 'item'));
     const id = this.corpusId(); const prev = this.analysis();
     { const nu = u => (u || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '').toLowerCase(); const have = {}; prev.docs.forEach(d => { if (d.url) have[nu(d.url)] = d; }); const dup = list.filter(x => x.url && have[nu(x.url)]); if (dup.length) { list = list.filter(x => !(x.url && have[nu(x.url)])); if (!list.length) { HD_TR = null; this.setState({ busy: '', view: 'reader', readDoc: have[nu(dup[0].url)].id, note: 'Already in this workspace — opened it.' }); return; } } }
-    const nd = list.map(x => ({ id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: x.title || 'Untitled', year: x.year || null, type: x.type || 'Text', format: x.format || 'text', hasHtml: !!x.html, url: x.url || null, pages: x.pages || null, ...(x.extra || {}), measured: !!x.measured, text: x.format === 'pdf' ? (x.text || '') : x.html ? pageText(x.html, x.format).slice(0, 60000) : (x.text || '') }));
+    const nd = list.map(x => ({ id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: x.title || 'Untitled', year: x.year || null, type: x.type || 'Text', format: x.format || 'text', hasHtml: !!x.html, url: x.url || null, pages: x.pages || null, ...(x.extra || {}), measured: !!x.measured, text: x.format === 'pdf' ? (x.text || '') : x.html ? pageText(x.html, x.format).slice(0, 60000) : (x.text || ''), ...(x.challenge ? { challenge: x.challenge } : {}), ...(x.anchor ? { anchor: x.anchor } : {}), ...(x.rateLimited ? { rateLimited: x.rateLimited } : {}) }));
     // The hang (holodeck-hang.js): which lens reveals the most meaning here, measured per doc, never assumed.
     // Directions in localStorage hd:hang-directions can prefer one hang over another; every flip is logged.
     try {
@@ -5173,6 +5448,7 @@ class Component extends DCLogic {
     if (this.state.tMax && st.year && st.year > this.state.tMax) return false;
     if (this._fold && this._fold.length && !this.state.showOutside && !this.inFold(st)) return false;
     if (f.name && skip !== 'name' && !st.names.includes(f.name)) return false;
+    if (f.topicGroup && skip !== 'topicGroup') { const inIt = f.topicGroup.docs.includes(st.doc); if (f.topicGroup.invert ? inIt : !inIt) return false; }
     if (f.doc && skip !== 'doc' && st.doc !== f.doc) return false;
     if (f.topic && skip !== 'topic' && !st.topics.includes(f.topic)) return false;
     if (f.frame && skip !== 'frame' && st.frame !== f.frame) return false;
@@ -5680,6 +5956,7 @@ class Component extends DCLogic {
     if (f.name) chips.push(chip('name', 'Mentions', f.name, () => this.setF('name', null)));
     if (f.doc) chips.push(chip('doc', 'Source', docT(f.doc), () => this.setF('doc', null)));
     if (f.topic) chips.push(chip('topic', 'Topic', f.topic, () => this.setF('topic', null)));
+    if (f.topicGroup) chips.push(chip('topicGroup', 'Segment', f.topicGroup.label, () => this.setF('topicGroup', null)));
     if (f.frame) chips.push(chip('frame', 'Framing', FR[f.frame].label, () => this.setF('frame', null)));
     if (f.type) chips.push(chip('type', 'Mentions', TYPE_L[f.type].toLowerCase(), () => this.setF('type', null)));
     if (f.unit) chips.push(chip('unit', 'Figures in', f.unit, () => this.setF('unit', null)));
@@ -5734,26 +6011,56 @@ class Component extends DCLogic {
     const opts = [{ id: 'custom', name: 'Your content' + (addN('custom') ? ' (' + addN('custom') + ')' : '') }]
       .concat(Object.keys(S.added).filter(k => wsNames[k]).map(k => ({ id: k, name: wsNames[k] + ' (' + addN(k) + ')' })));
     const cid = this.corpusId(); const J = S.just; const demo = DEMOS[cid] || DEMOS.custom;
-    // segmenting: the same paradigms computed once, driving both the left-rail quick segment switcher
-    // (persistent, via the existing per-workspace topic filter -- setMeta('__topic', ...) is the same
-    // mechanism the Topic box already uses) and the Overview page's cards (a one-shot search jump, kept as-is)
+    // segmenting: the workspace's own discovered topics, computed once and driving the left-rail Topics
+    // section, the global scope strip, and the Overview page's cards. A topic segment is source-based
+    // (f.topicGroup keeps only the member documents' statements), not a keyword fold, so it holds even
+    // when the workspace holds truly disparate content and none of the topics share a sentence.
     const P = A.docs.length ? paradigms(A) : { groups: [], strayN: 0 };
-    const segOn = this._topicStr || '';
+    const isEmpty = A.docs.length === 0;
     const sameF = (a, b) => JSON.stringify(a || {}) === JSON.stringify(b || {});
+    const topicGroups = P.groups.slice(0, 8);
+    const realDocIds = new Set(P.groups.flatMap(g => g.docs.map(d => d.id)));
+    const strayDocs = A.docs.filter(d => !realDocIds.has(d.id));
+    const activeTopicGroup = (f.topicGroup && f.topicGroup.label) || null;
+    const onTopicGroup = p => this.toggleTopicGroup(p);
+    const topicsNote = P.groups.length ? plural(P.groups.length, 'separate topic') + ' — sources that share real names with each other.' : A.docs.length >= 2 ? 'No two sources share real names — ' + plural(A.docs.length, 'source') + ' each stands alone.' : '';
+    const hasTopics = P.groups.length > 0;
+    const hasTopicsNote = !hasTopics && A.docs.length >= 2;
+    const showTopicsStray = hasTopics && P.strayN > 0;
+    const topicsStrayN = String(P.strayN || 0);
+    const onTopicsStray = () => this.toggleTopicGroup({ label: 'Not in any topic', docs: strayDocs.map(d => d.id), invert: true });
+    const topicsList = topicGroups.map(p => { const on = activeTopicGroup === p.label && !f.topicGroup.invert;
+      return { label: p.label, n: String(p.n), on, bg: on ? 'var(--sel)' : 'transparent', bd: on ? '#8b5cf6' : 'transparent', weight: on ? 600 : 500, onJump: () => onTopicGroup(p) }; });
+    // the global scope strip: sources · segmentations · perspective, visible from every surface.
+    const scopeSeg = (() => { const tg = f.topicGroup;
+      if (tg) return { label: tg.label, onClear: () => this.setF('topicGroup', null) };
+      if (this._topicStr) return { label: 'Topic: ' + this._topicStr, onClear: () => this.setMeta('__topic', '') };
+      return null; })();
+    const inScopeDocs = (docsIn.length ? docsIn : A.docs.filter(d => this._cnt.has(d.id))).filter(d => !this.isLiveDoc(d));
+    const scopeSourceItems = inScopeDocs.slice(0, 6).map(d => ({ label: short(d.title, 26), onClick: () => this.read(d.id) }));
+    const scope = {
+      show: !isEmpty,
+      sourcesLine: plural(this._cnt ? this._cnt.size : 0, 'source') + ' of ' + plural(A.docs.length, 'source'),
+      sourceItems: scopeSourceItems, hasMoreSources: inScopeDocs.length > scopeSourceItems.length, moreSources: String(inScopeDocs.length - scopeSourceItems.length),
+      onMoreSources: () => this.go('sources'), onAll: () => this.go('sources'),
+      hasSegment: !!scopeSeg, segmentLabel: scopeSeg ? scopeSeg.label : '', onClearSegment: scopeSeg ? scopeSeg.onClear : null,
+      segments: topicGroups.slice(0, 5).map(p => ({ label: p.label, n: String(p.n), onJump: () => onTopicGroup(p) })),
+      hasStray: showTopicsStray, strayN: topicsStrayN, onStray: onTopicsStray,
+      viewLabel: VIEW_LABEL[view] || 'Overview',
+      hasLens: view === 'surprise' && !!S.suLens, lens: view === 'surprise' && S.suLens ? this.lensLabel(S.suLens) : '',
+      filters: chips.map(ch => ({ k: ch.k, v: short(String(ch.v), 26), onClear: ch.onClear })),
+    };
     // a fold row's own click both shows what it is (name, count, one-line description, always visible)
     // and applies/clears it in that same click -- one click, like every other nav row, not click-to-preview
-    // then click-to-open
-    const autoSegs = P.groups.slice(0, 6).map(p => ({ key: 'a:' + p.label, label: p.label, n: p.n, auto: true, desc: 'Discovered: ' + plural(p.n, 'source') + ' sharing real names with each other, anchored by “' + p.label + '”.' }));
+    // then click-to-open. The detected topics live in the Topics section above; folds here are the reader's own.
     const manualFolds = this.myFolds().map(x => ({ key: 'm:' + x.label, label: x.label, n: x.n, auto: false, _f: x.f, _q: x.q, desc: 'Yours: ' + plural(x.n, 'source') + ' when you saved it.' }));
-    const segList = [...autoSegs, ...manualFolds].map(s => { const on = s.auto ? (segOn === s.label) : (sameF(S.f, s._f) && (S.q || '') === (s._q || ''));
-      return { ...s, n: String(s.n), on, hasRemove: !s.auto, bg: on ? 'var(--sel)' : 'transparent', bd: on ? '#8b5cf6' : 'transparent',
-        onJump: () => { if (on) { if (s.auto) this.setMeta('__topic', ''); else this.setState({ f: {}, q: '' }); }
-          else if (s.auto) this.setMeta('__topic', s.label);
-          else this.setState({ f: { ...(s._f || {}) }, q: s._q || '' }); },
+    const segList = manualFolds.map(s => { const on = sameF(S.f, s._f) && (S.q || '') === (s._q || '');
+      return { ...s, n: String(s.n), on, hasRemove: true, bg: on ? 'var(--sel)' : 'transparent', bd: on ? '#8b5cf6' : 'transparent',
+        onJump: () => { if (on) this.setState({ f: {}, q: '' }); else this.setState({ f: { ...(s._f || {}) }, q: s._q || '' }); },
         onRemove: e => { e.stopPropagation(); this.removeFold(s.label); } };
     });
     const hasSegments = segList.length > 0;
-    const segOpen = S.segOpen; const segToggleLabel = 'Folds'; const segCount = String(segList.length);
+    const segOpen = S.segOpen; const segToggleLabel = 'Saved folds'; const segCount = String(segList.length);
     const toggleSegOpen = () => { const open = !segOpen; try { localStorage.setItem('fold-explorer-segopen', open ? '1' : '0'); } catch (e) {} this.setState({ segOpen: open }); };
     const just = J ? (() => { const tr = (window.__hdTraces || []).slice().reverse().find(t => (t.focus || []).includes(J.first));
       const oddN = new Map((J.odd || []).map(o => [o.subject, o])); const player = at => tr && import(new URL('holodeck-ingest-player.js', location.href).href).then(M => M.open(tr, { seek: at }));
@@ -5768,7 +6075,6 @@ class Component extends DCLogic {
         hasReplay: !!tr, onReplay: () => tr && import(new URL('holodeck-ingest-player.js', location.href).href).then(M => M.open(tr)),
         readLabel: (A.docById[J.first] && this.isLiveDoc(A.docById[J.first])) ? 'View the page →' : 'Read it →', onRead: () => this.read(J.first), onConnections: () => this.go('connections'), onPatterns: () => this.go('patterns') }; })() : { names: [] };
     const allYears = [...new Set(A.docs.map(d => d.year).filter(Boolean))].sort();
-    const isEmpty = A.docs.length === 0;
     const V = {}; ['draft', 'summary', 'search', 'sources', 'surprise', 'names', 'types', 'figures', 'statements', 'connections', 'framing', 'views', 'patterns', 'reader', 'profile', 'ingest', 'reading'].forEach(k => { V[k] = !isEmpty && view === k; });
 
     const SU = isEmpty ? null : this.surprise(A); const Fid = new Set(F.map(st => st.id));
@@ -5840,7 +6146,7 @@ class Component extends DCLogic {
       ...(() => { const HL = A.docs.length ? this.headlines(A) : []; return { hasHeadlines: HL.length > 0, headlines: HL.map(x => ({ ...x, onClick: () => this.read(x.doc, x.stId), ...this.pinF(A.byId[x.stId]) })) }; })(),
       ...(() => { const CAP = 6; const shown = P.groups.slice(0, CAP); const restN = P.groups.slice(CAP).reduce((s, p) => s + p.n, 0) + P.strayN;
         return { hasParadigms: P.groups.length > 0, paradigmsNote: P.groups.length > 0 ? 'This workspace holds ' + plural(P.groups.length, 'separate topic') + ' -- discovered from what’s actually here, not declared.' : '', hasMoreParadigms: restN > 0, moreParadigmsLine: plural(restN, 'more source') + " that don't belong to any of these.",
-        paradigmList: shown.map(p => ({ label: p.label, n: plural(p.n, 'source'), onOpen: () => { this.setF('unit', null); this.setState({ q: p.label, qDraft: undefined, view: 'search', readDoc: null, srN: 25, qaN: 0, prevView: 'summary' }); }, canFork: p.docs.some(d => (S.added[cid] || []).some(a => a.id === d.id)), onFork: () => this.forkParadigm(p) })) }; })(),
+        paradigmList: shown.map(p => ({ label: p.label, n: plural(p.n, 'source'), onOpen: () => onTopicGroup(p), canFork: p.docs.some(d => (S.added[cid] || []).some(a => a.id === d.id)), onFork: () => this.forkParadigm(p) })) }; })(),
       pinPop: S.pinPop && view === 'reader' ? { has: true, x: S.pinPop.x + 'px', y: S.pinPop.y + 'px', onPin: e => { e.preventDefault(); this.pinSelection(); }, onCorrect: e => { e.preventDefault(); this.openCorr(S.pinPop.text); } } : { has: false },
       hasPinToast: !!S.pinToast, pinToast: S.pinToast || '', goDraft: () => { this.setState({ pinToast: '' }); this.go('draft'); }, plainRef: this.plainRef, omniRef: this.omniRef,
       rdPins: (() => { const n = view === 'reader' ? this.activePins().filter(p => p.docId === S.readDoc).length : 0; return { has: n > 0, label: plural(n, 'pin') + ' from this source →' }; })(), goalNav, navGroups, goalCards, noGround, hasGoalCards, checks, hasChecks: checks.length > 0, omniUrl, omniOpen,
@@ -5924,6 +6230,7 @@ class Component extends DCLogic {
       readerKeep: () => this.setMeta(S.readDoc, { status: 'source' }), readerDiscard: () => this.discard(S.readDoc),
       justSeen: !!(S.just && A.docById[S.just.first] && !this.isLiveDoc(A.docById[S.just.first]) && this.mOf(A.docById[S.just.first]).status === 'seen'), justKeep: () => S.just && this.setMeta(S.just.first, { status: 'source' }),
       corpusId: cid, corpusOptions: opts, q: S.q, corpusName: this.corpusName(), segList, hasSegments, segOpen, segToggleLabel, segCount, toggleSegOpen, addAsFold, navTop, navRead, navExplore, navRest,
+      topicsList, hasTopics, topicsNote, hasTopicsNote, topicsStrayN, showTopicsStray, onTopicsStray, scope,
       addr: S.addr || '', onAddr: e => this.setState({ addr: e.target.value }), bookmarkletRef: this.bookmarkletRef,
       onAddrKey: e => { if (e.key === 'Enter') { const u = (S.addr || '').trim(); if (u) { this.setState({ addr: '' }); this.ingestUrl(/^https?:\/\//.test(u) ? u : 'https://' + u, { open: true }); } } },
       openAddr: () => { const u = (S.addr || '').trim(); if (u) { this.setState({ addr: '' }); this.ingestUrl(/^https?:\/\//.test(u) ? u : 'https://' + u, { open: true }); } },
