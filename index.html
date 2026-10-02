@@ -345,9 +345,13 @@ select option{background:var(--s1);color:var(--ink)}
         <sc-if value="{{ hasSeen }}" hint-placeholder-val="{{ false }}">
           <button onClick="{{ goSources }}" style="white-space:normal;text-align:left;cursor:pointer;background:var(--s1);border:1px solid var(--line2);border-radius:10px;padding:10px 14px;font:500 15px 'Hanken Grotesk';color:var(--ink);display:flex;justify-content:space-between;gap:10px" style-hover="border-color:var(--acc)"><span>{{ seenLine }}</span><span style="color:var(--acc)">Review →</span></button>
         </sc-if>
+        <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 18px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc);white-space:nowrap">About This</span><span style="font:400 13px 'Hanken Grotesk';color:var(--mut)">A summary of what these sources, taken together, are about — a paraphrase in the fold's own words, not a quote.</span></div>
+          <textarea value="{{ about }}" onChange="{{ onAbout }}" rows="3" placeholder="{{ aboutPlaceholder }}" style="background:var(--bg);border:1px solid var(--line2);border-radius:10px;resize:vertical;font:400 17px/1.5 'Newsreader',serif;color:var(--ink);outline:none;padding:10px 12px;width:100%;box-sizing:border-box"></textarea>
+        </section>
         <sc-if value="{{ hasHeadlines }}" hint-placeholder-val="{{ false }}">
           <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 18px 6px;display:flex;flex-direction:column;gap:4px">
-            <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc);white-space:nowrap">What this is about</span><span style="font:400 13px 'Hanken Grotesk';color:var(--mut)">Statements that name someone, report an action or a figure, and use the words these sources share most. One per source, newest first.</span></div>
+            <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc);white-space:nowrap">Lead statements</span><span style="font:400 13px 'Hanken Grotesk';color:var(--mut)">Quoted statements that name someone, report an action or a figure, and use the words these sources share most. One per source, newest first.</span></div>
             <div style="display:flex;flex-direction:column">
               <sc-for list="{{ headlines }}" as="x" hint-placeholder-count="5">
                 <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 14px;align-items:baseline;border-top:1px solid var(--line);padding:11px 0">
@@ -6766,6 +6770,7 @@ class Component extends DCLogic {
       ...this.stripVals(S, A, D),
 ...svVals, hasFacets: false, srcGroups: svVals.svCardGroups.map(g => ({ ...g, ...this.capL('sg:' + g.label, g.items, 60) })), srcFacets,
       topic: topicStr, hasTopic: this._fold.length > 0, onTopic: e => this.setMeta('__topic', e.target.value),
+      about: (this.metaAll()[this.corpusId()] || {}).__about || '', onAbout: e => this.setMeta('__about', e.target.value), aboutPlaceholder: 'A summary of what these sources, taken together, are about.',
       inferredTopic: inferred ? inferred.name : '', topicPlaceholder: inferred ? 'e.g. ' + inferred.name : 'e.g. the bridge collapse',
       canAdopt: !this._fold.length && !!inferred, adoptTopic: () => inferred && this.setMeta('__topic', inferred.name),
       foldLine: this._fold.length ? (() => { const all = A.sts.filter(s => this._cnt.has(s.doc)); const k = all.filter(s => this.inFold(s)).length; return k + ' of ' + all.length + ' statements fall inside the fold.'; })() : 'No topic yet, so everything counts.',
