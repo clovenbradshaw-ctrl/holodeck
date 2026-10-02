@@ -6417,5 +6417,41 @@ class Component extends DCLogic {
   }
 }
 </script>
+<script>
+(function () {
+  var seen = new WeakSet();
+  function kill(root) {
+    if (!root || root.nodeType !== 1) return;
+    if (root.hasAttribute && root.hasAttribute('title')) root.removeAttribute('title');
+    if (root.querySelectorAll) root.querySelectorAll('[title]').forEach(function (el) { el.removeAttribute('title'); });
+  }
+  function watchFrame(f) {
+    function hook() { try { watchDoc(f.contentDocument); } catch (e) {} }
+    f.addEventListener('load', hook);
+    hook();
+  }
+  function watchDoc(doc) {
+    if (!doc || !doc.documentElement || seen.has(doc)) return;
+    seen.add(doc);
+    kill(doc.documentElement);
+    new MutationObserver(function (muts) {
+      for (var i = 0; i < muts.length; i++) {
+        var m = muts[i];
+        if (m.type === 'attributes') {
+          if (m.target.hasAttribute('title')) m.target.removeAttribute('title');
+        } else if (m.type === 'childList') {
+          m.addedNodes.forEach(function (n) {
+            if (n.nodeType !== 1) return;
+            if (n.tagName === 'IFRAME') watchFrame(n);
+            kill(n);
+          });
+        }
+      }
+    }).observe(doc.documentElement, { attributes: true, attributeFilter: ['title'], childList: true, subtree: true });
+  }
+  watchDoc(document);
+  document.querySelectorAll('iframe').forEach(watchFrame);
+})();
+</script>
 </body>
 </html>
