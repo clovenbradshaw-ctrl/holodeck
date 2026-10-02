@@ -1240,6 +1240,7 @@ select option{background:var(--s1);color:var(--ink)}
                     </sc-if>
                     <button onClick="{{ d.onRead }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">{{ d.readLabel }}</button>
                     <sc-if value="{{ d.isKept }}" hint-placeholder-val="{{ true }}"><button onClick="{{ d.onFocus }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">Only this source</button></sc-if>
+                    <sc-if value="{{ d.hasReplay }}" hint-placeholder-val="{{ false }}"><button onClick="{{ d.onReplay }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">Watch it being read</button></sc-if>
                     <sc-if value="{{ d.canUnkeep }}" hint-placeholder-val="{{ false }}"><button onClick="{{ d.onUnkeep }}" style="background:none;border:0;padding:5px 4px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink)">Set aside</button></sc-if>
                   </div>
                 </div>
@@ -1343,6 +1344,15 @@ select option{background:var(--s1);color:var(--ink)}
               <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
                 <span style="font:500 13px 'Hanken Grotesk';color:var(--mut);margin-right:2px">{{ pf.tagTitle }}</span>
                 <sc-for list="{{ pf.tags }}" as="t" hint-placeholder-count="3"><button onClick="{{ t.onClick }}" style="background:var(--s1);border:1px solid {{ t.color }};border-radius:999px;padding:2px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)">{{ t.label }}</button></sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ pf.hasRefs }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">{{ pf.refTitle }}</span>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  <sc-for list="{{ pf.refs }}" as="r" hint-placeholder-count="1"><button onClick="{{ r.onOpen }}" title="{{ r.href }}" style="background:var(--s2);border:1px solid var(--line2);border-radius:999px;padding:3px 11px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">{{ r.label }} ↗</button></sc-for>
+                </div>
+                <span style="font:400 12px/1.45 'Hanken Grotesk';color:var(--mut)">Where the source’s own link points — this is the referent it means by the name. Open it to read the page here.</span>
               </div>
             </sc-if>
           </div>
@@ -2281,6 +2291,15 @@ select option{background:var(--s1);color:var(--ink)}
       </sc-if>
       <button onClick="{{ pf.narrow.onClick }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:4px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">{{ pf.narrow.label }}</button>
       </div>
+      <sc-if value="{{ pf.hasRefs }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:6px">
+      <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">{{ pf.refTitle }}</span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <sc-for list="{{ pf.refs }}" as="r" hint-placeholder-count="1"><button onClick="{{ r.onOpen }}" title="{{ r.href }}" style="background:var(--s2);border:1px solid var(--line2);border-radius:999px;padding:3px 11px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">{{ r.label }} ↗</button></sc-for>
+      </div>
+      <span style="font:400 12px/1.45 'Hanken Grotesk';color:var(--mut)">Where the source’s own link points — this is the referent it means by the name. Open it to read the page here.</span>
+      </div>
+      </sc-if>
       <sc-if value="{{ pf.hasElse }}" hint-placeholder-val="{{ false }}">
       <div style="display:flex;flex-direction:column;gap:6px">
       <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">{{ pf.elseTitle }}</span>
@@ -2998,7 +3017,15 @@ function analyze(corpus, htmlMap) {
   Object.values(echoesNear).forEach(l => { l.sort((a, b) => b.sim - a.sim); l.length = Math.min(l.length, 4); });
   if (HD_TR && HD_TR.focus.size) { const byIdE = new Map(sts.map(x => [x.id, x])); const dt = id => (docs.find(x => x.id === id) || {}).title || id; sts.forEach(st => { if (!hdF(st.doc)) return; (echoes[st.id] || []).forEach(e => { const o = byIdE.get(e.id); hdT('echo', 'pair', 'Echo ' + e.sim.toFixed(2) + ' with \u201c' + hdCut(o.text, 50) + '\u201d in ' + hdCut(dt(o.doc), 40), { doc: st.doc, id: st.id, other: e.id, otherDoc: o.doc, otherTitle: dt(o.doc), sim: e.sim, mine: hdF(o.doc) }); }); }); }
   const stsByDoc = {}; sts.forEach(s => { (stsByDoc[s.doc] = stsByDoc[s.doc] || []).push(s); });
-  return { stsByDoc, echoes, echoesNear, echoFloor, docs, sts, names, byId: Object.fromEntries(sts.map(s => [s.id, s])), docById: Object.fromEntries(docs.map(d => [d.id, d])) };
+  // LINKED REFERENTS — the source's own disambiguation. Where a source hyperlinks
+  // a name, the link target is what THAT source means by the name ("Joe" → the
+  // 1970 film). The target is read (never fetched) only when the person opens it,
+  // so a name's panel shows its true referent without a background pull.
+  const nameLinks = {};
+  { const linkOf = Object.fromEntries(docs.map(d => [d.id, d.links || []]));
+    sts.forEach(st => { const L = linkOf[st.doc]; if (!L || !L.length) return;
+      for (const sp of st.spans) { const a0 = st.s + sp.s, b0 = st.s + sp.e; const hit = L.find(lk => lk.s < b0 && lk.e > a0); if (hit) (nameLinks[sp.name] = nameLinks[sp.name] || []).push({ href: hit.href, doc: st.doc }); } }); }
+  return { stsByDoc, echoes, echoesNear, echoFloor, docs, sts, names, nameLinks, byId: Object.fromEntries(sts.map(s => [s.id, s])), docById: Object.fromEntries(docs.map(d => [d.id, d])) };
 }
 // paradigms: which documents actually belong to the same conversation, discovered rather than declared.
 // The connector is the holograph, not name proximity: two documents are in the same topic when the SAME
@@ -3288,6 +3315,19 @@ function idbOpen() { return new Promise((res, rej) => { const r = indexedDB.open
 async function idbPut(k, v) { const db = await idbOpen(); return new Promise((res, rej) => { const tx = db.transaction('blobs', 'readwrite'); tx.objectStore('blobs').put(v, k); tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); }); }
 async function idbGet(k) { const db = await idbOpen(); return new Promise((res, rej) => { const q = db.transaction('blobs', 'readonly').objectStore('blobs').get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); }
 function wikiTitleOf(url) { const m = String(url).match(/^https?:\/\/en\.(?:m\.)?wikipedia\.org\/wiki\/([^#?]+)/); return m ? decodeURIComponent(m[1]) : null; }
+// The source's own disambiguation of a name: where its hyperlink points. A
+// Wikipedia link's title is the referent the source itself chose ("Joe" →
+// "Joe (1970 film)"); anything else is named by its host and path. The target
+// is read only when the person opens it — never fetched to fill the panel.
+function referentOfLink(url) {
+  let href = String(url || ''), host = '';
+  try { const u = new URL(href); host = u.hostname.replace(/^www\./, ''); href = u.href; } catch (e) {}
+  const m = href.match(/^https?:\/\/([a-z-]{2,12})\.(?:m\.)?wikipedia\.org\/wiki\/([^#?]+)/i);
+  const wt = m ? decodeURIComponent(m[2]).replace(/_/g, ' ') : null;
+  let label = wt;
+  if (!label) { try { const u = new URL(href); const p = decodeURIComponent(u.pathname || '').replace(/^\/+|\/+$/g, ''); label = p && p !== 'wiki' ? host + '/' + p : host; } catch (e) { label = href; } }
+  return { href, host, label: label || href, wiki: !!wt };
+}
 function faithfulHtml(raw, url) {
   const doc = new DOMParser().parseFromString(raw || '', 'text/html');
   doc.querySelectorAll('script,noscript,iframe,object,embed,frame,frameset,base,meta[http-equiv],link[rel=preload],link[rel=prefetch],link[rel=modulepreload],#onetrust-consent-sdk,[id*=cookie],[class*=cookie],[role=dialog],[class^="ad-"],[class*=" ad-"],[id^="ad-"],[class*=advert],[class*=sponsor],[id*=sponsor],[aria-label=advertisement]').forEach(e => e.remove());
@@ -3854,6 +3894,11 @@ class Component extends DCLogic {
     if (!files.length) return fail('No text files found in ' + owner + '/' + repo + '.');
     const rawBase = 'https://raw.githubusercontent.com/' + owner + '/' + repo + '/HEAD/';
     const docs = new Array(files.length); let next = 0, done = 0;
+    // A repo is read one batch at a time: as files land they are stored and rendered as sources at once (addDocs
+    // with defer), and only the whole workspace is folded once at the end. No file-count limit, no single freeze.
+    const stream = !opt.collect;
+    const buf = []; let flushing = null;
+    const drain = () => { if (flushing) return flushing; flushing = (async () => { while (buf.length) { const batch = buf.splice(0, 8).filter(Boolean); if (batch.length) await this.addDocs(batch, { defer: true, keepOpen: opt.keepOpen }); } flushing = null; })(); return flushing; };
     const lane = async () => {
       for (;;) {
         const i = next++; if (i >= files.length) return;
@@ -3861,17 +3906,18 @@ class Component extends DCLogic {
           const r = await fetch(rawBase + files[i].path.split('/').map(encodeURIComponent).join('/'), { cache: 'no-cache' });
           if (r.ok) {
             const t = await r.text();
-            if (t.trim().length >= 40) { const parts = files[i].path.split('/'); docs[i] = { title: parts.length > 1 ? parts.slice(-2).join('/') : parts[0].replace(/\.[^.]+$/, ''), year: null, type: 'Repo file', text: t, url: 'https://github.com/' + owner + '/' + repo + '/blob/HEAD/' + files[i].path, note: 'From ' + owner + '/' + repo + ' · ' + files[i].path }; }
+            if (t.trim().length >= 40) { const parts = files[i].path.split('/'); docs[i] = { title: parts.length > 1 ? parts.slice(-2).join('/') : parts[0].replace(/\.[^.]+$/, ''), year: null, type: 'Repo file', text: t, url: 'https://github.com/' + owner + '/' + repo + '/blob/HEAD/' + files[i].path, note: 'From ' + owner + '/' + repo + ' · ' + files[i].path }; if (stream) { buf.push(docs[i]); drain().catch(e => console.warn('repo stream add', e)); } }
           }
         } catch (e) {}
         if (++done % 10 === 0 || done === files.length) say('Pulling ' + owner + '/' + repo + ' · ' + done + ' / ' + files.length + ' files…');
       }
     };
     await Promise.all(Array.from({ length: Math.min(6, files.length) }, lane));
+    while (flushing) await flushing;
     const list = docs.filter(Boolean);
     if (!list.length) return fail('Nothing readable came back from ' + owner + '/' + repo + '.');
     A.status = 'Pulled ' + plural(list.length, 'file') + ' from ' + owner + '/' + repo + '.';
-    if (opt.collect) { opt.collect.push(...list); this.setState({ busy: '' }); } else await this.addDocs(list, { keepOpen: opt.keepOpen });
+    if (opt.collect) { opt.collect.push(...list); this.setState({ busy: '' }); } else { await drain(); this.foldStaged({ keepOpen: opt.keepOpen }); }
   }
   // ── An address that resolves to a YouTube video. The video plays through YouTube's own embed (a
   // direct iframe). Captions are read first, by yt-dlp on the reader's own machine (tools/ytdl-helper.py),
@@ -5135,7 +5181,15 @@ class Component extends DCLogic {
   // browser) has no captured body to render. Rather than a blank pane, show the real page in-app with
   // a direct iframe, and point at the on-device bookmarklet to capture it. Nothing is grounded — the
   // banner says so; the words come from the site, or from the person's own capture, not a server.
-  isLiveDoc(d) { return !!(d && /^https?:/i.test(d.url || '') && !d.media && !d.pdfSrc && d.format !== 'pdf' && !d.html && !d.faithful && !d.binPath); }
+  isLiveDoc(d) { return !!(d && /^https?:/i.test(d.url || '') && !d.media && !d.pdfSrc && d.format !== 'pdf' && !d.html && !d.hasHtml && !d.faithful && !d.binPath && !((d.text || '').trim().length > 40)); }
+  // The replay of how one source was read: the session trace (window.__hdTraces) narrowed to this doc's own
+  // events, so any asset can show its own reading from the card, not only the last ingest's floating chip.
+  traceFor(docId) {
+    const tr = (window.__hdTraces || []).slice().reverse().find(t => (t.focus || []).includes(docId));
+    if (!tr) return null;
+    const d = (tr.docs || []).find(x => x.id === docId);
+    return { ...tr, label: (d && d.title) || tr.label, docs: d ? [d] : [], ev: tr.ev.filter(e => e.doc === docId || e.doc == null) };
+  }
   renderLive(el, d) {
     el.innerHTML = ''; const host = (() => { try { return new URL(d.url).hostname.replace(/^www\./, ''); } catch (e) { return d.url; } })();
     const wrap = document.createElement('div'); wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px';
@@ -5427,6 +5481,18 @@ class Component extends DCLogic {
   baseDocs(id) { return SAMPLES[id] ? SAMPLES[id].docs : []; }
   analysis() {
     const id = this.corpusId(); const seenU = new Set(); const docs = this.baseDocs(id).concat(this.state.added[id] || []).filter(d => { const u = d.url && d.url.replace(/^https?:\/\/(www\.)?/, '').replace(/[#?].*$/, '').replace(/\/$/, '').toLowerCase(); if (!u || d.ohsId) { if (u) seenU.add(u); return true; } if (seenU.has(u)) return false; seenU.add(u); return true; });
+    // Progressive ingest: while sources are staged (stored, not yet folded), analyze only the folded set and return
+    // their graph with the staged docs appended as bare sources — Sources renders the moment a file lands, and the
+    // app stays responsive instead of blocking on one giant analyze over the whole batch.
+    if (this._stage && this._stage.size) {
+      const folded = docs.filter(d => !this._stage.has(d.id));
+      const fkey = id + ':' + folded.map(d => d.id).join(',') + ':' + this.state.htmlVer + ':' + this.corrKey(id);
+      if (this._key !== fkey) { this._key = fkey; this._A = analyze({ docs: folded }, this._html); this.applyCorrections(this._A, id); }
+      const extra = {}; docs.forEach(d => { if (this._stage.has(d.id)) extra[d.id] = d; });
+      const A = { ...this._A, docs, docById: { ...this._A.docById, ...extra } };
+      try { window.__holodeckA = A; } catch (e) {}
+      return A;
+    }
     const key = id + ':' + docs.map(d => d.id).join(',') + ':' + this.state.htmlVer + ':' + this.corrKey(id);
     if (this._key !== key) { this._key = key; this._A = analyze({ docs }, this._html); this.applyCorrections(this._A, id); }
     try { window.__holodeckA = this._A; } catch (e) {}
@@ -5611,9 +5677,20 @@ class Component extends DCLogic {
         if (w.recommendation === 'small-multiples') hdT('hang', 'workspace', 'Mixed kinds (' + w.hangs.join(', ') + '): one panel per kind \u2014 cross-links only where earned', {});
       }
     } catch (e) { hdT('hang', 'fail', 'Hang decision failed (' + e.message + '); proceeding unhung'); }
-    nd.forEach(d => { d.status = aopt && aopt.open ? 'seen' : 'source'; });
-    T.focus = new Set(nd.map(d => d.id)); nd.forEach(d => hdT('store', 'mint', 'Stored \u201c' + hdCut(d.title, 60) + '\u201d as ' + d.id + (list[nd.indexOf(d)].html ? ' \u00b7 full page kept; ' + d.text.length.toLocaleString() + ' characters indexed for search' + (d.text.length >= 60000 ? ' (the cap; the reading below uses the whole page)' : '') : ' \u00b7 ' + d.text.length.toLocaleString() + ' characters kept'), { doc: d.id }));
+    // A source the person just added is kept: `open` opens the reader, it does not withhold the source. (A page
+    // with no readable text still stays uncounted — isLiveDoc, below — so a blocked link is not counted either.)
+    nd.forEach(d => { d.status = 'source'; });
+    if (!(T.focus instanceof Set)) T.focus = new Set(T.focus || []); nd.forEach(d => T.focus.add(d.id)); nd.forEach(d => hdT('store', 'mint', 'Stored \u201c' + hdCut(d.title, 60) + '\u201d as ' + d.id + (list[nd.indexOf(d)].html ? ' \u00b7 full page kept; ' + d.text.length.toLocaleString() + ' characters indexed for search' + (d.text.length >= 60000 ? ' (the cap; the reading below uses the whole page)' : '') : ' \u00b7 ' + d.text.length.toLocaleString() + ' characters kept'), { doc: d.id }));
     nd.forEach((d, i) => { const x = list[i]; if (x.html) { this._html[d.id] = x.html; idbPut('html:' + d.id, x.html).catch(() => {}); } if (x.pdf) idbPut('pdf:' + d.id, x.pdf).catch(() => {}); if (x.buf) idbPut('media:' + d.id, x.buf).catch(() => {}); });
+    // Store first, then paint: each source lands in the workspace (and its bytes in IndexedDB) before the read and
+    // the fold, so Sources fills in as the files arrive instead of freezing until the whole batch is done.
+    const added = { ...this.state.added, [id]: [...(this.state.added[id] || []), ...nd] };
+    this.saveAdded(added);
+    (this._stage = this._stage || new Set()); nd.forEach(d => this._stage.add(d.id));
+    (this._stagedIds = this._stagedIds || []).push(...nd.map(d => d.id));
+    (this._stagedNotes = this._stagedNotes || []).push(...list.map(x => x.note).filter(Boolean));
+    this.setState({ added, busy: 'Reading ' + (nd.length === 1 ? '1 source' : nd.length + ' sources') + '…' });
+    await new Promise(r => setTimeout(r, 0));
     let engNote = null; { const live = nd.filter(d => d.text && !d.measured); let ok = 0, miss = 0;
       if (live.length) this.setState({ busy: 'Reading ' + (live.length === 1 ? '1 source' : live.length + ' sources') + ' with the eoreader7 engine…' });
       for (const d of live) { const t0 = HD_TR ? performance.now() - HD_TR.t0 : 0, got = await hdEngineRead(d.title, d.text);
@@ -5624,14 +5701,28 @@ class Component extends DCLogic {
             const rl = (got.read.relations || []).length; if (rl) { t += 0.2; HD_TR.ev.push({ t, stage: 'engine', kind: 'eng-relations', msg: 'Engine held ' + rl + ' relation' + (rl === 1 ? '' : 's'), doc: d.id, es: 'relations' }); } } }
         hdT('engine', 'eng-read', 'The engine read “' + hdCut(d.title, 50) + '”: ' + d.eng.referents.length + ' beings, ' + d.eng.relations + ' relations, ' + d.eng.ms + ' ms (' + got.host.replace(/^https?:\/\//, '') + ')', { doc: d.id }); }
       if (miss) { engNote = 'The engine (eoreader7 proxy) was not reachable, so ' + (ok ? miss + ' of ' + live.length + ' sources were' : live.length === 1 ? 'this source was' : 'these sources were') + ' read with the Holodeck’s own reader only. Start the proxy, or set its address with localStorage hd:engine.'; hdT('engine', 'eng-skip', engNote); } }
-    const added = { ...this.state.added, [id]: [...(this.state.added[id] || []), ...nd] };
-    this.saveAdded(added);
-    hdT('store', 'analyze', 'Re-reading the whole workspace (' + (this.baseDocs(id).length + added[id].length) + ' sources) so the new material is linked to everything already there');
-    const A = analyze({ docs: this.baseDocs(id).concat(added[id]) }, this._html);
-    const ids = nd.map(d => d.id); try { this.hdFinish(T, A, prev, ids); } catch (e) { console.warn('ingest trace', e); HD_TR = null; } const odd = (T && T.odd) || []; const sts = A.sts.filter(s => ids.includes(s.doc));
+    if (aopt && aopt.defer) { this.setState({ busy: '' }); return; }
+    this.foldStaged(aopt);
+  }
+  // The fold: once every streamed source is stored, re-read the whole workspace once and swap the full graph in.
+  // Called once by the repo puller after the stream, or directly by an ordinary add.
+  foldStaged(aopt) {
+    aopt = aopt || {}; const id = this.corpusId(); const T = HD_TR || hdTraceStart('ingest');
+    const prev = this.analysis(); // while _stage is set this is the folded graph from before the add
+    const ids = this._stagedIds || []; const notes = this._stagedNotes || [];
+    this._stage = null; this._stagedIds = null; this._stagedNotes = null;
+    const added = this.state.added;
+    if (!ids.length && !(added[id] || []).length) { this.setState({ busy: '' }); return; }
+    const seenU = new Set(); const allDocs = this.baseDocs(id).concat(added[id] || []).filter(d => { const u = d.url && d.url.replace(/^https?:\/\/(www\.)?/, '').replace(/[#?].*$/, '').replace(/\/$/, '').toLowerCase(); if (!u || d.ohsId) { if (u) seenU.add(u); return true; } if (seenU.has(u)) return false; seenU.add(u); return true; });
+    hdT('store', 'analyze', 'Re-reading the whole workspace (' + allDocs.length + ' sources) so the new material is linked to everything already there');
+    const A = analyze({ docs: allDocs }, this._html);
+    this.applyCorrections(A, id);
+    this._A = A; this._key = id + ':' + allDocs.map(d => d.id).join(',') + ':' + this.state.htmlVer + ':' + this.corrKey(id);
+    try { this.hdFinish(T, A, prev, ids); } catch (e) { console.warn('ingest trace', e); HD_TR = null; } const odd = (T && T.odd) || []; const sts = A.sts.filter(s => ids.includes(s.doc));
     const nm = [...new Set(sts.flatMap(s => s.names))];
     const echoN = sts.filter(s => (A.echoes[s.id] || []).some(e => !ids.includes(A.byId[e.id].doc))).length;
-    this.setState({ added, just: { ids, title: nd.length === 1 ? nd[0].title : plural(nd.length, 'item'), n: sts.length, linked: nm.filter(n => prev.names[n]), fresh: nm.filter(n => !prev.names[n]), echoN, odd, notes: list.map(x => x.note).filter(Boolean), first: nd[0].id }, view: aopt && aopt.open ? 'reader' : 'summary', sel: aopt && aopt.open ? { type: 'doc', id: nd[0].id } : null, f: {}, q: '', readDoc: aopt && aopt.open ? nd[0].id : null, readMode: 'original', draftTitle: '', draftYear: '', draftText: '', showAdd: !!(aopt && aopt.keepOpen), busy: '', note: '' });
+    const byId = {}; (added[id] || []).forEach(d => { byId[d.id] = d; }); const firstD = byId[ids[0]] || (added[id] || [])[0] || {};
+    this.setState({ added, just: { ids, title: ids.length === 1 ? (firstD.title || 'Untitled') : plural(ids.length, 'item'), n: sts.length, linked: nm.filter(n => prev.names[n]), fresh: nm.filter(n => !prev.names[n]), echoN, odd, notes, first: ids[0] }, view: aopt && aopt.open ? 'reader' : 'summary', sel: aopt && aopt.open ? { type: 'doc', id: ids[0] } : null, f: {}, q: '', readDoc: aopt && aopt.open ? ids[0] : null, readMode: 'original', draftTitle: '', draftYear: '', draftText: '', showAdd: !!(aopt && aopt.keepOpen), busy: '', note: '' });
   }
 
   // The time strip: how the statements every OTHER filter leaves are spread over time, on the chosen clock.
@@ -6105,7 +6196,8 @@ class Component extends DCLogic {
       const dd = distinctOf[d.id]; const inF = this._fold.length ? all.filter(s => this.inFold(s)).length : 0;
       const badges = [...(d.medium ? [{ label: d.medium === 'Video' || d.medium === 'Audio' ? d.medium + (d.transcribed ? ' · machine transcript' : ' · not transcribed') : d.medium, color: MEDIUM_C[d.medium] || 'var(--mut)' }] : []), ...(d.standing ? [{ label: d.standing, color: STANDING_C[d.standing] || 'var(--mut)' }] : []), ...((d.recordings || []).map(r => ({ label: 'Video linked · not transcribed', color: 'var(--date)' }))), ...(d.sameAs ? [{ label: 'Same bytes as ' + short(d.sameAsTitle || '', 36), color: 'var(--amber)' }] : []), ...(d.custodyStatus && d.custodyStatus !== 'captured' ? [{ label: d.custody, color: /missing|failed|not-located|no-text/.test(d.custodyStatus) ? 'var(--bad)' : 'var(--amber)' }] : [])];
       const vid = !!(d.media && d.media.kind === 'youtube');
-      return { ...c, op: 1, isVid: vid, noVid: !vid, thumbBg: vid ? 'url(https://i.ytimg.com/vi/' + d.media.id + '/hqdefault.jpg)' : 'none', readLabel: 'View', ...(vid ? { onSelect: () => this.read(d.id) } : {}), badges, hasBadges: badges.length > 0, hasDistinct: !!dd, distinct: dd ? dd.label + ' · ' + pct(dd.a) + ' of its statements vs ' + pct(dd.b) + ' elsewhere' : '', hasFold: this._fold.length > 0, fold: inF + ' of ' + all.length + ' statements touch the topic', stats: (narrowed ? ((FbyDoc[d.id] || []).length).toLocaleString() + ' of ' + plural(all.length, 'statement') + ' in this selection' : plural(all.length, 'statement')) + ' · ' + plural(nm.size, 'name'), isSeen: m.status === 'seen', isKept: m.status !== 'seen', canUnkeep: m.status !== 'seen' && !this.baseDocs(this.corpusId()).some(x => x.id === d.id),
+      const tr = this.traceFor(d.id);
+      return { ...c, op: 1, isVid: vid, noVid: !vid, thumbBg: vid ? 'url(https://i.ytimg.com/vi/' + d.media.id + '/hqdefault.jpg)' : 'none', readLabel: 'View', ...(vid ? { onSelect: () => this.read(d.id) } : {}), badges, hasBadges: badges.length > 0, hasDistinct: !!dd, distinct: dd ? dd.label + ' · ' + pct(dd.a) + ' of its statements vs ' + pct(dd.b) + ' elsewhere' : '', hasFold: this._fold.length > 0, fold: inF + ' of ' + all.length + ' statements touch the topic', stats: (narrowed ? ((FbyDoc[d.id] || []).length).toLocaleString() + ' of ' + plural(all.length, 'statement') + ' in this selection' : plural(all.length, 'statement')) + ' · ' + plural(nm.size, 'name'), isSeen: m.status === 'seen', isKept: m.status !== 'seen', hasReplay: !!tr, onReplay: () => tr && import(new URL('holodeck-ingest-player.js', location.href).href).then(M => M.open(tr)), canUnkeep: m.status !== 'seen' && !this.baseDocs(this.corpusId()).some(x => x.id === d.id),
         ...(() => { const on = this._inf[d.id] || null;
           return { originText: on ? on.why + ' ' + short(A.docById[on.of].title, 40) : 'Independent · shares no claims or outlet with another source', originDep: !!on, originCol: on ? 'var(--amber)' : 'var(--mut)' }; })(),
         drawsX: 0, drawOptions: drawOpts,
@@ -7119,8 +7211,14 @@ class Component extends DCLogic {
       this.setState({ pfIdx: i }); };
     const d = det.d;
     const pr = this.profileRows(A, n.name);
+    // Referents the SOURCE itself named for this name, via its hyperlinks.
+    const seenRef = new Set(); const refs = [];
+    ((A.nameLinks || {})[n.name] || []).forEach(L => { if (seenRef.has(L.href)) return; seenRef.add(L.href);
+      const r = referentOfLink(L.href); refs.push({ label: r.label, host: r.host, href: r.href, wiki: r.wiki, onOpen: () => this.navigate(L.href) }); });
+    refs.length = Math.min(refs.length, 6);
     return { has: true, eyebrow: d.eyebrow, color: d.color, title: n.name,
       hasProf: !!(pr && pr.rows.length), profKind: pr ? pr.kind : '', profEstablished: pr ? pr.established : false, profCount: pr ? pr.count : 0, profRows: pr ? pr.rows : [],
+      hasRefs: refs.length > 0, refs, refTitle: refs.length === 1 ? 'Linked referent' : 'Linked referents',
       sum: this.profileSummary(A, n.name),
       facts: d.facts, here: N ? plural(N, 'mention') + ' in this source' : 'Not named in this source’s statements', hasStep: N > 1, pos: N > 1 ? (Math.min(idx, N - 1) + 1) + ' / ' + N : '', prev: () => step(-1), next: () => step(1),
       hasTags: !!(d.tags && d.tags.length), tags: page ? (d.tags || []).map(t => ({ ...t, onClick: () => this.openProfile(t.label) })) : (d.tags || []), tagTitle: d.tagTitle,
