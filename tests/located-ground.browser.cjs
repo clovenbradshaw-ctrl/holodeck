@@ -57,3 +57,4 @@ await page.evaluate(()=>window.__testMap.destroy());
 if(errors.length) throw Error(errors.join('; '));
 } finally { await browser.close(); await new Promise(r=>server.close(r)); }
 })().catch(e=>{console.error(e);process.exitCode=1});
+

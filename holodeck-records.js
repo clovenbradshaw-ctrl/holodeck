@@ -131,7 +131,17 @@ export function tablesInSources(A) {
 // Read the schema off the folded state. Every conclusion carries the count it was drawn from.
 const LABELS = ['title', 'name', 'label', 'body'];
 export function inferSchema(state) {
-  const byType = new Map(); for (const e of Object.values(state.entities)) { const t = e._type; if (!t) continue; (byType.get(t) || byType.set(t, []).get(t)).push(e); }
+  const byType = new Map();
+  if (state.entitiesByType) {
+    for (const [t, anchors] of Object.entries(state.entitiesByType)) {
+      if (!t) continue;
+      const rows = [];
+      for (const a of anchors) { const e = state.entities[a]; if (e) rows.push(e); }
+      if (rows.length) byType.set(t, rows);
+    }
+  } else {
+    for (const e of Object.values(state.entities)) { const t = e._type; if (!t) continue; (byType.get(t) || byType.set(t, []).get(t)).push(e); }
+  }
   const tables = [...byType.entries()].sort((a, b) => b[1].length - a[1].length);
   const fields = {}, label = {}, tableInfo = [];
   for (const [t, rows] of tables) {

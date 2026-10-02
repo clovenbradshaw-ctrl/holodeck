@@ -204,8 +204,9 @@ function mount(T, opt = {}) {
   let last = performance.now(), raf = 0, frame = 0;
   function loop(now) {
     const dt = Math.min(100, now - last); last = now;
-    if (dir) { pos += dir * (real ? dt * speed : dt / 1000 * speed); if (pos >= maxPos()) { pos = maxPos(); setDir(0); } if (pos <= 0) { pos = 0; setDir(0); }
-      const nk = idxAt(pos); if (nk !== k) { k = nk; render(true); } else drawRibbon(); }
+    if (dir && dt > 0) { pos += dir * (real ? dt * speed : dt / 1000 * speed);
+      if (pos >= maxPos()) { pos = maxPos(); setDir(0); } else if (pos < 0) { pos = 0; setDir(0); }
+      else { const nk = idxAt(pos); if (nk !== k) { k = nk; render(true); } else drawRibbon(); } }
     raf = requestAnimationFrame(loop);
   }
 

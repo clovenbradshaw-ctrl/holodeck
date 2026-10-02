@@ -1,0 +1,68 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { createNotebookServer } from '../tools/notebook-server.mjs';
+import { verifyState } from '../holodeck-notebook.js';
+
+test('real Jupyter: state, errors, plots, interrupt, restart, import/export, isolation and sealed history', { timeout: 120000 }, async t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'holodeck-jupyter-test-'));
+  const server = createNotebookServer({ dir });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(async () => { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); fs.rmSync(dir, { recursive: true, force: true }); });
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const headers = { 'X-Holodeck-Notebook': '1', 'X-Holodeck-Workspace': 'test', 'Content-Type': 'application/json' };
+  const state = async c => (await fetch(base + '/notebook/state' + (c ? '?c=' + c : ''), { headers })).json();
+  const api = async body => { const r = await (await fetch(base + '/notebook/api', { method: 'POST', headers, body: JSON.stringify(body) })).json(); assert.ok(!r.error, r.error); return r; };
+  let s = await state(), c = s.conv.id;
+  const add = async source => (await api({ c, op: 'add', type: 'code', source })).selected;
+  const run = async id => { await api({ c, op: 'run', cell: id }); const s = await state(c); return s.ledgers.nb.filter(e => e.kind === 'exec' && e.cell === id).at(-1); };
+  const csv = 'name,value\na,10\nb,20\n';
+  await api({ c, op: 'upload', name: 'sample.csv', base64: Buffer.from(csv).toString('base64') });
+  const read = await add('import csv\nrows = list(csv.DictReader(open("data/sample.csv")))\nsum(int(r["value"]) for r in rows)');
+  let uploadRun = await run(read); assert.equal(uploadRun.output.trim(), '30'); assert.ok(uploadRun.env.rawDataShas['sample.csv']); assert.equal(uploadRun.env.standing, 'shown');
+  const a = await add('x = 40'); await run(a);
+  const b = await add('x += 2\nx'); let ex = await run(b); assert.equal(ex.output.trim(), '42'); assert.equal(ex.env.execution_count, 3);
+  const oldSeal = ex.hash;
+  await api({ c, op: 'kernel-interrupt' }); // Idle interrupt must not kill the kernel.
+  ex = await run(b); assert.equal(ex.output.trim(), '44', 'stateful execution really persists; prior cells are not replayed');
+  assert.equal(ex.env.execution_count, 4); assert.equal(ex.env.priorRunSeal, oldSeal);
+  const bad = await add('1 / 0'); ex = await run(bad); assert.equal(ex.ok, false); assert.equal(ex.env.outputs[0].ename, 'ZeroDivisionError');
+  const plot = await add('import matplotlib.pyplot as plt\nplt.plot([1, 2, 3])\nplt.show()'); ex = await run(plot); assert.ok(ex.figures.length); assert.ok(ex.env.outputs.some(o => o.data?.['image/png']));
+  const rich = await add('from IPython.display import HTML, display\ndisplay(HTML("<b>table</b>"))'); ex = await run(rich); assert.ok(ex.env.outputs.some(o => o.data?.['text/html']));
+  const endless = await add('import time\ntime.sleep(60)');
+  const running = api({ c, op: 'run', cell: endless });
+  await new Promise(resolve => setTimeout(resolve, 400));
+  await api({ c, op: 'kernel-interrupt' }); await running;
+  ex = (await state(c)).ledgers.nb.filter(e => e.kind === 'exec' && e.cell === endless).at(-1); assert.ok(!ex.ok); assert.equal(ex.env.outputs[0].ename, 'KeyboardInterrupt');
+  await api({ c, op: 'kernel-restart' });
+  ex = await run(b); assert.ok(!ex.ok); assert.equal(ex.env.outputs[0].ename, 'NameError', 'restart really clears variables');
+  await api({ c, op: 'edit', cell: bad, source: 'print("fixed")' });
+  await api({ c, op: 'edit', cell: endless, source: 'print("complete")' });
+  await api({ c, op: 'kernel-restart' }); await api({ c, op: 'runmany', which: 'all' });
+  s = await state(c); assert.ok(s.ledgers.nb.some(e => e.kind === 'exec' && e.cell === b && e.output === '42'));
+  assert.ok(Object.values(verifyState(s)).every(v => v.ok), 'all chains verify after execution and edits');
+  const nb = await (await fetch(base + '/notebook/ipynb?c=' + c, { headers })).json();
+  const file = path.join(dir, 'export.ipynb'); fs.writeFileSync(file, JSON.stringify(nb));
+  execFileSync('python3', ['-c', 'import json,nbformat,sys; nbformat.validate(nbformat.read(sys.argv[1], as_version=4))', file]);
+  assert.equal(nb.cells.find(x => x.id === plot).outputs.some(o => o.data?.['image/png']), true);
+  const imported = await api({ c, op: 'import-ipynb', notebook: nb, name: 'roundtrip.ipynb' });
+  const im = await state(imported.goto); assert.equal(im.ledgers.nb.filter(e => e.kind === 'cell').length, nb.cells.length); assert.equal(im.ledgers.nb.filter(e => e.kind === 'exec').length, 0);
+  assert.ok(im.ledgers.nb.some(e => e.kind === 'import' && e.recordedElsewhere));
+  const newTab = await api({ c, op: 'ws-new', type: 'notebook' }); c = newTab.goto;
+  const fresh = await add('x'); ex = await run(fresh); assert.equal(ex.env.outputs[0].ename, 'NameError', 'tabs have separate kernels');
+  const other = await (await fetch(base + '/notebook/state', { headers: { ...headers, 'X-Holodeck-Workspace': 'other' } })).json(); assert.equal(other.ledgers.nb.length, 0, 'workspaces do not share notebooks');
+  const original = (await state(s.conv.id)).ledgers.nb;
+  const fork = await api({ c: s.conv.id, op: 'ws-fork', at: 'end' });
+  const forked = await state(fork.goto); assert.deepEqual(forked.ledgers.nb.map(e => e.hash), original.map(e => e.hash));
+  assert.ok(forked.lineage.length); assert.equal((await state(s.conv.id)).ledgers.nb.length, original.length);
+  const reopened = createNotebookServer({ dir }); await new Promise(resolve => reopened.listen(0, '127.0.0.1', resolve));
+  try {
+    const saved = await (await fetch(`http://127.0.0.1:${reopened.address().port}/notebook/state?c=${s.conv.id}`, { headers })).json();
+    assert.deepEqual(saved.ledgers.nb.map(e => e.hash), original.map(e => e.hash)); assert.equal(saved.server.kernel, 'not started');
+  } finally { await new Promise(resolve => reopened.close(resolve)); }
+  const rejected = await fetch(base + '/notebook/api', { method: 'POST', headers: { Origin: 'https://untrusted.example', 'Content-Type': 'application/json' }, body: '{}' }); assert.equal(rejected.status, 403);
+  const missingHeader = await fetch(base + '/notebook/api', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }); assert.equal(missingHeader.status, 403);
+});

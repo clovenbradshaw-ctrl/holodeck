@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import G from './holodeck-ground.js';
+import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
+const context = { module: { exports: {} } };
+runInNewContext(readFileSync(new URL('./holodeck-ground.js', import.meta.url), 'utf8'), context);
+const G = context.module.exports;
 import { mapOrigin } from './holodeck-map.js';
 const c = {text:'No objection was raised'};
 const p = {question:'Were objections recorded?',workspace:'Council',sources:[{id:'minutes',title:'June minutes'}],frame:'minutes'};
@@ -29,3 +33,4 @@ test('automatic center is explained and selecting another center wins',()=>{
   assert.equal(mapOrigin(['B','A','C'],adj,'B').name,'B');
   assert.match(mapOrigin(['B'],new Map(),null).reason,/no connections/);
 });
+
