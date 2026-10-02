@@ -517,30 +517,36 @@ select option{background:var(--s1);color:var(--ink)}
               </div>
               <span style="font:400 12px 'JetBrains Mono';color:var(--dim)">{{ ak.modeNote }}</span>
             </div>
-            <sc-if value="{{ ak.mGen }}" hint-placeholder-val="{{ false }}">
-              <div style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:12px">
-                <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Generate a document from this workspace</span>
-                <div style="display:flex;gap:10px 14px;flex-wrap:wrap;align-items:center">
-                  <span style="font:500 14px 'Hanken Grotesk';color:var(--mut)">Kind</span>
-                  <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden">
-                    <sc-for list="{{ ak.gKinds }}" as="k" hint-placeholder-count="2"><button onClick="{{ k.onClick }}" style="border:0;background:{{ k.bg }};color:{{ k.col }};padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';white-space:nowrap">{{ k.label }}</button></sc-for>
-                  </div>
-                  <span style="font:500 14px 'Hanken Grotesk';color:var(--mut)">Sentences</span>
-                  <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden">
-                    <sc-for list="{{ ak.gModes }}" as="k" hint-placeholder-count="2"><button onClick="{{ k.onClick }}" style="border:0;background:{{ k.bg }};color:{{ k.col }};padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';white-space:nowrap">{{ k.label }}</button></sc-for>
-                  </div>
-                </div>
-                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-                  <label style="display:flex;gap:8px;align-items:center;flex:1 1 260px;min-width:0;font:500 14px 'Hanken Grotesk';color:var(--mut)">about<input value="{{ ak.gSubj }}" onChange="{{ ak.onGSubj }}" placeholder="a person, office or topic" style="flex:1;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font:500 14px 'Hanken Grotesk';color:var(--ink);outline:none"></input></label>
-                  <button onClick="{{ ak.gFill }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:7px 16px;cursor:pointer;font:600 14px 'Hanken Grotesk';opacity:{{ ak.gOp }}" style-hover="background:#7c3aed">{{ ak.gRunLabel }}</button>
-                  <button onClick="{{ ak.gOpen }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Open the Draft →</button>
-                </div>
-                <sc-if value="{{ ak.gHasNote }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px/1.5 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">{{ ak.gNote }}</span></sc-if>
+            <sc-if value="{{ ak.mNb }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <button onClick="{{ ak.nbExport }}" title="Download this notebook as a real .ipynb — every cell and its output, with the fold record in each cell's metadata" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Download .ipynb</button>
+                <button onClick="{{ ak.nbOpenLog }}" title="Open the workspace source that is the log of this notebook" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="border-color:var(--acc)">Open the log source →</button>
+                <span style="font:400 12px 'JetBrains Mono';color:var(--dim);text-wrap:pretty">{{ ak.nbLogLine }}</span>
               </div>
+            </sc-if>
+            <sc-if value="{{ ak.mGen }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font:500 13px 'Hanken Grotesk';color:var(--mut)">
+                <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Artifacts</span>
+                <sc-for list="{{ ak.artList }}" as="a" hint-placeholder-count="0"><button onClick="{{ a.onClick }}" title="Keep building this artifact" style="background:{{ a.bg }};border:1px solid {{ a.bd }};border-radius:999px;padding:3px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:{{ a.col }};white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis">{{ a.label }}</button></sc-for>
+                <button onClick="{{ ak.artNew }}" style="background:none;border:1px dashed var(--line2);border-radius:999px;padding:3px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:{{ ak.artNewCol }};white-space:nowrap" style-hover="border-color:var(--acc)">+ New</button>
+                <span style="font:400 12px 'JetBrains Mono';color:var(--dim)">{{ ak.artHint }}</span>
+              </div>
+              <sc-if value="{{ ak.artSelHas }}" hint-placeholder-val="{{ false }}">
+                <div style="border:1px solid var(--line2);border-radius:12px;background:var(--s1);padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+                  <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+                    <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">Artifact</span>
+                    <span style="font:500 21px/1.25 'Newsreader',serif;color:var(--ink);min-width:0">{{ ak.artSel.title }}</span>
+                    <span style="font:500 12px 'JetBrains Mono';color:var(--dim)">{{ ak.artSel.n }}</span>
+                    <span style="flex:1"></span>
+                    <button onClick="{{ ak.artSel.onOpen }}" style="all:unset;cursor:pointer;font:600 13px 'Hanken Grotesk';color:var(--acc);white-space:nowrap" style-hover="text-decoration:underline">Edit in Draft →</button>
+                  </div>
+                  <sc-for list="{{ ak.artSel.claims }}" as="c" hint-placeholder-count="2"><span style="font:400 16px/1.55 'Newsreader',serif;color:var(--ink2);text-wrap:pretty">• {{ c.text }} <sup style="font:600 10px 'JetBrains Mono';color:var(--dim)">{{ c.n }}</sup></span></sc-for>
+                </div>
+              </sc-if>
             </sc-if>
             <sc-if value="{{ ak.showCells }}" hint-placeholder-val="{{ true }}">
             <sc-for list="{{ ak.turns }}" as="t" hint-placeholder-count="0">
-              <sc-if value="{{ ak.mChat }}" hint-placeholder-val="{{ true }}">
+              <sc-if value="{{ ak.mThread }}" hint-placeholder-val="{{ true }}">
               <div style="display:flex;flex-direction:column;gap:10px;padding:4px 0 8px">
                 <div style="display:flex;justify-content:flex-end">
                   <div style="background:var(--sel);border:1px solid var(--line2);border-radius:16px 16px 4px 16px;padding:8px 14px;max-width:85%;font:500 15px/1.5 'Hanken Grotesk';color:var(--ink);text-wrap:pretty">{{ t.q }}</div>
@@ -566,6 +572,7 @@ select option{background:var(--s1);color:var(--ink)}
                       </div>
                     </sc-if>
                     <sc-if value="{{ t.canGen }}" hint-placeholder-val="{{ false }}"><button onClick="{{ t.onGen }}" title="Turn this answer’s cited passages into a Draft document" style="align-self:flex-start;background:none;border:1px solid var(--line2);border-radius:8px;padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="border-color:var(--acc)">Generate a document →</button></sc-if>
+                    <sc-if value="{{ t.artHas }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-left:3px solid #8b5cf6;padding:2px 0 2px 10px"><span style="font:500 13px 'Hanken Grotesk';color:var(--ink2)">{{ t.artLine }}</span><button onClick="{{ t.onOpenArt }}" style="all:unset;cursor:pointer;font:600 13px 'Hanken Grotesk';color:var(--acc);white-space:nowrap" style-hover="text-decoration:underline">Edit in Draft →</button></div></sc-if>
                   </div>
                 </div>
               </div>
@@ -642,12 +649,12 @@ select option{background:var(--s1);color:var(--ink)}
             <sc-if value="{{ ak.hasErr }}" hint-placeholder-val="{{ false }}"><span style="font:400 14px 'Hanken Grotesk';color:var(--bad)">{{ ak.err }}</span></sc-if>
             <div id="ak-composer" style="position:sticky;bottom:0;z-index:12;background:var(--hdr);backdrop-filter:blur(8px);padding:10px 0 2px;border-top:1px solid var(--line)">
               <div style="display:flex;flex-direction:column;gap:8px;background:var(--s1);border:1px solid var(--line2);border-radius:12px;padding:10px 12px">
-                <textarea value="{{ ak.q }}" onChange="{{ ak.onQ }}" onKeyDown="{{ ak.onKey }}" rows="2" placeholder="Ask about the sources in this workspace — Enter to ask, Shift+Enter for a new line" style="background:transparent;border:0;outline:none;resize:vertical;color:var(--ink);font:400 16px/1.5 'Hanken Grotesk';min-height:48px"></textarea>
+                <textarea value="{{ ak.q }}" onChange="{{ ak.onQ }}" onKeyDown="{{ ak.onKey }}" rows="2" placeholder="{{ ak.ph }}" style="background:transparent;border:0;outline:none;resize:vertical;color:var(--ink);font:400 16px/1.5 'Hanken Grotesk';min-height:48px"></textarea>
                 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
                   <sc-if value="{{ ak.noTurns }}" hint-placeholder-val="{{ true }}"><sc-for list="{{ ak.examples }}" as="x" hint-placeholder-count="3"><button onClick="{{ x.onClick }}" style="background:var(--s2);border:1px solid var(--line2);border-radius:999px;padding:3px 10px;cursor:pointer;font:400 13px 'Hanken Grotesk';color:var(--ink2);white-space:normal;text-align:left" style-hover="border-color:var(--acc)">{{ x.t }}</button></sc-for></sc-if>
                   <div style="margin-left:auto;display:flex;gap:8px">
                     <sc-if value="{{ ak.busy }}" hint-placeholder-val="{{ false }}"><button onClick="{{ ak.stop }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)">Stop</button></sc-if>
-                    <button onClick="{{ ak.send }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 16px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Ask ↵</button>
+                    <button onClick="{{ ak.send }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 16px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">{{ ak.sendLabel }}</button>
                   </div>
                 </div>
               </div>
@@ -785,31 +792,10 @@ select option{background:var(--s1);color:var(--ink)}
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
           <section style="flex:1 1 460px;min-width:0;display:flex;flex-direction:column;gap:12px">
-            <div style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px">
-              <div style="display:flex;gap:10px 14px;flex-wrap:wrap;align-items:center">
-                <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Generate</span>
-                <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden">
-                  <sc-for list="{{ gen.kinds }}" as="k" hint-placeholder-count="2"><button onClick="{{ k.onClick }}" style="border:0;background:{{ k.bg }};color:{{ k.col }};padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';white-space:nowrap">{{ k.label }}</button></sc-for>
-                </div>
-                <label style="display:flex;gap:8px;align-items:center;flex:1 1 220px;min-width:0;font:500 14px 'Hanken Grotesk';color:var(--mut)">about<input defaultValue="{{ gen.subject }}" onChange="{{ gen.onSubject }}" placeholder="a person, office or topic" style="flex:1;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font:500 14px 'Hanken Grotesk';color:var(--ink);outline:none"></input></label>
-              </div>
-              <div style="display:flex;gap:10px 14px;flex-wrap:wrap;align-items:center">
-                <span style="font:500 14px 'Hanken Grotesk';color:var(--mut)">Sentences</span>
-                <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden">
-                  <sc-for list="{{ gen.modes }}" as="k" hint-placeholder-count="2"><button onClick="{{ k.onClick }}" style="border:0;background:{{ k.bg }};color:{{ k.col }};padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';white-space:nowrap">{{ k.label }}</button></sc-for>
-                </div>
-                <span style="flex:1"></span>
-                <button onClick="{{ gen.onRun }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:7px 16px;cursor:pointer;font:600 14px 'Hanken Grotesk';white-space:nowrap;opacity:{{ gen.op }}">{{ gen.runLabel }}</button>
-              </div>
-              <sc-if value="{{ gen.isModel }}" hint-placeholder-val="{{ false }}">
-                <div style="display:flex;gap:8px 10px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--line);padding-top:10px">
-                  <input defaultValue="{{ gen.llmUrl }}" onChange="{{ gen.onLlmUrl }}" placeholder="http://localhost:11434" style="flex:1 1 200px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:5px 10px;font:500 13px 'JetBrains Mono';color:var(--ink);outline:none"></input>
-                  <input defaultValue="{{ gen.llmModel }}" onChange="{{ gen.onLlmModel }}" placeholder="model name" style="flex:0 1 160px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:5px 10px;font:500 13px 'JetBrains Mono';color:var(--ink);outline:none"></input>
-                  <button onClick="{{ gen.onLlmTest }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2);white-space:nowrap" style-hover="border-color:var(--acc)">Test connection</button>
-                  <span style="flex:1 1 100%;font:400 13px/1.45 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">{{ gen.llmTest }}</span>
-                </div>
-              </sc-if>
-              <span style="font:400 13px/1.5 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">{{ gen.hint }}</span>
+            <div style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+              <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Generate</span>
+              <span style="font:400 13px/1.5 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">Generating is open-ended now. Ask for anything in Ask → Generate; every answer becomes an artifact linked to that thread, and this is where you edit and ground it.</span>
+              <button onClick="{{ gen.openGen }}" style="align-self:flex-start;background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 14px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Generate in Ask →</button>
             </div>
             <div style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px">
               <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Write</span>
@@ -3246,6 +3232,33 @@ class Component extends DCLogic {
     this.saveAdded(added);
     this.setState({ added, htmlVer: this.state.htmlVer + 1 });
   }
+  // The Notebook is kept two ways from the same conversation: a real .ipynb you can download, and a plain
+  // log kept as a source in this workspace, so what happened in the notebook can be read and asked about.
+  notebookLogDoc() { const cid = this.corpusId(); return (this.state.added[cid] || []).find(d => d.id === 'nb-log') || null; }
+  notebookMeta() { const nm = this.corpusName(); return { title: 'Notebook — ' + nm, workspace: nm, generated: new Date().toLocaleString() }; }
+  async nbExport() {
+    const M = await this.askMod(); const conv = this._conv || M.emptyConv();
+    if (!(conv.turns || []).length) { this.toast('Run a cell first — the notebook is empty.'); return; }
+    const ipynb = M.toIpynb(conv, this.notebookMeta());
+    const blob = new Blob([JSON.stringify(ipynb, null, 1)], { type: 'application/x-ipynb+json' });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a');
+    a.href = url; a.download = (this.corpusName().replace(/[^\w-]+/g, '-').slice(0, 60) || 'notebook') + '.ipynb';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+    this.toast('Downloaded ' + a.download + ' — ' + plural(ipynb.cells.length, 'cell') + ', folded.');
+  }
+  async syncNotebookLog(opts) {
+    const M = this._askM || await this.askMod(); const conv = this._conv;
+    if (!conv || !(conv.turns || []).length) return null;
+    const cid = this.corpusId(); const text = M.notebookLog(conv, this.notebookMeta());
+    const list = this.state.added[cid] || []; const has = list.some(d => d.id === 'nb-log');
+    const doc = { id: 'nb-log', title: 'Notebook log — ' + this.corpusName(), year: new Date().getFullYear(), type: 'Notebook log', format: 'text', text, status: 'source', updated: Date.now() };
+    const added = { ...this.state.added, [cid]: has ? list.map(d => d.id === 'nb-log' ? { ...d, ...doc } : d) : [...list, doc] };
+    this.saveAdded(added);
+    this._ix = null; this._db = null; this._gi = null; this._infKey = null; this._qa = null; this._hl = null;
+    this.setState({ added, htmlVer: this.state.htmlVer + 1, ...(opts && opts.toast ? { note: opts.toast } : {}) });
+    return doc;
+  }
+  nbOpenLog() { const d = this.notebookLogDoc(); if (d) { this.read(d.id); return; } if (!(this._conv && (this._conv.turns || []).length)) { this.toast('Run a cell first — the notebook is empty.'); return; } this.syncNotebookLog({ toast: 'Keeping the notebook’s log as a source…' }); }
   async ensureMediaUrl(d) {
     if (!d || !d.media || d.media.kind !== 'local' || (this._mediaUrl || {})[d.id] !== undefined) return;
     this._mediaUrl = this._mediaUrl || {};
@@ -3368,7 +3381,7 @@ class Component extends DCLogic {
   tabBtn(on) { return { bg: on ? 'var(--sel)' : 'transparent', bd: on ? '#8b5cf6' : 'var(--line2)', fw: on ? 600 : 500 }; }
   // ---------- Ask the Fold: The Fold's grounded conversation over this workspace, answered by a model on this machine ----------
   askMod() { if (!this._askP) this._askP = import(new URL('holodeck-ask.js', location.href).href).then(M => { this._askM = M; return M; }); return this._askP; }
-  akModels() { const M = this._askM; const wl = M ? M.WEBLLM_MODELS.map(m => ({ v: 'webllm:' + m.id, label: m.label + ' · ' + m.size, size: m.size, name: m.label.replace(/ · in this tab$/, '') })) : []; const ol = (this._oll && this._oll.ok ? this._oll.models || [] : []).map(m => ({ v: m.name, label: m.name + ' · Ollama', name: m.name })); return [...wl, ...ol]; }
+  akModels() { const M = this._askM; const think = n => !!(M && M.isThinkingModel && M.isThinkingModel(n)); const wl = M ? M.WEBLLM_MODELS.filter(m => !think(m.id)).map(m => ({ v: 'webllm:' + m.id, label: m.label + ' · ' + m.size, size: m.size, name: m.label.replace(/ · in this tab$/, '') })) : []; const ol = (this._oll && this._oll.ok ? this._oll.models || [] : []).filter(m => !think(m.name)).map(m => ({ v: m.name, label: m.name + ' · Ollama', name: m.name })); return [...wl, ...ol]; }
   akModel() { const S = this.state; const ms = this.akModels(); if (S.akModel && ms.some(m => m.v === S.akModel)) return S.akModel; return 'webllm:gemma-2-2b-it-q4f16_1-MLC'; }
   llmOk() { const m = this.akModel(); const M = this._askM; if (m.startsWith('webllm:')) return !!(M && M.webgpu()); return !!(this._oll && this._oll.ok); }
   async akLoad() { const M = await this.askMod(); const m = this.akModel(); if (!m.startsWith('webllm:') || M.webllmLoaded(m.slice(7))) return true; if (!M.webgpu()) { this.setState({ akErr: 'This browser has no WebGPU, so a model can’t run in this tab. Chrome or Edge with hardware acceleration on can.' }); return false; }
@@ -3390,6 +3403,7 @@ class Component extends DCLogic {
   }
   async askSend(qIn) {
     const q = String(qIn ?? this.state.akQ ?? '').trim(); if (!q || this.state.akBusy) return;
+    if (this._akFold) { try { this._akFold.abort(); } catch (e) {} this._akFold = null; }
     const M = await this.askMod(); if (!this._conv) this._conv = M.emptyConv();
     if (!this.llmOk()) { this.setState({ akErr: this.akModel().startsWith('webllm:') ? 'This browser has no WebGPU, so the model can’t run in this tab.' : 'Ollama isn’t reachable on this machine.', akQ: q }); return; }
     this.setState({ akPending: q, akQ: '' }); if (!(await this.akLoad())) { this.setState({ akPending: '', akQ: q }); return; }
@@ -3402,10 +3416,39 @@ class Component extends DCLogic {
     let reading = null; try { reading = M.readingBlock(this._rix, retrievalQ); } catch (e) {}
     const ac = new AbortController(); this._akAbort = ac; let last = 0;
     this.setState({ akBusy: 'retrieving', akQ: '', akStream: '', akPending: q, akErr: '', akComputed: computed });
-    try { const r = await M.turn(this._conv, this._ix, q, { model: this.akModel(), computed, reading, retrievalQ, resolved, signal: ac.signal, onStage: st => this.setState({ akBusy: st }), onToken: t => { const now = Date.now(); if (now - last > 50) { last = now; this.setState({ akStream: t }); } } });
-      this._conv = r.conv; this._lastMsgs = r.turn.messages; this.saveConv(); this.setState({ akBusy: '', akStream: '', akPending: '', akComputed: null });
+    const isGen = (this.state.akMode || 'chat') === 'generate'; const fresh = !!this.state.akNew;
+    try { const r = await M.turn(this._conv, this._ix, q, { model: this.akModel(), computed, reading, retrievalQ, resolved, signal: ac.signal, onStage: st => this.setState({ akBusy: st }), onToken: t => { const now = Date.now(); if (now - last > 50) { last = now; this.setState({ akStream: t }); } }, deferFold: true, onFold: (folded, ref) => { if (this._conv !== r.conv) return; r.conv.summary = folded; r.turn.refresh = ref; this.saveConv(); this.forceUpdate(); } });
+      this._akFold = r.fold ? { abort: () => r.fold.abort(), conv: r.conv } : null;
+      const prevA = (this._conv && this._conv.artifacts) ? this._conv.artifacts.slice() : []; const prevC = this._conv ? this._conv.artCur : null;
+      this._conv = r.conv; this._conv.artifacts = prevA; this._conv.artCur = prevC; this._lastMsgs = r.turn.messages;
+      if (isGen) { this.setState({ akNew: false }); try { this.turnToArtifact(r.turn, fresh); } catch (e) {} }
+      this.saveConv(); this.setState({ akBusy: '', akStream: '', akPending: '', akComputed: null });
+      if ((this.state.akMode || 'chat') === 'notebook') { try { await this.syncNotebookLog(); } catch (e) {} }
     } catch (e) { this.setState({ akBusy: '', akStream: '', akPending: '', akComputed: null, akErr: ac.signal.aborted ? 'Stopped before the answer finished.' : String(e && e.message || e), akQ: q }); }
   }
+  convArts() { const c = this._conv; if (!c) return null; if (!c.artifacts) c.artifacts = []; if (c.artCur === undefined) c.artCur = null; return c; }
+  artifactClaims(A, t) { const docOfName = n => this._ix && this._ix.docOf[n]; const out = []; const seen = new Set();
+    (t.attr || []).forEach(x => { if (!x.ref || seen.has(x.ref)) return; seen.add(x.ref);
+      const m = String(x.ref).match(/^(.*)#(\d+)-(\d+)$/); if (!m) return;
+      const id = docOfName(m[1]); const d = id && A.docById[id]; if (!d) return;
+      const st = (A.stsByDoc[id] || []).find(y => y.e > +m[2] && y.s < +m[3]) || null; if (!st) return;
+      const u = (t.used || []).find(z => z.ref === x.ref);
+      out.push({ text: short(clean(x.text), 300), st, src: (u && u.text) || clean(st.text), date: this.dateOf(A, st).iso }); });
+    return out; }
+  turnToArtifact(t, fresh) { const A = this.analysis(); const claims = this.artifactClaims(A, t); if (!claims.length) return null;
+    const c = this.convArts(); if (!c) return null; const R = this.rawPins();
+    let docId = (!fresh && c.artCur) ? c.artCur : null; if (docId && !R.docs.some(d => d.id === docId)) docId = null;
+    const created = !docId;
+    if (!docId) { docId = 'doc-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+      const title = short(clean(t.question || 'Artifact'), 70) || 'Artifact';
+      this.setDocs(X => ({ docs: [...X.docs, { id: docId, title, claims: [], created: new Date().toISOString() }], cur: docId })); }
+    else if (R.cur !== docId) this.setDocs(X => ({ ...X, cur: docId }));
+    const newIds = [];
+    this.setPinData(D => { claims.forEach(cl => { const pin = this.ensurePin(D, A, cl.st);
+      const cc = { id: 'claim-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text: cl.text, pins: [pin], fixed: [pin], q: cl.src, by: 'ask', g: { verdict: 'source', why: 'From the chat answer, quoted from its own passage.', at: Date.now() } };
+      if (cl.date) cc.date = cl.date; D.claims.push(cc); newIds.push(cc.id); }); return D; });
+    if (!c.artifacts.includes(docId)) c.artifacts.push(docId); c.artCur = docId; t.artDoc = docId; t.artNew = created; t.artAdd = claims.length; this.saveConv();
+    this.groundClaims(newIds); return docId; }
   askToDraft(t) {
     const A = this.analysis();
     const docOfName = n => this._ix && this._ix.docOf[n];
@@ -3442,6 +3485,7 @@ class Component extends DCLogic {
     const model = this.akModel(); const ms = this.akModels(); const MM = this._askM; const isWL = model.startsWith('webllm:'); const gpu = !!(MM && MM.webgpu()); const loaded = !!(MM && isWL && MM.webllmLoaded(model.slice(7))); const mInfo = ms.find(m => m.v === model) || { name: model, size: '' }; const LD = S.akLoad;
     const docOfName = n => this._ix && this._ix.docOf[n];
     const refInfo = ref => { const m = String(ref).match(/^(.*)#(\d+)-(\d+)$/); if (!m) return null; const id = docOfName(m[1]); const d = id && A.docById[id]; if (!d) return null; const a = +m[2], b = +m[3]; const st = (A.stsByDoc[id] || []).find(x => x.e > a && x.s < b) || null; return { id, d, st, a, b }; };
+    const PD = this.pinData(); const docsById = {}; PD.docs.forEach(d => docsById[d.id] = d);
     const turns = conv.turns.map((t, i) => {
       const num = new Map(); (t.attr || []).forEach(x => { if (x.ref && !num.has(x.ref)) num.set(x.ref, num.size + 1); });
       const bad = (t.findings || []).filter(f => !f.echoesQuestion);
@@ -3454,10 +3498,18 @@ class Component extends DCLogic {
       const gen = t.attr && t.attr.some(x => x.ref && this._ix && this._ix.docOf[(String(x.ref).match(/^(.*)#/) || [])[1]]);
       return { n: String(t.n), q: t.question, sents, srcs, hasSrcs: srcs.length > 0, bad: bad.map(f => f.text).join(' · '), hasBad: bad.length > 0, noMaterial: !(t.offered || []).length,
         hasRes: !!(t.resolved && t.resolved.length), resLines: (t.resolved || []).map(r => ({ t: r.mode === 'nearmiss' ? 'Read “' + r.from + '” as ' + r.to + ': one letter off it, and off no other name.' : 'Did not guess who “' + r.from + '” is: ' + r.why + '.', col: r.mode === 'nearmiss' ? 'var(--acc)' : 'var(--amber)' })), hasNotes: !!(t.notes && t.notes.lines && t.notes.lines.length), notesLines: ((t.notes && t.notes.lines) || []).map(l => ({ l })), notesLine: t.notes ? (t.notes.empty ? 'The reader made no notes on these passages, and the model was told so.' : plural(t.notes.lines.length, 'note') + ' from ' + t.notes.coverage + '% of the sentences read · ' + plural(t.notes.spans, 'span') + ' of source text sent with them' + (t.notes.omitted ? ' · ' + t.notes.omitted + ' lower-ranked notes held back' : '')) : '', hasNotesLine: !!t.notes, hasRd: !!(t.reading && t.reading.lines && t.reading.lines.length), rdLines: ((t.reading && t.reading.lines) || []).map(l => ({ t: l.text, onClick: () => A.names[l.name] ? this.openProfile(l.name) : null })), hasComp: !!C, compHead: C ? C.head : '', compLines: C ? C.lines.map(l => ({ l })) : [], compSaid: C ? C.said : '', onComp: () => this.setState({ view: 'records', readDoc: null, dbT: C && C.type, dbAskDraft: C && C.q, dbRes: null }, () => C && this.dbRun(C.q)),
-        rec: 'On record · turn ' + t.n + ' · ' + recBits.join(' · '), fold: t.foldLine, meter: 'Sent ' + t.sentChars.toLocaleString() + ' characters in place of a ' + t.transcriptChars.toLocaleString() + '-character transcript', meta: t.model + (t.tokens && t.tokens.secs ? ' · ' + t.tokens.secs.toFixed(1) + ' s' : '') + (t.refresh && !t.refresh.ok && t.refresh.why ? ' · summary kept: ' + short(t.refresh.why, 120) : ''),
-        canGen: gen, onGen: () => this.askToDraft(t),
+        rec: 'On record · turn ' + t.n + ' · ' + recBits.join(' · '), fold: t.foldLine, meter: 'Sent ' + t.sentChars.toLocaleString() + ' characters in place of a ' + t.transcriptChars.toLocaleString() + '-character transcript', meta: t.model + (t.tokens && t.tokens.secs ? ' · ' + t.tokens.secs.toFixed(1) + ' s' : '') + (t.refresh && t.refresh.pending ? ' · folding…' : t.refresh && !t.refresh.ok && t.refresh.why ? ' · summary kept: ' + short(t.refresh.why, 120) : ''),
+        canGen: gen && (S.akMode || 'chat') !== 'generate', onGen: () => this.askToDraft(t),
+        isGen: (S.akMode || 'chat') === 'generate', artHas: !!t.artDoc,
+        artLine: t.artDoc ? ((t.artNew ? 'Started “' + ((docsById[t.artDoc] || {}).title || 'artifact') + '” · ' : 'Added ' + plural(t.artAdd || 0, 'claim') + ' to “' + ((docsById[t.artDoc] || {}).title || 'artifact') + '”') + (t.artNew ? plural(t.artAdd || 0, 'claim') : '')) : '',
+        onOpenArt: () => this.setState({ view: 'draft', readDoc: null, sel: null, f: {} }),
         i, onRun: e => { let q = t.question; try { const cell = e && e.target && e.target.closest ? e.target.closest('[data-cell]') : null; const ta = cell && cell.querySelector('textarea'); if (ta && String(ta.value).trim()) q = ta.value; } catch (er) {} this.askSend(String(q).trim()); } }; });
     const sm = conv.summary || {};
+    const cA = this.convArts() || { artifacts: [], artCur: null };
+    const artList = (cA.artifacts || []).filter(id => docsById[id]).map(id => { const d = docsById[id]; const on = cA.artCur === id; const n = (d.claims || []).filter(c => (c.text || '').trim() && c.kind !== 'heading').length;
+      return { label: (d.title || 'Untitled') + ' · ' + plural(n, 'claim'), bg: on ? 'var(--sel)' : 'transparent', bd: on ? '#8b5cf6' : 'var(--line2)', col: on ? 'var(--ink)' : 'var(--mut)', onClick: () => { if (cA.artCur !== id) { cA.artCur = id; this.saveConv(); this.forceUpdate(); } } }; });
+    const sd = cA.artCur ? docsById[cA.artCur] : null; const sdClaims = sd ? (sd.claims || []).filter(c => (c.text || '').trim() && c.kind !== 'heading') : [];
+    const artSel = sd ? { title: sd.title || 'Artifact', n: plural(sdClaims.length, 'claim'), claims: sdClaims.slice(0, 30).map(c => ({ text: short(clean(c.text), 300), n: (c.pins || []).length })), onOpen: () => this.setState({ view: 'draft', readDoc: null, sel: null, f: {} }) } : null;
     const M = this._askM; let nextChars = 0; try { if (M) nextChars = M.FOLD.charCount(M.FOLD.buildTurnMessages({ basePrompt: 'x'.repeat(290), summary: sm, history: conv.history, question: '' })); } catch (e) {}
     const trChars = conv.history.reduce((n, m) => n + (m.content || '').length, 0);
     const stageL = { indexing: 'Indexing the passages…', retrieving: 'Finding passages by the question’s own words…', reading: 'Reading the passages into notes…', answering: 'Answering…', checking: 'Checking every sentence against the passages…', folding: 'Folding the turn…' };
@@ -3471,8 +3523,16 @@ class Component extends DCLogic {
       nextN: String(conv.turns.length ? parseInt(conv.turns[conv.turns.length - 1].n) + 1 : 1),
       modes: (() => { const akMode = S.akMode || 'chat'; const seg = on => ({ bg: on ? 'var(--sel)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)' });
         return [['chat', 'Chat'], ['generate', 'Generate'], ['notebook', 'Notebook']].map(([k, l]) => ({ label: l, ...seg(akMode === k), onClick: () => this.setState({ akMode: k }) })); })(),
-      mChat: (S.akMode || 'chat') === 'chat', mGen: S.akMode === 'generate', mNb: S.akMode === 'notebook', showCells: S.akMode !== 'generate',
-      modeNote: S.akMode === 'generate' ? 'Build a sourced document — the answers you ask for, laid out by kind.' : S.akMode === 'notebook' ? 'Every cell can be edited and re-run; the output of each run stays below its cell.' : 'The conversation — every answer checked against its passages.',
+      mChat: (S.akMode || 'chat') === 'chat', mGen: S.akMode === 'generate', mNb: S.akMode === 'notebook', mThread: (S.akMode || 'chat') !== 'notebook', showCells: true,
+      modeNote: S.akMode === 'generate' ? 'Ask for anything. Every answer becomes an artifact, linked to this thread; keep building on the one you pick.' : S.akMode === 'notebook' ? 'Every cell can be edited and re-run; the output of each run stays below its cell.' : 'The conversation — every answer checked against its passages.',
+      nbExport: () => this.nbExport(), nbOpenLog: () => this.nbOpenLog(),
+      nbHasLog: !!this.notebookLogDoc(),
+      nbLogLine: this.notebookLogDoc() ? 'Kept as a source in this workspace — ask about this notebook in Chat.' : 'Run a cell and its log is kept here as a source you can read and ask about.',
+      artList, artHint: S.akNew ? 'Next answer starts a new artifact.' : (cA.artCur ? 'Answers add to the artifact you picked.' : 'The first answer starts an artifact.'),
+      artSelHas: !!artSel, artSel: artSel || { title: '', n: '', claims: [], onOpen: () => {} },
+      artNew: () => { const c = this.convArts(); if (c) { c.artCur = null; this.saveConv(); } this.setState({ akNew: true }); }, artNewCol: S.akNew ? 'var(--acc)' : 'var(--mut)',
+      ph: S.akMode === 'generate' ? 'Ask for any document from this workspace — a brief, a timeline, a summary of a name or office. Enter to send; keep going to build it up.' : 'Ask about the sources in this workspace — Enter to ask, Shift+Enter for a new line',
+      sendLabel: S.akMode === 'generate' ? 'Generate ↵' : 'Ask ↵',
       gKinds: [['brief', 'Brief'], ['timeline', 'Timeline']].map(([k, l]) => { const on = (S.gKind || 'brief') === k; return { label: l, bg: on ? 'var(--sel)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)', onClick: () => this.setState({ gKind: k }) }; }),
       gModes: [['mech', 'Quotes'], ['model', 'Model']].map(([k, l]) => { const on = (S.gMode || 'mech') === k; return { label: l, bg: on ? 'var(--sel)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)', onClick: () => this.setState({ gMode: k }) }; }),
       gSubj: S.gSubj != null ? S.gSubj : '', onGSubj: e => this.setState({ gSubj: e.target.value }),
@@ -3483,7 +3543,7 @@ class Component extends DCLogic {
       busy: !!S.akBusy, stage: stageL[S.akBusy] || '', pendingQ: S.akPending || '', hasPending: !!S.akPending, stream: S.akStream || '', hasStream: !!S.akStream,
       pendComp: S.akComputed ? S.akComputed.head : '', hasPendComp: !!S.akComputed,
       err: S.akErr || '', hasErr: !!S.akErr, q: S.akQ || '', onQ: e => this.setState({ akQ: e.target.value }), onKey: e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.askSend(); } }, send: () => this.askSend(), canSend: this.llmOk() && !S.akBusy, stop: () => { if (this._akAbort) this._akAbort.abort(); },
-      reset: () => { if (M) { this._conv = M.emptyConv(); this.saveConv(); } this._lastMsgs = null; this.setState({ akErr: '', akShowSent: false }); },
+      reset: () => { if (this._akFold) { try { this._akFold.abort(); } catch (e) {} this._akFold = null; } if (M) { this._conv = M.emptyConv(); this.saveConv(); } this._lastMsgs = null; this.setState({ akErr: '', akShowSent: false }); },
       sm: { topic: sm.topic || '—', flow: sm.flow || '', entities: (sm.entities || []).join(' · '), context: sm.context || '', hasFlow: !!sm.flow, hasEnt: !!(sm.entities || []).length, hasCtx: !!sm.context },
       recs, hasRecs: recs.length > 0, meter: 'Next turn carries about ' + nextChars.toLocaleString() + ' characters plus the new passages. The transcript it stands in for is ' + trChars.toLocaleString() + '.',
       canSent: !!this._lastMsgs, sentOpen: !!S.akShowSent && !!this._lastMsgs, toggleSent: () => this.setState({ akShowSent: !S.akShowSent }), sentLabel: S.akShowSent ? 'Hide what was sent' : 'Show exactly what the last turn sent',
@@ -3492,6 +3552,13 @@ class Component extends DCLogic {
         const qs = [];
         const nameEntries = Object.entries(A.names || {}).filter(([, n]) => (n.type === 'person' || n.type === 'organisation') && n.docs.size > 1);
         nameEntries.sort((a, b) => b[1].sts.length - a[1].sts.length);
+        if ((S.akMode || 'chat') === 'generate') {
+          if (nameEntries.length) { qs.push('Write a brief on ' + nameEntries[0][0] + '.'); qs.push('Make a timeline of ' + nameEntries[0][0] + ' from the sources.'); }
+          const kinds = [...new Set(A.docs.map(d => d.kind || d.type).filter(Boolean))];
+          if (kinds.length) qs.push('Summarize what these ' + A.docs.length + ' sources say by kind.');
+          if (!qs.length && A.docs.length) qs.push('Write an overview of this workspace from its sources.');
+          return qs.slice(0, 3).map(x => ({ t: x, onClick: () => this.setState({ akQ: x }) }));
+        }
         if (nameEntries.length) qs.push('What does this workspace say about ' + nameEntries[0][0] + '?');
         const kinds = [...new Set(A.docs.map(d => d.kind || d.type).filter(Boolean))];
         if (kinds.length > 1) qs.push('How many sources are there by kind?');
@@ -3669,7 +3736,8 @@ class Component extends DCLogic {
       status: blocked ? 'Export is blocked: ' + [nFail ? plural(nFail, 'claim') + ' don’t match their excerpts' : '', nCont ? plural(nCont, 'claim') + ' held otherwise by the sources' : '', nUntried ? plural(nUntried, 'claim') + ' not checked yet' : ''].filter(Boolean).join(', ') + '.' : plural(nSrc, 'claim') + ' grounded in the sources' + (nAuthor ? ', ' + nAuthor + ' attributed to you' : '') + '. Ready to export.',
       statusColor: blocked ? 'var(--amber)' : 'var(--ok)', canGroundAll: true, groundAllLabel: nUntried ? 'Ground ' + plural(nUntried, 'unchecked claim') : 'Re-test every claim', onGroundAll: () => this.groundClaims() };
     const gk = S.gKind || 'brief', gm = S.gMode || 'mech'; const seg = (on) => ({ bg: on ? 'var(--sel2)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)' });
-    const gen = { kinds: [['brief', 'Brief'], ['timeline', 'Timeline']].map(([k, l]) => ({ label: l, ...seg(gk === k), onClick: () => this.setState({ gKind: k }) })),
+    const gen = { openGen: () => this.setState({ view: 'ask', akMode: 'generate' }),
+      kinds: [['brief', 'Brief'], ['timeline', 'Timeline']].map(([k, l]) => ({ label: l, ...seg(gk === k), onClick: () => this.setState({ gKind: k }) })),
       modes: [['mech', 'Quotes, no model'], ['model', 'Local model']].map(([k, l]) => ({ label: l, ...seg(gm === k), onClick: () => this.setState({ gMode: k }) })),
       subject: S.gSubj != null ? S.gSubj : this.defaultSubject(A), onSubject: e => { this._gSubj = e.target.value; },
       onRun: () => this.generate(), isModel: gm === 'model', llmUrl: this.llmCfg().url, llmModel: this.llmCfg().model, onLlmUrl: e => this.setLlm({ url: e.target.value.trim() }), onLlmModel: e => this.setLlm({ model: e.target.value.trim() }), onLlmTest: () => this.testLLM(), llmTest: S.llmTest || 'Runs on your machine. Ollama (…:11434) or any OpenAI-compatible server (LM Studio …:1234/v1). Nothing is sent anywhere else.', runLabel: S.gen ? 'Working…' : 'Fill the document', op: S.gen ? 0.6 : 1,

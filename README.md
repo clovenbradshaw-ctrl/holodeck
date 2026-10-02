@@ -27,3 +27,11 @@ The first time the page opens, it deletes the persisted history of the old fixed
 ## Status
 
 This is the live, ongoing home for this surface — active development happens here going forward, not in a local-only copy.
+
+## DeepSeek experiment (result: not in-tab)
+
+Tried putting DeepSeek in the browser. WebLLM only prebuilds the R1-Distill **reasoning** models (`DeepSeek-R1-Distill-Llama-8B`, `DeepSeek-R1-Distill-Qwen-7B`), and a reasoning model is the wrong tool here: the fold does the reasoning itself and wants the answer only. Asked something trivial ("hi"), an R1 model over-thinks, loops, and can spend the whole token budget before it ever reaches the answer. Hiding the thinking trace does not fix that — the compute is still spent. So no DeepSeek is offered in-tab.
+
+DeepSeek's non-reasoning option is the MoE (V2-Lite / Coder-V2-Lite, 16 B total but 2.4 B active per token). It has no published webgpu `.wasm`, so it runs through the Ollama lane (`deepseek-coder-v2:lite`) instead — non-reasoning, minimal per-token compute, and it flows through the identical full pipeline (listed in the model dropdown automatically when Ollama is up).
+
+The roster filters reasoning models out of **both** lanes, by name (`isThinkingModel` in `holodeck-ask.js`): `deepseek-r1`, `qwq`, `qwen3` (thinks by default), and the `*-reasoning` / `*thinker` family. A reasoner over-thinks a simple prompt, loops, and can spend the whole budget before answering — the opposite of the fold, which does the reasoning itself. `qwen3-coder` and `deepseek-coder-v2` are not thinking models and stay.
