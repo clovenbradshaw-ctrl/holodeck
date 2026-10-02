@@ -73,8 +73,7 @@ const PERSONAS = {
     ],
     webScope: "wikipedia",
     webQuery: "Nashville Metropolitan Development Housing Agency MDHA violations",
-    question:
-      "Take the largest landlord by property count in the landlord data. Is that landlord's violation cluster unusual for the district it sits in? Use the demographic slice.",
+    question: "How many code violations are recorded for MDHA properties, and which council district has the most?",
   },
 };
 

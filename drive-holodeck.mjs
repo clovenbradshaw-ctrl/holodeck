@@ -91,7 +91,7 @@ export class Surface {
   }
 
   async shot(name) {
-    const f = path.join(OUT, `${name}.png`);
+    const f = path.resolve(OUT, name.endsWith(".png") ? name : name + ".png");
     await this.page.screenshot({ path: f, fullPage: false, timeout: 40000, animations: "disabled" });
     return f;
   }
