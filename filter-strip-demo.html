@@ -218,15 +218,15 @@ const PLAIN_GRAIN={Ground:'Background',Figure:'Figure',Pattern:'Pattern'};
 const ACT_WORD={NUL:'Clear',SIG:'Notice',INS:'Start',SEG:'Split',CON:'Bind',SYN:'Build',DEF:'Frame',EVA:'Weigh',REC:'Rebuild'};
 /* 27 cell words = stance inflected by terrain (proposed vocabulary, 2026-10-02) */
 const VOCAB={
- 'NUL|Ground':['Emptying','Emptying Voids'],'NUL|Figure':['Dissecting','Dissecting Entities'],'NUL|Pattern':['Unraveling','Unraveling Kinds'],
- 'SIG|Ground':['Tending','Tending Voids'],'SIG|Figure':['Binding','Binding Entities'],'SIG|Pattern':['Tracing','Tracing Kinds'],
- 'INS|Ground':['Seeding','Seeding Voids'],'INS|Figure':['Making','Making Entities'],'INS|Pattern':['Composing','Composing Kinds'],
- 'SEG|Ground':['Clearing','Clearing Fields'],'SEG|Figure':['Severing','Severing Links'],'SEG|Pattern':['Unweaving','Unweaving Networks'],
- 'CON|Ground':['Tilling','Tilling Fields'],'CON|Figure':['Coupling','Coupling Links'],'CON|Pattern':['Threading','Threading Networks'],
- 'SYN|Ground':['Cultivating','Cultivating Fields'],'SYN|Figure':['Forging','Forging Links'],'SYN|Pattern':['Wiring','Wiring Networks'],
- 'DEF|Ground':['Dispersing','Dispersing Atmospheres'],'DEF|Figure':['Fracturing','Fracturing Lenses'],'DEF|Pattern':['Deconstructing','Deconstructing Paradigms'],
- 'EVA|Ground':['Tuning','Tuning Atmospheres'],'EVA|Figure':['Focusing','Focusing Lenses'],'EVA|Pattern':['Weaving','Weaving Paradigms'],
- 'REC|Ground':['Brewing','Brewing Atmospheres'],'REC|Figure':['Casting','Casting Lenses'],'REC|Pattern':['Authoring','Authoring Paradigms']};
+ 'NUL|Ground':['Clearing','Clearing the ground'],'NUL|Figure':['Inspecting','Inspecting a thing'],'NUL|Pattern':['Breaking','Breaking down a category'],
+ 'SIG|Ground':['Tracking',"Tracking what's present"],'SIG|Figure':['Naming','Naming a thing'],'SIG|Pattern':['Grouping','Grouping the categories'],
+ 'INS|Ground':['Setting','Setting new ground'],'INS|Figure':['Creating','Creating a thing'],'INS|Pattern':['Applying','Applying a procedure'],
+ 'SEG|Ground':['Splitting','Splitting the field'],'SEG|Figure':['Cutting','Cutting a link'],'SEG|Pattern':['Breaking','Breaking the network'],
+ 'CON|Ground':['Maintaining','Maintaining the field'],'CON|Figure':['Connecting','Connecting two things'],'CON|Pattern':['Following','Following the network'],
+ 'SYN|Ground':['Consolidating','Consolidating the field'],'SYN|Figure':['Merging','Merging links'],'SYN|Pattern':['Building','Building a network'],
+ 'DEF|Ground':['Clearing','Clearing the context'],'DEF|Figure':['Checking','Checking a lens'],'DEF|Pattern':['Breaking','Breaking the paradigm'],
+ 'EVA|Ground':['Reading','Reading the context'],'EVA|Figure':['Testing','Testing through a lens'],'EVA|Pattern':['Comparing','Comparing paradigms'],
+ 'REC|Ground':['Resetting','Resetting the context'],'REC|Figure':['Revising','Revising a reading'],'REC|Pattern':['Rewriting','Rewriting the paradigm']};
 
 /* ── state ────────────────────────────────────────────── */
 let uid=1; const nid=()=>'r'+(uid++);

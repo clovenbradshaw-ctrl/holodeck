@@ -17,6 +17,7 @@
 // ground-truth label here; detection never sees it.
 
 import { openSurface } from "./drive-holodeck.mjs";
+import { pathToFileURL } from "node:url";
 
 const TOPICS = [
   {
@@ -24,6 +25,7 @@ const TOPICS = [
     docs: [
       "The Bellevue branch of the Metro Public Library is set to reopen in May after an $18 million renovation. Director Paul Ashworth told the library board the project came in under its $20 million estimate, and the new 24,000 square foot reading room will open to the public first. The renovation added meeting space and moved the children's collection to the ground floor.",
       "Paul Ashworth, the library director, confirmed the Bellevue renovation is on track to reopen in May. The $18 million project stayed under the $20 million estimate, he told the board, and the 24,000 square foot reading room is the centerpiece. The children's collection moves to the ground floor when the branch reopens.",
+      "Workers finished the Bellevue reading room this week, and the Metro Public Library branch reopens in May. Director Paul Ashworth says the $18 million renovation held to its $20 million budget, and the 24,000 square foot space will be the largest reading room in the system.",
     ],
   },
   {
@@ -31,20 +33,31 @@ const TOPICS = [
     docs: [
       "Northwind Quantum raised $90 million for its annealing chip line. Founder Elena Marsh says the Phoenix-class chip solved a scheduling workload in 42 microseconds, and the round was led by Meridian Capital. The new funding will double the company's fab capacity by next year.",
       "Elena Marsh's Northwind Quantum closed a $90 million round led by Meridian Capital. The Phoenix-class annealing chip completed a scheduling workload in 42 microseconds, Marsh said, and the company plans to double its fab capacity by next year.",
+      "Meridian Capital led the $90 million round in Northwind Quantum announced this week. Founder Elena Marsh told investors the Phoenix-class chip finished a scheduling workload in 42 microseconds, and the fab capacity will double next year.",
     ],
   },
   {
     label: "budget",
     docs: [
-      "The Metro Council budget committee reviewed the FY2027 operating budget on Tuesday. Chair Dana Whitfield said the public safety allocation rose to $412 million, a cut from the $430 million the mayor proposed, and the full council will vote next week.",
+      "The Metro Council budget committee reviewed the FY2027 operating budget on Tuesday. Chair Dana Whitfield said the public safety allocation rose to $412 million, a cut from the $430 million the mayor proposed, and the full council will vote next week. Miriam Okafor reported for the Metro Daily on Tuesday's hearing.",
       "Council Chair Dana Whitfield told reporters the FY2027 operating budget falls short of the mayor's request. The public safety allocation was set at $412 million after the committee vote, and the full council votes on it next week.",
+      "The FY2027 operating budget heads to the full Metro Council next week after the committee set public safety at $412 million. Dana Whitfield, the committee chair, called the cut from the mayor's $430 million proposal a necessary compromise.",
     ],
   },
   {
-    label: "audit", // ECHO TOPIC: the same story told with different proper names — only the claim and figures recur
+    label: "audit", // ECHO TOPIC: the same story told with different proper names — only the claim recurs
     docs: [
-      "An audit of the startup's flagship processor failed its own reliability claim. The chip could not sustain a 42-hour burn test, the audit said, and the projected launch now slips to 2027. Engineers blamed a cooling defect in the production unit.",
-      "The company's newest processor could not pass a 42-hour burn test, outside reviewers found. The projected launch now slips to 2027, undercutting the startup's reliability claim, and engineers are investigating a cooling defect.",
+      "An audit of the startup's flagship processor failed its own reliability claim. The projected launch now slips to 2027 after the chip could not sustain a 42-hour burn test, and engineers are investigating a cooling defect in the production unit.",
+      "The projected launch now slips to 2027 after outside reviewers found the company's newest processor could not pass a 42-hour burn test. The finding undercuts the startup's reliability claim, and engineers are investigating a cooling defect.",
+      "Engineers are investigating a cooling defect after the flagship processor failed a 42-hour burn test. The audit undercuts the startup's reliability claim, and the projected launch now slips to 2027.",
+    ],
+  },
+  {
+    label: "transit",
+    docs: [
+      "The Regional Transit Authority approved a $2.4 billion light rail plan for the central corridor. Executive Director Harold Peete said the first line could open by 2030, and federal funding would cover half the cost. Miriam Okafor reported for the Metro Daily from the board room.",
+      "Harold Peete, the transit authority's executive director, says the $2.4 billion light rail plan can open its first line by 2030. Federal money would cover half the cost, the board heard this week.",
+      "The Regional Transit Authority board approved the $2.4 billion central corridor light rail plan on Thursday. Harold Peete said the first line opens by 2030 if federal funds cover half the cost.",
     ],
   },
 ];
@@ -69,11 +82,22 @@ const CROSS = [
   },
 ];
 
+// CROSS-TOPIC BYLINE: the same reporter (Miriam Okafor, Metro Daily) is credited on the budget story, the
+// transit story, AND a third, unrelated health-clinic story. She touches four documents -- inside the hub
+// floor -- so name recurrence reads her as a connector and drags all three stories together. The holograph
+// refuses it: the reporter's bond is one link, and each story keeps its own echo/measure/bond structure.
+const BYLINE = [
+  { label: "byline-clinic", docs: [
+    "Miriam Okafor reported for the Metro Daily that the Cedar Health clinic will open a downtown branch. The clinic's director, Anita Reyes, said the $6 million project was funded by a federal grant.",
+    "Miriam Okafor wrote for the Metro Daily about the Cedar Health clinic's new downtown branch. Anita Reyes, the director, said the $6 million project is covered by a federal grant.",
+  ] },
+];
+
 function corpus() {
   const docs = [];
   const truth = new Map(); // doc id -> topic label
   let i = 0;
-  for (const t of [...TOPICS, ...CROSS]) {
+  for (const t of [...TOPICS, ...CROSS, ...BYLINE]) {
     t.docs.forEach((text, k) => {
       const id = "d" + i++;
       docs.push({ id, title: t.label + "-" + (k + 1), text });
@@ -82,6 +106,8 @@ function corpus() {
   }
   return { docs, truth };
 }
+
+export { TOPICS, CROSS, BYLINE };
 
 // score a paradigm run: every detected group must be single-topic (no over-merge), and each topic's
 // documents must be grouped with at least one partner (recall). Returns { groups, overMerge, strays,
@@ -151,4 +177,4 @@ async function main() {
   }
 }
 
-main();
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();

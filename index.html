@@ -153,8 +153,11 @@ select option{background:var(--s1);color:var(--ink)}
     <div style="max-width:1230px;margin:0 auto;padding:0 20px 8px;display:flex;align-items:center;gap:8px;position:relative;flex-wrap:wrap">
       <button onClick="{{ stripToggleSources }}" title="Sources — what is admitted" style="display:flex;align-items:center;gap:7px;background:var(--s1);border:1px solid var(--line2);border-radius:8px;padding:4px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2);white-space:nowrap;position:relative;z-index:56" style-hover="border-color:var(--acc)"><span style="font:500 13px 'JetBrains Mono';color:var(--acc)">▦</span><b style="font-weight:600;color:var(--ink)">{{ stripSourcesLabel }}</b><span style="color:var(--dim);font-size:11px">▾</span></button>
       <button onClick="{{ stripToggleSegment }}" title="Segment — filter and cut the sources" style="display:flex;align-items:center;gap:7px;background:var(--s1);border:1px solid var(--line2);border-radius:8px;padding:4px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2);white-space:nowrap;position:relative;z-index:56" style-hover="border-color:var(--acc)"><span style="font:500 13px 'JetBrains Mono';color:var(--acc)">⑃</span><b style="font-weight:600;color:var(--ink)">{{ stripSegLabel }}</b><span style="color:var(--dim);font-size:11px">▾</span></button>
-      <button onClick="{{ stripToggleRead }}" title="Read as — what × where × scale" style="display:flex;align-items:center;gap:7px;background:var(--s1);border:1px solid var(--line2);border-radius:8px;padding:4px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2);white-space:nowrap;position:relative;z-index:56" style-hover="border-color:var(--acc)"><span style="font:500 13px 'JetBrains Mono';color:var(--acc)">◫</span><b style="font-weight:600;color:var(--ink)">{{ stripReadLabel }}</b><span style="color:var(--dim);font-size:11px">▾</span></button>
-      <span style="margin-left:auto;font:500 12px 'JetBrains Mono';color:var(--dim);white-space:nowrap">{{ stripStatus }}</span>
+      <button onClick="{{ stripToggleRead }}" title="Read as — what × where × scale" style="display:flex;align-items:center;gap:7px;background:var(--s1);border:1px solid {{ readingTint }};border-radius:8px;padding:4px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2);white-space:nowrap;position:relative;z-index:56" style-hover="border-color:var(--acc)"><span style="font:500 13px 'JetBrains Mono';color:{{ readingTint }}">◫</span><b style="font-weight:600;color:var(--ink)">{{ stripReadLabel }}</b><span style="color:var(--dim);font-size:11px">▾</span></button>
+      <span id="hd-reading" title="{{ stripAutoWhy }}" style="display:flex;align-items:baseline;gap:7px;min-width:0;overflow:hidden;white-space:nowrap;margin-left:2px">
+        <span style="font:400 11px 'JetBrains Mono';color:var(--dim)">{{ stripReadFine }}</span>
+        <sc-if value="{{ readingAuto }}" hint-placeholder-val="{{ false }}"><span style="font:600 10px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:{{ readingTint }}">auto</span></sc-if>
+      </span>
       <sc-if value="{{ stripAnyOpen }}" hint-placeholder-val="{{ false }}"><div onClick="{{ stripClose }}" style="position:fixed;inset:0;z-index:55"></div></sc-if>
       <sc-if value="{{ stripOpenSources }}" hint-placeholder-val="{{ false }}">
         <div style="position:absolute;top:100%;left:20px;z-index:60;width:400px;max-height:56vh;overflow:auto;background:var(--s1);border:1px solid var(--line2);border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.55)">
@@ -168,13 +171,32 @@ select option{background:var(--s1);color:var(--ink)}
       </sc-if>
       <sc-if value="{{ stripOpenSegment }}" hint-placeholder-val="{{ false }}">
         <div style="position:absolute;top:100%;left:150px;z-index:60;width:620px;max-height:64vh;overflow:auto;background:var(--s1);border:1px solid var(--line2);border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.55)">
-          <div style="padding:10px 14px;border-bottom:1px solid var(--line);font:600 13px 'Hanken Grotesk'">Segment <span style="font:400 12px 'Hanken Grotesk';color:var(--mut)">the cut · polish EOQL, glyphs out</span></div>
+          <div style="padding:10px 14px;border-bottom:1px solid var(--line);font:600 13px 'Hanken Grotesk'">Segment <span style="font:400 12px 'Hanken Grotesk';color:var(--mut)">the cut · conditions by default · EOQL when you want it</span></div>
+          <div style="display:flex;gap:2px;padding:0 12px;border-bottom:1px solid var(--line)">
+            <button onClick="{{ stripTabConditions }}" style="background:none;border:0;padding:8px 10px;font:500 12px 'Hanken Grotesk';color:{{ stripOnConditions ? 'var(--ink)' : 'var(--mut)' }};border-bottom:2px solid {{ stripOnConditions ? '#8b5cf6' : 'transparent' }};cursor:pointer">Conditions</button>
+            <button onClick="{{ stripTabEOQL }}" style="background:none;border:0;padding:8px 10px;font:500 12px 'Hanken Grotesk';color:{{ stripOnEOQL ? 'var(--ink)' : 'var(--mut)' }};border-bottom:2px solid {{ stripOnEOQL ? '#8b5cf6' : 'transparent' }};cursor:pointer">EOQL</button>
+          </div>
           <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px">
-            <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ stripGroupRow }}" as="g" hint-placeholder-count="6"><button onClick="{{ g.onClick }}" style="cursor:pointer;border:1px solid var(--line2);border-radius:999px;padding:3px 10px;font:500 12px 'Hanken Grotesk';background:{{ g.bg }};color:{{ g.color }}">{{ g.label }}</button></sc-for></div>
-            <input defaultValue="{{ stripEOVal }}" onChange="{{ stripEOChange }}" onKeyDown="{{ stripEOKey }}" placeholder="SEG(sources) AND EVA(kind is Audit) AND REC(by fold)" style="background:var(--s2);border:1px solid var(--line2);border-radius:8px;color:var(--ink);font:400 12px 'JetBrains Mono';padding:8px 10px;outline:none">
-            <div style="font:400 12px 'JetBrains Mono';color:var(--acc);min-height:16px">{{ stripEOGlyphs }}</div>
-            <div style="display:flex;gap:8px;align-items:center"><button onClick="{{ stripEOApply }}" class="" style="background:#8b5cf6;border:0;color:#fff;border-radius:7px;padding:5px 12px;cursor:pointer;font:600 12px 'Hanken Grotesk'">Apply EOQL</button><button onClick="{{ stripEOClear }}" style="background:none;border:1px solid var(--line2);color:var(--ink2);border-radius:7px;padding:4px 10px;cursor:pointer;font:500 12px 'Hanken Grotesk'">clear</button></div>
-            <sc-for list="{{ stripGaps }}" as="g" hint-placeholder-count="0"><div style="font:400 11px 'JetBrains Mono';color:var(--amber)">⚠ {{ g.text }}</div></sc-for>
+            <sc-if value="{{ stripOnConditions }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:7px;font:400 13px 'Hanken Grotesk';color:var(--mut)">Where <select value="{{ stripConn }}" onChange="{{ stripOnConn }}" style="background:var(--s2);border:1px solid var(--line2);border-radius:6px;color:var(--ink);font:500 12px 'Hanken Grotesk';padding:2px 6px"><option value="all">all</option><option value="any">any</option></select> of the following are true</div>
+              <sc-for list="{{ stripCondRows }}" as="c" hint-placeholder-count="2">
+                <div style="display:flex;align-items:center;gap:6px;padding:2px 0">
+                  <select value="{{ c.field }}" onChange="{{ c.onField }}" style="background:var(--s2);border:1px solid var(--line2);border-radius:7px;color:var(--ink);font:500 12px 'Hanken Grotesk';padding:4px 8px"><sc-for list="{{ c.fields }}" as="f" hint-placeholder-count="6"><option value="{{ f.k }}">{{ f.label }}</option></sc-for></select>
+                  <select value="{{ c.op }}" onChange="{{ c.onOp }}" style="background:var(--s2);border:1px solid var(--line2);border-radius:7px;color:var(--ink);font:500 12px 'Hanken Grotesk';padding:4px 8px"><sc-for list="{{ c.ops }}" as="o" hint-placeholder-count="6"><option value="{{ o.k }}">{{ o.label }}</option></sc-for></select>
+                  <sc-if value="{{ c.isSelect }}" hint-placeholder-val="{{ false }}"><select value="{{ c.value }}" onChange="{{ c.onVal }}" style="background:var(--s2);border:1px solid var(--line2);border-radius:7px;color:var(--ink);font:500 12px 'Hanken Grotesk';padding:4px 8px"><option value="">choose…</option><sc-for list="{{ c.vals }}" as="v" hint-placeholder-count="4"><option value="{{ v.v }}">{{ v.label }}</option></sc-for></select></sc-if>
+                  <sc-if value="{{ c.notSelect }}" hint-placeholder-val="{{ true }}"><input type="text" value="{{ c.value }}" onChange="{{ c.onVal }}" placeholder="value" style="width:130px;background:var(--s2);border:1px solid var(--line2);border-radius:7px;color:var(--ink);font:500 12px 'Hanken Grotesk';padding:4px 8px"></sc-if>
+                  <button onClick="{{ c.onRemove }}" style="all:unset;cursor:pointer;color:var(--dim);font-size:12px;padding:2px 5px">✕</button>
+                </div>
+              </sc-for>
+              <div style="display:flex;gap:12px;align-items:center"><button onClick="{{ stripAddCond }}" style="background:none;border:0;color:var(--acc);cursor:pointer;font:500 12px 'Hanken Grotesk';padding:0">+ Condition</button><sc-if value="{{ stripHasConds }}" hint-placeholder-val="{{ false }}"><button onClick="{{ stripClearConds }}" style="background:none;border:0;color:var(--dim);cursor:pointer;font:500 12px 'Hanken Grotesk';padding:0">clear</button></sc-if></div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ stripGroupRow }}" as="g" hint-placeholder-count="6"><button onClick="{{ g.onClick }}" style="cursor:pointer;border:1px solid var(--line2);border-radius:999px;padding:3px 10px;font:500 12px 'Hanken Grotesk';background:{{ g.bg }};color:{{ g.color }}">{{ g.label }}</button></sc-for></div>
+            </sc-if>
+            <sc-if value="{{ stripOnEOQL }}" hint-placeholder-val="{{ false }}">
+              <input defaultValue="{{ stripEOVal }}" onChange="{{ stripEOChange }}" onKeyDown="{{ stripEOKey }}" placeholder="SEG(sources) AND EVA(kind is Audit) AND REC(by fold)" style="background:var(--s2);border:1px solid var(--line2);border-radius:8px;color:var(--ink);font:400 12px 'JetBrains Mono';padding:8px 10px;outline:none">
+              <div style="font:400 12px 'JetBrains Mono';color:var(--acc);min-height:16px">{{ stripEOGlyphs }}</div>
+              <div style="display:flex;gap:8px;align-items:center"><button onClick="{{ stripEOApply }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:7px;padding:5px 12px;cursor:pointer;font:600 12px 'Hanken Grotesk'">Apply EOQL</button><button onClick="{{ stripEOClear }}" style="background:none;border:1px solid var(--line2);color:var(--ink2);border-radius:7px;padding:4px 10px;cursor:pointer;font:500 12px 'Hanken Grotesk'">clear</button></div>
+              <sc-for list="{{ stripGaps }}" as="g" hint-placeholder-count="0"><div style="font:400 11px 'JetBrains Mono';color:var(--amber)">⚠ {{ g.text }}</div></sc-for>
+            </sc-if>
             <sc-for list="{{ stripSegRows }}" as="row" hint-placeholder-count="3"><div style="border-top:1px solid var(--line);padding-top:6px;display:flex;flex-direction:column;gap:2px"><span style="font:600 12px 'Hanken Grotesk';color:var(--ink)">{{ row.label }} <span style="font:400 11px 'JetBrains Mono';color:var(--mut)">{{ row.n }}</span></span><span style="font:400 12px 'Hanken Grotesk';color:var(--mut)">{{ row.line }}</span></div></sc-for>
           </div>
         </div>
@@ -183,6 +205,10 @@ select option{background:var(--s1);color:var(--ink)}
         <div style="position:absolute;top:100%;left:300px;z-index:60;width:580px;background:var(--s1);border:1px solid var(--line2);border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.55)">
           <div style="padding:10px 14px;border-bottom:1px solid var(--line);font:600 13px 'Hanken Grotesk'">Read as <span style="font:400 12px 'Hanken Grotesk';color:var(--mut)">what × where × scale → one perspective</span></div>
           <div style="padding:10px 12px;display:flex;flex-direction:column;gap:7px">
+            <div style="display:flex;align-items:center;gap:9px;padding-bottom:2px">
+              <button onClick="{{ stripAutoToggle }}" style="cursor:pointer;border:1px solid {{ stripAutoOn ? '#8b5cf6' : 'var(--line2)' }};border-radius:999px;padding:3px 11px;font:600 11px 'JetBrains Mono';letter-spacing:.06em;text-transform:uppercase;background:{{ stripAutoOn ? '#8b5cf6' : 'transparent' }};color:{{ stripAutoOn ? '#fff' : 'var(--mut)' }}">Auto</button>
+              <span style="font:400 11px 'Hanken Grotesk';color:var(--mut)">{{ stripAutoWhy }}</span>
+            </div>
             <sc-for list="{{ stripReadRows }}" as="r" hint-placeholder-count="3">
               <div style="display:grid;grid-template-columns:92px minmax(0,1fr);gap:9px;align-items:center">
                 <span style="font:600 10px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--dim);text-align:right">{{ r.lab }}</span>
@@ -201,14 +227,7 @@ select option{background:var(--s1);color:var(--ink)}
 
     <main style="flex:1 1 520px;min-width:0;display:flex;flex-direction:column;gap:16px">
 
-      <sc-if value="{{ hasReading }}" hint-placeholder-val="{{ false }}">
-        <div id="hd-reading" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s1);border:1px solid var(--line);border-left:3px solid var(--acc2);border-radius:10px;padding:8px 12px">
-          <span style="font:600 11px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--dim)">Reading as</span>
-          <span style="font:500 17px 'Newsreader',serif;color:var(--ink)">{{ readingName }}</span>
-          <span style="font:400 11px 'JetBrains Mono';color:var(--dim)">{{ readingFine }}</span>
-          <span style="margin-left:auto;font:400 12px 'Hanken Grotesk';color:var(--mut)">{{ readingFocus }}</span>
-        </div>
-      </sc-if>
+
 
       <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
         <div style="padding:56px 16px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px">
@@ -916,46 +935,46 @@ select option{background:var(--s1);color:var(--ink)}
       </sc-if>
 
       <sc-if value="{{ v.draft }}" hint-placeholder-val="{{ false }}">
-        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px">
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:stretch">
-            <sc-for list="{{ docBar.tabs }}" as="t" hint-placeholder-count="2">
-              <button onClick="{{ t.onClick }}" style="text-align:left;cursor:pointer;background:{{ t.bg }};border:1px solid {{ t.bd }};border-radius:10px;padding:8px 12px;display:flex;flex-direction:column;gap:2px;max-width:240px" style-hover="border-color:#8b5cf6">
-                <span style="font:500 15px/1.3 'Newsreader',serif;color:{{ t.col }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:216px">{{ t.title }}</span>
-                <span style="font:500 12px 'JetBrains Mono';color:var(--mut)">{{ t.meta }}</span>
-              </button>
-            </sc-for>
-            <button onClick="{{ docBar.onNew }}" style="cursor:pointer;background:none;border:1px dashed var(--line2);border-radius:10px;padding:8px 14px;font:500 14px 'Hanken Grotesk';color:var(--acc)" style-hover="border-color:#8b5cf6">+ New document</button>
-          </div>
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-            <input key="{{ docBar.docKey }}" defaultValue="{{ docBar.title }}" onChange="{{ docBar.onTitle }}" placeholder="Document title" style="flex:1 1 320px;min-width:0;background:transparent;border:0;border-bottom:1px solid var(--line2);padding:4px 0;font:500 26px/1.2 'Newsreader',serif;color:var(--ink);outline:none"></input>
-            <sc-if value="{{ docBar.noAskDel }}" hint-placeholder-val="{{ true }}">
-              <div style="display:flex;gap:14px;font:500 14px 'Hanken Grotesk'">
-                <button onClick="{{ docBar.onDup }}" style="all:unset;cursor:pointer;color:var(--mut);white-space:nowrap" style-hover="color:var(--ink)">Duplicate</button>
-                <button onClick="{{ docBar.onDel }}" style="all:unset;cursor:pointer;color:var(--mut);white-space:nowrap" style-hover="color:var(--ink)">Delete</button>
-              </div>
-            </sc-if>
-            <sc-if value="{{ docBar.askDel }}" hint-placeholder-val="{{ false }}">
-              <div style="display:flex;gap:12px;align-items:center;font:500 14px 'Hanken Grotesk';color:var(--ink2);flex-wrap:wrap">
-                <span>{{ docBar.delMsg }}</span>
-                <button onClick="{{ docBar.onDelYes }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:4px 12px;cursor:pointer;font:600 14px 'Hanken Grotesk'">Delete</button>
-                <button onClick="{{ docBar.onDelNo }}" style="all:unset;cursor:pointer;color:var(--mut)">Cancel</button>
-              </div>
-            </sc-if>
-          </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-bottom:16px">
+          <span style="font:600 11px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--dim);white-space:nowrap">{{ docBar.count }}</span>
+          <sc-for list="{{ docBar.tabs }}" as="t" hint-placeholder-count="2">
+            <button onClick="{{ t.onClick }}" title="{{ t.title }}" style="display:flex;gap:6px;align-items:baseline;cursor:pointer;padding:5px 11px;border-radius:999px;background:{{ t.bg }};border:1px solid {{ t.bd }};font:500 13px 'Hanken Grotesk';color:{{ t.col }};white-space:nowrap">{{ t.title }}<span style="font:500 11px 'JetBrains Mono';color:var(--dim)">{{ t.meta }}</span></button>
+          </sc-for>
+          <button onClick="{{ docBar.onNew }}" title="New document" style="cursor:pointer;background:none;border:1px dashed var(--line2);border-radius:999px;padding:5px 11px;font:500 13px 'Hanken Grotesk';color:var(--acc);white-space:nowrap" style-hover="border-color:#8b5cf6">+ New</button>
+          <input key="{{ docBar.docKey }}" defaultValue="{{ docBar.title }}" onChange="{{ docBar.onTitle }}" placeholder="Untitled document" style="flex:1 1 160px;min-width:110px;background:transparent;border:0;border-bottom:1px solid var(--line2);padding:3px 0;outline:none;font:500 17px/1.2 'Newsreader',serif;color:var(--ink)"></input>
+          <sc-if value="{{ docBar.noAskDel }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;gap:12px;font:500 13px 'Hanken Grotesk'">
+              <button onClick="{{ docBar.onDup }}" style="all:unset;cursor:pointer;color:var(--mut);white-space:nowrap" style-hover="color:var(--ink)">Duplicate</button>
+              <button onClick="{{ docBar.onDel }}" style="all:unset;cursor:pointer;color:var(--mut);white-space:nowrap" style-hover="color:var(--bad)">Delete</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ docBar.askDel }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <span style="font:400 12px 'Hanken Grotesk';color:var(--mut)">{{ docBar.delMsg }}</span>
+              <button onClick="{{ docBar.onDelYes }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:3px 10px;cursor:pointer;font:600 13px 'Hanken Grotesk'">Delete</button>
+              <button onClick="{{ docBar.onDelNo }}" style="all:unset;cursor:pointer;color:var(--mut);font:500 13px 'Hanken Grotesk'">Cancel</button>
+            </div>
+          </sc-if>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
           <section style="flex:1 1 460px;min-width:0;display:flex;flex-direction:column;gap:12px">
             <div style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px">
               <div style="display:flex;gap:10px 14px;flex-wrap:wrap;align-items:center">
                 <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Generate</span>
-                <span style="font:400 13px 'Hanken Grotesk';color:var(--dim)">chat on the left, the folded output on the right — every run is a new fold</span>
-                <span style="flex:1"></span>
                 <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden">
-                  <sc-for list="{{ gen.modes }}" as="k" hint-placeholder-count="2"><button onClick="{{ k.onClick }}" style="border:0;background:{{ k.bg }};color:{{ k.col }};padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';white-space:nowrap">{{ k.label }}</button></sc-for>
+                  <sc-for list="{{ gen.kinds }}" as="k" hint-placeholder-count="2"><button onClick="{{ k.onClick }}" style="border:0;background:{{ k.bg }};color:{{ k.col }};padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';white-space:nowrap">{{ k.label }}</button></sc-for>
                 </div>
+                <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden">
+                  <sc-for list="{{ gen.modes }}" as="k" hint-placeholder-count="2"><button onClick="{{ k.onClick }}" style="border:0;background:{{ k.bg }};color:{{ k.col }};padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';white-space:nowrap">{{ k.label }}</button></sc-for>
+                </div>
+                <span style="flex:1"></span>
+              </div>
+              <div style="display:flex;gap:8px;align-items:flex-end">
+                <textarea value="{{ gen.prompt }}" onChange="{{ gen.onPrompt }}" onKeyDown="{{ gen.onKey }}" rows="2" placeholder="Describe anything to generate — a brief, a timeline, a summary, a list, a comparison…" style="flex:1;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:8px 12px;font:400 14px/1.5 'Hanken Grotesk';color:var(--ink);outline:none;resize:vertical"></textarea>
+                <button onClick="{{ gen.onRun }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:7px 16px;cursor:pointer;font:600 14px 'Hanken Grotesk';white-space:nowrap;opacity:{{ gen.op }}">{{ gen.runLabel }}</button>
               </div>
               <sc-if value="{{ gen.hasThread }}" hint-placeholder-val="{{ false }}">
-                <div style="display:flex;flex-direction:column;gap:8px;max-height:260px;overflow:auto">
+                <div style="display:flex;flex-direction:column;gap:8px;max-height:200px;overflow:auto;border-top:1px solid var(--line);padding-top:10px">
                   <sc-for list="{{ gen.thread }}" as="m" hint-placeholder-count="0">
                     <div style="display:flex;flex-direction:column;gap:2px;background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:8px 12px">
                       <span style="font:600 11px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">{{ m.who }}</span>
@@ -965,10 +984,6 @@ select option{background:var(--s1);color:var(--ink)}
                   </sc-for>
                 </div>
               </sc-if>
-              <div style="display:flex;gap:8px;align-items:flex-end">
-                <textarea value="{{ gen.prompt }}" onChange="{{ gen.onPrompt }}" onKeyDown="{{ gen.onKey }}" rows="2" placeholder="Describe anything to generate — a brief, a timeline, a summary, a list, a comparison…" style="flex:1;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:8px 12px;font:400 14px/1.5 'Hanken Grotesk';color:var(--ink);outline:none;resize:vertical"></textarea>
-                <button onClick="{{ gen.onRun }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:7px 16px;cursor:pointer;font:600 14px 'Hanken Grotesk';white-space:nowrap;opacity:{{ gen.op }}">{{ gen.runLabel }}</button>
-              </div>
               <sc-if value="{{ gen.hasFolds }}" hint-placeholder-val="{{ false }}">
                 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px">
                   <button onClick="{{ gen.onFoldPrev }}" style="background:none;border:1px solid var(--line2);border-radius:6px;padding:3px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2)">‹</button>
@@ -1269,13 +1284,16 @@ select option{background:var(--s1);color:var(--ink)}
             <sc-if value="{{ pf.sum.has }}" hint-placeholder-val="{{ false }}">
               <section style="background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:14px 18px;display:flex;flex-direction:column;gap:7px">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                  <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">What it is about</span>
+                  <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">{{ pf.sum.aboutLabel }}</span>
                   <span style="font:500 11px 'JetBrains Mono';color:var(--dim)">{{ pf.sum.countLabel }}</span>
                   <span style="flex:1"></span>
+                  <select value="{{ pf.sum.code }}" onChange="{{ pf.sum.onLang }}" title="Render the summary in this language — zero model" style="background:var(--s2);border:1px solid var(--line2);border-radius:8px;color:var(--ink);font:500 11px 'JetBrains Mono';padding:3px 6px;outline:none;cursor:pointer;max-width:130px">
+                    <sc-for list="{{ pf.sum.langOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.code }}">{{ o.label }}</option></sc-for>
+                  </select>
                   <div style="display:flex;gap:3px;background:var(--s2);border-radius:999px;padding:2px">
-                    <button onClick="{{ pf.sum.onSmall }}" style="{{ pf.sum.btnSmall }}">one line</button>
-                    <button onClick="{{ pf.sum.onMed }}" style="{{ pf.sum.btnMed }}">paragraph</button>
-                    <button onClick="{{ pf.sum.onFull }}" style="{{ pf.sum.btnFull }}">all, cited</button>
+                    <button onClick="{{ pf.sum.onSmall }}" style="{{ pf.sum.btnSmall }}">{{ pf.sum.oneLine }}</button>
+                    <button onClick="{{ pf.sum.onMed }}" style="{{ pf.sum.btnMed }}">{{ pf.sum.paragraph }}</button>
+                    <button onClick="{{ pf.sum.onFull }}" style="{{ pf.sum.btnFull }}">{{ pf.sum.allCited }}</button>
                   </div>
                 </div>
                 <p style="margin:0;font:400 16px/1.5 'Newsreader',serif;color:var(--ink2);text-wrap:pretty;white-space:pre-line">{{ pf.sum.text }}</p>
@@ -1291,7 +1309,7 @@ select option{background:var(--s1);color:var(--ink)}
                             </button>
                           </sc-for>
                         </div>
-                        <sc-if value="{{ p.hasProv }}" hint-placeholder-val="{{ false }}"><span style="font:400 12px 'JetBrains Mono';color:var(--mut)">cited in {{ p.provDocs }}</span></sc-if>
+                        <sc-if value="{{ p.hasProv }}" hint-placeholder-val="{{ false }}"><span style="font:400 12px 'JetBrains Mono';color:var(--mut)">{{ pf.sum.citedIn }} {{ p.provDocs }}</span></sc-if>
                       </div>
                     </sc-for>
                   </div>
@@ -1343,11 +1361,14 @@ select option{background:var(--s1);color:var(--ink)}
 <sc-if value="{{ pf.sum.has }}" hint-placeholder-val="{{ false }}">
       <div style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;margin-top:6px">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <span style="font:600 11px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">About</span>
+          <span style="font:600 11px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">{{ pf.sum.aboutLabel }}</span>
           <span style="flex:1"></span>
-          <button onClick="{{ pf.sum.onSmall }}" style="{{ pf.sum.sbtnSmall }}">one line</button>
-          <button onClick="{{ pf.sum.onMed }}" style="{{ pf.sum.sbtnMed }}">paragraph</button>
-          <button onClick="{{ pf.sum.onFull }}" style="{{ pf.sum.sbtnFull }}">all</button>
+          <select value="{{ pf.sum.code }}" onChange="{{ pf.sum.onLang }}" title="Render the summary in this language — zero model" style="background:var(--s2);border:1px solid var(--line2);border-radius:7px;color:var(--ink);font:500 10px 'JetBrains Mono';padding:2px 5px;outline:none;cursor:pointer;max-width:100px">
+            <sc-for list="{{ pf.sum.langOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.code }}">{{ o.label }}</option></sc-for>
+          </select>
+          <button onClick="{{ pf.sum.onSmall }}" style="{{ pf.sum.sbtnSmall }}">{{ pf.sum.oneLine }}</button>
+          <button onClick="{{ pf.sum.onMed }}" style="{{ pf.sum.sbtnMed }}">{{ pf.sum.paragraph }}</button>
+          <button onClick="{{ pf.sum.onFull }}" style="{{ pf.sum.sbtnFull }}">{{ pf.sum.allCited }}</button>
         </div>
         <p style="margin:0;font:400 14px/1.5 'Newsreader',serif;color:var(--ink2);text-wrap:pretty;white-space:pre-line">{{ pf.sum.text }}</p>
         <sc-if value="{{ pf.sum.showProps }}" hint-placeholder-val="{{ false }}">
@@ -1362,7 +1383,7 @@ select option{background:var(--s1);color:var(--ink)}
                     </button>
                   </sc-for>
                 </div>
-                <sc-if value="{{ p.hasProv }}" hint-placeholder-val="{{ false }}"><span style="font:400 11px 'JetBrains Mono';color:var(--mut)">cited in {{ p.provDocs }}</span></sc-if>
+                <sc-if value="{{ p.hasProv }}" hint-placeholder-val="{{ false }}"><span style="font:400 11px 'JetBrains Mono';color:var(--mut)">{{ pf.sum.citedIn }} {{ p.provDocs }}</span></sc-if>
               </div>
             </sc-for>
           </div>
@@ -3481,6 +3502,10 @@ let _hdYt = null; const hdYt = () => _hdYt || (_hdYt = import(new URL('holodeck-
 // Entity profiles (holodeck-profile.js): kind-induced key parameters per being,
 // built from the workspace's own relations. Loaded like the other modules.
 let _hdProf = null;
+// Omnilingual summary lens (holodeck-lang.js): GFP → a language's grammar →
+// its natural language, zero model. UniMorph-derived priors (English
+// morphology, Russian declension) are injected as data, loaded once.
+let _hdLang = null;
 let _hdMed = null; const hdMedia = () => _hdMed || (_hdMed = import(new URL('holodeck-media.js', location.href).href));
 const hdTr = (a, b, c, x) => hdT(a, b, c, x);
 // Every file comes through here. Sound, images, scores, math, sheets and unknown bytes go to holodeck-media.js; everything
@@ -3650,16 +3675,40 @@ const STRIP_PLAIN_GRAIN = { Ground: 'Background', Figure: 'Figure', Pattern: 'Pa
 const STRIP_OP = { Differentiate: { Existence: 'NUL', Structure: 'SEG', Interpretation: 'DEF' }, Relate: { Existence: 'SIG', Structure: 'CON', Interpretation: 'EVA' }, Generate: { Existence: 'INS', Structure: 'SYN', Interpretation: 'REC' } };
 const STRIP_TERRAIN = { Existence: { Ground: 'Void', Figure: 'Entity', Pattern: 'Kind' }, Structure: { Ground: 'Field', Figure: 'Link', Pattern: 'Network' }, Interpretation: { Ground: 'Atmosphere', Figure: 'Lens', Pattern: 'Paradigm' } };
 const STRIP_STANCE = { Differentiate: { Ground: 'Clearing', Figure: 'Dissecting', Pattern: 'Unraveling' }, Relate: { Ground: 'Tending', Figure: 'Binding', Pattern: 'Tracing' }, Generate: { Ground: 'Cultivating', Figure: 'Making', Pattern: 'Composing' } };
-const STRIP_VOCAB = { 'NUL|Ground': 'Emptying Voids', 'NUL|Figure': 'Dissecting Entities', 'NUL|Pattern': 'Unraveling Kinds', 'SIG|Ground': 'Tending Voids', 'SIG|Figure': 'Binding Entities', 'SIG|Pattern': 'Tracing Kinds', 'INS|Ground': 'Seeding Voids', 'INS|Figure': 'Making Entities', 'INS|Pattern': 'Composing Kinds', 'SEG|Ground': 'Clearing Fields', 'SEG|Figure': 'Severing Links', 'SEG|Pattern': 'Unweaving Networks', 'CON|Ground': 'Tilling Fields', 'CON|Figure': 'Coupling Links', 'CON|Pattern': 'Threading Networks', 'SYN|Ground': 'Cultivating Fields', 'SYN|Figure': 'Forging Links', 'SYN|Pattern': 'Wiring Networks', 'DEF|Ground': 'Dispersing Atmospheres', 'DEF|Figure': 'Fracturing Lenses', 'DEF|Pattern': 'Deconstructing Paradigms', 'EVA|Ground': 'Tuning Atmospheres', 'EVA|Figure': 'Focusing Lenses', 'EVA|Pattern': 'Weaving Paradigms', 'REC|Ground': 'Brewing Atmospheres', 'REC|Figure': 'Casting Lenses', 'REC|Pattern': 'Authoring Paradigms' };
+const COND_FIELDS = [
+  { k: 'title', label: 'Name', type: 'text' },
+  { k: 'kind', label: 'Kind', type: 'select' },
+  { k: 'year', label: 'Year', type: 'number' },
+  { k: 'publisher', label: 'Publisher', type: 'select' },
+  { k: 'status', label: 'Status', type: 'select' },
+  { k: 'stmts', label: 'Statements', type: 'number' },
+];
+const COND_OPS = {
+  text: [['contains', 'contains'], ['ncontains', 'does not contain'], ['eq', 'is'], ['neq', 'is not'], ['empty', 'is empty'], ['notempty', 'is set']],
+  select: [['eq', 'is'], ['neq', 'is not'], ['empty', 'is empty'], ['notempty', 'is set']],
+  number: [['eq', '='], ['neq', '≠'], ['gt', '>'], ['gte', '≥'], ['lt', '<'], ['lte', '≤'], ['empty', 'is empty'], ['notempty', 'is set']],
+};
+function condCmp(a, op, b, type) {
+  const empty = a === undefined || a === null || a === '';
+  if (op === 'empty') return empty;
+  if (op === 'notempty') return !empty;
+  if (empty) return false;
+  if (type === 'number') { const x = Number(a), y = Number(b); switch (op) { case 'eq': return x === y; case 'neq': return x !== y; case 'gt': return x > y; case 'gte': return x >= y; case 'lt': return x < y; case 'lte': return x <= y; } }
+  const x = String(a).toLowerCase(), y = String(b).toLowerCase();
+  switch (op) { case 'eq': return x === y; case 'neq': return x !== y; case 'contains': return x.includes(y); case 'ncontains': return !x.includes(y); }
+  return true;
+}
+const MODE_TINT = { Differentiate: '#fbbf24', Relate: '#6fb0dc', Generate: '#a78bfa' };
+const STRIP_VOCAB = { 'NUL|Ground': 'Clearing the ground', 'NUL|Figure': 'Inspecting a thing', 'NUL|Pattern': 'Breaking down a category', 'SIG|Ground': "Tracking what's present", 'SIG|Figure': 'Naming a thing', 'SIG|Pattern': 'Grouping the categories', 'INS|Ground': 'Setting new ground', 'INS|Figure': 'Creating a thing', 'INS|Pattern': 'Applying a procedure', 'SEG|Ground': 'Splitting the field', 'SEG|Figure': 'Cutting a link', 'SEG|Pattern': 'Breaking the network', 'CON|Ground': 'Maintaining the field', 'CON|Figure': 'Connecting two things', 'CON|Pattern': 'Following the network', 'SYN|Ground': 'Consolidating the field', 'SYN|Figure': 'Merging links', 'SYN|Pattern': 'Building a network', 'DEF|Ground': 'Clearing the context', 'DEF|Figure': 'Checking a lens', 'DEF|Pattern': 'Breaking the paradigm', 'EVA|Ground': 'Reading the context', 'EVA|Figure': 'Testing through a lens', 'EVA|Pattern': 'Comparing paradigms', 'REC|Ground': 'Resetting the context', 'REC|Figure': 'Revising a reading', 'REC|Pattern': 'Rewriting the paradigm' };
 
 class Component extends DCLogic {
-  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, showSettings: false, draftTitle: '', draftYear: '', draftText: '', fw: {}, note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), topicsQ: '', topicsPage: 0, dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true }, stripOpen: null, stripDocs: null, stripGroup: 'fold', stripEO: '', stripGaps: [], stripRead: { mode: 'Relate', domain: 'Interpretation', grain: 'Pattern' } };
+  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, showSettings: false, draftTitle: '', draftYear: '', draftText: '', fw: {}, note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), topicsQ: '', topicsPage: 0, dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true }, stripOpen: null, stripDocs: null, stripGroup: 'fold', stripEO: '', stripGaps: [], stripRead: { mode: 'Relate', domain: 'Interpretation', grain: 'Pattern' }, stripReadAuto: true, stripConds: [], stripConn: 'all', stripSegTab: 'conditions' };
   _html = {};
 
   componentDidMount() {
     setTimeout(() => { try { this.netInit(); } catch (e) {} }, 800);
     setTimeout(() => this.measureHdr(), 400);
-    this.applyTheme(); this._c = 0; import(new URL('holodeck-match.js', location.href).href).then(M => { this._mt = M; this._qc = null; this.forceUpdate(); }).catch(() => {}); import(new URL('holodeck-profile.js', location.href).href).then(M => { _hdProf = M; this._pbA = null; this.forceUpdate(); }).catch(() => {}); this.loadHtml(); if (typeof location !== 'undefined' && /fx-share=/.test(location.hash)) { this.netInit(); this.setState({ view: 'draft' }); }
+    this.applyTheme(); this._c = 0; import(new URL('holodeck-match.js', location.href).href).then(M => { this._mt = M; this._qc = null; this.forceUpdate(); }).catch(() => {}); import(new URL('holodeck-profile.js', location.href).href).then(M => { _hdProf = M; this._pbA = null; this.forceUpdate(); }).catch(() => {}); import(new URL('holodeck-lang.js', location.href).href).then(M => { _hdLang = M; this._pfLang = null; this.loadLangPriors(); this.forceUpdate(); }).catch(() => {}); this.loadHtml(); if (typeof location !== 'undefined' && /fx-share=/.test(location.hash)) { this.netInit(); this.setState({ view: 'draft' }); }
     this._onRz = () => { this.measureHdr(); if ((window.innerWidth < SIDE_PANEL_MIN_VW) !== this._narrow) this.forceUpdate(); }; window.addEventListener('resize', this._onRz);
 
     this._onSelCh = () => { cancelAnimationFrame(this._selRaf); this._selRaf = requestAnimationFrame(() => this.updatePinPop()); };
@@ -4939,6 +4988,8 @@ class Component extends DCLogic {
     const visGenIds = new Set(genLog.slice(0, genCursor).map(g => g.id));
     const inFold = c => c.kind !== 'widget' && (!c.gen || visGenIds.has(c.gen));
     const setGenCursor = n => { const id = P.cur; const nx = Math.min(Math.max(1, n), Math.max(1, genLog.length)); this.setDocs(X => ({ ...X, docs: X.docs.map(d => d.id === id ? { ...d, genCursor: nx } : d) })); };
+    const genThread = genLog.slice().reverse().slice(0, 8).map(g => ({ who: (g.kind === 'timeline' ? 'Timeline' : 'Brief') + (g.mode === 'model' ? ' · local model' : ' · quotes'), text: g.prompt || 'Untitled run', hasNote: true, note: plural(genLog.indexOf(g) + 1, 'fold') + ' · ' + new Date(g.at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }));
+    const genFoldNav = { hasFolds: genLog.length > 1, foldLabel: genLog.length ? 'Fold ' + genCursor + ' of ' + genLog.length : '', foldNote: genCursor < genLog.length ? 'Showing up to fold ' + genCursor + ' — the earlier folds stay in the document.' : 'This run is what the document shows now; every earlier fold still exports.', onFoldPrev: () => setGenCursor(genCursor - 1), onFoldNext: () => setGenCursor(genCursor + 1) };
     const docBar = { tabs: docTabs, title: curDoc.title || '', docKey: String(P.cur || 'none'), onTitle: e => { const v = e.target.value; const id = P.cur; this.later('title', () => this.setDocs(X => ({ ...X, docs: X.docs.map(d => d.id === id ? { ...d, title: v } : d) }))); },
       onNew: () => newDoc('Untitled document'), onDup: () => newDoc((curDoc.title || 'Untitled document') + ' (copy)', (curDoc.claims || []).map(c => ({ ...c, id: 'claim-' + Math.random().toString(36).slice(2, 9), pins: [...c.pins] }))),
       askDel: !!S.dDel, noAskDel: !S.dDel, onDel: () => this.setState({ dDel: true }), onDelNo: () => this.setState({ dDel: null }),
@@ -5013,12 +5064,14 @@ class Component extends DCLogic {
       { label: 'Plain text', run: () => dl(asTxt(), 'text/plain', '.txt') } ].map((f, i) => ({ label: f.label, onClick: guard(f.run), bg: i === 0 && !blocked ? '#8b5cf6' : 'transparent', col: i === 0 && !blocked ? '#fff' : blocked ? 'var(--dim)' : 'var(--ink2)', bd: i === 0 && !blocked ? '#8b5cf6' : 'var(--line2)', cursor: blocked ? 'not-allowed' : 'pointer' }));
     const out = { has: hasOut, title: docTitle, items, notes: notes.map((n, i) => ({ n: String(i + 1), text: n.text + (n.url ? ' ' + n.url : '') })), hasNotes: notes.length > 0, formats,
       status: blocked ? 'Export is blocked: ' + [nFail ? plural(nFail, 'claim') + ' don’t match their excerpts' : '', nCont ? plural(nCont, 'claim') + ' held otherwise by the sources' : '', nUntried ? plural(nUntried, 'claim') + ' not checked yet' : ''].filter(Boolean).join(', ') + '.' : plural(nSrc, 'claim') + ' grounded in the sources' + (nAuthor ? ', ' + nAuthor + ' attributed to you' : '') + '. Ready to export.',
-      statusColor: blocked ? 'var(--amber)' : 'var(--ok)', canGroundAll: true, groundAllLabel: nUntried ? 'Ground ' + plural(nUntried, 'unchecked claim') : 'Re-test every claim', onGroundAll: () => this.groundClaims() };
+      statusColor: blocked ? 'var(--amber)' : 'var(--ok)', canGroundAll: true, groundAllLabel: nUntried ? 'Ground ' + plural(nUntried, 'unchecked claim') : 'Re-test every claim', onGroundAll: () => this.groundClaims(),
+      hasFoldCursor: genLog.length > 1, foldLabel: genFoldNav.foldLabel, onFoldPrev: genFoldNav.onFoldPrev, onFoldNext: genFoldNav.onFoldNext };
     const gk = S.gKind || 'brief', gm = S.gMode || 'mech'; const seg = (on) => ({ bg: on ? 'var(--sel2)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)' });
     const gen = { kinds: [['brief', 'Brief'], ['timeline', 'Timeline']].map(([k, l]) => ({ label: l, ...seg(gk === k), onClick: () => this.setState({ gKind: k }) })),
-      modes: [['mech', 'Quotes, no model'], ['model', 'Local model']].map(([k, l]) => ({ label: l, ...seg(gm === k), onClick: () => this.setState({ gMode: k }) })),
-      subject: S.gSubj != null ? S.gSubj : this.defaultSubject(A), onSubject: e => { this._gSubj = e.target.value; },
+      modes: [['mech', 'Quotes'], ['model', 'Model']].map(([k, l]) => ({ label: l, ...seg(gm === k), onClick: () => this.setState({ gMode: k }) })),
+      prompt: S.gSubj != null ? S.gSubj : this.defaultSubject(A), onPrompt: e => this.setState({ gSubj: e.target.value }), onKey: e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.generate(); } },
       onRun: () => this.generate(), isModel: gm === 'model', llmUrl: this.llmCfg().url, llmModel: this.llmCfg().model, onLlmUrl: e => this.setLlm({ url: e.target.value.trim() }), onLlmModel: e => this.setLlm({ model: e.target.value.trim() }), onLlmTest: () => this.testLLM(), llmTest: S.llmTest || 'Runs on your machine. Ollama (…:11434) or any OpenAI-compatible server (LM Studio …:1234/v1). Nothing is sent anywhere else.', runLabel: S.gen ? 'Working…' : 'Fill the document', op: S.gen ? 0.6 : 1,
+      thread: genThread, hasThread: genThread.length > 0, ...genFoldNav,
       hint: (gk === 'timeline' ? 'Finds dated statements that name the subject, one per source, in date order.' : 'Runs four searches (who leads it, budget, what audits found, how it responded) and adds each section with its excerpts.') + (gm === 'model' ? ' Your local model writes each sentence from those excerpts only; the same mechanical check runs on everything it writes.' : ' Each claim is a quote, so every word comes from the source.') };
     const wr = { wKey: String(S.wKey || 0), onText: e => { const had = !!(this._wText || '').trim(); this._wText = e.target.value; if (had !== !!this._wText.trim()) this.forceUpdate(); }, onGround: () => this.groundWriting(), op: (this._wText || '').trim() ? 1 : 0.5 };
     return { gen, wr, out, docBar, dr: { claims, noClaims: !claims.length, isTL, addClaim: () => { const c = newClaim(); this.setPinData(D => { D.claims.push(c); return D; }); this.setState({ dFocus: c.id }); },
@@ -5683,7 +5736,7 @@ class Component extends DCLogic {
       const terms = [...new Set(ql.split(/[^a-z0-9]+/).filter(w => w && !QW.has(w) && !(/^\s*(what|which|how)\b/i.test(ql) && /^(find|finds|found|findings?|observations?)$/.test(w)) && (w.length >= 3 || /\d/.test(w))).map(w => { const s = qStem(w); orig[s] = orig[s] || w; return s; }))];
       const qNames = new Set(Object.values(A.names).filter(n => [n.name, ...(n.aliases || [])].some(f => { f = f.toLowerCase(); return f.length >= 3 && new RegExp('\\b' + f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(ql); })).map(n => n.name));
       let want = /^when\b|\bwhat (year|date|day|month|time)\b/.test(ql) ? 'date' : /\bhow (much|many|long|big|far|often)\b|\bwhat (was|is|were|are) the (cost|amount|number|total|price|budget)/.test(ql) ? 'fig' : /^(who|whom|whose)\b|\bwho\b/.test(ql) ? 'who' : /^where\b|\bwhere\b/.test(ql) ? 'place' : '';
-      { const sr = this.state.stripRead; if (!want && sr && sr.domain) want = sr.domain === 'Existence' ? 'who' : sr.domain === 'Structure' ? 'fig' : ''; }
+      { const sr = this.state.stripReadAuto ? (this._autoRead || this.state.stripRead) : this.state.stripRead; if (!want && sr && sr.domain) want = sr.domain === 'Existence' ? 'who' : sr.domain === 'Structure' ? 'fig' : ''; }
       const df = {}; terms.forEach(w => { df[w] = 0; }); toks.forEach(T => terms.forEach(w => { if (T.has(w)) df[w]++; }));
       const Np = pool.length || 1, idf = w => Math.log(1 + Np / (df[w] + 0.5)); const maxI = Math.max(1, ...terms.map(idf));
       const scored = []; const BP = this.boilerplate(A); const wantFind = !/^\s*(did|does|do|is|was|were|has|have|had)\b/i.test(qv) && (/\b(find|found|findings?|observations?)\b/i.test(qv) || /\bwhat (problems?|issues?|concerns?|went wrong)\b/i.test(qv));
@@ -5789,8 +5842,19 @@ class Component extends DCLogic {
     this.setState({ stripDocs: [...cur] });
   }
   stripAllDocs() { this.setState({ stripDocs: null }); }
+  stripAddCond() { this.setState(s => ({ stripConds: [...(s.stripConds || []), { id: 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), field: 'title', op: 'contains', value: '' }] })); }
+  stripRmCond(id) { this.setState(s => ({ stripConds: (s.stripConds || []).filter(c => c.id !== id) })); }
+  stripClearConds() { this.setState({ stripConds: [] }); }
+  stripSetCond(id, key, val) { this.setState(s => ({ stripConds: (s.stripConds || []).map(c => { if (c.id !== id) return c; const n = { ...c, [key]: val }; if (key === 'field') { const f = COND_FIELDS.find(x => x.k === val) || COND_FIELDS[0]; n.op = (COND_OPS[f.type] || COND_OPS.text)[0][0]; n.value = ''; } return n; }) })); }
+  stripDocView(d, D) { return { title: d.title || '', name: d.title || '', kind: d.kind || d.type || '', type: d.type || '', year: d.year || 0, publisher: d.publisher || '', status: this.mOf(d).status || '', stmts: (D.perDoc || {})[d.id] || 0 }; }
+  stripCondMatch(d, D) {
+    const conds = this.state.stripConds || []; if (!conds.length) return true;
+    const v = this.stripDocView(d, D); const all = (this.state.stripConn || 'all') === 'all';
+    const rs = conds.map(c => { const f = COND_FIELDS.find(x => x.k === c.field) || COND_FIELDS[0]; return condCmp(v[c.field], c.op, c.value, f.type); });
+    return all ? rs.every(Boolean) : rs.some(Boolean);
+  }
   stripSetGroup(g) { this.setState({ stripGroup: g }); }
-  stripSetRead(k, v) { this.setState({ stripRead: { ...(this.state.stripRead || {}), [k]: v } }); }
+  stripSetRead(k, v) { this.setState({ stripReadAuto: false, stripRead: { ...(this.state.stripRead || {}), [k]: v } }); }
   stripEOApply() {
     const src = (this.state.stripEO || '').trim();
     if (!src) { this.setState({ stripGaps: [], stripDocs: null }); return; }
@@ -5806,9 +5870,32 @@ class Component extends DCLogic {
   }
   stripVals(S, A, D) {
     const counted = A.docs.filter(d => this.counted(d));
-    const scopeIds = S.stripDocs ? new Set(S.stripDocs) : null;
+    const scopeIds = (() => { let s = S.stripDocs ? new Set(S.stripDocs) : null;
+      if (S.stripConds && S.stripConds.length) { const keep = new Set(counted.filter(d => this.stripCondMatch(d, D)).map(d => d.id)); s = s ? new Set([...s].filter(id => keep.has(id))) : keep; }
+      return s; })();
     const inScope = counted.filter(d => !scopeIds || scopeIds.has(d.id));
-    const r = S.stripRead || { mode: 'Relate', domain: 'Interpretation', grain: 'Pattern' };
+    const scopedSts = A.sts.filter(st => !scopeIds || scopeIds.has(st.doc));
+    const namesN = (() => { const s = new Set(); scopedSts.forEach(st => (st.names || []).forEach(n => s.add(n))); return s.size; })();
+    const figsN = scopedSts.reduce((n, st) => n + ((st.figs || []).length), 0);
+    const pairsN = scopedSts.reduce((n, st) => { const k = (st.names || []).length; return n + (k > 1 ? k * (k - 1) / 2 : 0); }, 0);
+    const echoN = A.echoes && A.echoes.size ? A.echoes.size : (Array.isArray(A.echoes) ? A.echoes.length : 0);
+    const am = this._am || {};
+    const cutsN = ((am.differ || []).length) + ((am.echoConf || []).length) + ((am.unattributed || []).length);
+    const foldsN = this._P && this._P.groups ? this._P.groups.length : 0;
+    const autoRead = (() => {
+      const domS = { Existence: namesN, Structure: pairsN, Interpretation: cutsN * 3 + echoN * 2 };
+      const modeS = { Differentiate: cutsN * 3 + (am.echoConf || []).length * 3, Relate: echoN * 2 + pairsN * 0.4 + (am.single ? am.single.length : 0), Generate: foldsN * 5 + echoN * 1.5 + (am.differ || []).length };
+      const grainS = { Ground: inScope.length * 1.5, Figure: namesN + figsN, Pattern: foldsN * 4 + echoN * 2 + cutsN };
+      let best = null;
+      for (const m of STRIP_MODES) for (const d of STRIP_DOMAINS) for (const g of STRIP_GRAINS) {
+        const sc = (domS[d] || 0) + (modeS[m] || 0) + (grainS[g] || 0);
+        if (!best || sc > best.sc) best = { mode: m, domain: d, grain: g, sc };
+      }
+      return best;
+    })();
+    this._autoRead = autoRead;
+    const whyText = 'names ' + namesN + ' · pairs ' + pairsN + ' · cuts ' + cutsN + ' · echoes ' + echoN + ' · folds ' + foldsN;
+    const r = S.stripReadAuto ? autoRead : (S.stripRead || { mode: 'Relate', domain: 'Interpretation', grain: 'Pattern' });
     const op = STRIP_OP[r.mode][r.domain];
     const view = d => ({ title: d.title || '(untitled)', kind: d.kind || d.type || 'Source', year: d.year || 0, publisher: d.publisher || '', status: this.mOf(d).status || 'source', stmts: (D.perDoc || {})[d.id] || 0 });
     const srcRows = counted.map(d => { const v = view(d), on = !scopeIds || scopeIds.has(d.id);
@@ -5820,23 +5907,48 @@ class Component extends DCLogic {
     const segRows = Object.entries(groupsOut).slice(0, 6).map(([label, items]) => ({ label, n: plural(items.length, 'source'), line: items.slice(0, 4).map(x => x.title).join(' · ') + (items.length > 4 ? ' …' : '') }));
     const readRow = (key, lab, vals, words) => ({ lab, opts: vals.map(v => { const on = r[key] === v;
       return { label: words[v], bg: on ? '#8b5cf6' : 'var(--s2)', color: on ? '#fff' : 'var(--ink2)', onClick: () => this.stripSetRead(key, v) }; }) });
-    const totalStmts = inScope.reduce((n, d) => n + ((D.perDoc || {})[d.id] || 0), 0);
+    const kinds = [...new Set(counted.map(d => d.kind || d.type).filter(Boolean))];
+    const pubs = [...new Set(counted.map(d => d.publisher).filter(Boolean))];
+    const condRows = (S.stripConds || []).map(c => { const f = COND_FIELDS.find(x => x.k === c.field) || COND_FIELDS[0];
+      const opts = f.k === 'kind' ? kinds : f.k === 'publisher' ? pubs : f.k === 'status' ? ['source', 'seen'] : [];
+      return { id: c.id, field: c.field, op: c.op, value: c.value == null ? '' : String(c.value), isSelect: f.type === 'select', notSelect: f.type !== 'select',
+        fields: COND_FIELDS.map(x => ({ k: x.k, label: x.label })),
+        ops: (COND_OPS[f.type] || COND_OPS.text).map(o => ({ k: o[0], label: o[1] })),
+        vals: opts.map(v => ({ v, label: v })),
+        onField: e => this.stripSetCond(c.id, 'field', e.target.value),
+        onOp: e => this.stripSetCond(c.id, 'op', e.target.value),
+        onVal: e => this.stripSetCond(c.id, 'value', e.target.value),
+        onRemove: () => this.stripRmCond(c.id) }; });
     return {
       stripSourcesLabel: scopeIds ? (inScope.length + ' of ' + counted.length + ' sources') : ('All ' + counted.length + ' sources'),
       stripSourceRows: [{ label: 'All sources', meta: String(counted.length), bg: !scopeIds ? 'var(--sel)' : 'transparent', bd: !scopeIds ? '#8b5cf6' : 'var(--line)', onClick: () => this.stripAllDocs() }].concat(srcRows),
-      stripSegLabel: inScope.length + ' of ' + counted.length + ' · ' + (gsel === 'whole' ? 'whole' : 'by ' + gsel),
+      stripSegLabel: inScope.length + ' of ' + counted.length + ' · ' + (gsel === 'whole' ? 'whole' : 'by ' + gsel) + (condRows.length ? ' · ' + condRows.length + (condRows.length === 1 ? ' filter' : ' filters') : ''),
+      stripCondRows: condRows,
+      stripHasConds: condRows.length > 0,
+      stripConn: S.stripConn || 'all',
+      stripOnConn: e => this.setState({ stripConn: e.target.value }),
+      stripAddCond: () => this.stripAddCond(),
+      stripClearConds: () => this.stripClearConds(),
+      stripOnConditions: (S.stripSegTab || 'conditions') === 'conditions',
+      stripOnEOQL: (S.stripSegTab || 'conditions') !== 'conditions',
+      stripTabConditions: () => this.setState({ stripSegTab: 'conditions' }),
+      stripTabEOQL: () => this.setState({ stripSegTab: 'eoql' }),
       stripGroupRow: ['whole', 'fold', 'kind', 'year', 'publisher', 'status'].map(g => ({ label: g === 'whole' ? 'whole' : 'by ' + g, bg: gsel === g ? '#8b5cf6' : 'var(--s2)', color: gsel === g ? '#fff' : 'var(--ink2)', onClick: () => this.stripSetGroup(g) })),
       stripEOVal: S.stripEO || '', stripEOGlyphs: eoqlGlyphText(S.stripEO || ''),
       stripGaps: (S.stripGaps || []).map(g => ({ text: g })),
       stripSegRows: segRows,
       stripReadLabel: STRIP_VOCAB[op + '|' + r.grain],
       stripReadFine: op + '·' + r.grain + ' · terrain ' + STRIP_TERRAIN[r.domain][r.grain] + ' · stance ' + STRIP_STANCE[r.mode][r.grain],
+      stripAutoOn: !!S.stripReadAuto,
+      stripAutoWhy: whyText,
+      stripAutoToggle: () => this.setState({ stripReadAuto: !S.stripReadAuto }),
       hasReading: inScope.length > 0,
       readingName: STRIP_VOCAB[op + '|' + r.grain],
       readingFine: op + '·' + r.grain + ' · terrain ' + STRIP_TERRAIN[r.domain][r.grain] + ' · stance ' + STRIP_STANCE[r.mode][r.grain],
-      readingFocus: 'leading with ' + (r.domain === 'Existence' ? 'things' : r.domain === 'Structure' ? 'links' : 'meanings') + ' · ' + (r.mode === 'Differentiate' ? 'cuts' : r.mode === 'Relate' ? 'bonds' : 'makes'),
+      readingAuto: !!S.stripReadAuto,
+      readingTint: MODE_TINT[r.mode] || 'var(--acc)',
+      readingNote: S.stripReadAuto ? ('auto — most signal here: ' + whyText) : ('leading with ' + (r.domain === 'Existence' ? 'things' : r.domain === 'Structure' ? 'links' : 'meanings') + ' · ' + (r.mode === 'Differentiate' ? 'cuts' : r.mode === 'Relate' ? 'bonds' : 'makes')),
       stripReadRows: [readRow('mode', 'WHAT YOU DO', STRIP_MODES, STRIP_PLAIN_MODE), readRow('domain', 'WHAT YOU SEE', STRIP_DOMAINS, STRIP_PLAIN_DOMAIN), readRow('grain', 'SCALE', STRIP_GRAINS, STRIP_PLAIN_GRAIN)],
-      stripStatus: totalStmts.toLocaleString() + ' stmts · ' + inScope.length + ' sources in scope',
       stripOpenSources: S.stripOpen === 'sources', stripOpenSegment: S.stripOpen === 'segment', stripOpenRead: S.stripOpen === 'read', stripAnyOpen: !!S.stripOpen,
       stripToggleSources: () => this.setState({ stripOpen: S.stripOpen === 'sources' ? null : 'sources' }),
       stripToggleSegment: () => this.setState({ stripOpen: S.stripOpen === 'segment' ? null : 'segment' }),
@@ -5875,7 +5987,11 @@ class Component extends DCLogic {
 
     const _T0 = performance.now(), _PT = this._prof = {}; let _pl = _T0; const _m = k => { const n = performance.now(); _PT[k] = Math.round(n - _pl); _pl = n; };
     // counts per terrain
-    const stripScope = S.stripDocs ? new Set(S.stripDocs) : null;
+    let stripScope = S.stripDocs ? new Set(S.stripDocs) : null;
+    if (S.stripConds && S.stripConds.length) {
+      const keep = new Set(A.docs.filter(d => D.perDoc[d.id] && this.stripCondMatch(d, D)).map(d => d.id));
+      stripScope = stripScope ? new Set([...stripScope].filter(id => keep.has(id))) : keep;
+    }
     const docsIn = A.docs.filter(d => D.perDoc[d.id] && (!stripScope || stripScope.has(d.id)));
     const typesPresent = [...new Set(D.nameList.map(n => n.type))];
     const figCount = D.unitList.reduce((a, u) => a + u.items.length, 0);
@@ -5916,6 +6032,7 @@ class Component extends DCLogic {
     const echoed = F.filter(st => (A.echoes[st.id] || []).some(e => fSet.has(e.id)));
     const echoConf = []; const seenPair = {};
     echoConf.length = 0; shapesRaw.filter(g => g.clash.length).forEach(g => echoConf.push(g));
+    this._am = { differ, echoConf, unattributed, single };
     const counts = {
       sources: plural(A.docs.filter(d => this.counted(d)).length, 'source'), names: String(D.nameList.length), types: String(typesPresent.length),
       figures: String(figCount), statements: String(F.length), connections: String(D.edgeList.length),
@@ -6521,7 +6638,7 @@ class Component extends DCLogic {
       isEmpty, hasContent: !isEmpty, v: V, hdr, summaryRows,
       docCards, gaps, nameGroups, nameTable, corr: this.corrVals(), typeBlocks, measures, noMeasures: !measures.length, ...(() => { const c = this.capL('stg', stGroups, 8); return { stGroups: c.items.map(g => ({ ...g, ...this.capL('stg:' + g.title, g.items, 4) })), stgMore: c }; })(),
       graphEl, timeInfo, ...orbX, ...(() => { const c = this.capL('pairs', pairs, 12); return { pairs: c.items, pairsMore: c }; })(), noPairs: !pairs.length, frameCols: frameCols.map(c => ({ ...c, ...this.capL('fr:' + c.label, c.items, 5) })), timeBars, ...(() => { const c = this.capL('topics', topicChips, 24); return { topicChips: c.items, topicMore: c }; })(), ...(() => { const c = this.capL('srcbars', [...sourceBars].sort((a, b) => +b.n - +a.n), 12); return { sourceBars: c.items, srcBarMore: c }; })(), shapes, noShapes: !shapes.length, hasRoutine: (this._routineN || 0) > 0, routineLine: plural(this._routineN || 0, 'routine agreement') + ' hidden: repeated by several sources, but about names and words that appear together in most sources anyway.', holds, breaks, noBreaks: !breaks.length,
-      hdrShow: !isEmpty && view !== 'reader' && view !== 'profile' && view !== 'ask',
+      hdrShow: !isEmpty && view !== 'reader' && view !== 'profile' && view !== 'ask' && view !== 'draft',
       crumbLast, crumbAnc, hasAnc, yearOn: !isEmpty && (view === 'views' || view === 'surprise'),
       ...(() => { const d0 = S.readDoc && A.docById[S.readDoc]; if (!d0) return { rd: { eyebrow: '', title: '', meta: '' } }; const dsts = A.stsByDoc[d0.id] || []; const nm = new Set(dsts.flatMap(s => s.names)); const host = d0.url ? (/wikipedia\.org/.test(d0.url) ? 'Wikipedia' : d0.url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]) : 'Your content'; return { rd: { eyebrow: [host, d0.type, d0.year].filter(Boolean).join(' · '), title: d0.title, meta: [d0.authors && d0.authors.length ? 'By ' + d0.authors.join(', ') : '', d0.pubLabel ? 'Published ' + d0.pubLabel : ''].filter(Boolean).map(x => x + ' · ').join('') + plural(dsts.length, 'statement') + ' · ' + plural(nm.size, 'name') + ' · ' + plural(dsts.reduce((a, s) => a + s.figs.length, 0), 'figure') } }; })(),
       gsw: { track: S.ground.on ? 'var(--acc2)' : 'var(--line2)', left: S.ground.on ? '16px' : '2px' },
@@ -6892,40 +7009,66 @@ class Component extends DCLogic {
   // The summary field: what the profile is about, instant from the induced
   // profile + the analysis (no model call), larger or smaller at will. Every
   // proposition carries full provenance to the exact source statements that
-  // witnessed its values — each value is clickable into its statement.
+  // witnessed its values — each value is clickable into its statement. The
+  // prose renders omnilingually (holodeck-lang.js): GFP → the reader's
+  // language's grammar → its natural language, zero model, UniMorph priors
+  // injected as data. A language with no lens is refused, never read English.
+  loadLangPriors() {
+    if (!_hdLang || this._langPriors) return;
+    this._langPriors = true;
+    const load = u => fetch(new URL(u, location.href)).then(r => r.ok ? r.json() : null).catch(() => null);
+    Promise.all([
+      load('vendor/eoreader7/native/priors/morphology-eng.json'),
+      load('vendor/eoreader7/native/priors/declension-rus.json'),
+    ]).then(([engMorph, rusDecl]) => { if (_hdLang) _hdLang.setPriors({ engMorph, rusDecl }); this.forceUpdate(); });
+  }
+  pfLang() {
+    if (!_hdLang) return 'en';
+    if (this._pfLang) return this._pfLang;
+    let c = null;
+    try { c = _hdLang.languageOf((localStorage.getItem('hd:sum-lang') || '')) || _hdLang.languageOf(navigator.language || '') || null; } catch (e) {}
+    this._pfLang = c || 'en';
+    return this._pfLang;
+  }
   profileSummary(A, name) {
-    const M = _hdProf; if (!M) return null;
+    const M = _hdProf; if (!M || !_hdLang) return null;
     const built = this.profileBuild(A); if (!built) return null;
     const p = built.byId.get(name); if (!p || !p.parameters.length) return { has: false };
     const prov = M.provenanceFor(A, name);
     const size = (this._pfSumBy || {})[name] || 'small';
+    const code = this.pfLang();
+    const lens = _hdLang.summaryVals(p, built, { code, provenance: prov });
+    if (!lens.has) return { has: false, code };
     const btn = (on) => `background:${on ? 'var(--s1)' : 'transparent'};border:0;border-radius:99px;padding:2px 10px;cursor:pointer;font:500 11px 'JetBrains Mono';color:${on ? 'var(--ink)' : 'var(--mut)'}`;
     const sbtn = (on) => `background:none;border:1px solid ${on ? 'var(--acc)' : 'var(--line2)'};border-radius:99px;padding:0 7px;cursor:pointer;font:500 10px 'JetBrains Mono';color:${on ? 'var(--acc)' : 'var(--mut)'}`;
+    const stmtShort = lens.stmtShort;
     const props = M.summaryProps(p, built).map(pr => ({
       rel: pr.rel, starMark: pr.star ? '★' : '', standing: pr.standing,
       vals: pr.vals.map(v => {
         const witness = prov.get(pr.rel + '\u0001' + String(v.raw)) || [];
         return {
           label: v.text + (v.n > 1 ? ' ×' + v.n : ''), hasProv: witness.length > 0,
-          provLabel: witness.length ? ' · ' + witness.length + ' stmt' + (witness.length === 1 ? '' : 's') : '',
+          provLabel: witness.length ? ' · ' + stmtShort(witness.length) : '',
           onCite: witness[0] ? () => this.read(witness[0].doc, witness[0].id) : null,
         };
       }),
       more: pr.more,
     }));
     const citeDocs = new Map();
-    M.summaryProps(p, built).forEach((pr, i) => {
+    M.summaryProps(p, built).forEach(pr => {
       const docs = new Set();
       for (const v of pr.vals) for (const st of prov.get(pr.rel + '\u0001' + String(v.raw)) || []) if (st.docTitle) docs.add(st.docTitle);
       citeDocs.set(pr.rel, docs);
     });
     for (const pr of props) { const docs = citeDocs.get(pr.rel) || new Set(); pr.hasProv = docs.size > 0; pr.provDocs = [...docs].join(', '); }
-    const text = sz => M.summaryText(p, built, { size: sz, provenance: prov }) || '';
     const setSize = sz => { (this._pfSumBy = this._pfSumBy || {})[name] = sz; this.forceUpdate(); };
-    const count = props.length;
+    const setLang = e => { try { localStorage.setItem('hd:sum-lang', e.target.value); } catch (err) {} this._pfLang = e.target.value; this.forceUpdate(); };
     return {
-      has: true, size, count, countLabel: count + ' proposition' + (count === 1 ? '' : 's') + ' · each cited to its source statements',
-      text: text(size),
+      has: true, size, code, autonym: lens.autonym, order: lens.order, giver: lens.giver,
+      aboutLabel: lens.aboutLabel, oneLine: lens.oneLine, paragraph: lens.paragraph, allCited: lens.allCited,
+      countLabel: lens.countLabel, citedIn: lens.citedIn, key: lens.key,
+      text: lens.text(size),
+      langOptions: _hdLang.langOptions(), onLang: setLang,
       btnSmall: btn(size === 'small'), btnMed: btn(size === 'medium'), btnFull: btn(size === 'full'),
       sbtnSmall: sbtn(size === 'small'), sbtnMed: sbtn(size === 'medium'), sbtnFull: sbtn(size === 'full'),
       onSmall: () => setSize('small'), onMed: () => setSize('medium'), onFull: () => setSize('full'),
