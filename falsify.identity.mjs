@@ -116,6 +116,7 @@ async function main() {
   try {
     await surf.page.waitForFunction(() => window.__holodeck && typeof window.__holodeck.analyze === "function", null, { timeout: 20000 });
     await surf.page.waitForFunction(() => window.__holodeck.hdDeclReady && window.__holodeck.hdDeclReady() && window.__holodeck.hdEngineReady && window.__holodeck.hdEngineReady(), null, { timeout: 20000 });
+    await surf.page.waitForFunction(() => window.__holodeck.hdReaderReady && window.__holodeck.hdReaderReady(), null, { timeout: 20000 });
     let failed = 0;
     for (const c of CASES) {
       const names = await surf.page.evaluate((docs) => Object.values(window.__holodeck.analyze({ docs }).names).map((n) => ({ name: n.name, type: n.type, aliases: n.aliases || [], pronouns: n.pronouns || 0 })), c.docs);
@@ -142,6 +143,26 @@ async function main() {
       const ok = got === want;
       if (!ok) failed += 1;
       console.log((ok ? "PASS " : "FAIL ") + "type".padEnd(28) + nm + " → " + (got || "?").padEnd(14) + " (want " + want + ")");
+    }
+
+    // ── EMERGENT TYPING: the kind read off kind induction over the engine reader's
+    //    own relations, not the fallback word lists. A corpus with enough relation
+    //    structure for kinds to establish. ──
+    const EMERG_DOCS = [
+      doc("d0", "Metro Report", `Susan Sarandon was born in New York City. Susan Sarandon attended the Catholic University of America. Susan Sarandon won an Academy Award. Susan Sarandon moved to Connecticut. Chris Sarandon was born in New York City. Chris Sarandon studied at the Catholic University of America. Louis Malle was born in France. Louis Malle directed Au Revoir les Enfants. Louis Malle moved to New York City. The Catholic University of America is located in Washington. New York City is a large city. Alex Barlow directed three films. Alex Barlow won an award in 1995. Alex Barlow was born in Lisboa. Alex Barlow moved to Lisboa in 2001.`),
+      // the two discriminating cases are IN this corpus: nameType's word lists are
+      // silent for them — the person has no role/title cue and the place is not in
+      // the English PLACE set — so only a kind read off the relations can type them.
+      doc("d1", "Arts", `The actress Susan Sarandon said the award changed her career. Chris Sarandon said he taught at the Catholic University of America. Louis Malle told reporters he worked in New York City. Susan Sarandon and Chris Sarandon attended the Catholic University of America.`),
+    ];
+    const emergNames = await surf.page.evaluate((docs) => Object.values(window.__holodeck.analyze({ docs }).names).map((n) => ({ name: n.name, type: n.type })), EMERG_DOCS);
+    const eTypeOf = (label) => { const hit = emergNames.find((n) => n.name === label); return hit ? hit.type : null; };
+    const EWANT = [["Susan Sarandon", "person"], ["Chris Sarandon", "person"], ["Louis Malle", "person"], ["New York City", "place"], ["Catholic University of America", "organisation"], ["Alex Barlow", "person"], ["Lisboa", "place"]];
+    for (const [nm, want] of EWANT) {
+      const got = eTypeOf(nm);
+      const ok = got === want;
+      if (!ok) failed += 1;
+      console.log((ok ? "PASS " : "FAIL ") + "emergent".padEnd(28) + nm + " → " + (got || "?").padEnd(14) + " (want " + want + ")");
     }
 
     console.log("");

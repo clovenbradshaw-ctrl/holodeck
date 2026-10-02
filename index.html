@@ -2662,6 +2662,14 @@ const TYPE_L = { person: 'People', organisation: 'Organisations', place: 'Places
 // name ("Actress Susan Sarandon"): professions that never begin a common title, and
 // never a noble title ("Princess Bride" stays one surface) or a word TITLES already owns.
 const TITLE_ROLES = new Set(('actress actor singer songwriter musician composer pianist violinist filmmaker screenwriter playwright novelist poet essayist journalist reporter columnist editor publisher illustrator painter sculptor photographer architect designer inventor engineer scientist physicist chemist astronomer biologist historian archaeologist anthropologist sociologist psychologist economist linguist philosopher theologian lawyer attorney surgeon nurse activist feminist humanitarian revolutionary entrepreneur industrialist businessman businesswoman executive philanthropist comedian performer entertainer').split(' '));
+// EMERGENT TYPING — the relation sets kind induction types against. Small and
+// structural: a referent's own relations, with position (subject vs object) doing
+// the disambiguation ("studied" as subject -> a person; "studied at X" -> X is an
+// organisation). The induced kind must establish before these are consulted.
+const EMERG_FUNC = new Set('the a an of to in on at for with by from and or is are was were be been has have had not but as it its this that these those then than into onto over under'.split(' '));
+const EMERG_PERSON = new Set('said says told reported announced argued wrote directed played starred won taught studied attended married died moved lived travelled traveled worked born asked added claimed believed co-founded founded'.split(' '));
+const EMERG_PLACE = new Set('born moved lived located grew returned left settled went visited raised based'.split(' '));
+const EMERG_ORG = new Set('attended founded established joined worked taught studied based launched created headed led ran served employed hired graduated'.split(' '));
 // A person's profession, used two ways: a role word right BEFORE a name ("actress
 // Susan Sarandon") or after a copula ("Louis Malle was a French filmmaker") marks
 // the name a person. A closed set of human roles — a machine or an institution
@@ -2733,7 +2741,7 @@ function hdEngineMerge(t, ns, eng, hy) {
   return out.sort((a, b) => a.s - b.s);
 }
 // read-only handle for tests: the real functions, so a harness can recompute what a trace claims happened
-setTimeout(() => { try { window.__holodeck = Object.freeze({ analyze, holoKit, paradigms, splitSentences, findNames, isJunk, readAny, hdHygiene, hdPos: w => hdPos(w), hdDeclReady: () => !!HD_DECL, hdEngineReady: () => !!HD_ENGINE }); } catch (e) {} }, 0);
+setTimeout(() => { try { window.__holodeck = Object.freeze({ analyze, holoKit, paradigms, splitSentences, findNames, isJunk, readAny, hdHygiene, hdPos: w => hdPos(w), hdDeclReady: () => !!HD_DECL, hdEngineReady: () => !!HD_ENGINE, hdReaderReady: () => hdReaderReady() }); } catch (e) {} }, 0);
 const hdCut = (t, n) => { t = String(t || '').replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
 function splitSentences(text, tr) {
   const out = []; const re = /[^\n]+?(?:[.!?]+(?=\s|$)|(?=\n)|$)/g; let m;
@@ -2789,6 +2797,17 @@ Promise.all([
   import(new URL('vendor/eoreader7/native/adapters/text/pronouns.js', location.href)),
 ]).then(([S, Pr]) => { HD_ENGINE = { discoverReferents: S.discoverReferents, resolvePronouns: Pr.resolvePronouns }; }).catch(() => { HD_ENGINE = null; });
 const hdEngineReady = () => !!HD_ENGINE;
+// For emergent TYPING the pipeline must also be ready: the relation reader
+// (holodeck-reader), the workspace index/retrieve (holodeck-ask), and the profile
+// builder (holodeck-profile, kind induction). analyze stays synchronous — these are
+// preloaded, then used; absent them, typing falls back to the reader's own words.
+let HD_PROF = null, HD_ASK = null, HD_READER = null;
+Promise.all([
+  import(new URL('holodeck-profile.js', location.href)),
+  import(new URL('holodeck-ask.js', location.href)),
+  import(new URL('holodeck-reader.js', location.href)).then(M => M.makeEngineRelationReader()),
+]).then(([P, Q, R]) => { HD_PROF = P; HD_ASK = Q; HD_READER = R; }).catch(() => {});
+const hdReaderReady = () => !!(HD_PROF && HD_ASK && HD_READER);
 // The RECEIVED ground for "normal": live_priors' General English set (books, encyclopedia articles, US/UK law), the same
 // baseline the surprise view uses, read for how often each word is capitalised mid-sentence. It is independent of the
 // material being judged, so a workspace full of junk cannot talk itself into calling its junk normal. Fetched once,
@@ -3176,6 +3195,71 @@ function analyze(corpus, htmlMap) {
     st.topics = [...new Set(words.filter(w => !STOP.has(w) && !nameWords.has(w) && !MONTHS.has(w[0].toUpperCase() + w.slice(1))).map(w => w.length > 4 ? w.replace(/(ies)$/, 'y').replace(/([^s])s$/, '$1') : w))];
   });
   Object.values(names).forEach(n => { const I = info[n.name] || {}; n.type = nameType(n.name, I); n.aliases = [...(I.aliases || [])]; });
+  // TYPES ARE EMERGENT PARAMETERS, READ OFF KIND INDUCTION — not a word list. The
+  // engine reader extracts the workspace's own relations; buildFromTriples induces
+  // each referent's kind from them; the kind's characteristic relations ARE its type —
+  // a referent that says/directs/wins is a person, one people are born in and move to
+  // is a place, one they attend and found is an organisation. nameType is only the
+  // fallback where the material has too little relation evidence for a kind to
+  // establish. The circular 'typed' relation is never fed in — the kind emerges from
+  // the material's own relations.
+  if (HD_PROF && HD_ASK && HD_READER && sts.length <= 500) {
+    try {
+      const IX = HD_ASK.index(docs);
+      const tri = [];
+      const cleanEnd = s => String(s || '').replace(/^[\s"'“]+|[\s"'”]+$/g, '').trim();
+      const mainVerb = v => { const w = String(v || '').toLowerCase().replace(/[^a-z\s']/g, ' ').split(/\s+/).filter(Boolean); for (let i = w.length - 1; i >= 0; i--) if (!EMERG_FUNC.has(w[i])) return w[i]; return null; };
+      for (const st of sts) {
+        let claims = [];
+        try { const ranked = HD_ASK.retrieve(IX.chunks, st.text, 6); claims = HD_READER(ranked.length ? ranked : IX.chunks.slice(0, 6)).read(st.text).claims || []; } catch (e) {}
+        for (const c of claims) {
+          const e1 = cleanEnd(c.end1), e2 = cleanEnd(c.end2), v = mainVerb(c.label);
+          if (e1 && e2 && v && e1 !== e2) tri.push({ subject: e1, verb: v, object: e2, witnessed: true });
+        }
+      }
+      const beings = [...new Set([...tri.map(t => t.subject), ...tri.map(t => t.object)])];
+      // The reader's endpoints are ITS OWN surfaces ("Barlow", "Malle", "America"),
+      // partial against analyze's canonicals ("Alex Barlow", "Louis Malle"). Fold each
+      // endpoint onto the canonical that carries it as a leading or trailing token-run
+      // (the same form fold), most-mentioned first — BEFORE the induction, so kinds and
+      // profiles are keyed by the canonicals the surface displays.
+      const byLast = new Map(), byFirst = new Map();
+      Object.values(names).forEach(n => {
+        const w = n.name.split(/\s+/); if (w.length < 2) return;
+        let a = byLast.get(w[w.length - 1]); if (!a) byLast.set(w[w.length - 1], a = []); a.push(n.name);
+        let b = byFirst.get(w[0]); if (!b) byFirst.set(w[0], b = []); b.push(n.name);
+      });
+      const resolveSurface = e => {
+        const low = String(e).toLowerCase();
+        const hit = Object.values(names).find(n => n.name === e || (n.aliases || []).includes(e));
+        if (hit) return hit.name;
+        for (const pool of [byLast.get(e) || byLast.get(low), byFirst.get(e) || byFirst.get(low)]) {
+          if (!pool || !pool.length) continue;
+          return pool.slice().sort((x, y) => (rawN.get(y) || 0) - (rawN.get(x) || 0))[0];
+        }
+        return e;
+      };
+      const rTri = [];
+      for (const t of tri) { const s = resolveSurface(t.subject), o = resolveSurface(t.object); if (s && o && s !== o) rTri.push({ ...t, subject: s, object: o }); }
+      const rBeings = [...new Set([...rTri.map(t => t.subject), ...rTri.map(t => t.object)])];
+      const built = HD_PROF.buildFromTriples(rTri, { beings: rBeings, exposureFloor: 2, draws: 99, alpha: 0.05, seed: 5 });
+      const profiles = built && built.byId;
+      const subjV = new Map(), objV = new Map();
+      for (const t of rTri) {
+        const a = subjV.get(t.subject) || new Map(); a.set(t.verb, (a.get(t.verb) || 0) + 1); subjV.set(t.subject, a);
+        const b = objV.get(t.object) || new Map(); b.set(t.verb, (b.get(t.verb) || 0) + 1); objV.set(t.object, b);
+      }
+      Object.values(names).forEach(n => {
+        const p = profiles && profiles.get(n.name); if (!p || !p.established || !(p.kinds || []).length) return;
+        const sv = subjV.get(n.name) || new Map(), ov = objV.get(n.name) || new Map();
+        const score = { person: 0, place: 0, organisation: 0 };
+        for (const [v, c] of sv) if (EMERG_PERSON.has(v)) score.person += 2 * c;
+        for (const [v, c] of ov) { if (EMERG_PLACE.has(v)) score.place += 2 * c; if (EMERG_ORG.has(v)) score.organisation += 2 * c; }
+        const top = Object.entries(score).sort((a, b) => b[1] - a[1])[0];
+        if (top && top[1] >= 2) n.type = top[0];
+      });
+    } catch (e) { /* an organ failure leaves the reader's own fallback typing — a gap, never a guess */ }
+  }
   // PRONOUN BINDING — the engine's own organ (resolvePronouns, the one holodeck-reader
   // assembles), with the reader's own declared gates. She/he binds to an established
   // referent by one-hop activation recall over the cast; a pronoun it cannot resolve
