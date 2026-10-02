@@ -2790,8 +2790,13 @@ function findNames(t, hy) {
   const out = [];
   // a hyphen only continues the same capitalized word when what follows it is ALSO capitalized
   // (Winston-Salem, Coca-Cola) -- a lowercase continuation (Atlanta-based) is a modifier, not part of the name
-  const WORD = "[A-Z][A-Za-z'\\u2019&.]*(?:-[A-Z][A-Za-z'\\u2019&.]*)*";
-  const re = new RegExp(WORD + '(?:\\s+(?:of\\s+|and\\s+|&\\s+)?' + WORD + ')*', 'g'); let m;
+  // CHOMSKY: the arrangement (a name is a run of name-letters; a referent is the fold
+  // of its surfaces) is universal — the CASE convention that opens a name is the
+  // language's, declared here (\p{Lu}, any cased script), never ASCII A-Z assumed as
+  // universal. The ASCII class silently truncated "García" to "Garc" and "Márquez" to
+  // "M", fragments that then collided and merged unrelated people.
+  const WORD = "[\\p{Lu}][\\p{L}\\p{M}'\\u2019&.]*(?:-[\\p{Lu}][\\p{L}\\p{M}'\\u2019&.]*)*";
+  const re = new RegExp(WORD + '(?:\\s+(?:of\\s+|and\\s+|&\\s+)?' + WORD + ')*', 'gu'); let m;
   const push = (words, idx, title, m, after) => {
     const oi = words.findIndex((w, i) => i > 0 && i < words.length - 1 && ORG.has(w.replace(/[.,]$/, '')) && (() => { const r = words.slice(i + 1); return r.length >= 1 && r.length <= 3 && r.every(x => /^[A-Z][a-z'\u2019.-]+$/.test(x) && !ORG.has(x) && !PLACE.has(x) && !TITLES.has(x.replace(/\.$/, '')) && !/^(of|and)$/.test(x)); })());
     if (oi > 0) { let j2 = idx; for (let i = 0; i <= oi; i++) j2 = next(j2, words[i]); push(words.slice(0, oi + 1), idx, title, m, ' ' + words[oi + 1]); push(words.slice(oi + 1), j2, null, m, after); return; }
@@ -2922,10 +2927,16 @@ function analyze(corpus, htmlMap) {
       x.heads.sort((a, b) => a.o - b.o); x.blocks.sort((a, b) => a - b);
     }
     if (hdF(x.id)) { HD_TR.docs.push({ id: x.id, title: x.title, type: x.type, text: x.text }); hdT('text', 'walk', x.format === 'pdf' ? 'Took ' + x.text.length + ' characters from the PDF text layer' : 'Walked the page tree: ' + x.text.length + ' characters of text, ' + x.heads.length + ' headings, ' + x.blocks.length + ' blocks, ' + (x.links || []).length + ' links', { doc: x.id, chars: x.text.length }); }
+    // SULLIVAN: the naming convention is MEASURED from the material, never assumed.
+    // A document whose script carries letter case (or an English one that is simply
+    // all-lowercase) is case-marked; a script with no case at all — Chinese 孙中山,
+    // Arabic نجيب محفوظ — is not, and the case convention that opens a name does not
+    // hold there. Measured once, carried on the doc, disclosed below.
+    x.hasCase = /[\p{Lu}\p{Ll}]/u.test(x.text);
     return x; });
   const sts = []; const found = []; const alias = {}; const info = {}; const HY = hdHygiene(docs);
-  docs.forEach(d => { const on = hdF(d.id); const ss = splitSentences(d.text, on ? (a, b, c, x) => hdT(a, b, c, { doc: d.id, ...x }) : null); if (on) hdT('sentences', 'split', 'Split into ' + ss.length + ' statements', { doc: d.id, n: ss.length }); const hy = HY ? HY.forDoc(d, on ? (k, what, why) => hdT('names', 'hygiene', why + ' (' + qW(what) + ')', { doc: d.id }) : null) : null; ss.forEach((se, i) => {
-    const ns = hdEngineMerge(se.t, findNames(se.t, hy), d.eng, hy);
+  docs.forEach(d => { const on = hdF(d.id); const ss = splitSentences(d.text, on ? (a, b, c, x) => hdT(a, b, c, { doc: d.id, ...x }) : null); if (on) hdT('sentences', 'split', 'Split into ' + ss.length + ' statements', { doc: d.id, n: ss.length }); const hy = HY ? HY.forDoc(d, on ? (k, what, why) => hdT('names', 'hygiene', why + ' (' + qW(what) + ')', { doc: d.id }) : null) : null; if (on && !d.hasCase) hdT('names', 'gap', 'This source carries no letter case — its script has none (or it is code): the case convention that opens a name does not apply, so no names are read here. A gap of the reader, never a claim the material names no one', { doc: d.id }); ss.forEach((se, i) => {
+    const ns = d.hasCase ? hdEngineMerge(se.t, findNames(se.t, hy), d.eng, hy) : [];
     ns.forEach(n => { if (n.alias) alias[n.alias] = n.name; });
     const st0 = { id: d.id + ':' + i, doc: d.id, s: se.s, e: se.e, text: se.t, rawNames: ns, figs: findFigures(se.t), dates: findDates(se.t), frame: frameOf(se.t) }; sts.push(st0);
     if (on) { const D = { doc: d.id, id: st0.id }; hdT('sentences', 'statement', 'Statement ' + (i + 1) + ': \u201c' + hdCut(se.t, 90) + '\u201d', { ...D, s: se.s, e: se.e });
@@ -2938,41 +2949,56 @@ function analyze(corpus, htmlMap) {
   sts.forEach(st => st.rawNames.forEach(n => { const w = n.name.split(' '); const l = w[w.length - 1]; if (w.length > 1 && !ORG.has(l) && !PLACE.has(l)) (lastMap[l] = lastMap[l] || new Set()).add(n.name); }));
   const allRaw = [...new Set(sts.flatMap(st => st.rawNames.map(n => n.name)))];
   const nest = (short, long) => { const a = short.split(' '), b = long.split(' '); if (b.length <= a.length) return false; return a.every((w, i) => b[i] === w) || a.every((w, i) => b[b.length - a.length + i] === w); };
-  const canonMemo = new Map(); const canonFold = nm => { let v = canonMemo.get(nm); if (v === undefined) { v = canonOf0(nm); canonMemo.set(nm, v); } return v; };
   const byFirst = new Map(), byLast = new Map(); allRaw.forEach(o => { if (!o.includes(' ')) return; const w = o.split(' '); const f0 = w[0], l0 = w[w.length - 1]; (byFirst.get(f0) || byFirst.set(f0, []).get(f0)).push(o); (byLast.get(l0) || byLast.set(l0, []).get(l0)).push(o); });
   // a longer name may absorb a shorter one only if the longer one recurs itself (2+ statements, the bar holoName uses):
   // otherwise one stray capitalised run (measured: word salad's “Office The Brookmeade Park”) renames a real place everywhere
   const rawN = new Map(); sts.forEach(st => new Set(st.rawNames.map(n => n.name)).forEach(n => rawN.set(n, (rawN.get(n) || 0) + 1)));
-  const canonOf0 = nm => {
-    if (alias[nm]) return alias[nm];
-    if (nm.includes(' ')) { const w = nm.split(' '); const pool = [...new Set([...(byFirst.get(w[0]) || []), ...(byLast.get(w[w.length - 1]) || [])])]; const c = pool.filter(o => nest(nm, o)).sort((x, y) => y.length - x.length); if (c.length && c.every(o => o === c[0] || nest(o, c[0])) && (rawN.get(c[0]) || 0) >= 2) return c[0]; return nm; }
-    return lastMap[nm] && lastMap[nm].size === 1 && (rawN.get([...lastMap[nm]][0]) || 0) >= 2 ? [...lastMap[nm]][0] : nm;
-  };
   // ── REFERENT IDENTITY ──────────────────────────────────────────────────────
   // A surface is a spelling; a referent is what the SOURCE means by it. Surfaces
   // the source itself gives as one being fold together; identity is never
   // guessed from a shared token. Four evidence sources:
-  //   1. the fold this workspace already holds (a parenthetical alias, containment
-  //      into a recurring fuller name, a surname with exactly one full bearer);
+  //   1. a parenthetical alias ("… (SAG)") — stated identity;
   //   2. the source's own hyperlink target — the same <a href> means the same
   //      referent, the link being the source's own disambiguation (nameLinks);
   //   3. an appositive alias ("born X", "née X", "known as X", "aka X",
-  //      "formerly X") marrying the named form to the statement's own subject;
+  //      "formerly X") marrying the named form to the name it follows;
   //   4. a bare surname a document's own title gives to one full name — but only
   //      when EVERY document using that surname agrees on the same full form, so
   //      the surname is SINGULAR. Two full names sharing it stay apart.
-  // SCOPE (disclosed, not hidden): this module reads English — capitalised name
-  // runs and the English/French alias cues below. A language that names without
-  // case, or states a birth name another way, is not folded here; that gap is
-  // the material's to close, never this rule's to guess.
+  //   5. containment: a name folds into the ONE most descriptive name that carries
+  //      it as a leading or trailing token-run, and a bare surname only when
+  //      exactly one full name ends in it — the same SINGULAR guard. This is
+  //      sharper than the workspace's older fold, which demanded every container be
+  //      mutually nested (so it refused "García Márquez" → "Gabriel García
+  //      Márquez"). The loose form, closed transitively on a large article, chained
+  //      distinct people through a shared surname (measured: "Gabriel García
+  //      Márquez" absorbed Fidel Castro, Colombia, Macondo — 83→285 statements).
+  // The evidence is transitive because it genuinely makes A and B one referent; the
+  // single most-descriptive container is the whole reach of containment.
+  // SCOPE (Chomsky/Sullivan): the arrangement is universal, but the convention that
+  // opens a name is the LANGUAGE'S, declared — \p{Lu} any cased script — and a
+  // document's own case-markedness is measured (Sullivan) and disclosed. The
+  // appositive cues are English/French, and a script without case (Chinese 孙中山,
+  // Arabic نجيب محفوظ) is not read; that gap is named, never guessed.
   const parent = new Map(); allRaw.forEach(n => { if (!parent.has(n)) parent.set(n, n); });
   const find = x => { let r = x; while (parent.get(r) !== r) r = parent.get(r); return r; };
   const union = (a, b) => { if (!parent.has(a) || !parent.has(b)) return; const ra = find(a), rb = find(b); if (ra !== rb) parent.set(ra, rb); };
-  allRaw.forEach(nm => { const c = canonFold(nm); if (c !== nm) union(nm, c); });
+  allRaw.forEach(nm => { if (alias[nm] && parent.has(alias[nm])) union(nm, alias[nm]); });  // a parenthetical alias is stated identity
+  const containTarget = nm => {
+    if (nm.includes(' ')) { const w = nm.split(' '); const pool = [...new Set([...(byFirst.get(w[0]) || []), ...(byLast.get(w[w.length - 1]) || [])])];
+      const c = pool.filter(o => nest(nm, o)).sort((x, y) => y.split(' ').length - x.split(' ').length || y.length - x.length);
+      return c[0] || null; }
+    return lastMap[nm] && lastMap[nm].size === 1 ? [...lastMap[nm]][0] : null; };
+  allRaw.forEach(nm => { const t = containTarget(nm); if (t && (rawN.get(t) || 0) >= 2) union(nm, t); });
   { const linkOf = {}; docs.forEach(d => { linkOf[d.id] = d.links || []; });
     const byHref = new Map();
     sts.forEach(st => { const L = linkOf[st.doc]; if (!L || !L.length) return;
-      st.rawNames.forEach(n => { const a0 = st.s + n.s, b0 = st.s + n.e; const hit = L.find(lk => lk.s < b0 && lk.e > a0); if (!hit) return; let g = byHref.get(hit.href); if (!g) byHref.set(hit.href, g = new Set()); g.add(n.name); }); });
+      st.rawNames.forEach(n => { const a0 = st.s + n.s, b0 = st.s + n.e;
+        // the name must BE the link's text, not merely sit inside a long anchor:
+        // a navbox/quote link spanning 130+ chars would otherwise sweep every name
+        // it covers onto one href and merge them (measured on the es article).
+        const hit = L.find(lk => lk.s <= a0 + 1 && lk.e >= b0 - 1 && (lk.e - lk.s) <= (b0 - a0) + 4); if (!hit) return;
+        let g = byHref.get(hit.href); if (!g) byHref.set(hit.href, g = new Set()); g.add(n.name); }); });
     byHref.forEach(set => { const a = [...set]; for (let i = 1; i < a.length; i++) union(a[0], a[i]); }); }
   // ALIAS_GAP: a name and its appositive sit in one clause — the marker ("born",
   // "known professionally as", …) follows the name across punctuation and a short
