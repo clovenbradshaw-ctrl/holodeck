@@ -4,7 +4,11 @@
 // write only the compact index to OPFS — never the raw decompressed JSONL.
 import { packIndex } from './idx-binary.js';
 import { buildIndex } from './reading-index.js';
-const SRC_URL = 'https://raw.githubusercontent.com/clovenbradshaw-ctrl/ohs-custody/main/ground-readings/f3affd2e11370118-causalTextPerceiver_reviseTextFold_refresh25.jsonl.zst';
+// The reading corpus is vendored beside the app (fixtures/reading/…), so the view no longer
+// reaches a clovenbradshaw repo at runtime. Only the pre-built index and its cursor are vendored;
+// the .zst path is the key the pre-built index sits beside, never fetched when the index is present.
+// The main thread may pass an absolute `url` (localStorage hd:reading) to point at another source.
+const SRC_URL = new URL('fixtures/reading/f3affd2e11370118-causalTextPerceiver_reviseTextFold_refresh25.jsonl.zst', self.location.href).href;
 async function dirOf(path) { let d = await navigator.storage.getDirectory(); for (const p of path.split('/').filter(Boolean)) d = await d.getDirectoryHandle(p, { create: true }); return d; }
 // Write the index as JSON (the historical fallback) and as a binary FRIX file so the
 // fold's open path is one arrayBuffer(), no JSON.parse. The .bin is the fast path.
