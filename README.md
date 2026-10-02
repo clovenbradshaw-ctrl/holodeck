@@ -1,4 +1,12 @@
-# Holodeck
+# the fold
+
+**The Fold is the whole system (naming, 2026-10-01); this is its reading and
+research surface.** The khora (the eoreader7 repo) perceives and produces
+ground; penelope keeps the record and owns the mouth; this repo is where the
+hand comes back to the loom — previously called the holodeck, now named for the
+whole it serves. The former `the-fold` repo's surface is being absorbed here;
+its machinery is being absorbed by plane (generation → penelope,
+information-processing → eoreader7, surfacing → this repo).
 
 A single-page reading and research surface: paste, upload, or link anything, and it gets split into statements with every name, figure, and date traced back to where it appears — grounded, never paraphrased. Cross-document agreement, disagreement, and genuine topical clusters ("paradigms") are discovered from what's actually there, not declared.
 
@@ -14,7 +22,7 @@ python3 -m http.server 8000
 `vendor/` carries in, unchanged, the pieces of two sibling projects this surface is built on top of rather than re-deriving:
 
 - **eoreader7** (`vendor/eoreader7/native/`) — the kernel, organs, and text adapters for real grounding: span-accurate names, referents, relation extraction. Some of this is already wired in (the Records/Assertions view's query engine); some is vendored ahead of being wired in, for what's next.
-- **the-fold** (`vendor/the-fold/fold.js`) and **bare-metal** (`vendor/bare-metal/`) — the fold/query engine (`data-chat.js`, `operators.js`) actually powering the Assertions view's "treat this as a relational database" query bar right now.
+- **the-fold's engines** (`vendor/the-fold/fold.js`, `vendor/bare-metal/`) — the fold/query engine (`data-chat.js`, `operators.js`) actually powering the Assertions view's "treat this as a relational database" query bar right now. Vendored from the former `the-fold` repo before its absorption; the engines themselves are moving into the khora (eoreader7) as the repo's functionality is absorbed.
 
 `VENDORING.md` is the real, dated provenance log: which upstream repo each file came from, and whether it was kept byte-identical or ported.
 
@@ -55,7 +63,7 @@ A repo, a report, and a recording don't share affordances, so every ingest is hu
 
 ## Status
 
-This is the live, ongoing home for this surface — active development happens here going forward, not in a local-only copy.
+This is the live, ongoing home for this surface — active development happens here going forward, not in a local-only copy. It is **the fold**, the reading/research surface of The Fold, and inherits the former `the-fold` repo's surface role.
 
 ## Compute workers — Heimdall invites (2026-10-01)
 
