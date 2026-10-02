@@ -2060,6 +2060,7 @@ select option{background:var(--s1);color:var(--ink)}
               <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden">
                 <button onClick="{{ modeOriginal }}" style="border:0;padding:6px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';background:{{ modeO.bg }};color:{{ modeO.color }}">Original</button>
                 <sc-if value="{{ hasFaithful }}" hint-placeholder-val="{{ false }}"><button onClick="{{ modeReading }}" style="border:0;padding:6px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';background:{{ modeR.bg }};color:{{ modeR.color }}">Reading</button></sc-if>
+                <sc-if value="{{ hasScreen }}" hint-placeholder-val="{{ false }}"><button onClick="{{ modeScreen }}" title="The measured 2D model drawn on the image: every region, coloured by role" style="border:0;padding:6px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';background:{{ modeSc.bg }};color:{{ modeSc.color }}">Regions</button></sc-if>
                 <button onClick="{{ modePlain }}" style="border:0;padding:6px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';background:{{ modeP.bg }};color:{{ modeP.color }}">Text only</button>
                 <button onClick="{{ modeRestated }}" title="The document restated from its own structure: no model, every clause from the text" style="border:0;padding:6px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';background:{{ modeS.bg }};color:{{ modeS.color }}">Restated</button>
               </div>
@@ -3737,8 +3738,10 @@ async function readAny(file) {
           const sc = await S.readScreenImage(bmp, { name: title, tr: hdT, tessSrc: (() => { try { return localStorage.getItem('hd:tess') || null; } catch (e) { return null; } })() });
           if (sc && sc.elements && sc.elements.length) {
             const words = (sc.text.match(/\S+/g) || []).length;
+            const imgUrl = await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(file); });
+            this._pendingImg = this._pendingImg || {}; this._pendingImg['img:' + (title || name)] = imgUrl;
             const struct = '<p style="' + TAG_STYLE.P + '">' + esc(sc.text.replace(/\s+/g, ' ').trim()) + '</p>';
-            r = { ...r, html: r.html + struct, screen: sc, note: (r.note ? r.note + ' ' : '') + 'Read for structure: ' + sc.elements.length + ' elements with a region, ' + words + ' words of text (a machine reading from the pixels and OCR boxes, no vision model).' };
+            r = { ...r, html: r.html + struct, screen: sc, hasImg: true, note: (r.note ? r.note + ' ' : '') + 'Read for structure: ' + sc.elements.length + ' elements with a region, ' + words + ' words of text (a machine reading from the pixels and OCR boxes, no vision model).' };
             hdT('screen', 'done', 'The 2D model: ' + sc.elements.length + ' elements, ' + Object.keys(sc.tokens || {}).length + ' token groups');
             r.text = [r.text, sc.text].filter(Boolean).join('\n\n');
           }
@@ -5465,6 +5468,42 @@ class Component extends DCLogic {
     target.addEventListener('submit', e => e.preventDefault(), true);
     target.addEventListener('mouseover', e => { const st = e.target.closest && e.target.closest('[data-st]'); this.hoverSt(st ? st.getAttribute('data-st') : null); });
   }
+  // A source that was read for structure: the image with the measured 2D model drawn on it —
+  // every element's region [x,y,w,h] as a labelled box, coloured by role, so the middle layer is
+  // visible, not only addressable. Clicking a region selects the referent(s) it carries.
+  renderScreen(el, d, A, key) {
+    const sc = d.screen;
+    el.innerHTML = '';
+    const wrap = document.createElement('div'); wrap.style.cssText = 'position:relative;width:100%;max-width:900px;margin:0 auto';
+    const img = document.createElement('img'); img.src = (this._html && this._html['img:' + d.id]) || d.imgSrc || ''; img.alt = d.title || ''; img.style.cssText = 'display:block;width:100%;height:auto;border-radius:8px;box-shadow:0 0 0 1px var(--line),0 8px 24px rgba(0,0,0,.18)';
+    if (!img.src) idbGet('img:' + d.id).catch(() => null).then(u => { if (u && this._rKey === key) { this._html = this._html || {}; this._html['img:' + d.id] = u; img.src = u; } });
+    wrap.appendChild(img); el.appendChild(wrap);
+    const bar = document.createElement('div'); bar.style.cssText = "display:flex;gap:6px 14px;align-items:baseline;flex-wrap:wrap;font:400 13px/1.5 'Hanken Grotesk';color:var(--mut);margin:10px 0 4px";
+    bar.append('The 2D model: ' + (sc.elements || []).length + ' elements with a region, read from the pixels and OCR boxes — no vision model. ' + (Object.entries((sc.tokens && sc.tokens) || {}).filter(([, v]) => v).length) + ' measured token groups. A box’s colour is its role.');
+    const legend = document.createElement('div'); legend.style.cssText = "display:flex;gap:6px 12px;flex-wrap:wrap;font:500 12px/1.7 'JetBrains Mono',monospace";
+    const RC = { h1: 'var(--acc)', h2: 'var(--acc)', h3: 'var(--acc)', p: 'var(--blue)', box: 'var(--amber)', button: 'var(--green)', header: 'var(--pink)', section: 'var(--amber)', image: 'var(--mut)', rule: 'var(--date)' };
+    Object.keys(RC).forEach(role => { const s = document.createElement('span'); s.textContent = role; s.style.color = RC[role]; legend.appendChild(s); });
+    const col = document.createElement('div'); col.style.cssText = 'display:flex;flex-direction:column;gap:2px'; col.appendChild(bar); col.appendChild(legend); el.insertBefore(col, wrap);
+    const draw = () => {
+      if (this._rKey !== key) return;
+      wrap.querySelectorAll('.hd-region').forEach(x => x.remove());
+      if (this._screenRegions === false) { this._rRoot = wrap; this.applySel(wrap); return; }
+      const W = img.clientWidth || wrap.clientWidth; if (!W || !sc.width) return; const k = W / sc.width;
+      (sc.elements || []).forEach(e => {
+        if (!e.region || e.region.length !== 4) return; const [x, y, w, h] = e.region;
+        const box = document.createElement('div'); box.className = 'hd-region';
+        const rgb = RC[e.role] || 'var(--mut)';
+        box.style.cssText = 'position:absolute;box-sizing:border-box;border:1.5px solid ' + rgb + ';border-radius:3px;cursor:' + (e.text ? 'pointer' : 'default') + ';background:color-mix(in srgb, ' + rgb + ' 12%, transparent)';
+        box.style.left = (x * k) + 'px'; box.style.top = (y * k) + 'px'; box.style.width = (w * k) + 'px'; box.style.height = (h * k) + 'px';
+        if (e.text) box.title = (e.role || '') + ' — ' + e.text;
+        box.onclick = ev => { ev.stopPropagation(); const nm = (e.text || '').match(/\b[\p{Lu}][\p{L}'\u2019-]+(?:\s+[\p{Lu}][\p{L}'\u2019-]+)*/u); if (nm && A.names && A.names[nm[0]]) this.openProfile(nm[0]); };
+        wrap.appendChild(box);
+      });
+      this._rRoot = wrap; this._selKey = null; this.applySel(wrap);
+    };
+    img.onload = () => { draw(); setTimeout(draw, 300); };
+    this._screenDraw = draw; draw();
+  }
   renderPage(el, d, R, A, key) {
     el.innerHTML = ''; const f = document.createElement('iframe');
     f.setAttribute('sandbox', 'allow-same-origin allow-popups allow-popups-to-escape-sandbox');
@@ -5673,6 +5712,7 @@ class Component extends DCLogic {
     if (this._rKey !== key) {
       this._rKey = key; this._selKey = null; this._hov = null;
       const F = new Set(A.sts.filter(st => this.match(st, A)).map(s => s.id)); const R = this.ranges(A, d, F, q);
+      if (d.screen && d.screen.elements && d.screen.elements.length) { this.renderScreen(el, d, A, key); return; }
       if (d.format === 'pdf') { this._rRoot = el; this.renderPdf(el, d, R, A, key); return; }
       if (d.format === 'page') { this.renderPage(el, d, R, A, key); return; }
       if ((d.faithful || d.binPath) && !d.pdfSrc && S.readMode === 'original') { this.renderFaithful(el, d, R, A, key, q); return; }
@@ -5916,7 +5956,12 @@ class Component extends DCLogic {
   sel(type, id) { const S0 = this.state; if (type === 'name' && S0.view === 'reader' && !(S0.sel && S0.sel.type === 'name' && S0.sel.id === id)) this.pushHist(); if (type === 'doc') this.markRead(id); this.setState(s => (s.sel && s.sel.type === type && s.sel.id === id) ? { sel: null, selAll: false, pfIdx: 0, pfAll: false } : { sel: { type, id }, selAll: false, pfIdx: 0, pfAll: false }); }
   go(view) { this.setState({ view, readDoc: null }); }
   read(docId, stId) { const S0 = this.state; if (S0.view !== 'reader' || docId !== S0.readDoc || (S0.sel && S0.sel.type === 'name')) this.pushHist(); this.markRead(docId); const live = this.isLiveDoc(this.analysis().docById[docId]); if (docId !== this.state.readDoc) { this.state.seekT = 0; this._faithFound = null; } this.setState({ view: 'reader', readDoc: docId, sel: stId ? { type: 'statement', id: stId } : { type: 'doc', id: docId }, ...(live ? { readMode: 'original' } : {}) }); }
-  saveAdded(added) { try { localStorage.setItem('fold-explorer-added', JSON.stringify(added)); } catch (e) {} }
+  saveAdded(added) {
+    // The image's own bytes go to IndexedDB (as a blob), not localStorage: the sidecar kept on the
+    // doc is only the addressable model (elements/tokens/gaps/text), never the pixels or the raw
+    // tree, so a page of images cannot blow the workspace quota.
+    try { const slim = {}; for (const cid in added) slim[cid] = (added[cid] || []).map(d => { if (!d.screen) return d; const { model, ...sc } = d.screen; return { ...d, screen: sc }; }); localStorage.setItem('fold-explorer-added', JSON.stringify(slim)); } catch (e) {}
+  }
   // The Notebook is kept two ways from the same conversation: a real .ipynb you can download, and a plain
   // log kept as a source in this workspace, so what happened in the notebook can be read and asked about.
   notebookLogDoc() { const cid = this.corpusId(); return (this.state.added[cid] || []).find(d => d.id === 'nb-log') || null; }
@@ -6035,7 +6080,7 @@ class Component extends DCLogic {
     // with no readable text still stays uncounted — isLiveDoc, below — so a blocked link is not counted either.)
     nd.forEach(d => { d.status = 'source'; });
     if (!(T.focus instanceof Set)) T.focus = new Set(T.focus || []); nd.forEach(d => T.focus.add(d.id)); nd.forEach(d => hdT('store', 'mint', 'Stored \u201c' + hdCut(d.title, 60) + '\u201d as ' + d.id + (list[nd.indexOf(d)].html ? ' \u00b7 full page kept; ' + d.text.length.toLocaleString() + ' characters indexed for search' + (d.text.length >= 60000 ? ' (the cap; the reading below uses the whole page)' : '') : ' \u00b7 ' + d.text.length.toLocaleString() + ' characters kept'), { doc: d.id }));
-    nd.forEach((d, i) => { const x = list[i]; if (x.html) { this._html[d.id] = x.html; idbPut('html:' + d.id, x.html).catch(() => {}); } if (x.pdf) idbPut('pdf:' + d.id, x.pdf).catch(() => {}); if (x.buf) idbPut('media:' + d.id, x.buf).catch(() => {}); });
+    nd.forEach((d, i) => { const x = list[i]; if (x.html) { this._html[d.id] = x.html; idbPut('html:' + d.id, x.html).catch(() => {}); } if (x.pdf) idbPut('pdf:' + d.id, x.pdf).catch(() => {}); if (x.buf) idbPut('media:' + d.id, x.buf).catch(() => {}); if (d.hasImg && this._pendingImg) { const u = this._pendingImg['img:' + d.title]; if (u) { this._html['img:' + d.id] = u; idbPut('img:' + d.id, u).catch(() => {}); delete this._pendingImg['img:' + d.title]; } } });
     // Store first, then paint: each source lands in the workspace (and its bytes in IndexedDB) before the read and
     // the fold, so Sources fills in as the files arrive instead of freezing until the whole batch is done.
     const added = { ...this.state.added, [id]: [...(this.state.added[id] || []), ...nd] };
@@ -7154,6 +7199,9 @@ class Component extends DCLogic {
         return { hasFaithful: hf, modeR: pill(onR), modeReading: () => this.setState({ readMode: 'reading' }), faithOn: hf && S.readMode === 'original',
           rdFaith: hf && S.readMode === 'original' ? { has: true, note: (d0.pdfSrc ? 'The PDF exactly as captured' + (d0.custody ? ' (' + d0.custody + ')' : '') + '.' : 'The page as captured' + (d0.custody ? ' (' + d0.custody + ')' : '') + '. Layout and styles load from ' + ohsPublisher(d0.url) + ' today and may have changed since; the words are the captured bytes.') + (this._faithFound ? ' ' + this._faithFound.found + ' of ' + plural(this._faithFound.total, 'statement') + ' located and marked; the rest differ in wording or layout — see Reading.' : '') } : { has: false }, _o: onO }; })(),
       modeO: (() => { const d0 = S.readDoc && A.docById[S.readDoc]; const hf = !!(d0 && (d0.faithful || d0.binPath || d0.pdfSrc)); const on = S.readMode === 'original' || (!hf && S.readMode === 'reading'); return { bg: on ? 'var(--sel)' : 'transparent', color: on ? 'var(--ink)' : 'var(--mut)' }; })(), modeP: { bg: S.readMode === 'plain' ? 'var(--sel)' : 'transparent', color: S.readMode === 'plain' ? 'var(--ink)' : 'var(--mut)' }, modeS: { bg: S.readMode === 'restated' ? 'var(--sel)' : 'transparent', color: S.readMode === 'restated' ? 'var(--ink)' : 'var(--mut)' }, modeRestated: () => this.setState({ readMode: 'restated' }),
+      hasScreen: !!(S.readDoc && A.docById[S.readDoc] && A.docById[S.readDoc].screen && A.docById[S.readDoc].screen.elements && A.docById[S.readDoc].screen.elements.length),
+      modeSc: { bg: (S.screenRegions !== false) ? 'var(--sel)' : 'transparent', color: (S.screenRegions !== false) ? 'var(--ink)' : 'var(--mut)' },
+      modeScreen: () => this.setState(s => { const on = s.screenRegions !== false; this._screenRegions = !on; setTimeout(() => { if (this._screenDraw) this._screenDraw(); }, 0); return { screenRegions: !on }; }),
       modeOriginal: () => this.setState({ readMode: 'original' }), modePlain: () => this.setState({ readMode: 'plain' }),
       readerHasUrl: !!(S.readDoc && A.docById[S.readDoc] && A.docById[S.readDoc].url), readerUrl: (S.readDoc && A.docById[S.readDoc] && A.docById[S.readDoc].url) || '',
       readerSourceLabel: S.readDoc && A.docById[S.readDoc] && A.docById[S.readDoc].url ? (/wikipedia.org/.test(A.docById[S.readDoc].url) ? (A.docById[S.readDoc].live ? 'Live from Wikipedia' : 'Excerpt from Wikipedia') + ' · CC BY-SA 4.0 ↗' : 'Open original ↗') : '',
