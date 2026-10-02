@@ -2420,6 +2420,22 @@ function ohsSegmentsHtml(segs, title) {
 async function opfsDir(path) { const root = await navigator.storage.getDirectory(); let d = root; for (const p of path.split('/').filter(Boolean)) d = await d.getDirectoryHandle(p, { create: true }); return d; }
 async function opfsRead(path) { try { const parts = path.split('/'); const name = parts.pop(); const d = await opfsDir(parts.join('/')); const fh = await d.getFileHandle(name); return await (await fh.getFile()).arrayBuffer(); } catch (e) { return null; } }
 async function opfsWrite(path, buf) { try { const parts = path.split('/'); const name = parts.pop(); const d = await opfsDir(parts.join('/')); const fh = await d.getFileHandle(name, { create: true }); const w = await fh.createWritable(); await w.write(buf); await w.close(); return true; } catch (e) { return false; } }
+// Reading index loader: prefer the binary FRIX file (one arrayBuffer(), no JSON.parse —
+// the single-decode discipline from eodb 7cac452). Falls back to the historical JSON.
+let _rdIdxCache = null; let _rdIdxP = null;
+async function loadReadingIndex(force) {
+  if (force) { _rdIdxCache = null; _rdIdxP = null; }
+  if (_rdIdxCache) return _rdIdxCache;
+  if (_rdIdxP) return _rdIdxP;
+  _rdIdxP = (async () => { try {
+    const IB = await import(new URL('idx-binary.js', location.href).href);
+    const b = await IB.opfsReadBinary('ohs-custody/reading-refresh25.idx.bin');
+    if (b) { _rdIdxCache = new IB.FoldIndex(b); return _rdIdxCache; }
+    const j = await opfsRead('ohs-custody/reading-refresh25.index.json');
+    _rdIdxCache = j ? JSON.parse(new TextDecoder().decode(j)) : null; return _rdIdxCache;
+  } catch (e) { _rdIdxCache = null; return null; } })();
+  return _rdIdxP;
+}
 const SAMPLES = {};
 const W = s => new Set(s.split(' '));
 const STOP = W('the a an and or of to in on for with at by from as is are was were be been being will would should could may might can this that these those it its their his her they them we our you your i not no new every per than then also into over under about after before during each which who whom what when where while there here has have had do does did said says last first next more most some any all other such only just very since until because through across between within without upon a day week daily');
@@ -3084,11 +3100,11 @@ async function fetchAnySite(url) {
     const raw = new TextDecoder().decode(buf); if (raw.length < 200) throw 0;
     return { html: faithfulHtml(raw, url), format: 'page', title: titleOf(raw), note: null };
   };
+  // Direct only. Nothing is relayed through a server, so no third party learns the address. When a
+  // site refuses the cross-origin read, the caller offers the bookmarklet (capture from the user's
+  // own browser) instead of trying a proxy.
   const tries = [
-    async () => viaHost(await fetchT(url, 8000)),
-    async () => viaHost(await fetchT('https://holodeck-proxy.prometheoid.workers.dev/raw?url=' + encodeURIComponent(url), 8000)),
-    async () => viaHost(await fetchT('https://n8n.intelechia.com/webhook/feed?url=' + encodeURIComponent(url), 12000)),
-    async () => { const r = await fetchT('https://r.jina.ai/' + url, 7000); if (!r.ok) throw 0; const md = await r.text(); const tm = md.match(/^Title:\s*(.+)$/m); const body = md.includes('Markdown Content:') ? md.split('Markdown Content:').slice(1).join('Markdown Content:') : md; return { html: sanitizeHtml(mdToHtml(body), url), title: tm ? tm[1].trim() : '', note: null }; }
+    async () => viaHost(await fetchT(url, 12000))
   ];
   const variants = [url]; try { const u = new URL(url); if (!/^www\./.test(u.hostname) && u.hostname.split('.').length === 2) { u.hostname = 'www.' + u.hostname; variants.push(u.href); } } catch (e) {}
   for (const v of variants) { url = v; for (const f of tries) { try { const g = await f(); if (g.file || (g.html && pageText(g.html, g.format).trim().length > 40)) return { ...g, url: v }; } catch (e) {} } }
@@ -3106,16 +3122,11 @@ function jsonText(s) { try { const out = []; (function walk(v, k) { if (typeof v
 function csvText(s) { const lines = s.split(/\r?\n/).filter(l => l.trim()); if (lines.length < 2) return s; const sep = lines[0].includes('\t') ? '\t' : ','; const sp = l => l.split(sep).map(x => x.replace(/^"|"$/g, '').trim()); const h = sp(lines[0]); return lines.slice(1).map(l => { const c = sp(l); return h.map((k, i) => c[i] ? k + ': ' + c[i] : '').filter(Boolean).join('; ') + '.'; }).join('\n'); }
 function loadScript(src) { return new Promise((res, rej) => { if (document.querySelector('script[src="' + src + '"]')) { const w = () => window.JSZip ? res() : setTimeout(w, 50); return w(); } const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('could not load reader')); document.head.appendChild(s); }); }
 // ── Universal intake: search any source, add any address ────────────────────────────────────────
-// A repo, a video, an article and a web page differ only in what their address resolves to, so none
-// of them gets a control of its own. Web, News and YouTube go through the Cloudflare Worker
-// (holodeck-proxy), because a static page cannot read those sites itself. GitHub, Wikipedia and the
-// Internet Archive allow browser requests, so they are asked directly.
-const HD_PROXY = 'https://holodeck-proxy.prometheoid.workers.dev';
-const hdProxy = () => { let u = null; try { u = localStorage.getItem('hd:proxy'); } catch (e) {} return (u || HD_PROXY).replace(/\/+$/, ''); };
+// No server relays a page: a page is fetched directly from the site, and when the site refuses a
+// cross-origin read (most news sites do) it is captured from the user's own browser with the
+// "✦ Explore this page" bookmarklet — so no third party learns what is being read. GitHub, Wikipedia
+// and the Internet Archive answer a browser directly, so only those can be searched.
 const SEARCH_SCOPES = [
-  { id: 'web', label: 'Web', ask: 'Search the web for sources' },
-  { id: 'news', label: 'News', ask: 'Search recent news' },
-  { id: 'youtube', label: 'YouTube', ask: 'Search YouTube videos' },
   { id: 'github', label: 'GitHub', ask: 'Search GitHub repositories' },
   { id: 'wikipedia', label: 'Wikipedia', ask: 'Search Wikipedia articles' },
   { id: 'archive', label: 'Internet Archive', ask: 'Search books, documents and recordings' },
@@ -3126,20 +3137,23 @@ function githubRepoOf(url) {
 }
 function youtubeIdOf(url) { const m = String(url).match(/^https?:\/\/(?:www\.|m\.|music\.)?(?:youtube\.com\/(?:watch\?(?:[^#]*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([\w-]{11})/i); return m ? m[1] : null; }
 const plainText = s => new DOMParser().parseFromString('<p>' + String(s || '') + '</p>', 'text/html').body.textContent.replace(/\s+/g, ' ').trim();
+// The on-device capture bookmarklet. Dragged to the bookmarks bar once, it is clicked on any page the
+// person is already reading; the page's rendered DOM is handed to this surface through the fold-ingest
+// channel. No server fetches anything, so no third party sees the address or the page.
+function bookmarkletHref() {
+  const base = location.origin + location.pathname;
+  const src = "(function(){var t=Date.now();var w=window.open(" + JSON.stringify(base + '#ingest') + ",'fold');if(!w)return;"
+    + "function post(){try{w.postMessage({type:'fold-ingest',url:location.href,title:document.title,html:'<!doctype html>'+document.documentElement.outerHTML,t:t},'*');}catch(e){}}"
+    + "function h(e){if(e&&e.data&&e.data.type==='fold-ready'){window.removeEventListener('message',h);post();}}"
+    + "window.addEventListener('message',h);setTimeout(post,2000);})()";
+  return 'javascript:' + encodeURIComponent(src);
+}
 async function searchSources(scope, q, page) {
   const getJson = async (url, who) => {
     let r; try { r = await fetchT(url, 30000); } catch (e) { throw new Error(who + ' did not answer' + (e && e.name === 'AbortError' ? ' in time.' : '.')); }
     let j = null; try { j = await r.json(); } catch (e) {}
     return { r, j };
   };
-  if (scope === 'web' || scope === 'news' || scope === 'youtube') {
-    const { r, j } = await getJson(hdProxy() + '/search?scope=' + scope + '&q=' + encodeURIComponent(q), 'The search relay');
-    if (!r.ok || !j || !j.results) {
-      console.warn('search relay:', r.status, j && (j.detail || j.error));
-      throw new Error(scope === 'web' ? 'Web search is busy right now — the search engines limit shared relays. Try again in a moment, or search another kind of source.' : 'The ' + scope + ' search is unavailable right now (' + ((j && (j.detail || j.error)) || r.status) + ').');
-    }
-    return { results: j.results.map(x => ({ ...x, kind: scope })), more: false, engine: j.engine };
-  }
   if (scope === 'github') {
     const { r, j } = await getJson('https://api.github.com/search/repositories?per_page=30&page=' + (page + 1) + '&q=' + encodeURIComponent(q), 'GitHub');
     if (r.status === 403 || r.status === 429) throw new Error('GitHub is limiting searches from this browser. Wait a minute and try again.');
@@ -3350,14 +3364,14 @@ class Component extends DCLogic {
     } catch (e) {
       hdT('bytes', 'fail', 'Fetch failed: ' + e.message + (opt.fallback ? '; using the saved excerpt' : ''));
       if (opt.fallback) this.addDocs([{ title: opt.title || url, year: opt.year, type: wt ? 'Wikipedia article (excerpt)' : 'Text', text: opt.fallback, url, note: 'Couldn’t reach the live page, so a saved excerpt was used.' }], { open: opt.open, keepOpen: opt.keepOpen });
-      else this.addDocs([{ title: url, year: new Date().getFullYear(), type: 'Link', text: '', url, note: 'That site doesn’t let its page be read from here — open it, then drag or paste its text instead.' }], { keepOpen: opt.keepOpen });
+      else this.addDocs([{ title: opt.title || url, year: new Date().getFullYear(), type: 'Link', text: '', url, note: 'That site blocks being read directly. Open it in this browser and click ✦ Explore this page to capture it as you see it, or paste its text.' }], { keepOpen: opt.keepOpen });
     }
   }
   async autoResearch(q) {
-    // A question is the whole brief: ask the relay's web and news search and Wikipedia at once, then read the best few.
+    // A question is the whole brief: search Wikipedia and the Internet Archive directly (nothing is relayed), then read the best few.
     const N = 6, say = m => this.setState({ busy: m });
     say('Finding sources for “' + q.slice(0, 60) + '”…');
-    const found = await Promise.all(['web', 'news', 'wikipedia'].map(sc => searchSources(sc, q, 0).then(r => r.results.slice(0, 5)).catch(e => { console.warn('research', sc, e && e.message); return []; })));
+    const found = await Promise.all(['wikipedia', 'archive'].map(sc => searchSources(sc, q, 0).then(r => r.results.slice(0, 5)).catch(e => { console.warn('research', sc, e && e.message); return []; })));
     // interleave so one kind cannot crowd out the others; web first, since it answers most questions
     const seen = new Set(), pick = [];
     for (let k = 0; k < 5 && pick.length < N; k++) for (const list of found) { const x = list[k]; if (!x || !x.url || seen.has(x.url)) continue; seen.add(x.url); pick.push(x); if (pick.length >= N) break; }
@@ -3407,37 +3421,22 @@ class Component extends DCLogic {
     A.status = 'Pulled ' + plural(list.length, 'file') + ' from ' + owner + '/' + repo + '.';
     if (opt.collect) { opt.collect.push(...list); this.setState({ busy: '' }); } else await this.addDocs(list, { keepOpen: opt.keepOpen });
   }
-  // ── An address that resolves to a YouTube video: its title, description and caption transcript, read by the
-  // Worker (a static page cannot read them). With captions it becomes the same timed transcript document local
-  // transcription makes; without, the title and description are kept and it says so.
+  // ── An address that resolves to a YouTube video. Nothing is relayed to read it: the video plays in
+  // the app through YouTube's own embed (a direct iframe), and its page can be captured from the user's
+  // own browser with the bookmarklet. A downloaded audio/video file is transcribed here, in this tab.
   async addVideo(url, id, opt) {
-    opt = opt || {}; hdTraceStart(url); hdT('bytes', 'fetch', 'Asking the relay for the video and its captions');
-    this.setState({ busy: 'Fetching ' + (opt.title || 'the video') + '…' });
-    let j = null;
-    try {
-      const r = await fetchT(hdProxy() + '/yt?v=' + id, 30000);
-      j = await r.json().catch(() => null);
-      if (!r.ok || !j || !j.title) throw new Error((j && (j.detail || j.error)) || 'the relay answered ' + r.status);
-    } catch (e) { hdT('bytes', 'fail', 'Video lookup failed: ' + (e.message || e)); j = null; }
-    const link = 'https://www.youtube.com/watch?v=' + id, title = (j && j.title) || opt.title || link;
-    const segs = j && j.parsed !== false ? (j.segments || []).map(g => ({ start: g.start, end: g.start + (g.dur || 0), text: g.text })) : [];
-    const by = j && j.author ? 'By ' + j.author + '. ' : '', desc = ((j && j.description) || opt.snippet || '').trim();
-    const media = { kind: 'youtube', id, url: link, segN: segs.length, ...(segs.length ? { model: 'YouTube captions' + (j.track && j.track.kind === 'asr' ? ' (auto-generated)' : '') } : {}) };
-    let item;
-    if (segs.length) {
-      const P = TAG_STYLE.P ? ' style="' + TAG_STYLE.P + '"' : '';
-      const intro = (by + desc).trim() ? '<p' + P + '><em>' + esc((by + desc).trim()).replace(/\n/g, '<br>') + '</em></p>\n' : '';
-      item = { title, url: link, format: 'html', html: ohsSegmentsHtml(segs, title).replace('</h1>\n', '</h1>\n' + intro), type: 'YouTube video', extra: { format: 'html', media, kind: 'Recording', medium: 'Video', transcribed: true } };
-    } else item = { title, url: link, type: 'YouTube video', text: title + '. ' + by + desc, note: j ? (j.note || 'This video has no captions, so only its title and description were read.') : 'Only the link was captured — the relay could not read this video.', extra: { media, kind: 'Recording', medium: 'Video' } };
-    hdT('bytes', 'fetched', segs.length ? plural(segs.length, 'caption cue') + ' and a ' + desc.length.toLocaleString() + '-character description' : 'No captions came back');
+    opt = opt || {}; hdTraceStart(url); hdT('bytes', 'link', 'A YouTube video — its page can be captured with ✦ Explore this page; nothing is relayed to read it');
+    const link = 'https://www.youtube.com/watch?v=' + id, title = opt.title || link;
+    const media = { kind: 'youtube', id, url: link, segN: 0 };
+    const item = { title, url: link, type: 'YouTube video', text: title + (opt.snippet ? '. ' + opt.snippet : ''), note: 'Captions are not fetched here (nothing is relayed). Open the video in this browser and click ✦ Explore this page to capture its page, or transcribe a downloaded audio or video file in this tab.', extra: { media, kind: 'Recording', medium: 'Video' } };
     if (opt.collect) { opt.collect.push(item); this.setState({ busy: '' }); } else return this.addDocs([item], { open: opt.open, keepOpen: opt.keepOpen });
   }
 
   // ── Add sources: one dialog for searching, links, files and text ─────────────────────────────────────────────
   addState() {
     if (!this._add) {
-      let scope = 'web'; try { const s = localStorage.getItem('hd:add-scope'); if (SEARCH_SCOPES.some(x => x.id === s)) scope = s; } catch (e) {}
-      this._add = { scope, q: '', pane: '', results: null, page: 0, more: false, loading: false, error: '', status: '', links: '', engine: '', ticket: 0, adding: {}, all: false };
+      let scope = SEARCH_SCOPES[0].id; try { const s = localStorage.getItem('hd:add-scope'); if (SEARCH_SCOPES.some(x => x.id === s)) scope = s; } catch (e) {}
+      this._add = { scope, q: '', pane: '', results: null, page: 0, more: false, loading: false, error: '', status: '', links: '', engine: '', ticket: 0, adding: {}, all: false, baseAdded: null };
     }
     return this._add;
   }
@@ -3480,7 +3479,9 @@ class Component extends DCLogic {
     }
     if (got.length) await this.addDocs(got, { keepOpen: true });
     todo.forEach(r => { delete A.adding[r.url]; });
-    A.status = got.length ? 'Added ' + plural(got.length, 'source') + '.' : ''; A.all = false; this.forceUpdate();
+    const miss = todo.length - got.length;
+    A.status = got.length ? 'Added ' + plural(got.length, 'source') + (miss ? ' · ' + miss + ' couldn’t be read' : '') + '.' : (todo.length ? 'None of the ' + plural(todo.length, 'result') + ' could be read.' : '');
+    A.all = false; this.forceUpdate();
   }
   async addLinks() {
     const A = this.addState(), urls = [...new Set(((A.links || '').match(/https?:\/\/[^\s<>"']+/g) || []).map(u => u.replace(/[.,;:!?)\]]+$/, '')))];
@@ -3488,7 +3489,9 @@ class Component extends DCLogic {
     A.error = ''; const got = [];
     for (let i = 0; i < urls.length; i++) { A.status = 'Reading ' + (i + 1) + ' of ' + urls.length + '…'; this.forceUpdate(); try { await this.ingestUrl(urls[i], { collect: got, keepOpen: true }); } catch (e) {} }
     if (got.length) await this.addDocs(got, { keepOpen: true });
-    A.status = got.length ? 'Added ' + plural(got.length, 'source') + '.' : ''; A.links = ''; A.pane = ''; this.forceUpdate();
+    const missL = urls.length - got.length;
+    A.status = got.length ? 'Added ' + plural(got.length, 'source') + (missL ? ' · ' + missL + ' couldn’t be read' : '') + '.' : 'None of the ' + plural(urls.length, 'link') + ' could be read.';
+    A.links = ''; A.pane = ''; this.forceUpdate();
   }
   addVals() {
     const S = this.addState(), sc = SEARCH_SCOPES.find(x => x.id === S.scope) || SEARCH_SCOPES[0], known = this.knownIds(this.analysis());
@@ -3509,7 +3512,7 @@ class Component extends DCLogic {
       onScope: e => { S.scope = e.target.value; reset(); try { localStorage.setItem('hd:add-scope', S.scope); } catch (er) {} if ((S.q || '').trim()) this.addSearch(); else this.forceUpdate(); },
       q: S.q, placeholder: sc.ask + '…', onQ: e => { S.q = e.target.value; }, onKey: e => { if (e.key === 'Enter') { S.q = e.target.value; this.addSearch(); } }, onSearch: () => this.addSearch(),
       loading: S.loading, rows, hasPanel: !!(S.loading || S.results), showIntake: !(S.loading || S.results),
-      resultsLine: S.loading && !S.results ? 'Searching ' + sc.label + '…' : plural(rows.length, 'result') + (S.engine ? ' · ' + S.engine : ''),
+      resultsLine: S.loading && !S.results ? 'Searching ' + sc.label + '…' : plural(rows.length, sc.label.toLowerCase() + ' result') + (S.engine ? ' · ' + S.engine : ''),
       hasMore: !!S.more, onMore: () => this.addSearch(true), moreLabel: S.loading ? 'Loading…' : 'More results',
       hasPending: pending > 0 && !S.loading, allLabel: 'Add all ' + pending, onAll: () => this.addAllResults(), onClear: () => { reset(); this.forceUpdate(); },
       error: S.error, hasError: !!S.error, status: S.status, hasStatus: !!S.status && !S.error,
@@ -3948,8 +3951,8 @@ class Component extends DCLogic {
     if (list.length) this.addDocs(list); this.ilog(list.length ? 'Added ' + plural(list.length, 'item') + ' from the public room, each checked against its sha256.' : 'Everything in the room is already here.'); }); }
   // ---------- the constitutional reading (EO reader output, indexed in a worker, kept in OPFS) ----------
   async loadReading(rebuild) { if (this._rixP && !rebuild) return this._rixP; this._rixP = (async () => {
-      if (!rebuild) { const b = await opfsRead('ohs-custody/reading-refresh25.index.json'); if (b) { this._rix = JSON.parse(new TextDecoder().decode(b)); this.forceUpdate(); return this._rix; } }
-      return new Promise(res => { const w = new Worker(new URL('reading-worker.js', location.href), { type: 'module' }); w.onmessage = async e => { const m = e.data; if (m.err) { this._rixErr = m.err; this._rixProg = null; this.forceUpdate(); w.terminate(); res(null); return; } if (!m.done) { this._rixProg = m; this.forceUpdate(); return; } w.terminate(); this._rixProg = null; const b = await opfsRead('ohs-custody/reading-refresh25.index.json'); this._rix = b ? JSON.parse(new TextDecoder().decode(b)) : null; this.forceUpdate(); res(this._rix); }; w.postMessage({}); }); })(); return this._rixP; }
+      if (!rebuild) { const v = await loadReadingIndex(false); if (v) { this._rix = v; this.forceUpdate(); return this._rix; } }
+      return new Promise(res => { const w = new Worker(new URL('reading-worker.js', location.href), { type: 'module' }); w.onmessage = async e => { const m = e.data; if (m.err) { this._rixErr = m.err; this._rixProg = null; this.forceUpdate(); w.terminate(); res(null); return; } if (!m.done) { this._rixProg = m; this.forceUpdate(); return; } w.terminate(); this._rixProg = null; this._rix = await loadReadingIndex(true); this.forceUpdate(); res(this._rix); }; w.postMessage({}); }); })(); return this._rixP; }
   // ---------- Records: the workspace as a relational database, its schema read off the data (bare-metal fold.js + DataChat) ----------
   recMod() { if (!this._recP) this._recP = import(new URL('holodeck-records.js', location.href).href); return this._recP; }
   dataChat() { if (window.DataChat) return Promise.resolve(window.DataChat); if (!this._dcP) this._dcP = new Promise((res, rej) => { const el = document.createElement('script'); el.src = new URL('vendor/bare-metal/public/data-chat.js', location.href).href; el.onload = () => res(window.DataChat); el.onerror = () => rej(new Error('DataChat did not load')); document.head.appendChild(el); }); return this._dcP; }
@@ -3992,12 +3995,14 @@ class Component extends DCLogic {
   ensureDb(A) {
     const key = this._key + ':' + (this._rix ? 'r' : '');
     if (this._db && this._db.key === key) return this._db;
-    if (!this._rix && !this._rixTried) { this._rixTried = true; opfsRead('ohs-custody/reading-refresh25.index.json').then(b => { if (b && !this._rix) { this._rix = JSON.parse(new TextDecoder().decode(b)); this.forceUpdate(); } }).catch(() => {}); }
+    if (!this._rix && !this._rixTried) { this._rixTried = true; loadReadingIndex(false).then(v => { if (v && !this._rix) { this._rix = v; this.forceUpdate(); } }).catch(() => {}); }
     if (this._dbBuilding !== key) { this._dbBuilding = key;
       Promise.all([this.recMod(), this.dataChat().catch(() => null)]).then(([M]) => setTimeout(() => { if (this._dbBuilding !== key) return;
-        try { const db = M.buildDatabase(A, this._rix, { counted: d => this.counted(d), filterFrames: this.filterFramesFor(A), savedFolds: this.myFolds() }); db.key = key; const out = new Map(), inn = new Map(), byType = new Map();
+        try { const db = M.buildDatabase(A, this._rix, { counted: d => this.counted(d), filterFrames: this.filterFramesFor(A), savedFolds: this.myFolds() }); db.key = key; const out = new Map(), inn = new Map();
           for (const c of db.state.connections) { (out.get(c.source) || out.set(c.source, []).get(c.source)).push({ rel: c.type, a: c.target }); (inn.get(c.target) || inn.set(c.target, []).get(c.target)).push({ rel: c.type, a: c.source }); }
-          for (const e of Object.values(db.state.entities)) (byType.get(e._type) || byType.set(e._type, []).get(e._type)).push(e);
+          const byType = new Map();
+          if (db.state.entitiesByType) { for (const [t, anchors] of Object.entries(db.state.entitiesByType)) { const rows = []; for (const a of anchors) { const e = db.state.entities[a]; if (e) rows.push(e); } if (rows.length) byType.set(t, rows); } }
+          else { for (const e of Object.values(db.state.entities)) (byType.get(e._type) || byType.set(e._type, []).get(e._type)).push(e); }
           db.out = out; db.inn = inn; db.byType = byType; this._db = db; this._dbErr = ''; } catch (e) { this._dbErr = String(e && e.message || e); }
         this._dbBuilding = null; this.forceUpdate(); }, 30)).catch(e => { this._dbErr = String(e && e.message || e); this._dbBuilding = null; this.forceUpdate(); }); }
     return this._db || null;
@@ -4158,7 +4163,7 @@ class Component extends DCLogic {
     this.setState({ akPending: q, akQ: '' }); if (!(await this.akLoad())) { this.setState({ akPending: '', akQ: q }); return; }
     if (!this._ix) { this.setState({ akBusy: 'indexing', akPending: q, akQ: '' }); for (let i = 0; i < 200 && !this._ix; i++) await new Promise(r => setTimeout(r, 100)); if (!this._ix) { this.setState({ akBusy: '', akErr: 'The passages are still being indexed. Try again in a moment.', akQ: q, akPending: '' }); return; } }
     let computed = null; try { computed = await this.askComputed(q); } catch (e) {}
-    if (!this._rix) { try { const b = await opfsRead('ohs-custody/reading-refresh25.index.json'); if (b) this._rix = JSON.parse(new TextDecoder().decode(b)); } catch (e) {} }
+    if (!this._rix) { try { this._rix = await loadReadingIndex(false); } catch (e) {} }
     let retrievalQ = q, resolved = [];
     if (this._mt) { const A0 = this.analysis(); const known = Object.keys(A0.names); const caps = [...new Set((q.match(/\b[A-Z][\p{L}'’-]+(?:\s+[A-Z][\p{L}'’-]+){0,3}/gu) || []).concat((q.match(/\b[a-z][a-z'’-]{3,}(?:\s+[a-z][a-z'’-]{3,})?/g) || []).filter(w => !/^(what|when|where|which|about|does|have|there|their|would|could|should|from|with|that|this|many|much|find|said|says|audit|sources)$/i.test(w))))];
       for (const c of caps) { if (known.some(n => n.toLowerCase() === c.toLowerCase())) continue; const r = this._mt.resolveTerm(c, known, { sameAs: this.sameAsFor(A0) }); if (r.mode === 'nearmiss') { resolved.push({ from: c, to: r.names[0], why: r.why, mode: 'nearmiss' }); retrievalQ += ' ' + r.names[0]; } else if (r.mode === 'refused') resolved.push({ from: c, to: null, why: r.why, mode: 'refused' }); } }
@@ -4326,16 +4331,16 @@ class Component extends DCLogic {
   }
   readingVals(A, view) {
     const S = this.state; const X = this._rix; const docOf = src => { const id = String(src).replace(/\.(txt|json)$/, ''); return A.docs.find(d => d.ohsId === id) || null; };
-    const rdOn = view === 'reader' && S.readDoc && X; if (view === 'reader' && !X && !this._rixP) opfsRead('ohs-custody/reading-refresh25.index.json').then(b => { if (b && !this._rix) { this._rix = JSON.parse(new TextDecoder().decode(b)); this.forceUpdate(); } }); const rdDoc = rdOn ? A.docById[S.readDoc] : null; const rdSrc = rdDoc && rdDoc.ohsId ? X.sources[rdDoc.ohsId + '.txt'] || X.sources[rdDoc.ohsId + '.json'] : null;
+    const rdOn = view === 'reader' && S.readDoc && X; if (view === 'reader' && !X && !this._rixP) loadReadingIndex(false).then(v => { if (v && !this._rix) { this._rix = v; this.forceUpdate(); } }); const rdDoc = rdOn ? A.docById[S.readDoc] : null; const srcOf = X ? (X.source ? n => X.source(n) : n => X.sources[n]) : null; const rdSrc = rdDoc && rdDoc.ohsId && srcOf ? srcOf(rdDoc.ohsId + '.txt') || srcOf(rdDoc.ohsId + '.json') : null;
     const rdPanel = rdSrc ? { has: true, line: plural(rdSrc.chunks, 'encounter') + ' \u00b7 ' + Object.entries(rdSrc.ops).sort((a, b) => b[1] - a[1]).map(([k, v]) => k + ' ' + v).join(' \u00b7 '), cast: Object.entries(rdSrc.cast).slice(0, 12).map(([k, v]) => k + ' \u00d7' + v).join(', '), bonds: Object.entries(rdSrc.bonds).slice(0, 8).map(([k, v]) => k + ' \u00d7' + v), churn: Object.entries(rdSrc.idChurn).slice(0, 5).map(([k, v]) => k + ' \u00d7' + v), hasChurn: Object.keys(rdSrc.idChurn).length > 0 } : { has: false, bonds: [], churn: [] };
     if (view !== 'reading') return { rdReading: rdPanel, rx: { on: false } };
     if (!X) { this.loadReading(); const p = this._rixProg; return { rdReading: rdPanel, rx: { on: true, ready: false, notReady: true, wait: this._rixErr ? 'Could not build the reading index: ' + this._rixErr : p ? (p.stage + (p.pct != null ? ' ' + p.pct + '%' : '') + (p.mb ? ' \u00b7 ' + p.mb + ' MB' : '')) : 'Opening the reading\u2026', note: 'The reading is 1.67 GB once decompressed. It is decoded once in the background, kept in this browser\u2019s file store, and indexed; later visits open the index directly.' } }; }
-    const nSrc = Object.keys(X.sources).length;
+    const srcMeta = X.sourcesMeta ? X.sourcesMeta() : null; const nSrc = srcMeta ? Object.keys(srcMeta).length : Object.keys(X.sources).length;
     const bondRow = b => { const within = b.n - b.srcN; const bg = b.srcN >= 5 && b.n <= b.srcN * 1.25; return { pair: b.a + ' \u2014 ' + b.b, n: '\u00d7' + b.n, where: plural(b.srcN, 'source'), rel: Object.entries(b.rel || {}).sort((x, y) => y[1] - x[1]).slice(0, 3).map(([k]) => '\u201c' + k + '\u201d').join(' '), tag: bg ? 'background: once per page' : within > 0 ? 'recurs within sources' : '', tagCol: bg ? 'var(--dim)' : 'var(--ok)', neg: b.neg ? b.neg + ' negated' : '' }; };
-    const bonds = (X.bonds || []).map(bondRow); const load = bonds.filter(b => b.tag !== 'background: once per page'), back = bonds.filter(b => b.tag === 'background: once per page');
-    const castRows = (X.cast || []).slice().sort((a, b) => b.srcN - a.srcN || b.mentions - a.mentions).slice(0, 60).map(c => { const nm = c.surfaces[0]; const inCorpus = !!A.names[nm]; return { name: nm, alts: c.surfaces.slice(1, 4).join(' \u00b7 '), hasAlts: c.surfaces.length > 1, meta: plural(c.mentions, 'mention') + ' \u00b7 ' + plural(c.srcN, 'source') + ' \u00b7 ' + String(c.standing || '').replace(/_/g, ' '), onClick: inCorpus ? () => this.openProfile(nm) : () => { this.setState({ q: nm, qDraft: undefined }); this.go('search'); } }; });
-    const churn = (X.identities || []).slice(0, 30).map(i => ({ pair: i.left + ' \u2194 ' + i.right, n: '\u00d7' + i.n, ev: Object.entries(i.events || {}).map(([k, v]) => k.replace(/^identity_/, '').replace(/_/g, ' ') + ' ' + v).join(' \u00b7 '), where: plural(i.srcN, 'source') }));
-    const srcRows = (X.order || Object.keys(X.sources)).map(s => { const x = X.sources[s]; const d = docOf(s); return { name: d ? d.title : s, file: s, line: plural(x.chunks, 'encounter') + ' \u00b7 ' + (x.ops.CON || 0) + ' CON \u00b7 ' + (x.ops.INS || 0) + ' INS \u00b7 ' + (x.ops.REC || 0) + ' REC', onOpen: d ? () => this.read(d.id) : () => {} , canOpen: !!d }; });
+    const bonds = (X.eachBond ? X.eachBond() : (X.bonds || [])).map(bondRow); const load = bonds.filter(b => b.tag !== 'background: once per page'), back = bonds.filter(b => b.tag === 'background: once per page');
+    const castRows = (X.castTop ? X.castTop(60) : (X.cast || []).slice().sort((a, b) => b.srcN - a.srcN || b.mentions - a.mentions).slice(0, 60)).map(c => { const nm = c.surfaces[0]; const inCorpus = !!A.names[nm]; return { name: nm, alts: c.surfaces.slice(1, 4).join(' \u00b7 '), hasAlts: c.surfaces.length > 1, meta: plural(c.mentions, 'mention') + ' \u00b7 ' + plural(c.srcN, 'source') + ' \u00b7 ' + String(c.standing || '').replace(/_/g, ' '), onClick: inCorpus ? () => this.openProfile(nm) : () => { this.setState({ q: nm, qDraft: undefined }); this.go('search'); } }; });
+    const churn = (X.identitiesTop ? X.identitiesTop(30) : (X.identities || []).slice(0, 30)).map(i => ({ pair: i.left + ' \u2194 ' + i.right, n: '\u00d7' + i.n, ev: Object.entries(i.events || {}).map(([k, v]) => k.replace(/^identity_/, '').replace(/_/g, ' ') + ' ' + v).join(' \u00b7 '), where: plural(i.srcN, 'source') }));
+    const srcRows = (X.order || (srcMeta ? Object.keys(srcMeta) : Object.keys(X.sources))).map(s => { const x = srcMeta ? srcMeta[s] : X.sources[s]; const d = docOf(s); return { name: d ? d.title : s, file: s, line: plural(x.chunks, 'encounter') + ' \u00b7 ' + (x.ops.CON || 0) + ' CON \u00b7 ' + (x.ops.INS || 0) + ' INS \u00b7 ' + (x.ops.REC || 0) + ' REC', onOpen: d ? () => this.read(d.id) : () => {} , canOpen: !!d }; });
     return { rdReading: rdPanel, rx: { on: true, ready: true, stats: [[X.encounters, 'encounters'], [nSrc, 'sources'], [X.castTotal, 'referents admitted'], [X.bondsTotal, 'bonds witnessed'], [X.canonTotal, 'canonical relations'], [X.identitiesTotal, 'identity hypotheses']].map(([n, l]) => ({ n: Number(n).toLocaleString(), l })),
       kinds: Object.entries(X.kinds).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ k, v: v.toLocaleString() })),
       cast: castRows, load: load.slice(0, 40), back: back.slice(0, 20), backN: String(back.length), loadN: String(load.length), churn, srcRows, built: 'Built ' + new Date(X.builtAt).toLocaleString() + ' in ' + (X.ms / 1000).toFixed(1) + ' s from ' + String(X.from).split('/').pop(), onRebuild: () => { this._rix = null; this.loadReading(true); this.forceUpdate(); } } };
@@ -4565,7 +4570,12 @@ class Component extends DCLogic {
   readerRef = el => {
     if (this._rEl === el) return; this._rEl = el; this._rKey = null; this._selKey = null; this._rRoot = el; if (!el) return;
     this.attachHandlers(el); this.syncReader();
-  };
+  }
+  // The bookmarklet: the user reads a page in their own browser, clicks "Explore this page", and the
+  // page's already-rendered DOM (scripts and all — faithfulHtml strips them) is handed to this surface.
+  // Nothing is fetched by any server and nothing about the reading leaves the machine; the page was
+  // rendered by the user's own browser, so frame-ancestors and CORS never apply.
+  bookmarkletRef = el => { if (el) el.setAttribute('href', bookmarkletHref()); };
   attachHandlers(target) {
     target.addEventListener('click', e => { const a = e.target.closest('a'); if (a && (e.metaKey || e.ctrlKey)) return; const nm = e.target.closest('[data-name]'); const st = e.target.closest('[data-st]');
       if (a && !e.shiftKey && /^https?:/.test(a.href || '')) { e.preventDefault(); e.stopPropagation(); this.navigate(a.href); return; }
@@ -4591,6 +4601,29 @@ class Component extends DCLogic {
       try { let raf = 0; this._ro = new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(fit); }); this._ro.observe(doc.documentElement); } catch (e) {}
       this._selKey = null; this.applySel(body);
     };
+  }
+  // A source the surface could not read (a page that blocks cross-origin reads, or renders only in a
+  // browser) has no captured body to render. Rather than a blank pane, show the real page in-app with
+  // a direct iframe, and point at the on-device bookmarklet to capture it. Nothing is grounded — the
+  // banner says so; the words come from the site, or from the person's own capture, not a server.
+  isLiveDoc(d) { return !!(d && /^https?:/i.test(d.url || '') && !d.media && !d.pdfSrc && d.format !== 'pdf' && !d.html && !d.faithful && !d.binPath); }
+  renderLive(el, d) {
+    el.innerHTML = ''; const host = (() => { try { return new URL(d.url).hostname.replace(/^www\./, ''); } catch (e) { return d.url; } })();
+    const wrap = document.createElement('div'); wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px';
+    const bar = document.createElement('div'); bar.style.cssText = "display:flex;gap:6px 14px;align-items:baseline;flex-wrap:wrap;font:400 13px/1.5 'Hanken Grotesk';color:var(--mut);text-wrap:pretty";
+    bar.append('This page could not be read directly' + (d.note ? ' — ' + d.note : '') + ' It is shown live from ' + host + ' and is not part of the record. To read it into the workspace, open it in this browser, then click ');
+    const a = document.createElement('a'); a.href = d.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Open the page ↗';
+    a.style.cssText = "color:var(--acc);text-decoration:none;font:600 13px 'Hanken Grotesk'"; bar.appendChild(a);
+    bar.append(' and, on it, ');
+    const bm = document.createElement('a'); bm.href = bookmarkletHref(); bm.textContent = '✦ Explore this page';
+    bm.title = 'Drag to your bookmarks bar, then click it on the page you are reading'; bm.style.cssText = "color:var(--acc);text-decoration:none;font:600 13px 'Hanken Grotesk';cursor:grab"; bar.appendChild(bm);
+    bar.append(' (drag it to your bookmarks bar first). If the frame below stays blank, the site also blocks embedding.');
+    const f = document.createElement('iframe');
+    f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms');
+    f.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin'); f.title = d.title || host;
+    f.style.cssText = 'width:100%;height:70vh;min-height:520px;border:1px solid var(--line);border-radius:10px;background:#fff';
+    f.src = d.url;
+    wrap.appendChild(bar); wrap.appendChild(f); el.appendChild(wrap); this._rRoot = el;
   }
   async renderFaithful(el, d, R, A, key, q) {
     this._faith = this._faith || {}; let page = d.faithful || this._faith[d.id];
@@ -4693,6 +4726,7 @@ class Component extends DCLogic {
       if (d.format === 'page') { this.renderPage(el, d, R, A, key); return; }
       if ((d.faithful || d.binPath) && !d.pdfSrc && S.readMode === 'original') { this.renderFaithful(el, d, R, A, key, q); return; }
       if (d.pdfSrc && S.readMode === 'original') { this._rRoot = el; this.renderPdfFaithful(el, d, R, A, key, q); return; }
+      if (S.readMode === 'original' && this.isLiveDoc(d)) { this.renderLive(el, d); return; }
       if (d.lazy) { const L = (this._lazy || {})[d.id]; if (!L || L.loading) { this._rRoot = el; el.innerHTML = '<p style="font:400 15px Hanken Grotesk;color:var(--mut)">Loading the transcript…</p>'; this.loadLazyBody(d); this._rKey = null; return; } }
       this._rRoot = el; el.innerHTML = (d.lazy && ((this._lazy || {})[d.id] || {}).html) || d.html || ''; this._ptr = { S: 0, M: 0 }; const nodes = []; walkText(el, (n, o) => nodes.push([n, o]));
       if (!d.lazy) nodes.forEach(([n, o]) => { const fr = this.makeFrag(n.data, o, R, false, A); if (fr) n.parentNode.replaceChild(fr, n); });
@@ -4915,7 +4949,7 @@ class Component extends DCLogic {
     this.setState({ added, corpus: newId, view: 'summary', sel: null, f: {}, q: '', readDoc: null, just: null }); }
   sel(type, id) { const S0 = this.state; if (type === 'name' && S0.view === 'reader' && !(S0.sel && S0.sel.type === 'name' && S0.sel.id === id)) this.pushHist(); if (type === 'doc') this.markRead(id); this.setState(s => (s.sel && s.sel.type === type && s.sel.id === id) ? { sel: null, selAll: false, pfIdx: 0, pfAll: false } : { sel: { type, id }, selAll: false, pfIdx: 0, pfAll: false }); }
   go(view) { this.setState({ view, readDoc: null }); }
-  read(docId, stId) { const S0 = this.state; if (S0.view !== 'reader' || docId !== S0.readDoc || (S0.sel && S0.sel.type === 'name')) this.pushHist(); this.markRead(docId); if (docId !== this.state.readDoc) { this.state.seekT = 0; this._faithFound = null; } this.setState({ view: 'reader', readDoc: docId, sel: stId ? { type: 'statement', id: stId } : { type: 'doc', id: docId } }); }
+  read(docId, stId) { const S0 = this.state; if (S0.view !== 'reader' || docId !== S0.readDoc || (S0.sel && S0.sel.type === 'name')) this.pushHist(); this.markRead(docId); const live = this.isLiveDoc(this.analysis().docById[docId]); if (docId !== this.state.readDoc) { this.state.seekT = 0; this._faithFound = null; } this.setState({ view: 'reader', readDoc: docId, sel: stId ? { type: 'statement', id: stId } : { type: 'doc', id: docId }, ...(live ? { readMode: 'original' } : {}) }); }
   saveAdded(added) { try { localStorage.setItem('fold-explorer-added', JSON.stringify(added)); } catch (e) {} }
   // Fold the new statements into the holograph by the surprise view's own rules (holoKit), recording each step,
   // then hand the trace to the replay player. The picture before is everything else in the workspace.
@@ -4986,7 +5020,7 @@ class Component extends DCLogic {
     T.focus = new Set(nd.map(d => d.id)); nd.forEach(d => hdT('store', 'mint', 'Stored \u201c' + hdCut(d.title, 60) + '\u201d as ' + d.id + (list[nd.indexOf(d)].html ? ' \u00b7 full page kept; ' + d.text.length.toLocaleString() + ' characters indexed for search' + (d.text.length >= 60000 ? ' (the cap; the reading below uses the whole page)' : '') : ' \u00b7 ' + d.text.length.toLocaleString() + ' characters kept'), { doc: d.id }));
     nd.forEach((d, i) => { const x = list[i]; if (x.html) { this._html[d.id] = x.html; idbPut('html:' + d.id, x.html).catch(() => {}); } if (x.pdf) idbPut('pdf:' + d.id, x.pdf).catch(() => {}); if (x.buf) idbPut('media:' + d.id, x.buf).catch(() => {}); });
     let engNote = null; { const live = nd.filter(d => d.text && !d.measured); let ok = 0, miss = 0;
-      if (live.length) this.setState({ busy: 'Reading ' + (live.length === 1 ? 'it' : live.length + ' sources') + ' with the engine…' });
+      if (live.length) this.setState({ busy: 'Reading ' + (live.length === 1 ? '1 source' : live.length + ' sources') + ' with the eoreader7 engine…' });
       for (const d of live) { const t0 = HD_TR ? performance.now() - HD_TR.t0 : 0, got = await hdEngineRead(d.title, d.text);
         if (!got) { miss++; continue; } ok++; d.eng = hdEngineCompact(got.host, got.read);
         if (HD_TR) { const evs = Array.isArray(got.read.events) ? got.read.events : [];
@@ -5260,15 +5294,15 @@ class Component extends DCLogic {
     const used = new Set(); const usedT = new Set(); const seeds = F.filter(st => st.claimy && (A.echoes[st.id] || []).some(e => fSet.has(e.id))).sort((a, b) => (A.echoes[b.id] || []).length - (A.echoes[a.id] || []).length);
     const shapesRaw = [];
     const shDocs = new Set(F.map(st => st.doc)); const shN0 = Math.max(1, shDocs.size);
-    const termDocs = {}; F.forEach(st => { st.topics.forEach(w => { (termDocs[w] = termDocs[w] || new Set()).add(st.doc); }); st.names.forEach(n => { (termDocs['n:' + n] = termDocs['n:' + n] || new Set()).add(st.doc); }); });
+    const termDocs = Object.create(null); F.forEach(st => { st.topics.forEach(w => { (termDocs[w] = termDocs[w] || new Set()).add(st.doc); }); st.names.forEach(n => { (termDocs['n:' + n] = termDocs['n:' + n] || new Set()).add(st.doc); }); });
     const ROLE_RE = /^(director|chair|chairman|chairwoman|president|member|council|councilmember|mayor|spokesperson|spokesman|spokeswoman|manager|officer|chief|executive|deputy|interim|former|office|department|division|staff|reporter|editor|writer|photo|photograph|contributor|said|says|told)$/;
     const contentWords = st => (clean(st.text).toLowerCase().match(/[a-z]{3,}/g) || []).filter(w => !STOP.has(w) && !ROLE_RE.test(w) && !st.names.some(n => n.toLowerCase().includes(w)));
     seeds.forEach(seed => { if (used.has(seed.id) || usedT.has(normT(seed.text))) return; const txt = new Set([normT(seed.text)]); const m = [seed]; const sw = wset(seed.text); const hosts = new Set([hostOf(seed.doc)]);
       (A.echoes[seed.id] || []).forEach(e => { const o = A.byId[e.id]; if (!fSet.has(o.id) || !o.claimy || used.has(o.id) || e.sim < A.echoFloor) return; const nt = normT(o.text); if (txt.has(nt) || usedT.has(nt)) return; const hk = hostOf(o.doc); if (hosts.has(hk)) return; const ow = wset(o.text); let inter = 0; ow.forEach(w => { if (sw.has(w)) inter++; }); const jac = inter / ((sw.size + ow.size - inter) || 1); const shName = o.names.some(n => seed.names.includes(n)); if (inter < 3 || jac < 0.25 || (!shName && jac < 0.4)) return; txt.add(nt); hosts.add(hk); m.push(o); });
       const docs = new Set(m.map(x => x.doc)); const k = kOf(docs); if (k < 2) return; m.forEach(x => { used.add(x.id); usedT.add(normT(x.text)); });
-      const nc = {}, tc = {}; m.forEach(st => { new Set(st.names).forEach(n => { nc[n] = (nc[n] || 0) + 1; }); new Set(st.topics).forEach(w => { tc[w] = (tc[w] || 0) + 1; }); });
+      const nc = Object.create(null), tc = Object.create(null); m.forEach(st => { new Set(st.names).forEach(n => { nc[n] = (nc[n] || 0) + 1; }); new Set(st.topics).forEach(w => { tc[w] = (tc[w] || 0) + 1; }); });
       const shN = Object.keys(nc).filter(n => nc[n] >= 2).sort((a, b) => nc[b] - nc[a]).slice(0, 3); const shT = Object.keys(tc).filter(w => tc[w] >= 2 && !ROLE_RE.test(w) && !STOP.has(w) && !shN.some(n => n.toLowerCase().includes(w))).sort((a, b) => tc[b] - tc[a]).slice(0, 4);
-      const vals = {}; m.forEach(st => st.figs.forEach(f => { (vals[f.unit] = vals[f.unit] || new Set()).add(f.raw); })); const clash = Object.keys(vals).filter(u => vals[u].size > 1);
+      const vals = Object.create(null); m.forEach(st => st.figs.forEach(f => { (vals[f.unit] = vals[f.unit] || new Set()).add(f.raw); })); const clash = Object.keys(vals).filter(u => vals[u].size > 1);
       if (m.every(st => contentWords(st).length < 4)) return;
       if (!shT.length && !clash.length) return;
       const keys = [...shN.map(n => 'n:' + n), ...shT.slice(0, 2)]; let co = null; keys.forEach(kk => { const ds = termDocs[kk] || new Set(); co = co ? new Set([...co].filter(x => ds.has(x))) : new Set(ds); });
@@ -5640,7 +5674,7 @@ class Component extends DCLogic {
       const names = J.linked.slice(0, 8).map(n => ({ label: n, w: 600, col: 'var(--ink)', tip: 'Already in this workspace', onClick: selN(n) })).concat(J.fresh.slice(0, Math.max(0, 10 - Math.min(8, J.linked.length))).map(n => ({ label: n, w: 400, col: 'var(--ink2)', tip: 'New here', onClick: selN(n) })));
       names.forEach(x => { const o = oddN.get(x.label); if (o) { x.col = 'var(--amber)'; x.label += ' ?'; x.tip = 'Archon Fort: ' + o.why; } });
       const more = J.linked.length + J.fresh.length - names.length; if (more > 0) names.push({ label: '+' + more + ' more', w: 400, col: 'var(--dim)', tip: 'All names', onClick: () => this.go('names') });
-      return { title: J.title, summary: [plural(J.n, 'statement'), J.linked.length ? plural(J.linked.length, 'name') + ' already here' : '', J.echoN ? plural(J.echoN, 'echo', 'echoes') : ''].filter(Boolean).join(' · '),
+      return { title: J.title, summary: [plural(J.n, 'statement') + ' read from what you added', J.linked.length ? plural(J.linked.length, 'name') + ' already here' : '', J.echoN ? plural(J.echoN, 'echo', 'echoes') : ''].filter(Boolean).join(' · '),
         hasOdd: !!(J.odd && J.odd.some(o => o.standing === 'stands')), odd: (J.odd || []).filter(o => o.standing === 'stands').slice(0, 3).map(o => ({ tag: 'Odd', label: o.subject, why: o.short, onInspect: () => player(o.at), onCorrect: () => this.fileCorrection(o.subject, '"' + o.subject + '" is not a name') })),
         oddMore: (() => { const st = (J.odd || []).filter(o => o.standing === 'stands').length, ct = (J.odd || []).filter(o => o.standing === 'contested').length; const parts = [st > 3 ? (st - 3) + ' more odd' : '', ct ? ct + ' disputed' : ''].filter(Boolean); return parts.length ? parts.join(', ') + ', in the replay' : ''; })(), onOddAll: () => { const f = (J.odd || [])[0]; if (f) player(f.at); },
         hasNames: names.length > 0, names, ...(() => { const groups = new Map(), lines = []; J.notes.forEach(n => { const m = /^From (\S+) · (.+)$/.exec(n); if (m) { if (!groups.has(m[1])) groups.set(m[1], []); groups.get(m[1]).push({ path: m[2] }); } else lines.push({ text: n }); });
@@ -5812,7 +5846,7 @@ class Component extends DCLogic {
         return { show: !!S.showRepo, name: 'ohs', open: () => this.setState({ showRepo: true, repoMsg: '' }), close: () => this.setState({ showRepo: false }), closeBg: e => { if (e.target === e.currentTarget) this.setState({ showRepo: false }); },
           dot: ci.from ? 'var(--ok)' : 'var(--mut)', title: 'Read-only source store',
           corpusLine, wsLine, rebuild: () => { this.setState({ showRepo: false }); this.rebuildLive(); }, msg: '', hasMsg: false }; })(),
-      openAdd: () => { this._add = null; this.setState({ showAdd: true }); }, closeAdd: () => this.setState({ showAdd: false }),
+      openAdd: () => { this._add = null; this.addState().baseAdded = (S.added[cid] || []).length; this.setState({ showAdd: true }); }, closeAdd: () => this.setState({ showAdd: false }),
       openNewWs: () => this.createWorkspace(), openTask: () => this.go('ingest'),
       closeAddBg: e => { if (e.target === e.currentTarget) this.setState({ showAdd: false }); },
       goSummary: () => this.go('summary'), summaryBtn: hi(view === 'summary'),
@@ -5825,7 +5859,7 @@ class Component extends DCLogic {
       gsw: { track: S.ground.on ? 'var(--acc2)' : 'var(--line2)', left: S.ground.on ? '16px' : '2px' },
       toggleGround: () => this.setState(s => ({ ground: { ...s.ground, on: !s.ground.on } })),
       layers: [['names', 'Names', 'var(--acc)', 'People, organisations and places'], ['figures', 'Figures', 'var(--amber)', 'Numbers and amounts'], ['dates', 'Dates', 'var(--date)', 'Years, months and times'], ['sentences', 'Sentences', 'var(--sel2)', 'Make every sentence clickable']].map(([k, label, color, title]) => { const on = S.ground.on && S.ground[k]; return { label, title, color, op: S.ground.on ? (on ? 1 : 0.5) : 0.35, bd: on ? 'var(--line2)' : 'transparent', bg: on ? 'var(--s1)' : 'transparent', onClick: () => this.setState(s => ({ ground: { ...s.ground, on: true, [k]: s.ground.on ? !s.ground[k] : true } })) }; }),
-      readerHint: S.ground.on ? 'Click a name or sentence to inspect · links open here · Shift-click a link to inspect it' : 'Grounding off — the page as published. Links still open here.',
+       readerHint: (() => { const d0 = S.readDoc && A.docById[S.readDoc]; if (d0 && S.readMode === 'original' && this.isLiveDoc(d0)) return 'The live page — read outside this workspace, so it carries no grounding'; return S.ground.on ? 'Click a name or sentence to inspect · links open here · Shift-click a link to inspect it' : 'Grounding off — the page as published. Links still open here.'; })(),
       readerPad: S.readDoc && A.docById[S.readDoc] && (A.docById[S.readDoc].format === 'page' || ((A.docById[S.readDoc].faithful || A.docById[S.readDoc].binPath) && S.readMode === 'original')) ? '0' : A.docById[S.readDoc] && A.docById[S.readDoc].pdfSrc && S.readMode === 'original' ? '24px 16px' : '28px 34px', readerMax: S.readDoc && A.docById[S.readDoc] && (A.docById[S.readDoc].format === 'page' || ((A.docById[S.readDoc].faithful || A.docById[S.readDoc].binPath) && S.readMode === 'original')) ? 'none' : '900px',
       rdMedia: (() => { const d0 = S.readDoc && A.docById[S.readDoc]; const m = d0 && d0.media; if (!m) return { has: false };
         if (m.kind === 'youtube') { const LZ = d0.lazy ? (this._lazy || {})[d0.id] : null; const segN = LZ && !LZ.loading ? LZ.segN : m.segN; const timed = segN > 0 || segN === -1;
@@ -5885,7 +5919,7 @@ class Component extends DCLogic {
       add: S.showAdd ? this.addVals() : undefined,
       addDraft: () => { const t = S.draftText.trim(); if (!t) { this.setState({ note: 'Paste some text first.' }); return; } this.addDocs([{ title: S.draftTitle.trim(), year: parseInt(S.draftYear) || null, text: t }]); },
       onFiles: e => this.ingest({ files: e.target.files, getData: () => '' }),
-      customNote: S.note || (addN(cid) ? plural(addN(cid), 'item') + ' added here' : ''),
+      customNote: S.note || (() => { const A = this.addState(); const total = addN(cid); const base = A.baseAdded != null ? A.baseAdded : total; const now = Math.max(0, total - base); const name = this.corpusName(); return now ? plural(now, 'source') + ' added just now · ' + plural(total, 'source') + ' in “' + name + '”' : total ? plural(total, 'source') + ' in “' + name + '” · nothing added from this search' : (S.results ? 'Nothing added from this search yet.' : ''); })(),
       hasCustom: addN(cid) > 0,
       clearCustom: () => { const added = { ...S.added, [cid]: [] }; this.saveAdded(added); this.setState({ added, just: null, view: 'summary', sel: null, f: {}, showAdd: false }); }
     };

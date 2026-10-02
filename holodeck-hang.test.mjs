@@ -20,7 +20,7 @@ const read = p => fs.readFileSync(path.join(HERE, p), 'utf8');
 const D0 = []; // no directions: the measured ranking alone
 
 const REPO = { type: 'JS', title: 'holodeck-reader.js', text: read('holodeck-reader.js') };
-const REPORT = { type: 'Notes', title: 'nine-jobs.md', text: read('../nine-jobs.md') };
+const REPORT = { type: 'Notes', title: 'nine-jobs.md', text: read('../eo-compendium/essays/nine-jobs.md') };
 // Verbatim from `pdftotext -layout -f 11 -l 11 /tmp/opencode/tufte/tufte-ch2-5.pdf -`
 // (reproduce with that command; rows 5-10 of the gasoline-scale table):
 const GRID = {
@@ -85,7 +85,7 @@ test('mixed workspace recommends small-multiples; single kind stays single', () 
   assert.equal(mixed.recommendation, 'small-multiples');
   const single = H.workspaceHang([
     H.readHanging(REPORT, { directions: D0 }),
-    H.readHanging({ type: 'Notes', title: 'arrival.md', text: read('../arrival-is-not-a-finish-line.md') }, { directions: D0 }),
+    H.readHanging({ type: 'Notes', title: 'arrival.md', text: read('../eo-compendium/essays/arrival-is-not-a-finish-line.md') }, { directions: D0 }),
   ]);
   assert.equal(single.recommendation, 'single');
 });

@@ -2,8 +2,18 @@
 // Strategy: first check if the repo already has a pre-built index.json beside the .zst; if so,
 // fetch it directly (no decompression). Otherwise download + decompress in memory, index, and
 // write only the compact index to OPFS — never the raw decompressed JSONL.
+import { packIndex } from './idx-binary.js';
 const SRC_URL = 'https://raw.githubusercontent.com/clovenbradshaw-ctrl/ohs-custody/main/ground-readings/f3affd2e11370118-causalTextPerceiver_reviseTextFold_refresh25.jsonl.zst';
 async function dirOf(path) { let d = await navigator.storage.getDirectory(); for (const p of path.split('/').filter(Boolean)) d = await d.getDirectoryHandle(p, { create: true }); return d; }
+// Write the index as JSON (the historical fallback) and as a binary FRIX file so the
+// fold's open path is one arrayBuffer(), no JSON.parse. The .bin is the fast path.
+async function writeIndex(dir, out, obj) {
+  const fh = await dir.getFileHandle(out, { create: true }); const w = await fh.createWritable(); await w.write(JSON.stringify(obj)); await w.close();
+  try {
+    const bh = await dir.getFileHandle(out.replace(/\.json$/, '.idx.bin'), { create: true });
+    const bw = await bh.createWritable(); await bw.write(packIndex(obj)); await bw.close();
+  } catch (e) { console.warn('[reading-worker] binary index write failed:', e); }
+}
 // zstd frame header → declared content size (null if the frame doesn't declare one).
 function frameSize(b) { if (b[0] !== 0x28 || b[1] !== 0xB5 || b[2] !== 0x2F || b[3] !== 0xFD) throw new Error('not a zstd frame');
   const fhd = b[4], fcs = fhd >> 6, single = (fhd >> 5) & 1, did = [0, 1, 2, 4][fhd & 3]; let o = 5 + (single ? 0 : 1) + did;
@@ -45,7 +55,7 @@ self.onmessage = async e => {
     const prebuilt = await fetch(prebuiltUrl).then(r => r.ok ? r.json() : null).catch(() => null);
     if (prebuilt && prebuilt.schema === 'FoldReadingIndex@2') {
       const dir = await dirOf('ohs-custody');
-      const fh = await dir.getFileHandle(out, { create: true }); const w = await fh.createWritable(); await w.write(JSON.stringify(prebuilt)); await w.close();
+      await writeIndex(dir, out, prebuilt);
       postMessage({ done: true, index: { lines: prebuilt.lines, bad: prebuilt.bad, encounters: prebuilt.encounters, sources: Object.keys(prebuilt.sources || {}).length, cast: prebuilt.castTotal, bonds: prebuilt.bondsTotal, canon: prebuilt.canonTotal, identities: prebuilt.identitiesTotal, ms: Date.now() - t0, from: 'repo-prebuilt', topCast: (prebuilt.cast || []).slice(0, 12).map(c => c.surfaces[0] + ' (' + c.mentions + ', ' + c.srcN + ' sources, ' + c.standing + ')'), topBonds: (prebuilt.bonds || []).slice(0, 10).map(b => b.a + ' — ' + b.b + ' ×' + b.n + ' in ' + b.srcN), churn: (prebuilt.identities || []).slice(0, 8).map(i => i.left + ' ↔ ' + i.right + ' ×' + i.n + ' ' + JSON.stringify(i.events)) } });
       return;
     }
@@ -61,7 +71,7 @@ self.onmessage = async e => {
     const cur2 = await fetch(url.replace(/\.zst$/, '.cursor')).then(r => r.ok ? r.json() : null).catch(() => null);
     const index = buildIndex(lines, url, cur2, t0);
     if (cur2 && cur2.sequence && cur2.sequence !== index.encounters) throw new Error('Decoded ' + index.encounters + ' encounters; the reading’s cursor records ' + cur2.sequence + '.');
-    const dir = await dirOf('ohs-custody'); const fh = await dir.getFileHandle(out, { create: true }); const w = await fh.createWritable(); await w.write(JSON.stringify(index)); await w.close();
+    const dir = await dirOf('ohs-custody'); await writeIndex(dir, out, index);
     postMessage({ done: true, index: { lines: index.lines, bad: index.bad, encounters: index.encounters, sources: Object.keys(index.sources || {}).length, cast: index.castTotal, bonds: index.bondsTotal, canon: index.canonTotal, identities: index.identitiesTotal, ms: index.ms, topCast: index.cast.slice(0, 12).map(c => c.surfaces[0] + ' (' + c.mentions + ', ' + c.srcN + ' sources, ' + c.standing + ')'), topBonds: index.bonds.slice(0, 10).map(b => b.a + ' — ' + b.b + ' ×' + b.n + ' in ' + b.srcN), churn: index.identities.slice(0, 8).map(i => i.left + ' ↔ ' + i.right + ' ×' + i.n + ' ' + JSON.stringify(i.events)) } });
   } catch (err) { postMessage({ err: String(err && err.message || err) }); }
 };

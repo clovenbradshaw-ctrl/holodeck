@@ -193,8 +193,9 @@ export function readingBlock(rix, question) {
     seen.add(h.c.id); taken.push(h.k); refs.push(h.c); if (refs.length >= 3) break;
   }
   if (!refs.length) return null;
+  const bondsOf = rix.bondsOf ? (nm, n) => rix.bondsOf(nm, n) : (nm, n) => (rix.bonds || []).filter(b => b.a === nm || b.b === nm).sort((a, b) => b.n - a.n).slice(0, n);
   const lines = refs.map(c => { const surf = (c.surfaces || []).slice(0, 5); const nm = surf[0] || c.id;
-    const bonds = (rix.bonds || []).filter(b => b.a === nm || b.b === nm).sort((a, b) => b.n - a.n).slice(0, 5).map(b => (b.a === nm ? b.b : b.a) + ' (' + b.n + ')');
+    const bonds = bondsOf(nm, 5).map(b => (b.a === nm ? b.b : b.a) + ' (' + b.n + ')');
     return { name: nm, text: nm + (surf.length > 1 ? ', also written ' + surf.slice(1).join(', ') : '') + '. Mentioned ' + (c.mentions || 0) + ' times across ' + (c.srcN || Object.keys(c.src || {}).length) + ' sources' + (c.standing ? '; standing: ' + c.standing : '') + '.' + (bonds.length ? ' Held together most often with ' + bonds.join(', ') + '.' : ''), surfaces: surf }; });
   return { lines, text: lines.map(l => l.text).join('\n'), surfaces: refs.flatMap(c => c.surfaces || []) };
 }
