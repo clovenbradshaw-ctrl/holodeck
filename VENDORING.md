@@ -1,6 +1,18 @@
 repo: clovenbradshaw-ctrl/ohs-custody
 branch: main
 
+## Vendored reading fixture (2026-10-02, delink from clovenbradshaw at runtime)
+
+`fixtures/reading/f3affd2e11370118-causalTextPerceiver_reviseTextFold_refresh25.jsonl.index.json`
+and its `.cursor` are vendored byte-identical from `ohs-custody` `ground-readings/`. The
+reading view (`reading-worker.js`) now reads the pre-built `FoldReadingIndex@2` beside the
+app instead of fetching `raw.githubusercontent.com/clovenbradshaw-ctrl/ohs-custody` at
+runtime, so the view survives the migration's clovenbradshaw delink (FOLD-MIGRATION Step 4:
+"vendor the fixture, or gate the view on absence"). Only the index and cursor are vendored;
+the 7.7 MB `.jsonl.zst` is left upstream — the pre-built index is the path actually used,
+and the `.zst` path is only the key the index sits beside. `localStorage hd:reading`
+overrides the source with any absolute `.jsonl.zst` (or sibling `.index.json`) URL.
+
 ## Last sync
 date: 2026-09-25T19:46:51Z
 
