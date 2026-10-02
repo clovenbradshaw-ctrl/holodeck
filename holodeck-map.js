@@ -15,6 +15,12 @@
 // scroll still scrolls the page.
 import { nestByTies, repOf, visibleHolons, rollUp, placeLabels, sourceGraph, statementsOf, levelsOf, openAtLevel } from './holodeck-holons.js';
 
+export function mapOrigin(vis, adj, sel) {
+  if (sel && vis.includes(sel)) return { name: sel, reason: 'you selected it' };
+  let name = null, degree = -1; for (const n of vis) { const d = (adj.get(n) || new Set()).size; if (d > degree) { name = n; degree = d; } }
+  return { name, reason: degree > 0 ? 'it has the most visible connections (shared statements)' : 'it is the first visible name; no connections are present' };
+}
+
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const hash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967296; };
 const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
@@ -28,6 +34,7 @@ const CSS = `
 .hm button{all:unset;cursor:pointer;color:var(--mut);font:500 13px 'Hanken Grotesk',sans-serif;padding:4px 9px}
 .hm button:hover{color:var(--ink)}.hm button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}.hm button[disabled]{opacity:.35;cursor:default;color:var(--mut)}
 .hm-top{position:absolute;left:12px;right:12px;top:8px;z-index:2;display:flex;justify-content:space-between;align-items:flex-start;gap:6px 10px;flex-wrap:wrap;pointer-events:none}
+.hm-position{flex:1 0 100%;color:var(--mut);font-size:12px;background:var(--s1);padding:3px 6px;border-radius:5px}
 .hm-top>*{pointer-events:auto}
 .hm-layers,.hm-tg{display:flex;align-items:center;gap:2px;background:var(--s1);border:1px solid var(--line);border-radius:8px;padding:2px 4px}
 .hm-layers button[aria-pressed=true]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--acc)}
@@ -57,7 +64,7 @@ export function mountMap(host, opts = {}) {
   root.innerHTML = `<canvas></canvas><div class="hm-top"><div class="hm-layers" role="group" aria-label="Layer"><button type="button" data-layer="sources" title="The readings and the names they share">Sources</button><button type="button" data-layer="names" aria-pressed="true" title="Names, nested into groups that open on click">Names</button><button type="button" data-layer="statements" title="What a name sits in">Statements</button></div>` +
     `<div class="hm-tools"><span class="hm-tg" title="Zoom the picture"><button type="button" data-z="out" title="Zoom out">−</button><button type="button" data-z="in" title="Zoom in">+</button><button type="button" data-z="fit" title="Fit everything">Fit</button></span>` +
     `<span class="hm-tg" title="Move between levels of nesting"><button type="button" data-lv="up" title="Up a level: fewer, larger groups">↑</button><span class="hm-lv"></span><button type="button" data-lv="down" title="Down a level: open the groups">↓</button></span>` +
-    `<span class="hm-tg" title="Orbit speed"><button type="button" data-spd="slow" title="Slower orbit">🐢</button><span class="hm-spd"></span><button type="button" data-spd="fast" title="Faster orbit">🐇</button></span></div></div><div class="hm-card" hidden></div>${opts.legend ? legend : ''}`;
+    `<span class="hm-tg" title="Orbit speed"><button type="button" data-spd="slow" title="Slower orbit">🐢</button><span class="hm-spd"></span><button type="button" data-spd="fast" title="Faster orbit">🐇</button></span></div><div class="hm-position" aria-label="Map viewpoint"></div></div><div class="hm-card" hidden></div>${opts.legend ? legend : ''}`;
   host.appendChild(root);
   const gc = root.querySelector('canvas'), cardEl = root.querySelector('.hm-card'), layersEl = root.querySelector('.hm-layers'), topEl = root.querySelector('.hm-top'), lvEl = root.querySelector('.hm-lv'); { const s = root.querySelector('.hm-spd'); if (s) s.textContent = '0.25×'; }
   const padBottom = opts.padBottom ?? 30, css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#888';
@@ -65,8 +72,9 @@ export function mountMap(host, opts = {}) {
   const readCols = () => { col = { acc: css('--acc'), blue: css('--blue'), dim: css('--dim'), ink: css('--ink'), ink2: css('--ink2'), bad: css('--bad'), amber: css('--amber'), edge: css('--edge'), line2: css('--line2'), bg: css('--bg') }; };
 
   let D = null, sig = null, nodeMap = new Map(), adj = new Map(), docMap = new Map(), occ = new Map(), lastSel, nest0 = null, model = null;
+  let selectedEdge = null;
   let layer = 'names', sel = null, level = 0, heat = 1, sigH = '', dirty = true, lastCard = '', drag = null, moved = false;
-  const view = { k: 1, x: 0, y: 0 }, manual = new Map(), P = new Map(), hitsAt = [], wcache = new Map(), cc = new Map();
+  const view = { k: 1, x: 0, y: 0 }, manual = new Map(), P = new Map(), hitsAt = [], edgeHits = [], wcache = new Map(), cc = new Map();
   const X = x => x * view.k + view.x, Y = y => y * view.k + view.y, Rz = r => Math.max(1.4, r * view.k);
 
   function rebuild() {
@@ -123,8 +131,9 @@ export function mountMap(host, opts = {}) {
         const ma = wadj.get(a), mb = wadj.get(b); ma.set(b, Math.max(ma.get(b) || 0, ww)); mb.set(a, Math.max(mb.get(a) || 0, ww)); };
       (D.edges || []).forEach(E => addE(E.a, E.b, E.c || (E.sts && E.sts.length)));
       if (M.agg) M.agg.forEach(E => addE(E.a, E.b, E.c));
-      let origin = (sel && visSet.has(sel)) ? sel : null;
-      if (!origin) { let best = vis[0] || null, bd = -1; vis.forEach(n => { const d = (adj.get(n) || new Set()).size; if (d > bd) { bd = d; best = n; } }); origin = best; }
+      const center = mapOrigin(vis, adj, sel), origin = center.name;
+      root.querySelector('.hm-position').textContent = origin ? 'Centered on ' + origin + ' because ' + center.reason + ' · ' + docMap.size + ' sources · distance follows shared-statement counts, not ownership or control' : 'No origin: no names have been read here.';
+      topPad = topEl.offsetHeight + 16; cardEl.style.top = topPad + 'px';
       // GRAVITY: orbit radius ∝ 1/bond. Edge length is the bond's inverse
       // (scaled so the strongest bond is length 1), so a strongly-bound name
       // sits close and a weakly-bound one drifts out; Dijkstra gives the
@@ -158,13 +167,13 @@ export function mountMap(host, opts = {}) {
   function drawNames(g) {
     const M = buildModel(), hot = new Set([...(D.hot || [])].map(n => M.rep.get(n) || n)), odd = D.odd || new Map();
     const hotE = new Set((D.hotPairs || []).map(([a, b]) => { const x = M.rep.get(a), y = M.rep.get(b); return x && y && x !== y ? eKey(x, y) : ''; }));
-    hitsAt.length = 0;
+    hitsAt.length = 0; edgeHits.length = 0;
     // OHS: draw the orbit rings so the relational-distance shells read as a
     // solar system (faint concentric circles around the origin).
     if (simulate._rings) { const ocx = W / 2, ocy = (H - padBottom + topPad) / 2, ox = X(ocx), oy = Y(ocy); g.save(); g.setLineDash([3, 6]); g.strokeStyle = col.line2; g.globalAlpha = 0.5; g.lineWidth = 1;
       simulate._rings.forEach(rad => { g.beginPath(); g.arc(ox, oy, Rz(rad), 0, 6.283); g.stroke(); }); g.restore(); }
     M.agg.forEach((E, key) => { const a = P.get(E.a), b = P.get(E.b); if (!a || !b) return; g.beginPath(); g.moveTo(X(a.x), Y(a.y)); g.lineTo(X(b.x), Y(b.y));
-      g.strokeStyle = E.neg ? col.bad : E.mine ? col.acc : col.edge; g.globalAlpha = hotE.has(key) ? 1 : E.mine ? 0.7 : 0.35; g.lineWidth = Math.min(5, 0.8 + Math.log2(1 + E.c)) + (hotE.has(key) ? 1.5 : 0); g.setLineDash(E.neg ? [5, 4] : []); g.stroke(); });
+      g.strokeStyle = E.neg ? col.bad : E.mine ? col.acc : col.edge; g.globalAlpha = hotE.has(key) ? 1 : E.mine ? 0.7 : 0.35; g.lineWidth = Math.min(5, 0.8 + Math.log2(1 + E.c)) + (hotE.has(key) ? 1.5 : 0); g.setLineDash(E.neg ? [5, 4] : []); g.stroke(); edgeHits.push({ a:E.a, b:E.b, x1:X(a.x), y1:Y(a.y), x2:X(b.x), y2:Y(b.y) }); });
     g.setLineDash([]); g.globalAlpha = 1;
     const items = [];
     D.nodes.forEach(x => { if (solid(x)) return; const p = P.get(x.n); if (!p) return; const h = hot.has(x.n);
@@ -212,6 +221,15 @@ export function mountMap(host, opts = {}) {
   const docTitle = id => (docMap.get(id) || {}).title || 'Source';
   const chipsOf = list => list.map(([n, c]) => `<button type="button" class="hm-nm" data-name="${esc(n)}">${esc(n)}${c ? `<i>${c}</i>` : ''}</button>`).join('');
   function cardHtml() {
+    if (selectedEdge && layer === 'names') {
+      const e = selectedEdge, witnesses = new Map();
+      D.edges.filter(x => { const a = model.rep.get(x.a) || x.a, b = model.rep.get(x.b) || x.b; return eKey(a,b) === eKey(e.a,e.b); }).forEach(x => {
+        const right = new Set((occ.get(x.b) || []).map(o => String(o.doc) + ':' + o.id));
+        (occ.get(x.a) || []).filter(o => right.has(String(o.doc) + ':' + o.id)).forEach(o => witnesses.set(String(o.doc) + ':' + o.id, o));
+      });
+      return '<div class="hm-ch"><b>Why this connection exists</b></div>' + chipsOf([[e.a,0],[e.b,0]]) + '<p class="hm-mut">Names sharing statements, rolled up through the visible groups. This does not establish ownership, coordination or control.</p>' + (witnesses.size ? [...witnesses.values()].map(o => '<div class="hm-st"><div class="hm-src">' + esc(docTitle(o.doc)) + ' · statement ' + esc(o.id) + '</div>' + esc(sentenceOf(o)) + (opts.onWitness ? '<button type="button" data-witness="' + esc(String(o.doc) + ':' + o.id) + '">Open in source →</button>' : '') + '</div>').join('') : '<p class="hm-mut">No shared-statement witness is available here. This may be a grouping link; do not treat it as a sourced relation.</p>');
+    }
+
     if (layer === 'sources') {
       if (!sel) return '';
       if (sel === 'prior') { const ns = D.nodes.filter(x => x.st === 'prior' && !x.mine).sort((a, b) => b.c - a.c).slice(0, 14).map(x => [x.n, x.c]); return `<div class="hm-ch"><b>Already in the picture</b> · names from your earlier sources</div>${chipsOf(ns)}`; }
@@ -242,12 +260,12 @@ export function mountMap(host, opts = {}) {
 
   // ---------- levels, zoom and pan ----------
   const after = () => { heat = 1; dirty = true; renderCard(); };
-  const setLayer = l => { if ((l === 'sources') !== (layer === 'sources')) sel = null; layer = l; after(); };
+  const setLayer = l => { selectedEdge = null; if (l !== 'names') root.querySelector('.hm-position').textContent = docMap.size + ' sources in this map · ' + (l === 'sources' ? 'links count shared names; placement is a display arrangement' : 'statements shown for the selected name'); if ((l === 'sources') !== (layer === 'sources')) sel = null; layer = l; after(); };
   function levelDown() { if (!D) return; if (layer === 'sources') { layer = 'names'; level = 0; manual.clear(); } else if (layer === 'names') { buildModel(); if (level < model.max) { level++; manual.clear(); } else layer = 'statements'; } after(); }
   function levelUp() { if (layer === 'statements') layer = 'names'; else if (layer === 'names') { if (level > 0) { level--; manual.clear(); } else { layer = 'sources'; sel = null; } } after(); }
   function zoomAt(mx, my, f) { const nk = Math.max(0.35, Math.min(8, view.k * f)), s = nk / view.k; view.x = mx - (mx - view.x) * s; view.y = my - (my - view.y) * s; view.k = nk; dirty = true; }
   const fit = () => { view.k = 1; view.x = 0; view.y = 0; dirty = true; };
-  function focusName(n) { buildModel(); sel = n; layer = 'names'; for (let p = model.nest.parent.get(n); p != null; p = model.nest.parent.get(p)) manual.set(p, true); heat = 1; dirty = true; }
+  function focusName(n) { selectedEdge = null; buildModel(); sel = n; layer = 'names'; for (let p = model.nest.parent.get(n); p != null; p = model.nest.parent.get(p)) manual.set(p, true); heat = 1; dirty = true; }
   const pick = e => { const r = gc.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top; let best = null, bd = 1e9; hitsAt.forEach(h => { const d = Math.hypot(h.x - x, h.y - y); if (d <= h.r + 6 && d < bd) { best = h; bd = d; } }); return best; };
   const tipOf = h => layer === 'sources' ? (docMap.get(h.id.slice(4)) || {}).title || h.id : h.id + (model && model.nest.kids.get(h.id) && model.nest.kids.get(h.id).length ? ' — holds ' + plural(model.nest.size.get(h.id) - 1, 'more name') : '');
 
@@ -257,6 +275,8 @@ export function mountMap(host, opts = {}) {
     const h = pick(e); gc.style.cursor = h ? 'pointer' : 'grab'; gc.title = h ? tipOf(h) : ''; });
   gc.addEventListener('pointerup', () => { drag = null; });
   gc.addEventListener('click', e => { if (moved) { moved = false; return; } const h = pick(e);
+    selectedEdge = null;
+    if (!h && layer === 'names') { let best = null, bd = 7; edgeHits.forEach(x => { const r = gc.getBoundingClientRect(), px = e.clientX-r.left, py = e.clientY-r.top, dx=x.x2-x.x1, dy=x.y2-x.y1, t=Math.max(0,Math.min(1,((px-x.x1)*dx+(py-x.y1)*dy)/(dx*dx+dy*dy || 1))), d=Math.hypot(px-x.x1-t*dx,py-x.y1-t*dy); if (d<bd) { best=x; bd=d; } }); if (best) { selectedEdge=best; renderCard(); return; } }
     if (layer === 'names') { if (h && !h.noPick) { sel = h.id; if (model && model.nest.kids.get(h.id).length) { manual.set(h.id, !model.open.has(h.id)); heat = 1; } } else { sel = null; manual.clear(); view.k = 1; view.x = 0; view.y = 0; heat = 1; } }
     else if (layer === 'sources') sel = h ? h.id : null;
     dirty = true; renderCard(); });
@@ -266,7 +286,7 @@ export function mountMap(host, opts = {}) {
     if (b.dataset.spd) { simulate._spd = Math.min(8, Math.max(0.1, (simulate._spd || 0.5) * (b.dataset.spd === 'fast' ? 1.6 : 1 / 1.6))); const el = root.querySelector('.hm-spd'); if (el) el.textContent = (simulate._spd).toFixed(1) + '×'; return; }
     if (b.dataset.z === 'fit') fit(); else if (b.dataset.z) zoomAt(W / 2, H / 2, b.dataset.z === 'in' ? 1.35 : 1 / 1.35); else if (b.dataset.lv === 'up') levelUp(); else levelDown(); });
   layersEl.addEventListener('click', e => { const b = e.target.closest('[data-layer]'); if (b) setLayer(b.dataset.layer); });
-  cardEl.addEventListener('click', e => { const b = e.target.closest('[data-name],[data-layer],[data-profile]'); if (!b) return;
+  cardEl.addEventListener('click', e => { const w = e.target.closest('[data-witness]'); if (w) { const o = [...occ.values()].flat().find(o => String(o.doc) + ':' + o.id === w.dataset.witness); if (o && opts.onWitness) opts.onWitness(o); return; } const b = e.target.closest('[data-name],[data-layer],[data-profile]'); if (!b) return;
     if (b.dataset.profile) { opts.onProfile && opts.onProfile(b.dataset.profile); return; }
     if (b.dataset.layer) { setLayer(b.dataset.layer); return; }
     focusName(b.dataset.name); renderCard(); });
@@ -277,7 +297,7 @@ export function mountMap(host, opts = {}) {
     if (D && W && (dirty || heat > 0.01 || layer === 'names')) { simulate(); draw(); dirty = false; } raf = requestAnimationFrame(loop); }
 
   function set(d) {
-    D = d; if (d.sig == null || d.sig !== sig) { sig = d.sig; rebuild(); heat = Math.max(heat, 0.8); }
+    D = d; selectedEdge = null; if (d.sig == null || d.sig !== sig) { sig = d.sig; rebuild(); heat = Math.max(heat, 0.8); }
     if ((d.sel || null) !== lastSel) { lastSel = d.sel || null; if (lastSel && nodeMap.has(lastSel)) focusName(lastSel); }
     dirty = true; renderCard();
   }
