@@ -33,15 +33,46 @@ const THINKING_RE = /(^|[^a-z0-9])(deepseek[-_]?r1|qwq|qwen3(?![-_]?coder)|reaso
 export function isThinkingModel(name) { return THINKING_RE.test(String(name || '')); }
 export const DEFAULT_MODEL = 'webllm:gemma-2-2b-it-q4f16_1-MLC';
 export function webgpu() { return typeof navigator !== 'undefined' && !!navigator.gpu; }
-let _wl = null, _wlId = null, _wlP = null;
+let _wl = null, _wlId = null, _wlP = null, _wlIv = null, _wlGen = 0;
+const WL_STALL_MS = 60000; // the weights ship over the network; no init progress for a minute means the download stalled, not that the GPU is warming up
+const WL_SOURCES = ['https://esm.run/@mlc-ai/web-llm', 'https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm/+esm'];
 // The engine downloads the weights once (the browser caches them), then runs them on this machine's GPU. Nothing leaves the tab.
-export async function loadWebLLM(id, onProgress) {
-  if (_wl && _wlId === id) return _wl;
+// A load that makes no progress is broken, not slow: a watchdog fails it so the next call really retries (a fresh
+// engine, and a fallback CDN if the first runtime import did not answer). A late-finishing abandoned engine is unloaded.
+export function loadWebLLM(id, onProgress) {
+  if (_wl && _wlId === id) return Promise.resolve(_wl);
   if (_wlP && _wlId === id) return _wlP;
-  if (_wl && _wlId !== id) { try { await _wl.unload(); } catch (e) {} _wl = null; }
+  if (_wl && _wlId !== id) { try { _wl.unload(); } catch (e) {} _wl = null; }
   _wlId = id;
-  _wlP = (async () => { const W = await import('https://esm.run/@mlc-ai/web-llm'); const e = await W.CreateMLCEngine(id, { initProgressCallback: p => onProgress && onProgress(p) }); _wl = e; return e; })();
-  try { return await _wlP; } catch (e) { _wlP = null; _wlId = null; throw e; }
+  const gen = ++_wlGen;
+  const settle = () => { if (_wlIv) { clearInterval(_wlIv); _wlIv = null; } };
+  _wlP = new Promise((resolve, reject) => {
+    let lastBeat = Date.now(), done = false;
+    const beat = () => { lastBeat = Date.now(); };
+    (async () => {
+      let W = null, lastErr = null;
+      for (const src of WL_SOURCES) { try { W = await import(src); break; } catch (e) { lastErr = e; } }
+      if (!W) throw lastErr || new Error('Could not load the WebLLM runtime.');
+      return W.CreateMLCEngine(id, { initProgressCallback: p => { beat(); onProgress && onProgress(p); } });
+    })().then(e => {
+      done = true; settle();
+      if (gen !== _wlGen) { try { e.unload && e.unload(); } catch (x) {} return; }
+      _wl = e; resolve(e);
+    }, err => {
+      done = true; settle();
+      if (gen === _wlGen) { _wlP = null; _wlId = null; reject(err); }
+    });
+    _wlIv = setInterval(() => {
+      if (done) { settle(); return; }
+      if (Date.now() - lastBeat > WL_STALL_MS) {
+        if (gen !== _wlGen) { settle(); return; }
+        onProgress && onProgress({ text: 'The download has stalled — it will start again.', progress: 0 });
+        done = true; settle(); _wlP = null; _wlId = null;
+        reject(new Error('The model download stalled. It will be fetched again.'));
+      }
+    }, 3000);
+  });
+  return _wlP;
 }
 export function webllmLoaded(id) { return !!_wl && _wlId === id; }
 async function chatWebLLM(id, messages, { onToken, format, maxTokens, signal } = {}) {
