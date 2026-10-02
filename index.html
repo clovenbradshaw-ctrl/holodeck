@@ -4707,6 +4707,37 @@ class Component extends DCLogic {
   async loadReading(rebuild) { if (this._rixP && !rebuild) return this._rixP; this._rixP = (async () => {
       if (!rebuild) { const v = await loadReadingIndex(false); if (v) { this._rix = v; this.forceUpdate(); return this._rix; } }
       return new Promise(res => { const w = new Worker(new URL('reading-worker.js', location.href), { type: 'module' }); w.onmessage = async e => { const m = e.data; if (m.err) { this._rixErr = m.err; this._rixProg = null; this.forceUpdate(); w.terminate(); res(null); return; } if (!m.done) { this._rixProg = m; this.forceUpdate(); return; } w.terminate(); this._rixProg = null; this._rix = await loadReadingIndex(true); this.forceUpdate(); res(this._rix); }; w.postMessage({ url: hdReadingSrc() }); }); })(); return this._rixP; }
+  // ---------- the local reading: the same cast, bonds and encounters the OHS ground reading has,
+  // folded in this tab from the workspace's own documents through the vendored eoreader7 relation
+  // reader. No prebuilt index and no server: a source is read here, so uploads yield Referents and
+  // Bonds beside the corpus instead of names alone. Keyed by the docs, so it recomputes only when
+  // they change; the reader is the same organ the engine's /v1/read drives.
+  async loadLocalReading() {
+    const A = this.analysis();
+    const docs = A.docs.filter(d => !d.ohsId && d.text && d.text.trim());
+    const sig = docs.map(d => d.id).join(',') + ':' + docs.reduce((n, d) => n + String(d.text || '').length, 0);
+    if (this._lrixDone === sig) return this._localRix || null;
+    if (this._lrixP && this._lrixSig === sig) return this._lrixP;
+    this._lrixSig = sig;
+    if (!docs.length) { this._lrixDone = sig; this._localRix = null; this._lrixP = null; return null; }
+    this._lrixP = (async () => {
+      try {
+        const M = await import(new URL('holodeck-reading.js', location.href).href);
+        const R = await (await import(new URL('holodeck-reader.js', location.href).href)).makeEngineRelationReader();
+        const readings = [];
+        for (const d of docs) {
+          const text = String(d.text || '').slice(0, 60000); const passages = M.splitPassages(text);
+          let report = { edges: [] };
+          try { report = R(passages.map(t => ({ ref: d.id, text: t }))) || report; } catch (e) { report = { edges: [] }; }
+          readings.push({ name: d.id, ...M.readDoc(d.id, text, report, { passages: passages.length }) });
+          await new Promise(r => setTimeout(r, 0));
+        }
+        return M.mergeReadings(readings, { from: 'workspace (read in this tab)' });
+      } catch (e) { return null; }
+    })();
+    const rix = await this._lrixP; if (this._lrixSig === sig) { this._lrixP = null; this._localRix = rix; this._lrixDone = sig; this.forceUpdate(); }
+    return rix;
+  }
   // ---------- Records: the workspace as a relational database, its schema read off the data (bare-metal fold.js + DataChat) ----------
   recMod() { if (!this._recP) this._recP = import(new URL('holodeck-records.js', location.href).href); return this._recP; }
   dataChat() { if (window.DataChat) return Promise.resolve(window.DataChat); if (!this._dcP) this._dcP = new Promise((res, rej) => { const el = document.createElement('script'); el.src = new URL('vendor/bare-metal/public/data-chat.js', location.href).href; el.onload = () => res(window.DataChat); el.onerror = () => rej(new Error('DataChat did not load')); document.head.appendChild(el); }); return this._dcP; }
@@ -4747,12 +4778,13 @@ class Component extends DCLogic {
     return out;
   }
   ensureDb(A) {
-    const key = this._key + ':' + (this._rix ? 'r' : '');
+    const key = this._key + ':' + (this._rix ? 'r' : '') + (this._localRix ? 'l' : '');
     if (this._db && this._db.key === key) return this._db;
     if (!this._rix && !this._rixTried) { this._rixTried = true; loadReadingIndex(false).then(v => { if (v && !this._rix) { this._rix = v; this.forceUpdate(); } }).catch(() => {}); }
+    this.loadLocalReading().catch(() => {});
     if (this._dbBuilding !== key) { this._dbBuilding = key;
       Promise.all([this.recMod(), this.dataChat().catch(() => null)]).then(([M]) => setTimeout(() => { if (this._dbBuilding !== key) return;
-        try { const db = M.buildDatabase(A, this._rix, { counted: d => this.counted(d), filterFrames: this.filterFramesFor(A), savedFolds: this.myFolds() }); db.key = key; const out = new Map(), inn = new Map();
+        try { const db = M.buildDatabase(A, this._rix, { localIx: this._localRix, counted: d => this.counted(d), filterFrames: this.filterFramesFor(A), savedFolds: this.myFolds() }); db.key = key; const out = new Map(), inn = new Map();
           for (const c of db.state.connections) { (out.get(c.source) || out.set(c.source, []).get(c.source)).push({ rel: c.type, a: c.target }); (inn.get(c.target) || inn.set(c.target, []).get(c.target)).push({ rel: c.type, a: c.source }); }
           const byType = new Map();
           if (db.state.entitiesByType) { for (const [t, anchors] of Object.entries(db.state.entitiesByType)) { const rows = []; for (const a of anchors) { const e = db.state.entities[a]; if (e) rows.push(e); } if (rows.length) byType.set(t, rows); } }
@@ -5138,8 +5170,8 @@ class Component extends DCLogic {
       ph: isGen ? (art.targeting ? 'Describe a change…' : 'Describe what to build…') : 'Ask about the sources…', sendLabel: isGen ? 'Send ↵' : 'Ask ↵' } };
   }
   readingVals(A, view) {
-    const S = this.state; const X = this._rix; const docOf = src => { const id = String(src).replace(/\.(txt|json)$/, ''); return A.docs.find(d => d.ohsId === id) || null; };
-    const rdOn = view === 'reader' && S.readDoc && X; if (view === 'reader' && !X && !this._rixP) loadReadingIndex(false).then(v => { if (v && !this._rix) { this._rix = v; this.forceUpdate(); } }); const rdDoc = rdOn ? A.docById[S.readDoc] : null; const srcOf = X ? (X.source ? n => X.source(n) : n => X.sources[n]) : null; const rdSrc = rdDoc && rdDoc.ohsId && srcOf ? srcOf(rdDoc.ohsId + '.txt') || srcOf(rdDoc.ohsId + '.json') : null;
+    const S = this.state; const X = this._rix || this._localRix; const docOf = src => { const id = String(src).replace(/\.(txt|json)$/, ''); return A.docs.find(d => d.ohsId === id) || A.docById[id] || null; };
+    const rdOn = view === 'reader' && S.readDoc && X; if (view === 'reader' && !X && !this._rixP) loadReadingIndex(false).then(v => { if (v && !this._rix) { this._rix = v; this.forceUpdate(); } }).catch(() => {}); if ((view === 'reader' || view === 'reading') && !this._localRix && !this._lrixP) this.loadLocalReading(); const rdDoc = rdOn ? A.docById[S.readDoc] : null; const srcOf = X ? (X.source ? n => X.source(n) : n => X.sources[n]) : null; const rdSrc = rdDoc ? (rdDoc.ohsId && srcOf ? (srcOf(rdDoc.ohsId + '.txt') || srcOf(rdDoc.ohsId + '.json')) : (this._localRix && this._localRix.sources[rdDoc.id])) : null;
     const rdPanel = rdSrc ? { has: true, line: plural(rdSrc.chunks, 'encounter') + ' \u00b7 ' + Object.entries(rdSrc.ops).sort((a, b) => b[1] - a[1]).map(([k, v]) => k + ' ' + v).join(' \u00b7 '), cast: Object.entries(rdSrc.cast).slice(0, 12).map(([k, v]) => k + ' \u00d7' + v).join(', '), bonds: Object.entries(rdSrc.bonds).slice(0, 8).map(([k, v]) => k + ' \u00d7' + v), churn: Object.entries(rdSrc.idChurn).slice(0, 5).map(([k, v]) => k + ' \u00d7' + v), hasChurn: Object.keys(rdSrc.idChurn).length > 0 } : { has: false, bonds: [], churn: [] };
     if (view !== 'reading') return { rdReading: rdPanel, rx: { on: false } };
     if (!X) { this.loadReading(); const p = this._rixProg; return { rdReading: rdPanel, rx: { on: true, ready: false, notReady: true, wait: this._rixErr ? 'Could not build the reading index: ' + this._rixErr : p ? (p.stage + (p.pct != null ? ' ' + p.pct + '%' : '') + (p.mb ? ' \u00b7 ' + p.mb + ' MB' : '')) : 'Opening the reading\u2026', note: 'The reading is 1.67 GB once decompressed. It is decoded once in the background, kept in this browser\u2019s file store, and indexed; later visits open the index directly.' } }; }
@@ -5151,7 +5183,7 @@ class Component extends DCLogic {
     const srcRows = (X.order || (srcMeta ? Object.keys(srcMeta) : Object.keys(X.sources))).map(s => { const x = srcMeta ? srcMeta[s] : X.sources[s]; const d = docOf(s); return { name: d ? d.title : s, file: s, line: plural(x.chunks, 'encounter') + ' \u00b7 ' + (x.ops.CON || 0) + ' CON \u00b7 ' + (x.ops.INS || 0) + ' INS \u00b7 ' + (x.ops.REC || 0) + ' REC', onOpen: d ? () => this.read(d.id) : () => {} , canOpen: !!d }; });
     return { rdReading: rdPanel, rx: { on: true, ready: true, stats: [[X.encounters, 'encounters'], [nSrc, 'sources'], [X.castTotal, 'referents admitted'], [X.bondsTotal, 'bonds witnessed'], [X.canonTotal, 'canonical relations'], [X.identitiesTotal, 'identity hypotheses']].map(([n, l]) => ({ n: Number(n).toLocaleString(), l })),
       kinds: Object.entries(X.kinds).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ k, v: v.toLocaleString() })),
-      cast: castRows, load: load.slice(0, 40), back: back.slice(0, 20), backN: String(back.length), loadN: String(load.length), churn, srcRows, built: 'Built ' + new Date(X.builtAt).toLocaleString() + ' in ' + (X.ms / 1000).toFixed(1) + ' s from ' + String(X.from).split('/').pop(), onRebuild: () => { this._rix = null; this.loadReading(true); this.forceUpdate(); } } };
+      cast: castRows, load: load.slice(0, 40), back: back.slice(0, 20), backN: String(back.length), loadN: String(load.length), churn, srcRows, built: 'Built ' + new Date(X.builtAt).toLocaleString() + ' in ' + (X.ms / 1000).toFixed(1) + ' s from ' + String(X.from).split('/').pop(), onRebuild: () => { this._rix = null; this._localRix = null; this._lrixSig = null; this._lrixDone = null; this.loadReading(true); this.loadLocalReading(); this.forceUpdate(); } } };
   }
   async sourceBytes(d) {
     await this.net();

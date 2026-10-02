@@ -94,6 +94,22 @@ In a blind three-grader panel on 100 random multi-word names from the OHS worksp
 
 A repo, a report, and a recording don't share affordances, so every ingest is hung before it is read (`holodeck-hang.js`): witness-line counts for imports/definitions, sentence terminals, and grid alignment decide among code/graph, prose/sequence, and table — winner must strictly beat its runner-up, a tie is a recorded gap, never a guess. Media kinds keep the hang their sniff magic earned. Your input is ordinal ("prefer X over Y here"), kept append-only in `hd:hang-directions` — superseded, never edited — and every decision lands on the ingest replay under a Hang stage. Mixed kinds share no lens: one panel per kind.
 
+## Reading a source, not just naming it
+
+Every source the workspace holds is read by eoreader7's own relation reader, in this tab, through `holodeck-reading.js` — the same organs the engine's `POST /v1/read` drives, no server and no prebuilt index. The reader's cast and bonds fold into the same `FoldReadingIndex@2` shape the OHS ground reading already has, and `holodeck-records.js` writes them as `Referents` and `Bonds` beside the corpus, so an upload lands as a read source, not merely a named one. A referent's `standing` is `witnessed` for text.
+
+The reader is a *witness* beside the local finder, never a replacement: measured on real documents the engine reader agreed with only part of the local names (see "The engine reads first"). `holodeck-reading.test.mjs` proves the fold; `falsify.reading.mjs` runs it over a battery of content kinds (prose, legal, transcript, CJK, Cyrillic, dense figures, attributed speech, delimited tables, HTML, code, JSON, near-empty) and checks the fold laws, merge order-stability, and records parity. Its surfaces are kept in null-prototype bags, so a name like `__proto__` is read like any other.
+
+## Seeing a source: the middle layer, and why it beats flat OCR
+
+Images are read in two rungs. Flat OCR (`tesseract.js`, `holodeck-read.js`) returns a string. Better, when the screenshot pipeline is reachable, is the **measured 2D model** — `EOScreenLook@1` (in `eoreader7-screenshot-pipeline/native/adapters/image/`): every element carries `region [x,y,w,h]`, a `role` (page/header/box/h1/p/image/rule), a parent, reading order, and the page's design tokens (ink, surfaces, radius, type scale), all read mechanically from the pixels — no vision model. This is the middle layer between pixels and HTML, and it is what makes "where is this, and what is it" answerable.
+
+Measured head-to-head on the pipeline's own sample (a landing page): flat OCR gave **16 lines / 50 words and no geometry**; the 2D model gave **57 elements, 57 with a region, 6 labelled headings, 9 role types, and 11 design-token groups** — and a caption the page-level OCR never saw. `screen-reading.js` folds that model into the same reading shape, so an image's referents carry their regions and stand `sighted`, and it surfaces the model as EOT observations (`role: "visual-sighted"`, `at: {image, region:[x,y,w,h]}`) — the region address beside the text's byte offset.
+
+## Transcription, proven local
+
+`falsify.reading.mjs` proves transcription on the machine, offline: `mlx_whisper` (whisper-small-mlx) transcribed an 8.7k-word audio file, and ffmpeg extracted a video's audio track which was then transcribed — each transcript fed back through the reading as a source. This is the two-rung path the surface offers for a video with no caption track.
+
 ## Status
 
 This is the live, ongoing home for this surface — active development happens here going forward, not in a local-only copy. It is **the fold**, the reading/research surface of The Fold, and inherits the former `the-fold` repo's surface role.
