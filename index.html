@@ -129,7 +129,7 @@ select option{background:var(--s1);color:var(--ink)}
       <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
         <div style="padding:56px 16px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px">
           <h1 style="margin:0;font:500 32px 'Newsreader',serif">What do you want to understand?</h1>
-          <p style="margin:0;max-width:480px;color:var(--mut);text-wrap:pretty">Ask a question and the workspace finds sources for it, or add your own. Every claim is traced back to where it appears.</p>
+          <p style="margin:0;max-width:480px;color:var(--mut);text-wrap:pretty">Ask a question — it is answered from the sources you keep here, or told plainly what is missing. Paste a link or a file, and every sentence is traced back to where it appears.</p>
           <div style="width:100%;max-width:620px;display:flex;align-items:center;border:1px solid var(--line2);border-radius:12px;background:var(--s1);padding:4px">
             <input ref="{{ heroRef }}" onKeyDown="{{ onHeroKey }}" placeholder="Ask a question, paste a link, or paste text" style="flex:1;min-width:0;background:transparent;border:0;color:var(--ink);font:400 16px 'Hanken Grotesk';padding:12px 14px;outline:none">
             <button onClick="{{ onHeroGo }}" style="flex:none;border:0;background:#8b5cf6;color:#fff;border-radius:9px;padding:10px 16px;cursor:pointer;font:600 15px 'Hanken Grotesk'">Ask ↵</button>
@@ -173,7 +173,7 @@ select option{background:var(--s1);color:var(--ink)}
           </sc-for>
           <div style="display:flex;gap:4px 18px;flex-wrap:wrap;padding-top:2px">
             <sc-if value="{{ justSeen }}" hint-placeholder-val="{{ false }}"><button onClick="{{ justKeep }}" style="all:unset;cursor:pointer;font:600 14px 'Hanken Grotesk';color:var(--acc)" style-hover="color:var(--ink)">Keep as a source</button></sc-if>
-            <button onClick="{{ just.onRead }}" style="all:unset;cursor:pointer;font:600 14px 'Hanken Grotesk';color:var(--acc)" style-hover="color:var(--ink)">Read it →</button>
+            <button onClick="{{ just.onRead }}" style="all:unset;cursor:pointer;font:600 14px 'Hanken Grotesk';color:var(--acc)" style-hover="color:var(--ink)">{{ just.readLabel }}</button>
             <sc-if value="{{ just.hasReplay }}" hint-placeholder-val="{{ false }}"><button onClick="{{ just.onReplay }}" style="all:unset;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink)">Watch it being read</button></sc-if>
             <button onClick="{{ just.onConnections }}" style="all:unset;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink)">Connections</button>
             <button onClick="{{ just.onPatterns }}" style="all:unset;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink)">Patterns</button>
@@ -305,6 +305,20 @@ select option{background:var(--s1);color:var(--ink)}
             </div>
           </section>
         </sc-if>
+        <sc-if value="{{ noGround.on }}" hint-placeholder-val="{{ false }}">
+          <div style="border:1px dashed var(--line2);border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:8px">
+            <span style="font:500 19px 'Newsreader',serif;color:var(--ink)">Nothing here can be read yet.</span>
+            <span style="font:400 14px/1.5 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">{{ noGround.line }}</span>
+            <sc-if value="{{ noGround.hasLinks }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:4px 14px;flex-wrap:wrap"><sc-for list="{{ noGround.links }}" as="l" hint-placeholder-count="3"><button onClick="{{ l.onOpen }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="text-decoration:underline">{{ l.title }} ↗</button></sc-for></div>
+            </sc-if>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;padding-top:2px">
+              <button onClick="{{ noGround.onAdd }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:7px 16px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Add the text itself</button>
+              <sc-if value="{{ noGround.canKeep }}" hint-placeholder-val="{{ false }}"><button onClick="{{ noGround.onKeep }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">{{ noGround.keepLabel }}</button></sc-if>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ hasGoalCards }}" hint-placeholder-val="{{ true }}">
         <span style="font:600 15px 'Hanken Grotesk';margin-top:4px">What do you want to do?</span>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px">
           <sc-for list="{{ goalCards }}" as="c" hint-placeholder-count="6">
@@ -325,6 +339,7 @@ select option{background:var(--s1);color:var(--ink)}
             </div>
           </sc-for>
         </div>
+        </sc-if>
       </sc-if>
 
       <sc-if value="{{ rx.on }}" hint-placeholder-val="{{ false }}">
@@ -540,6 +555,23 @@ select option{background:var(--s1);color:var(--ink)}
                 <span style="font:400 14px/1.5 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">It needs WebGPU: Chrome or Edge on a desktop, with hardware acceleration switched on. If Ollama runs on this machine, pick it from the model menu instead.</span>
                 <span style="font:400 12px 'JetBrains Mono';color:var(--dim)">{{ ak.why }}</span>
                 <button onClick="{{ ak.retry }}" style="align-self:flex-start;background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Look for Ollama</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ ak.refuse.has }}" hint-placeholder-val="{{ false }}">
+              <div style="border:1px dashed var(--line2);border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:8px">
+                <span style="font:500 19px 'Newsreader',serif;color:var(--ink)">This workspace can’t answer that yet.</span>
+                <span style="font:400 15px/1.5 'Hanken Grotesk';color:var(--ink2);text-wrap:pretty">“{{ ak.refuse.q }}”</span>
+                <span style="font:400 14px/1.5 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">{{ ak.refuse.line }}</span>
+                <span style="font:400 12px 'JetBrains Mono';color:var(--dim)">{{ ak.refuse.trace }}</span>
+                <sc-if value="{{ ak.refuse.hasLinks }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;gap:4px 14px;flex-wrap:wrap"><sc-for list="{{ ak.refuse.links }}" as="l" hint-placeholder-count="3"><button onClick="{{ l.onOpen }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="text-decoration:underline">{{ l.title }} ↗</button></sc-for></div>
+                </sc-if>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;padding-top:2px">
+                  <button onClick="{{ ak.refuse.onGather }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:7px 16px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">{{ ak.refuse.gatherLabel }}</button>
+                  <sc-if value="{{ ak.refuse.hasReadable }}" hint-placeholder-val="{{ false }}"><button onClick="{{ ak.refuse.onKeep }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">{{ ak.refuse.keepLabel }}</button></sc-if>
+                  <button onClick="{{ ak.refuse.onAdd }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">Add your own material</button>
+                  <button onClick="{{ ak.refuse.onDismiss }}" style="background:none;border:0;padding:6px 4px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--dim)" style-hover="color:var(--ink)">Dismiss</button>
+                </div>
               </div>
             </sc-if>
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -3350,24 +3382,27 @@ class Component extends DCLogic {
     const wt = wikiTitleOf(url); hdTraceStart(url); hdT('bytes', 'fetch', 'Fetching ' + url + (wt ? ' (Wikipedia article API)' : ''));
     this.setState({ busy: 'Fetching ' + (opt.title || (wt ? wt.replace(/_/g, ' ') : 'link')) + '…' });
     try {
-      let html, title = opt.title, type = 'Web page', fmt = 'html';
+      let html, text = null, title = opt.title, type = 'Web page', fmt = 'html';
       if (wt) { html = await fetchWiki(wt); fmt = 'page'; title = title || wt.replace(/_/g, ' '); type = 'Wikipedia article'; }
       let note = null;
       if (!wt) {
         const got = await fetchAnySite(url);
         if (got.file) { hdT('bytes', 'fetched', 'Received ' + got.file.size.toLocaleString() + ' bytes of ' + got.file.name); const d = await readAny(got.file); return this.addDocs([{ ...d, title: opt.title || d.title, year: opt.year || d.year, url: got.url || url }], { open: opt.open, keepOpen: opt.keepOpen }); }
-        html = got.html; note = got.note; title = title || got.title || url; fmt = got.format || 'html'; url = got.url || url;
+        html = got.html; text = got.text || null; note = got.note; title = title || got.title || url; fmt = got.format || (text ? 'text' : 'html'); url = got.url || url;
       }
-      hdT('bytes', 'fetched', 'Received ' + (html || '').length.toLocaleString() + ' characters of HTML' + (note ? ' \u2014 ' + note : ''));
-      const doc = { title, year: opt.year || new Date().getFullYear(), type, format: fmt, html, url, note };
+      hdT('bytes', 'fetched', 'Received ' + (text ? text.length.toLocaleString() + ' characters of text' : (html || '').length.toLocaleString() + ' characters of HTML') + (note ? ' \u2014 ' + note : ''));
+      const doc = { title, year: opt.year || new Date().getFullYear(), type, format: fmt, html, url, note, ...(text ? { text } : {}) };
       if (opt.collect) opt.collect.push(doc); else this.addDocs([doc], { open: opt.open, keepOpen: opt.keepOpen });
     } catch (e) {
       hdT('bytes', 'fail', 'Fetch failed: ' + e.message + (opt.fallback ? '; using the saved excerpt' : ''));
-      if (opt.fallback) this.addDocs([{ title: opt.title || url, year: opt.year, type: wt ? 'Wikipedia article (excerpt)' : 'Text', text: opt.fallback, url, note: 'Couldn’t reach the live page, so a saved excerpt was used.' }], { open: opt.open, keepOpen: opt.keepOpen });
-      else this.addDocs([{ title: opt.title || url, year: new Date().getFullYear(), type: 'Link', text: '', url, note: 'That site blocks being read directly. Open it in this browser and click ✦ Explore this page to capture it as you see it, or paste its text.' }], { keepOpen: opt.keepOpen });
+      const shell = opt.fallback
+        ? { title: opt.title || url, year: opt.year, type: wt ? 'Wikipedia article (excerpt)' : 'Text', text: opt.fallback, url, note: 'Couldn’t reach the live page, so a saved excerpt was used.' }
+        : { title: opt.title || url, year: new Date().getFullYear(), type: 'Link', text: '', url, note: 'That site blocks being read directly. Open it in this browser and click ✦ Explore this page to capture it as you see it, or paste its text.' };
+      if (opt.collect) opt.collect.push(shell); else this.addDocs([shell], { open: opt.open, keepOpen: opt.keepOpen });
     }
   }
-  async autoResearch(q) {
+  async autoResearch(q, opt) {
+    opt = opt || {};
     // A question is the whole brief: search Wikipedia and the Internet Archive directly (nothing is relayed), then read the best few.
     const N = 6, say = m => this.setState({ busy: m });
     say('Finding sources for “' + q.slice(0, 60) + '”…');
@@ -3377,9 +3412,27 @@ class Component extends DCLogic {
     for (let k = 0; k < 5 && pick.length < N; k++) for (const list of found) { const x = list[k]; if (!x || !x.url || seen.has(x.url)) continue; seen.add(x.url); pick.push(x); if (pick.length >= N) break; }
     const got = []; let i = 0;
     for (const x of pick) { i++; say('Reading source ' + i + ' of ' + pick.length + ' — ' + hdCut(x.title || x.url, 50)); try { await this.ingestUrl(x.url, { title: x.title, collect: got }); } catch (e) {} }
-    const usable = got.filter(d => d && ((d.text && d.text.trim().length > 40) || (d.html && d.html.length > 200)));
-    if (usable.length) await this.addDocs(usable); else this.setState({ busy: '', note: 'No sources could be read for that question. Try rephrasing it, or add your own.' });
+    // A source is usable only if text was actually read out of it. A page that answers with a
+    // JavaScript shell is not a source, however many bytes of markup it carried — it is reported,
+    // never admitted to stand in for one.
+    const readableOf = d => String(d.text || (d.html ? pageText(d.html, d.format) : '') || '').trim();
+    const usable = got.filter(d => readableOf(d).length > 40);
+    const unread = got.filter(d => readableOf(d).length <= 40);
+    if (usable.length) await this.addDocs(usable);
     clearTimeout(this._omniT); this._askLive = '';
+    if (!usable.length) {
+      const why = unread.length ? ' The search found ' + plural(unread.length, 'page') + ' but none could be read here (' + unread.slice(0, 3).map(x => short(x.title || x.url, 40)).join('; ') + ').' : '';
+      this.setState({ busy: '', note: 'No sources could be read for that question.' + why + ' Try rephrasing it, or add your own.' });
+      if (opt.answer) this.setState({ view: 'ask', akRefuse: { q }, busy: '' });
+      return;
+    }
+    if (opt.answer) {
+      // Gathering is a means, not the end: the question is answered from what was gathered.
+      this.setState({ q, qDraft: undefined, showAdd: false, readDoc: null, view: 'ask', akRefuse: null, akErr: '' });
+      if (this.askReady()) setTimeout(() => this.askSend(q), 0);
+      else { this.setState({ akQ: q }); this.toast('Gathered ' + plural(usable.length, 'source') + ' for this question — load the model above, then send.'); }
+      return;
+    }
     this.setState(s => ({ q, askVal: '', showAdd: false, qDraft: undefined, view: 'search', readDoc: null, srN: 25, qaN: 0, prevView: s.view === 'search' || s.view === 'reader' ? (s.prevView || 'summary') : s.view }));
   }
   // ── An address that resolves to a repository. Not a special case in the interface: ingestUrl calls this
@@ -4156,11 +4209,24 @@ class Component extends DCLogic {
     if (this._akWrapEl === el) return; if (this._akRO) { this._akRO.disconnect(); this._akRO = null; } this._akWrapEl = el; if (!el || typeof ResizeObserver === 'undefined') return;
     this._akRO = new ResizeObserver(() => { const nar = el.clientWidth < ART_CHAT_W + ART_PANE_W + ART_GAP; if (nar !== !!this._akNarrow) { this._akNarrow = nar; this.forceUpdate(); } }); this._akRO.observe(el);
   };
+  askReady() { const m = this.akModel(); const M = this._askM; if (m.startsWith('webllm:')) return !!(M && M.webllmLoaded(m.slice(7))); return !!(this._oll && this._oll.ok); }
+  // A question is answered, never briefed: with ground and a ready model, straight to the Ask
+  // pipeline; with ground but no model loaded, the record's own answer; with no ground at all, a
+  // cited refusal (II.3, the descent test — resolution, never invention) that offers to gather, keep, or add — never a silent conversion to ingest.
+  askQuestion(qIn) {
+    const q = String(qIn || '').trim(); if (!q) return;
+    const A = this.analysis();
+    if (!A.docs.some(d => this.counted(d))) { this.setState({ q, qDraft: undefined, view: 'ask', readDoc: null, akRefuse: { q }, akErr: '' }); return; }
+    if (this.askReady()) { this.setState({ q, qDraft: undefined, view: 'ask', readDoc: null, akRefuse: null, akErr: '' }); setTimeout(() => this.askSend(q), 0); return; }
+    this.setState(s => ({ q, qDraft: undefined, view: 'search', readDoc: null, srN: 25, qaN: 0, prevView: s.view === 'search' || s.view === 'reader' ? (s.prevView || 'summary') : s.view }));
+  }
   async askSend(qIn) {
     const q = String(qIn ?? this.state.akQ ?? '').trim(); if (!q || this.state.akBusy) return;
+    const A0 = this.analysis();
+    if (!A0.docs.some(d => this.counted(d))) { this.setState({ akRefuse: { q }, akQ: '', akPending: '' }); return; }
     const M = await this.askMod(); if (!this._conv) this._conv = M.emptyConv();
     if (!this.llmOk()) { this.setState({ akErr: this.akModel().startsWith('webllm:') ? 'This browser has no WebGPU, so the model can’t run in this tab.' : 'Ollama isn’t reachable on this machine.', akQ: q }); return; }
-    this.setState({ akPending: q, akQ: '' }); if (!(await this.akLoad())) { this.setState({ akPending: '', akQ: q }); return; }
+    this.setState({ akPending: q, akQ: '', akRefuse: null }); if (!(await this.akLoad())) { this.setState({ akPending: '', akQ: q }); return; }
     if (!this._ix) { this.setState({ akBusy: 'indexing', akPending: q, akQ: '' }); for (let i = 0; i < 200 && !this._ix; i++) await new Promise(r => setTimeout(r, 100)); if (!this._ix) { this.setState({ akBusy: '', akErr: 'The passages are still being indexed. Try again in a moment.', akQ: q, akPending: '' }); return; } }
     let computed = null; try { computed = await this.askComputed(q); } catch (e) {}
     if (!this._rix) { try { this._rix = await loadReadingIndex(false); } catch (e) {} }
@@ -4204,7 +4270,8 @@ class Component extends DCLogic {
     const S = this.state; const cid = this.corpusId();
     if (this._convCid !== cid) { this._convCid = cid; this._conv = null; try { this._conv = JSON.parse(localStorage.getItem(this.convKey()) || 'null'); } catch (e) {} }
     if (!this._oll) this.akProbe();
-    if (!this._ix || this._ix.key !== this._key) { const k = this._key; if (this._ixBuilding !== k) { this._ixBuilding = k; this.askMod().then(M => setTimeout(() => { const ix = M.index(A.docs.filter(d => this.counted(d))); ix.key = k; this._ix = ix; this._ixBuilding = null; this.forceUpdate(); }, 40)); } }
+    const ixKey = this._key + ':' + A.docs.map(d => this.counted(d) ? '1' : '0').join('');
+    if (!this._ix || this._ix.key !== ixKey) { const k = ixKey; if (this._ixBuilding !== k) { this._ixBuilding = k; this.askMod().then(M => setTimeout(() => { const ix = M.index(A.docs.filter(d => this.counted(d))); ix.key = k; this._ix = ix; this._ixBuilding = null; this.forceUpdate(); }, 40)); } }
     this.ensureDb(A);
     const O = this._oll || {}; const conv = this._conv || { summary: { topic: null, flow: null, entities: [], context: null, records: [], folds: [], turnCount: 0 }, history: [], turns: [] };
     const model = this.akModel(); const ms = this.akModels(); const MM = this._askM; const isWL = model.startsWith('webllm:'); const gpu = !!(MM && MM.webgpu()); const loaded = !!(MM && isWL && MM.webllmLoaded(model.slice(7))); const mInfo = ms.find(m => m.v === model) || { name: model, size: '' }; const LD = S.akLoad;
@@ -4287,7 +4354,26 @@ class Component extends DCLogic {
         onDl: () => { const t = sel.c ? sel.c.text : proj; const b = new Blob([t], { type: sel.c ? 'text/html' : 'text/markdown' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = (title.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-').toLowerCase() || 'artifact') + (sel.c ? '.html' : '.md'); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); },
         canNew: vers.length > 0, onNew: () => { const id = 'doc-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); this.setDocs(X => ({ docs: [...X.docs, { id, title: 'Untitled artifact', claims: [], created: new Date().toISOString() }], cur: id })); this.setState({ akTab: 'preview', akErr: '', genNew: false, akOverlay: false }); } };
     })();
-    return { ak: { on: true, ready: this.llmOk(), pending: false, gap: isWL ? !gpu && !!MM : !(O && O.ok), why: isWL ? 'navigator.gpu is not available in this browser' : (O.why || ''), isWL, noGpu: isWL && MM && !gpu, needLoad: isWL && gpu && !loaded && !LD, loading: !!LD, loadText: LD ? LD.text : '', loadPct: LD ? Math.round((LD.p || 0) * 100) + '%' : '0%', load: () => this.akLoad(), mName: mInfo.name, mSize: mInfo.size || '',
+    const refuse = (() => {
+      const R0 = view === 'ask' ? S.akRefuse : null; if (!R0) return { has: false };
+      const q0 = R0.q;
+      const readable = A.docs.filter(d => !this.counted(d) && !this.isLiveDoc(d) && (d.text || '').trim().length > 40);
+      const live = A.docs.filter(d => this.isLiveDoc(d));
+      const line = !A.docs.length
+        ? 'This workspace holds nothing to answer from. Any answer would be invention, not reading.'
+        : readable.length
+          ? plural(readable.length, 'document') + ' here can be read but ' + (readable.length === 1 ? 'is' : 'are') + ' not kept as a source yet — the fold answers only from kept sources.'
+          : plural(live.length || A.docs.length, 'link') + ' saved, and none could be read into the workspace. A page that blocks reading gives the fold no sentences to stand on.';
+      return { has: true, q: q0, line, trace: 'Refused under II.3 (the descent test — resolution, never invention) — an answer with no ground beneath it would be a hallucination with a rank.',
+        hasReadable: readable.length > 0, keepLabel: 'Keep ' + plural(readable.length, 'source') + ' and answer',
+        onKeep: () => { readable.forEach(d => this.setMeta(d.id, { status: 'source' })); this.setState({ akRefuse: null }); setTimeout(() => this.askSend(q0), 0); },
+        gatherLabel: this.askReady() ? 'Find sources, then answer' : 'Find sources for this question',
+        onGather: () => { this.setState({ akRefuse: null }); this.autoResearch(q0, { answer: true }); },
+        onAdd: () => { this.setState({ akRefuse: null, showAdd: true }); },
+        onDismiss: () => this.setState({ akRefuse: null }),
+        links: live.slice(0, 5).map(d => ({ title: short(d.title || d.url, 60), onOpen: () => window.open(d.url, '_blank', 'noopener') })), hasLinks: live.length > 0 };
+    })();
+    return { ak: { on: true, ready: this.llmOk(), pending: false, refuse, gap: isWL ? !gpu && !!MM : !(O && O.ok), why: isWL ? 'navigator.gpu is not available in this browser' : (O.why || ''), isWL, noGpu: isWL && MM && !gpu, needLoad: isWL && gpu && !loaded && !LD, loading: !!LD, loadText: LD ? LD.text : '', loadPct: LD ? Math.round((LD.p || 0) * 100) + '%' : '0%', load: () => this.akLoad(), mName: mInfo.name, mSize: mInfo.size || '',
       dot: isWL ? (loaded ? 'var(--ok)' : gpu ? 'var(--amber)' : 'var(--bad)') : O.ok ? 'var(--ok)' : 'var(--bad)',
       status: isWL ? (loaded ? mInfo.name + ' running in this tab · nothing leaves it' : !MM ? 'Starting…' : gpu ? mInfo.name + ' runs in this tab once loaded' : 'This browser can’t run a model in the tab') : O.ok ? model + ' via Ollama on this machine' : 'Ollama isn’t reachable',
       models: ms.map(m => ({ v: m.v, label: m.label })), hasModels: ms.length > 1, model, onModel: e => { const v = e.target.value; try { localStorage.setItem('fold-explorer-ak-model', v); } catch (er) {} this.setState({ akModel: v }); }, retry: () => this.akProbe(),
@@ -4929,7 +5015,7 @@ class Component extends DCLogic {
     });
     this._infV = out; return out;
   }
-  counted(d) { return this.mOf(d).status !== 'seen'; }
+  counted(d) { const cid = this.corpusId(); const raw = (this.state.added[cid] || []).find(x => x.id === d.id) || d; if (this.isLiveDoc(raw)) return false; return this.mOf(d).status !== 'seen'; }
   inFold(st) { const t = this._fold; if (!t || !t.length) return true; const x = st.text.toLowerCase(); return t.some(w => x.includes(w)); }
   setMeta(docId, patch) { const cid = this.corpusId(); const all = { ...this.metaAll() }; const w = { ...(all[cid] || {}) }; w[docId] = typeof patch === 'string' ? patch : { ...(w[docId] || {}), ...patch }; all[cid] = w; this._meta = all; try { localStorage.setItem('fold-explorer-srcmeta', JSON.stringify(all)); } catch (e) {} this.setState({ metaVer: (this.state.metaVer || 0) + 1 }); }
   // manually-created folds: a snapshot of whatever filter (f/q) was active when saved, not a typed label --
@@ -5586,7 +5672,7 @@ class Component extends DCLogic {
       : view === 'ask' ? { eyebrow: 'Ask the Fold', title: 'Ask the sources', sub: 'Answered by a small model running in this tab, from material found by the question\'s own words. Afterwards every sentence is checked: a numbered address where it matches something in the sources, a dotted line where it is the model\'s own, a wavy line where a figure or name is not in the material.', color: 'var(--acc)' }
       : view === 'draft' ? { eyebrow: 'Draft', title: 'Claims and the excerpts behind them', sub: 'Private to this browser — pinned passages keep their source.', color: 'var(--acc)' }
       : c ? { eyebrow: c.row + (this.props.showTerrainNames ? ' · ' + c.terrain : ''), title: c.label, sub: c.question, color: c.color }
-      : { eyebrow: 'Overview', title: this.corpusName(), sub: plural(docsIn.length, 'document') + ' · ' + plural(F.length, 'statement') + ' · ' + plural(D.nameList.length, 'name') + ' · ' + plural(figCount, 'figure') + '.', color: 'var(--acc)' };
+      : { eyebrow: 'Overview', title: this.corpusName(), sub: plural(docsIn.length, 'document') + ' · ' + plural(F.length, 'statement') + ' · ' + plural(D.nameList.length, 'name') + ' · ' + plural(figCount, 'figure') + '.' + (A.docs.length && !docsIn.length ? ' ' + plural(A.docs.length, 'link') + ' saved; none could be read yet.' : ''), color: 'var(--acc)' };
 
     // chips — each chip is position 2 (filter) + position 3 (what-counts: for-whom)
     const chip = (key, k, v, onClear) => ({ key, k, v, w: this.fwLabel(key), onClear });
@@ -5680,7 +5766,7 @@ class Component extends DCLogic {
         hasNames: names.length > 0, names, ...(() => { const groups = new Map(), lines = []; J.notes.forEach(n => { const m = /^From (\S+) · (.+)$/.exec(n); if (m) { if (!groups.has(m[1])) groups.set(m[1], []); groups.get(m[1]).push({ path: m[2] }); } else lines.push({ text: n }); });
           return { noteLines: lines, noteGroups: [...groups].map(([repo, files]) => ({ repo, count: plural(files.length, 'file'), files })) }; })(),
         hasReplay: !!tr, onReplay: () => tr && import(new URL('holodeck-ingest-player.js', location.href).href).then(M => M.open(tr)),
-        onRead: () => this.read(J.first), onConnections: () => this.go('connections'), onPatterns: () => this.go('patterns') }; })() : { names: [] };
+        readLabel: (A.docById[J.first] && this.isLiveDoc(A.docById[J.first])) ? 'View the page →' : 'Read it →', onRead: () => this.read(J.first), onConnections: () => this.go('connections'), onPatterns: () => this.go('patterns') }; })() : { names: [] };
     const allYears = [...new Set(A.docs.map(d => d.year).filter(Boolean))].sort();
     const isEmpty = A.docs.length === 0;
     const V = {}; ['draft', 'summary', 'search', 'sources', 'surprise', 'names', 'types', 'figures', 'statements', 'connections', 'framing', 'views', 'patterns', 'reader', 'profile', 'ingest', 'reading'].forEach(k => { V[k] = !isEmpty && view === k; });
@@ -5716,6 +5802,19 @@ class Component extends DCLogic {
     // split so Folds can sit right under The reading / Connections, inside Explore
     const navTop = navGroups[0].items; const navRead = navGroups[1]; const navExplore = navGroups[2]; const navRest = navGroups.slice(3);
     const goalCards = GOALS.map(g => ({ label: g[1], question: g[2], count: counts[g[0]], headline: heads[g[0]], examples: ex[g[0]], onClick: () => this.go(g[0]) }));
+    const liveDocs = A.docs.filter(d => this.isLiveDoc(d));
+    const seenReadable = A.docs.filter(d => !this.isLiveDoc(d) && this.mOf(d).status === 'seen' && (d.text || '').trim().length > 40);
+    const noGround = {
+      on: !isEmpty && A.docs.length > 0 && !A.docs.some(d => this.counted(d)),
+      line: liveDocs.length ? plural(liveDocs.length, 'link') + ' saved, and none could be read into the workspace — a page that blocks reading gives the fold no sentences to stand on.'
+        : seenReadable.length ? plural(seenReadable.length, 'document') + ' added but not kept as a source yet — keep ' + (seenReadable.length === 1 ? 'it' : 'them') + ' to read and ask.'
+        : plural(A.docs.length, 'source') + ' read, and none carried a statement the fold could stand on.',
+      hasLinks: liveDocs.length > 0, links: liveDocs.slice(0, 5).map(d => ({ title: short(d.title || d.url, 64), onOpen: () => window.open(d.url, '_blank', 'noopener') })),
+      canKeep: seenReadable.length > 0, keepLabel: 'Keep ' + plural(seenReadable.length, 'source'),
+      onKeep: () => { seenReadable.forEach(d => this.setMeta(d.id, { status: 'source' })); this.setState({ view: 'summary' }); },
+      onAdd: () => { this._add = null; this.setState({ showAdd: true }); },
+    };
+    const hasGoalCards = docsIn.length > 0;
     const checks = [
       ...(juncMode ? (JN.length ? [{ label: plural(JN.length, 'junction') + ' between independent sources that nothing in the record links', onClick: () => this.go('surprise') }] : [])
         : suF.length ? [{ label: plural(suF.length, 'statement') + ' in ' + (SU.lensLabel || 'this view') + ' moved the picture more than chance', onClick: () => this.go('surprise') }] : []),
@@ -5729,7 +5828,13 @@ class Component extends DCLogic {
     const isOmniUrl = v => /^(https?:\/\/|www\.)\S+$|^[\w-]+(\.[\w-]+)*\.[a-z]{2,}(\/\S*)?$/i.test(v);
     const omniUrl = isOmniUrl(dv);
     // live: the input's own value on Enter -- dv is from the last render and lags the debounced onOmni.
-    const omniGo = live => { const v = typeof live === 'string' ? live : dv; if (!v) return; if (!A.docs.length && !isOmniUrl(v)) { this.autoResearch(v); return; } clearTimeout(this._omniT); this.setState(s => ({ q: v, qDraft: undefined, view: 'search', readDoc: null, srN: 25, qaN: 0, prevView: s.view === 'search' || s.view === 'reader' ? (s.prevView || 'summary') : s.view })); };
+    // The doorway answers the input's intent, not the surface's state: a question goes to the
+    // answer path in every state (Ask when a model is ready, the record's own answer when not,
+    // a cited refusal when there is no ground), a phrase searches, a link ingests.
+    const omniGo = live => { const v = typeof live === 'string' ? live : dv; if (!v) return; clearTimeout(this._omniT);
+      if (IS_Q(v) || PARSE_REL(v)) { this.askQuestion(v); return; }
+      if (!A.docs.length) { this.autoResearch(v); return; }
+      this.setState(s => ({ q: v, qDraft: undefined, view: 'search', readDoc: null, srN: 25, qaN: 0, prevView: s.view === 'search' || s.view === 'reader' ? (s.prevView || 'summary') : s.view })); };
     const omniOpen = live => { const v = typeof live === 'string' ? live : dv; if (!isOmniUrl(v)) return; clearTimeout(this._omniT); this.setState({ q: '', qDraft: undefined }); this.ingestUrl(/^https?:\/\//.test(v) ? v : 'https://' + v, { open: true }); };
     Object.assign(this._extra = {}, { ...this.qaVals(A, F, qv, view), ...this.draftVals(A), ...this.pfCoVals(A), ...this.dbVals(A, view), ...this.askVals(A, view), askFold: () => { const q = (this.state.q || '').trim(); this.setState({ view: 'ask', readDoc: null }); setTimeout(() => this.askSend(q), 0); }, ...this.netVals(A, view), ...this.readingVals(A, view),
       ...(() => { const HL = A.docs.length ? this.headlines(A) : []; return { hasHeadlines: HL.length > 0, headlines: HL.map(x => ({ ...x, onClick: () => this.read(x.doc, x.stId), ...this.pinF(A.byId[x.stId]) })) }; })(),
@@ -5738,7 +5843,7 @@ class Component extends DCLogic {
         paradigmList: shown.map(p => ({ label: p.label, n: plural(p.n, 'source'), onOpen: () => { this.setF('unit', null); this.setState({ q: p.label, qDraft: undefined, view: 'search', readDoc: null, srN: 25, qaN: 0, prevView: 'summary' }); }, canFork: p.docs.some(d => (S.added[cid] || []).some(a => a.id === d.id)), onFork: () => this.forkParadigm(p) })) }; })(),
       pinPop: S.pinPop && view === 'reader' ? { has: true, x: S.pinPop.x + 'px', y: S.pinPop.y + 'px', onPin: e => { e.preventDefault(); this.pinSelection(); }, onCorrect: e => { e.preventDefault(); this.openCorr(S.pinPop.text); } } : { has: false },
       hasPinToast: !!S.pinToast, pinToast: S.pinToast || '', goDraft: () => { this.setState({ pinToast: '' }); this.go('draft'); }, plainRef: this.plainRef, omniRef: this.omniRef,
-      rdPins: (() => { const n = view === 'reader' ? this.activePins().filter(p => p.docId === S.readDoc).length : 0; return { has: n > 0, label: plural(n, 'pin') + ' from this source →' }; })(), goalNav, navGroups, goalCards, checks, hasChecks: checks.length > 0, omniUrl, omniOpen,
+      rdPins: (() => { const n = view === 'reader' ? this.activePins().filter(p => p.docId === S.readDoc).length : 0; return { has: n > 0, label: plural(n, 'pin') + ' from this source →' }; })(), goalNav, navGroups, goalCards, noGround, hasGoalCards, checks, hasChecks: checks.length > 0, omniUrl, omniOpen,
       ...(() => {
         if (view !== 'search' || !qv) return { sr: { sub: '', names: [], docs: [], figs: [], sts: [], co: [], others: [] } };
         const c = this.qc(A); const q = c.q;
@@ -5817,7 +5922,7 @@ class Component extends DCLogic {
       readerSeen: !!(S.readDoc && A.docById[S.readDoc] && this.mOf(A.docById[S.readDoc]).status === 'seen'),
       readerFold: S.readDoc && this._fold.length ? ' ' + (A.stsByDoc[S.readDoc] || []).filter(s => this.inFold(s)).length + ' of its statements touch the topic.' : '',
       readerKeep: () => this.setMeta(S.readDoc, { status: 'source' }), readerDiscard: () => this.discard(S.readDoc),
-      justSeen: !!(S.just && A.docById[S.just.first] && this.mOf(A.docById[S.just.first]).status === 'seen'), justKeep: () => S.just && this.setMeta(S.just.first, { status: 'source' }),
+      justSeen: !!(S.just && A.docById[S.just.first] && !this.isLiveDoc(A.docById[S.just.first]) && this.mOf(A.docById[S.just.first]).status === 'seen'), justKeep: () => S.just && this.setMeta(S.just.first, { status: 'source' }),
       corpusId: cid, corpusOptions: opts, q: S.q, corpusName: this.corpusName(), segList, hasSegments, segOpen, segToggleLabel, segCount, toggleSegOpen, addAsFold, navTop, navRead, navExplore, navRest,
       addr: S.addr || '', onAddr: e => this.setState({ addr: e.target.value }), bookmarkletRef: this.bookmarkletRef,
       onAddrKey: e => { if (e.key === 'Enter') { const u = (S.addr || '').trim(); if (u) { this.setState({ addr: '' }); this.ingestUrl(/^https?:\/\//.test(u) ? u : 'https://' + u, { open: true }); } } },
@@ -6284,9 +6389,9 @@ class Component extends DCLogic {
     } else if (sel.type === 'doc' && A.docById[sel.id]) {
       const doc = A.docById[sel.id]; const sts = A.stsByDoc[doc.id] || []; const nm = [...new Set(sts.flatMap(s => s.names))];
       d = { eyebrow: 'Source', color: 'var(--acc)', title: doc.title,
-        facts: [{ k: doc.pubLabel ? 'Published' : 'Date', v: doc.pubLabel || (doc.year ? String(doc.year) : 'Undated') }, ...(doc.publisher || (doc.authors && doc.authors.length) ? [{ k: 'By', v: doc.publisher || doc.authors.join(', ') }] : []), { k: 'Kind', v: [doc.kind || doc.type, doc.medium].filter(Boolean).join(' · ') || '—' }, ...(doc.standing ? [{ k: 'Standing', v: doc.standing }] : []), ...((this._inf || {})[doc.id] ? [{ k: 'Origin', v: this._inf[doc.id].why + ' ' + A.docById[this._inf[doc.id].of].title }] : [])],
+        facts: [{ k: doc.pubLabel ? 'Published' : 'Date', v: doc.pubLabel || (doc.year ? String(doc.year) : 'Undated') }, ...(doc.publisher || (doc.authors && doc.authors.length) ? [{ k: 'By', v: doc.publisher || doc.authors.join(', ') }] : []), { k: 'Kind', v: [doc.kind || doc.type, doc.medium].filter(Boolean).join(' · ') || '—' }, ...(this.isLiveDoc(doc) ? [{ k: 'Read', v: 'Not readable here — kept as a link' }] : []), ...(doc.standing ? [{ k: 'Standing', v: doc.standing }] : []), ...((this._inf || {})[doc.id] ? [{ k: 'Origin', v: this._inf[doc.id].why + ' ' + A.docById[this._inf[doc.id].of].title }] : [])],
         tagTitle: 'Names in it', tags: nm.slice(0, 10).map(nameTag),
-        actions: [{ label: doc.media ? 'Watch and read the transcript' : 'Read it', onClick: () => this.read(doc.id) }, ...((doc.recordings || []).map(r => ({ label: r.label + ' ↗ (not transcribed)', onClick: () => window.open(r.url, '_blank', 'noopener') }))), ...(doc.url ? [{ label: 'Open original ↗', onClick: () => window.open(doc.url, '_blank', 'noopener') }] : []), { label: f.doc === doc.id ? 'Stop narrowing to this source' : 'Narrow everything to this source', onClick: () => this.setF('doc', f.doc === doc.id ? null : doc.id) }],
+        actions: [{ label: doc.media ? 'Watch and read the transcript' : this.isLiveDoc(doc) ? 'View the page' : 'Read it', onClick: () => this.read(doc.id) }, ...((doc.recordings || []).map(r => ({ label: r.label + ' ↗ (not transcribed)', onClick: () => window.open(r.url, '_blank', 'noopener') }))), ...(doc.url ? [{ label: 'Open original ↗', onClick: () => window.open(doc.url, '_blank', 'noopener') }] : []), { label: f.doc === doc.id ? 'Stop narrowing to this source' : 'Narrow everything to this source', onClick: () => this.setF('doc', f.doc === doc.id ? null : doc.id) }],
         listTitle: 'Its statements', list: listOf(sts) };
     } else if (sel.type === 'unit') {
       const items = A.sts.flatMap(st => st.figs.filter(g => g.unit === sel.id).map(g => ({ g, st })));
