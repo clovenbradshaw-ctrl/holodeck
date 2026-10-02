@@ -29,7 +29,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import { splitSentences } from './vendor/eoreader7/native/adapters/text/spans.js';
-import { select, ladder, resolverEdges, attestPrior, turnAgainstPrior, tokens, observables, dmdBaseline, genreBaseline, excessOf, makeH, render } from './holodeck-summary.js';
+import { select, ladder, resolverEdges, attestPrior, turnAgainstPrior, tokens, observables, dmdBaseline, genreBaseline, excessOf, makeH, render, worth, conclusionOf, stanceOf } from './holodeck-summary.js';
 
 const TEXT = readFileSync(fileURLToPath(new URL('./fixtures/summary-goldens/no-turn-on-red.txt', import.meta.url)), 'utf8');
 const DOC = 'ntor';
@@ -149,15 +149,18 @@ test('N — HOLDS: every resolver that forms shares the turn’s subject and is 
   assert.equal(new Set(used).size, used.length, 'the same sentence may not “resolve” two different turns');
 });
 
-test('N — OPEN: the inherited excess measure cannot form a resolver for a FIRST-asserted turn', () => {
-  // Proven by direct execution (2026-10-02): excessOf() scores a bond only when
-  // BOTH names have already recurred (ca>=2 && cb>=2); against an empty baseline
-  // a first, load-bearing claim therefore has excess 0, and baseline
-  // augmentation cannot drop what was never there. This is a real property of
-  // the inherited reading-stream measure, not a test artifact — a summary that
-  // must surface a document's FIRST claim needs a first-assertion signal the
-  // stream measure does not carry. Asserted here so it is not mistaken for a
-  // passing feature.
+test('N — HOLDS: a FIRST-asserted turn carries excess, and a resolver forms for it', () => {
+  // WAS OPEN (2026-10-02). Two inherited holes: (1) excessOf scored a bond only
+  // when BOTH names had already recurred (ca>=2 && cb>=2) or one had (ca||cb) —
+  // the BOTH-NEW first assertion fell through and scored 0; (2) fieldsOf kept
+  // only multi-word names and ALL-CAPS acronyms, dropping every single proper
+  // noun, so a first assertion about one had no name to bond. Fixed: a both-new
+  // bond takes the bond weight at the formula's own variable (min(ca,cb)=0 →
+  // weight 1, the strongest entry), a single capitalized word is a name unless
+  // the document writes it lowercase (CODING-LESSONS 63), and the turn's own
+  // subject is a legitimate resolver link even when it is the document's most
+  // common name (a resolver must be about the turn; `claimed` still bounds the
+  // flooder to one turn). The first, load-bearing claim now resolves.
   const DOC2 = 'x';
   const mk = (id, text, names, s) => ({ id, doc: DOC2, text, names, figs: [], ref: false, claimy: true, frame: 'fact', s, e: s + text.length, year: 2026 });
   const sts = [
@@ -167,9 +170,9 @@ test('N — OPEN: the inherited excess measure cannot form a resolver for a FIRS
   ];
   const A2 = { sts, byId: Object.fromEntries(sts.map((s) => [s.id, s])), stsByDoc: { [DOC2]: sts }, docById: { [DOC2]: { id: DOC2, title: 'x', year: 2026 } } };
   const empty = makeH();
-  assert.equal(excessOf(A2.byId.t, empty, A2).excess, 0, 'a first-asserted bond carries zero excess under the inherited measure');
+  assert.ok(excessOf(A2.byId.t, empty, A2).excess > 0, 'a first-asserted bond carries excess (the first-assertion signal)');
   const edges = resolverEdges(A2, DOC2, { top: 3 });
-  assert.equal(edges.some((e) => e.turn.id === 't' && e.resolver.id === 'r'), false, 'OPEN: no resolver can form for a zero-excess turn');
+  assert.ok(edges.some((e) => e.turn.id === 't' && e.resolver.id === 'r'), 'a resolver forms for the first-asserted turn, sharing its subject');
 });
 
 test('N — HOLDS: word salad manufactures no explanations (the null control)', () => {
@@ -222,13 +225,41 @@ test('B — HOLDS: DMD over a genre trajectory yields stable and decaying modes,
 
 // ── R: OPEN — the turn, not the biggest figure ──────────────────────────────
 
-test('R — OPEN: the mechanical ladder surfaces the data section’s turns but NOT the essay’s verdict', () => {
+test('R — OPEN (quantified): the verdict is a claim but the entity/figure measure cannot see it', () => {
+  // Measured 2026-10-02: the verdict ("…these 59 NTOR signage seems to be
+  // good, targeted policy…") IS a claim, but it ranks 30th of 104 by worth()
+  // (excess 2.96 against the top pick's ~18; one figure; NO resolver), and its
+  // RESIDUAL DROP is NEGATIVE — adding it to a baseline does not explain any
+  // other claim. So NO reweighting of the entity/figure score can surface it:
+  // its surprise is rhetorical (the reader's prior's inversion), not
+  // holographic. Closing R needs a VOID-keyed frame signal — the declared
+  // prior and the claim that answers it — which is a new measure, not a
+  // tuned constant (the derivation's own guard: "do not tune a constant to
+  // hide it"). THIS is where folding at a PERSPECTIVE (the void) is required:
+  // a verdict is visible only as a turn against the perspective it overturns.
+  const { score, claims } = worth(A, DOC);
+  const rows = claims.map((st) => ({ id: st.id, s: score.get(st.id).s })).sort((a, b) => b.s - a.s);
+  const rank = rows.findIndex((r) => /targeted policy/i.test(A.byId[r.id].text));
+  assert.ok(rank >= 0, 'the verdict is a claim');
+  assert.ok(rank > 5, `the verdict ranks ${rank + 1} of ${rows.length} — far below the data picks`);
   const one = select(A, DOC, { size: 1 });
-  // The verdict-turn exists in the source and is a claim:
-  const turnIdx = A.sts.findIndex((s) => /targeted policy/i.test(s.text));
-  assert.ok(turnIdx >= 0, 'the verdict sentence is in the source');
-  // But the holograph ranks it low (few figures), so the mechanical pick is a
-  // data claim instead. DOCUMENTED GAP — do not tune a constant to hide it.
-  const flagsTurn = /targeted policy|limited data/i.test(one.lines[0]);
-  assert.equal(flagsTurn, false, 'OPEN: pure holographic excess does not surface the rhetorical verdict; the VOID + a subject-gated resolver must, and that resolver is still degenerate (it picks the most name-dense list)');
+  assert.equal(/targeted policy|limited data/i.test(one.lines[0]), false, 'OPEN: the 1-sentence pick is a data claim, not the verdict');
+});
+
+test('R — the fold at an identity: a verdict is visible ONLY as a turn against the perspective it overturns', () => {
+  // The law: the world folds at a POINT — an identity — and what belongs is
+  // what makes a difference TO IT. At the empty point the verdict is invisible
+  // (the test above). Folded at the reader's identity (the prior the essay
+  // argues against), the pick must be a claim that INVERTS that identity's
+  // stance — the turn — not arbitrary salience. The identity's held evaluation
+  // is carried by conclusionOf's stance (an English evaluative lens, giver:
+  // STANCE_GIVER).
+  const prior = 'The NTOR bill is unnecessary government overreach and the whining about pedestrian safety is nonsense';
+  const identity = { id: 'prior', doc: DOC, s: 0, e: prior.length, text: prior, names: ['The NTOR'], figs: [], ref: false, claimy: true, frame: 'fact', year: 2026 };
+  const conclusion = conclusionOf([identity], A);
+  assert.equal(conclusion.stance, -1, 'the reader holds a negative stance on the bill');
+  const one = select(A, DOC, { size: 1, forWhom: { conclusion } });
+  const pick = A.byId[one.spans[0].id];
+  assert.ok(pick, 'the folded pick is a source claim');
+  assert.notEqual(stanceOf(pick.text), conclusion.stance, 'the pick is a turn against the identity — its stance inverts the held one');
 });

@@ -661,6 +661,18 @@ select option{background:var(--s1);color:var(--ink)}
                   </div>
                   <div style="display:flex;flex-direction:column;gap:12px;padding:6px 0 14px 2px">
                     <sc-if value="{{ t.hasRes }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ t.resLines }}" as="x" hint-placeholder-count="0"><span style="font:500 12px ‘JetBrains Mono’;color:{{ x.col }}">{{ x.t }}</span></sc-for></sc-if>
+                    <sc-if value="{{ t.hasSyn }}" hint-placeholder-val="{{ false }}">
+                      <div style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px">
+                        <span style="font:600 11px ‘JetBrains Mono’;letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">The source summarized from its own sentences — verbatim, no model</span>
+                        <sc-for list="{{ t.synDocs }}" as="s" hint-placeholder-count="0">
+                          <div style="display:flex;flex-direction:column;gap:3px">
+                            <span style="font:500 12px ‘JetBrains Mono’;color:var(--mut)">{{ s.title }} · {{ s.n }} statements folded</span>
+                            <span style="font:400 16px/1.5 ‘Newsreader’,serif;color:var(--ink)">{{ s.one }}</span>
+                            <sc-for list="{{ s.five }}" as="x" hint-placeholder-count="0"><span style="font:400 14px/1.45 ‘Newsreader’,serif;color:var(--ink2)">· {{ x.l }}</span></sc-for>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
                     <sc-if value="{{ t.hasNotesLine }}" hint-placeholder-val="{{ false }}">
                       <details style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:8px 12px">
                         <summary style="cursor:pointer;font:500 13px ‘Hanken Grotesk’;color:var(--ink2)"><span style="font:600 11px ‘JetBrains Mono’;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);margin-right:8px">What the model was given</span>{{ t.notesLine }}</summary>
@@ -716,6 +728,18 @@ select option{background:var(--s1);color:var(--ink)}
                   </div>
                   <section style="background:var(--s1);border:1px solid var(--line);border-radius:0 0 14px 14px;padding:14px 18px 16px;display:flex;flex-direction:column;gap:12px">
                     <sc-if value="{{ t.hasRes }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ t.resLines }}" as="x" hint-placeholder-count="0"><span style="font:500 12px ‘JetBrains Mono’;color:{{ x.col }}">{{ x.t }}</span></sc-for></sc-if>
+                    <sc-if value="{{ t.hasSyn }}" hint-placeholder-val="{{ false }}">
+                      <div style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px">
+                        <span style="font:600 11px ‘JetBrains Mono’;letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">The source summarized from its own sentences — verbatim, no model</span>
+                        <sc-for list="{{ t.synDocs }}" as="s" hint-placeholder-count="0">
+                          <div style="display:flex;flex-direction:column;gap:3px">
+                            <span style="font:500 12px ‘JetBrains Mono’;color:var(--mut)">{{ s.title }} · {{ s.n }} statements folded</span>
+                            <span style="font:400 16px/1.5 ‘Newsreader’,serif;color:var(--ink)">{{ s.one }}</span>
+                            <sc-for list="{{ s.five }}" as="x" hint-placeholder-count="0"><span style="font:400 14px/1.45 ‘Newsreader’,serif;color:var(--ink2)">· {{ x.l }}</span></sc-for>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
                     <sc-if value="{{ t.hasNotesLine }}" hint-placeholder-val="{{ false }}">
                       <details style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:8px 12px">
                         <summary style="cursor:pointer;font:500 13px ‘Hanken Grotesk’;color:var(--ink2)"><span style="font:600 11px ‘JetBrains Mono’;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);margin-right:8px">What the model was given</span>{{ t.notesLine }}</summary>
@@ -2058,6 +2082,7 @@ select option{background:var(--s1);color:var(--ink)}
                 <sc-if value="{{ hasFaithful }}" hint-placeholder-val="{{ false }}"><button onClick="{{ modeReading }}" style="border:0;padding:6px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';background:{{ modeR.bg }};color:{{ modeR.color }}">Reading</button></sc-if>
                 <button onClick="{{ modePlain }}" style="border:0;padding:6px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';background:{{ modeP.bg }};color:{{ modeP.color }}">Text only</button>
                 <button onClick="{{ modeRestated }}" title="The document restated from its own structure: no model, every clause from the text" style="border:0;padding:6px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';background:{{ modeS.bg }};color:{{ modeS.color }}">Restated</button>
+                <button onClick="{{ modeSummary }}" title="The document curated from its own sentences — one line, five, three paragraphs. No model; every line is a verbatim span of this source" style="border:0;padding:6px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';background:{{ modeSum.bg }};color:{{ modeSum.color }}">Summary</button>
               </div>
               <sc-if value="{{ readerHasUrl }}" hint-placeholder-val="{{ false }}"><a href="{{ readerUrl }}" target="_blank" rel="noopener" style="font:500 14px 'Hanken Grotesk';white-space:nowrap">{{ readerSourceLabel }}</a></sc-if>
             </div>
@@ -2199,6 +2224,25 @@ select option{background:var(--s1);color:var(--ink)}
                   </sc-for>
                 </section>
               </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ isSummary }}" hint-placeholder-val="{{ false }}">
+            <div style="border-top:1px solid var(--line);padding:28px 34px 44px;max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:22px">
+              <p style="margin:0;font:400 13px/1.5 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">{{ sm.note }}</p>
+              <sc-if value="{{ sm.has }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">One sentence · {{ sm.n }} statements folded</span>
+                  <span style="font:400 24px/1.4 'Newsreader',serif;color:var(--ink);text-wrap:pretty">{{ sm.one }}</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">Five sentences</span>
+                  <sc-for list="{{ sm.five }}" as="x" hint-placeholder-count="5"><span style="font:400 18px/1.55 'Newsreader',serif;color:var(--ink2);text-wrap:pretty">· {{ x.l }}</span></sc-for>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc)">Three paragraphs</span>
+                  <sc-for list="{{ sm.three }}" as="x" hint-placeholder-count="3"><span style="font:400 17px/1.6 'Newsreader',serif;color:var(--ink);text-wrap:pretty">{{ x.l }}</span></sc-for>
+                </div>
+              </sc-if>
             </div>
           </sc-if>
           <sc-if value="{{ isPlain }}" hint-placeholder-val="{{ false }}">
@@ -3853,6 +3897,7 @@ let _hdProf = null;
 // its natural language, zero model. UniMorph-derived priors (English
 // morphology, Russian declension) are injected as data, loaded once.
 let _hdLang = null;
+let _hdSum = null; const hdSum = () => _hdSum || (_hdSum = import(new URL('holodeck-summary.js', location.href).href).then(M => { _hdSum = M; return M; }));
 let _hdMed = null; const hdMedia = () => _hdMed || (_hdMed = import(new URL('holodeck-media.js', location.href).href));
 // holodeck-read.js: the OHS reading, generalised — page attribution, the article's own text,
 // timed transcripts, email headers, tables as statements, and OCR for scans and images.
@@ -4097,7 +4142,7 @@ class Component extends DCLogic {
     setTimeout(() => { try { this.netInit(); } catch (e) {} }, 800);
     setTimeout(() => this.measureHdr(), 400);
     setTimeout(() => { try { this.akAutoLoad(); } catch (e) {} }, 2500);
-    this.applyTheme(); this._c = 0; import(new URL('holodeck-match.js', location.href).href).then(M => { this._mt = M; this._qc = null; this.forceUpdate(); }).catch(() => {}); import(new URL('holodeck-profile.js', location.href).href).then(M => { _hdProf = M; this._pbA = null; this.forceUpdate(); }).catch(() => {}); import(new URL('holodeck-lang.js', location.href).href).then(M => { _hdLang = M; this._pfLang = null; this.loadLangPriors(); this.forceUpdate(); }).catch(() => {}); this.loadHtml(); if (typeof location !== 'undefined' && /fx-share=/.test(location.hash)) { this.netInit(); this.setState({ view: 'draft' }); }
+    this.applyTheme(); this._c = 0; import(new URL('holodeck-match.js', location.href).href).then(M => { this._mt = M; this._qc = null; this.forceUpdate(); }).catch(() => {}); import(new URL('holodeck-profile.js', location.href).href).then(M => { _hdProf = M; this._pbA = null; this.forceUpdate(); }).catch(() => {}); import(new URL('holodeck-lang.js', location.href).href).then(M => { _hdLang = M; this._pfLang = null; this.loadLangPriors(); this.forceUpdate(); }).catch(() => {}); hdSum().then(() => this.forceUpdate()).catch(() => {}); this.loadHtml(); if (typeof location !== 'undefined' && /fx-share=/.test(location.hash)) { this.netInit(); this.setState({ view: 'draft' }); }
     this._onRz = () => { this.measureHdr(); if ((window.innerWidth < SIDE_PANEL_MIN_VW) !== this._narrow) this.forceUpdate(); }; window.addEventListener('resize', this._onRz);
 
     this._onSelCh = () => { cancelAnimationFrame(this._selRaf); this._selRaf = requestAnimationFrame(() => this.updatePinPop()); };
@@ -5121,7 +5166,8 @@ class Component extends DCLogic {
     let reading = null; try { reading = M.readingBlock(this._rix, retrievalQ); } catch (e) {}
     const ac = new AbortController(); this._akAbort = ac; let last = 0;
     this.setState({ akBusy: 'retrieving', akQ: '', akStream: '', akPending: q, akErr: '', akComputed: computed });
-    try { const r = await M.turn(this._conv, this._ix, q, { model: this.akModel(), computed, reading, retrievalQ, resolved, signal: ac.signal, onStage: st => this.setState({ akBusy: st }), onToken: t => { const now = Date.now(); if (now - last > 50) { last = now; this.setState({ akStream: t }); } }, deferFold: true, onFold: (folded, ref) => { if (this._conv !== r.conv) return; r.conv.summary = folded; r.turn.refresh = ref; this.saveConv(); this.forceUpdate(); } });
+    const sourceDocs = A0.docs.filter(d => this.counted(d) && (d.text || '').trim().length > 40);
+    try { const r = await M.turn(this._conv, this._ix, q, { model: this.akModel(), computed, reading, retrievalQ, resolved, docs: sourceDocs, signal: ac.signal, onStage: st => this.setState({ akBusy: st }), onToken: t => { const now = Date.now(); if (now - last > 50) { last = now; this.setState({ akStream: t }); } }, deferFold: true, onFold: (folded, ref) => { if (this._conv !== r.conv) return; r.conv.summary = folded; r.turn.refresh = ref; this.saveConv(); this.forceUpdate(); } });
       this._akFold = r.fold ? { abort: () => r.fold.abort(), conv: r.conv } : null;
       this._conv = r.conv; this._lastMsgs = r.turn.messages; this.saveConv(); this.setState({ akBusy: '', akStream: '', akPending: '', akComputed: null });
       if ((this.state.akMode || 'chat') === 'notebook') { try { await this.syncNotebookLog(); } catch (e) {} }
@@ -5175,7 +5221,8 @@ class Component extends DCLogic {
       const C = t.computed;
       const gen = t.attr && t.attr.some(x => x.ref && this._ix && this._ix.docOf[(String(x.ref).match(/^(.*)#/) || [])[1]]);
       return { n: String(t.n), q: t.question, sents, srcs, hasSrcs: srcs.length > 0, bad: bad.map(f => f.text).join(' · '), hasBad: bad.length > 0, noMaterial: !(t.offered || []).length,
-        hasRes: !!(t.resolved && t.resolved.length), resLines: (t.resolved || []).map(r => ({ t: r.mode === 'nearmiss' ? 'Read “' + r.from + '” as ' + r.to + ': one letter off it, and off no other name.' : 'Did not guess who “' + r.from + '” is: ' + r.why + '.', col: r.mode === 'nearmiss' ? 'var(--acc)' : 'var(--amber)' })), hasNotes: !!(t.notes && t.notes.lines && t.notes.lines.length), notesLines: ((t.notes && t.notes.lines) || []).map(l => ({ l })), notesLine: t.notes ? (t.notes.empty ? 'The reader made no notes on these passages, and the model was told so.' : plural(t.notes.lines.length, 'note') + ' from ' + t.notes.coverage + '% of the sentences read · ' + plural(t.notes.spans, 'span') + ' of source text sent with them' + (t.notes.omitted ? ' · ' + t.notes.omitted + ' lower-ranked notes held back' : '')) : '', hasNotesLine: !!t.notes, hasRd: !!(t.reading && t.reading.lines && t.reading.lines.length), rdLines: ((t.reading && t.reading.lines) || []).map(l => ({ t: l.text, onClick: () => A.names[l.name] ? this.openProfile(l.name) : null })), hasComp: !!C, compHead: C ? C.head : '', compLines: C ? C.lines.map(l => ({ l })) : [], compSaid: C ? C.said : '', onComp: () => this.setState({ view: 'records', readDoc: null, dbT: C && C.type, dbAskDraft: C && C.q, dbRes: null }, () => C && this.dbRun(C.q)),
+        hasRes: !!(t.resolved && t.resolved.length), resLines: (t.resolved || []).map(r => ({ t: r.mode === 'nearmiss' ? 'Read “' + r.from + '” as ' + r.to + ': one letter off it, and off no other name.' : 'Did not guess who “' + r.from + '” is: ' + r.why + '.', col: r.mode === 'nearmiss' ? 'var(--acc)' : 'var(--amber)' })),
+        hasSyn: !!(t.synopsis && t.synopsis.docs && t.synopsis.docs.length), synDocs: ((t.synopsis && t.synopsis.docs) || []).map(d => ({ title: d.title, one: d.one, five: d.five.map(l => ({ l })), n: d.n, forWhom: d.forWhom })), synOne: (t.synopsis && t.synopsis.docs && t.synopsis.docs[0]) ? t.synopsis.docs[0].one : '', hasNotes: !!(t.notes && t.notes.lines && t.notes.lines.length), notesLines: ((t.notes && t.notes.lines) || []).map(l => ({ l })), notesLine: t.notes ? (t.notes.empty ? 'The reader made no notes on these passages, and the model was told so.' : plural(t.notes.lines.length, 'note') + ' from ' + t.notes.coverage + '% of the sentences read · ' + plural(t.notes.spans, 'span') + ' of source text sent with them' + (t.notes.omitted ? ' · ' + t.notes.omitted + ' lower-ranked notes held back' : '')) : '', hasNotesLine: !!t.notes, hasRd: !!(t.reading && t.reading.lines && t.reading.lines.length), rdLines: ((t.reading && t.reading.lines) || []).map(l => ({ t: l.text, onClick: () => A.names[l.name] ? this.openProfile(l.name) : null })), hasComp: !!C, compHead: C ? C.head : '', compLines: C ? C.lines.map(l => ({ l })) : [], compSaid: C ? C.said : '', onComp: () => this.setState({ view: 'records', readDoc: null, dbT: C && C.type, dbAskDraft: C && C.q, dbRes: null }, () => C && this.dbRun(C.q)),
         rec: 'On record · turn ' + t.n + ' · ' + recBits.join(' · '), fold: t.foldLine, meter: 'Sent ' + t.sentChars.toLocaleString() + ' characters in place of a ' + t.transcriptChars.toLocaleString() + '-character transcript', meta: t.model + (t.tokens && t.tokens.secs ? ' · ' + t.tokens.secs.toFixed(1) + ' s' : '') + (t.refresh && !t.refresh.ok && t.refresh.why ? ' · summary kept: ' + short(t.refresh.why, 120) : ''),
         canGen: gen, onGen: () => this.askToDraft(t),
         i, onRun: e => { let q = t.question; try { const cell = e && e.target && e.target.closest ? e.target.closest('[data-cell]') : null; const ta = cell && cell.querySelector('textarea'); if (ta && String(ta.value).trim()) q = ta.value; } catch (er) {} this.askSend(String(q).trim()); } }; });
@@ -7254,11 +7301,12 @@ class Component extends DCLogic {
           model: S.txModel || 'base', onModel: e => this.setState({ txModel: e.target.value }), models: [['base', 'whisper-base · fast, multilingual'], ['small', 'whisper-small · slower, more accurate, multilingual'], ['smallen', 'whisper-small.en · English only, most accurate for English']].map(([v, l]) => ({ v, l })),
           onTerms: e => { this._txTerms = e.target.value; }, busy: !!S.txBusy, prog: S.txProg || '', onTx: () => this.transcribeLocal(d0), priorNote: 'Whisper runs locally here; the recording never leaves this machine. A transcript is a machine interpretation — the prior changes what it hears, and the choice stays on the record.' }; })(),
       isOriginalFlat: S.readMode !== 'plain' && S.readMode !== 'restated' && !(S.readDoc && A.docById[S.readDoc] && A.docById[S.readDoc].media),
-      isOriginal: S.readMode !== 'plain' && S.readMode !== 'restated', isRestated: S.readMode === 'restated', rs: S.readMode === 'restated' && S.readDoc && A.docById[S.readDoc] ? this.restatedVals(A.docById[S.readDoc], A) : { note: '', sections: [], hasCover: false, cover: { pairs: [] } }, isPlain: S.readMode === 'plain', readerRef: this.readerRef,
+      isOriginal: S.readMode !== 'plain' && S.readMode !== 'restated' && S.readMode !== 'summary', isRestated: S.readMode === 'restated', rs: S.readMode === 'restated' && S.readDoc && A.docById[S.readDoc] ? this.restatedVals(A.docById[S.readDoc], A) : { note: '', sections: [], hasCover: false, cover: { pairs: [] } }, isSummary: S.readMode === 'summary', sm: S.readMode === 'summary' && S.readDoc && A.docById[S.readDoc] ? this.summaryVals(A.docById[S.readDoc], A) : { has: false, note: '', one: '', five: [], three: [], n: 0, mono: true }, isPlain: S.readMode === 'plain', readerRef: this.readerRef,
       ...(() => { const d0 = S.readDoc && A.docById[S.readDoc]; const hf = !!(d0 && (d0.faithful || d0.binPath || d0.pdfSrc)); const onO = S.readMode === 'original' || (!hf && S.readMode === 'reading'), onR = hf && S.readMode === 'reading'; const pill = on => ({ bg: on ? 'var(--sel)' : 'transparent', color: on ? 'var(--ink)' : 'var(--mut)' });
         return { hasFaithful: hf, modeR: pill(onR), modeReading: () => this.setState({ readMode: 'reading' }), faithOn: hf && S.readMode === 'original',
           rdFaith: hf && S.readMode === 'original' ? { has: true, note: (d0.pdfSrc ? 'The PDF exactly as captured' + (d0.custody ? ' (' + d0.custody + ')' : '') + '.' : 'The page as captured' + (d0.custody ? ' (' + d0.custody + ')' : '') + '. Layout and styles load from ' + ohsPublisher(d0.url) + ' today and may have changed since; the words are the captured bytes.') + (this._faithFound ? ' ' + this._faithFound.found + ' of ' + plural(this._faithFound.total, 'statement') + ' located and marked; the rest differ in wording or layout — see Reading.' : '') } : { has: false }, _o: onO }; })(),
       modeO: (() => { const d0 = S.readDoc && A.docById[S.readDoc]; const hf = !!(d0 && (d0.faithful || d0.binPath || d0.pdfSrc)); const on = S.readMode === 'original' || (!hf && S.readMode === 'reading'); return { bg: on ? 'var(--sel)' : 'transparent', color: on ? 'var(--ink)' : 'var(--mut)' }; })(), modeP: { bg: S.readMode === 'plain' ? 'var(--sel)' : 'transparent', color: S.readMode === 'plain' ? 'var(--ink)' : 'var(--mut)' }, modeS: { bg: S.readMode === 'restated' ? 'var(--sel)' : 'transparent', color: S.readMode === 'restated' ? 'var(--ink)' : 'var(--mut)' }, modeRestated: () => this.setState({ readMode: 'restated' }),
+        modeSum: { bg: S.readMode === 'summary' ? 'var(--sel)' : 'transparent', color: S.readMode === 'summary' ? 'var(--ink)' : 'var(--mut)' }, modeSummary: () => this.setState({ readMode: 'summary' }),
       modeOriginal: () => this.setState({ readMode: 'original' }), modePlain: () => this.setState({ readMode: 'plain' }),
       readerHasUrl: !!(S.readDoc && A.docById[S.readDoc] && A.docById[S.readDoc].url), readerUrl: (S.readDoc && A.docById[S.readDoc] && A.docById[S.readDoc].url) || '',
       readerSourceLabel: S.readDoc && A.docById[S.readDoc] && A.docById[S.readDoc].url ? (/wikipedia.org/.test(A.docById[S.readDoc].url) ? (A.docById[S.readDoc].live ? 'Live from Wikipedia' : 'Excerpt from Wikipedia') + ' · CC BY-SA 4.0 ↗' : 'Open original ↗') : '',
@@ -7524,6 +7572,24 @@ class Component extends DCLogic {
     this._rs = { key, v }; return v;
   }
   restatedVals(d, A) { const v = this.restate(d, A); return v.ok ? v : { note: v.note, sections: [], hasCover: false, cover: { pairs: [] } }; }
+  // THE GROUNDED SUMMARY, on the reader (holodeck-summary.js): the document
+  // curated from its OWN sentences — one line, five, three paragraphs. Zero
+  // model, grounded by construction (every line is a verbatim span). Built
+  // synchronously from the analysis A, so it renders with the document. Falls
+  // back to a typed note when the reader heard too few claims to fold.
+  summaryVals(d, A) {
+    const empty = { has: false, note: '', one: '', five: [], three: [], n: 0, mono: true };
+    try {
+      const M = this._askM || _hdSum;
+      if (!M || !M.ladder) return { ...empty, note: 'The summary organ is not loaded yet.' };
+      const sts = (A.stsByDoc && A.stsByDoc[d.id]) || A.sts.filter(s => s.doc === d.id);
+      const claims = sts.filter(s => !s.ref && (s.claimy !== false));
+      if (claims.length < 4) return { ...empty, n: claims.length, note: 'The reader heard too few claims in this source to fold a summary (it needs at least four).' };
+      const L = M.ladder(A, d.id, {});
+      const one = L.one.lines[0] || '';
+      return { has: !!one, note: 'The document curated from its own sentences: the size is a selection budget, not a generation budget. Every line below is a verbatim span of this source — no model wrote it, and none can.', one, five: L.five.lines.map(l => ({ l })), three: L.three.lines.map(l => ({ l })), n: claims.length, mono: L.monotone, onPinSpan: null };
+    } catch (e) { return { ...empty, note: 'The summary could not be built: ' + String(e && e.message || e) }; }
+  }
   lensFn(L, A) {
     const MON = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
     if (L.k === 'fin') { const re = /\b(budget|budgets|fund|funds|funding|funded|grant|grants|contract|contracts|spend|spending|spent|cost|costs|revenue|revenues|million|billion|dollars?|appropriat\w*|fiscal|payment|payments|paid|salary|salaries|invoice\w*)\b/i; return st => re.test(st.text) || st.figs.some(g => /dollar|percent/.test(g.unit)); }

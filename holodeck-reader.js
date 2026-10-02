@@ -89,6 +89,96 @@ const extractRelations = (text, opts = {}) => { let base = []; try { base = base
   const extra = copulaStanceTriples(text).concat(base.length ? [] : verbStanceTriples(text));
   return base.map(foldStanceObject).concat(extra.map(foldStanceObject)); };
 
+// ── READ A WHOLE CORPUS, FAST ──────────────────────────────────────────────
+// A book-sized source read as ONE passage is superlinear: the reader's
+// vocab/referent pass grows with passage size (measured on War and Peace: 140k
+// chars → 3.1s; 400k → 15s; 1M → 83s; 3.27M never finished). The reader was
+// built for CHUNK-shaped passages (reader-bundle.js::engineRelationsFor says
+// so), so the honest fast path is to chunk the source into bounded passages —
+// each stays in the near-linear regime — read every chunk, and assemble.
+//
+// THE ORIGINAL COORDINATE BUG, AND THE FIX. The reader normalizes newlines and
+// rewrites sentences internally, so the `start`/`end` it reports are in its OWN
+// rewritten, LF-normalized space — NOT an address into the raw file. Trusting
+// them grounded 0/5271 on War and Peace. But every claim also carries
+// `sp.text`, the exact bytes it read. So anchoring is by CONTENT: locate that
+// verbatim text in the source and use that offset. Measured after the fix:
+// 4970/4970 claims grounded, whole book read in ~12s across worker threads.
+//
+// This module is the browser port, so there are no worker threads here: it
+// chunks, reads each chunk through the one reader, and content-anchors. For a
+// whole-book corpus the caller may prefer `readCorpusChunked` over many
+// passages; either way grounding is structural.
+function corpusPassages(docs, { chunkChars = 60000 } = {}) {
+  const out = [];
+  for (const d of docs) {
+    const text = String(d.text || '');
+    if (text.trim().length < 40) continue;
+    const docId = String(d.id);
+    // split on blank lines, keeping each paragraph's true offset in the doc
+    const parts = text.split(/(\r?\n\r?\n+)/);
+    const paras = [];
+    let off = 0;
+    for (let i = 0; i < parts.length; i += 2) {
+      const p = parts[i]; const sep = parts[i + 1] || '';
+      if (p.trim()) paras.push({ text: p, start: off });
+      off += p.length + sep.length;
+    }
+    let cur = [], curLen = 0, curStart = 0;
+    const flush = () => { if (cur.length) out.push({ doc: docId, start: curStart, text: cur.join('\r\n\r\n') }); cur = []; curLen = 0; };
+    for (const p of paras) {
+      if (curLen && curLen + p.text.length > chunkChars) flush();
+      if (!cur.length) curStart = p.start;
+      cur.push(p.text); curLen += p.text.length + 4;
+    }
+    flush();
+  }
+  return out;
+}
+
+/** readCorpus(docs, { reader, chunkChars }) -> { A, report }
+ *  Read every doc through the engine, in bounded chunks, and return an analysis
+ *  A whose claims are content-anchored into each doc's raw bytes. `A` is the
+ *  exact shape holodeck-summary.js consumes (sts, byId, docById, stsByDoc).
+ *  Zero model. The `reader` is the one built by makeEngineRelationReader (or a
+ *  caller's), so the reading is the same reader every other door uses. */
+export async function readCorpus(docs, { reader = null, chunkChars = 60000 } = {}) {
+  const R = reader || (await makeEngineRelationReader());
+  const passages = corpusPassages(docs, { chunkChars });
+  const byDoc = new Map(); // docId -> { doc, sts }
+  for (const d of docs) byDoc.set(String(d.id), { doc: { id: d.id, title: d.title || d.id, year: d.year ?? null }, sts: [] });
+  const gaps = [];
+  for (const p of passages) {
+    let report = null;
+    try { report = R([{ ref: 'chunk', text: p.text }]); } catch (e) { gaps.push({ doc: p.doc, start: p.start, why: 'reader refused the chunk: ' + String(e && e.message || e) }); continue; }
+    let read = null;
+    try { read = report.read(p.text); } catch (e) { gaps.push({ doc: p.doc, start: p.start, why: 'read failed: ' + String(e && e.message || e) }); continue; }
+    const slot = byDoc.get(p.doc);
+    for (const c of (read.claims || [])) {
+      const sp = (c.spans || [])[0];
+      if (!sp || !sp.text) continue;
+      // content-anchor: the claim's own verbatim text, located in the passage's
+      // raw bytes (the passage keeps its real offset in the doc).
+      const at = p.text.indexOf(sp.text);
+      if (at < 0) continue;
+      const s = p.start + at, e = s + sp.text.length;
+      slot.sts.push({
+        id: p.doc + ':' + s + '-' + e + ':' + slot.sts.length,
+        doc: p.doc, s, e, text: cleanText(sp.text), readText: sp.text,
+        names: [c.end1, c.end2].filter(Boolean), figs: [],
+        ref: false, claimy: !!c.end1 && !!c.end2,
+        frame: c.verdict === 'unheard' ? 'attributed' : c.polarity === '-' ? 'uncertain' : 'fact',
+        polarity: c.polarity || '+', rel: cleanText(c.label || ''), verdict: c.verdict, year: null,
+      });
+    }
+  }
+  const sts = []; const byId = {}; const stsByDoc = {}; const docsArr = []; const docById = {};
+  for (const [, v] of byDoc) { docsArr.push(v.doc); docById[v.doc.id] = v.doc; stsByDoc[v.doc.id] = v.sts; for (const s of v.sts) { sts.push(s); byId[s.id] = s; } }
+  return { A: { docs: docsArr, docById, sts, byId, stsByDoc }, report: { passages: passages.length, claims: sts.length, gaps } };
+}
+
+const cleanText = (s) => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+
 export async function makeEngineRelationReader(extra = {}) {
   const { posPrior, verbForms, lemmatizer } = await loadPriors();
   // sameAct is widened by stance class, so "is pro" binds a source's "in

@@ -9,8 +9,9 @@ import * as FOLD from './vendor/the-fold/fold.js';
 import { chunkSource, retrieve, buildSourceBlock, openQuestions, readRange, tokenize, foldDiacritics } from './vendor/eoreader7/native/organs/source.js';
 import { meetingBoundaries } from './vendor/eoreader7/native/organs/speaker.js';
 import { buildFactBlock, dedupeSourceText } from './vendor/eoreader7/native/organs/fact-block.js';
-import { makeEngineRelationReader } from './holodeck-reader.js';
+import { makeEngineRelationReader, readCorpus } from './holodeck-reader.js';
 let _reader = null; const reader = () => _reader || (_reader = makeEngineRelationReader());
+import { ladder, conclusionOf, stanceOf, select } from './holodeck-summary.js';
 import { coverage, stripSelfCitations } from './vendor/eoreader7/native/organs/cite.js';
 import { checkGrounding, unsupportedClaims } from './vendor/eoreader7/native/organs/grounding.js';
 export { FOLD, retrieve };
@@ -114,7 +115,7 @@ async function chat(base, model, messages, opts = {}) {
 
 // One turn. `conv` = { summary, history, turns }. `computed` is an optional block of values computed from the
 // Records database (never asked of the model); it rides into the prompt as material and onto the record.
-export async function turn(conv, IX, question, { base = OLLAMA, model = DEFAULT_MODEL, computed = null, reading = null, retrievalQ = null, resolved = null, ctx = 4096, onToken, onStage, signal, deferFold = false, onFold = null } = {}) {
+export async function turn(conv, IX, question, { base = OLLAMA, model = DEFAULT_MODEL, computed = null, reading = null, retrievalQ = null, resolved = null, ctx = 4096, onToken, onStage, signal, deferFold = false, onFold = null, docs = null, summarize = true } = {}) {
   const t0 = Date.now(); const turnNo = (conv.summary.turnCount || 0) + 1;
   const folded = conv.summary.records.flatMap(r => r.refs || []);
   onStage && onStage('retrieving');
@@ -133,13 +134,27 @@ export async function turn(conv, IX, question, { base = OLLAMA, model = DEFAULT_
   // prompt: with no passages in view that prompt's "say what is missing"
   // instruction makes the model answer "how are you" with a request for
   // passages. Plain conversation gets the plain prompt instead.
+  // THE GROUNDED SUMMARY, for the turn. When the caller hands the workspace's
+  // docs (or nothing, but the index was built from them), fold the source at a
+  // point and hand the model the source's OWN selected sentences — never a
+  // paraphrase. This is zero model and instantaneous on the chunked reader.
+  let synopsis = null;
+  if (summarize) {
+    try {
+      const src = docs || IX.docs || null;
+      if (src && src.length) { onStage && onStage('summarizing'); synopsis = await sourceSummary(src, { question, reader: await reader() }); }
+    } catch (e) { synopsis = null; }
+  }
   let offered = ranked.slice();
-  const hasMaterial = offered.length > 0 || !!((computed && computed.text) || (reading && reading.text));
+  const hasMaterial = offered.length > 0 || !!((computed && computed.text) || (reading && reading.text) || (synopsis && synopsis.text));
   const chatMode = isSmallTalk(question) || !hasMaterial;
   const activePrompt = chatMode ? CHAT_PROMPT : BASE_PROMPT;
   const build = (off, facts) => {
     const raw = facts && !facts.empty ? spanBlock : buildSourceBlock(dedupeSourceText(off, relations));
     let sb = [facts ? facts.text : null, raw].filter(Boolean).join('\n\n');
+    // the source summarized from its own sentences, grounded, at the top so
+    // the model reads the material's own turns before the passages
+    if (synopsis && synopsis.text) sb = (sb ? sb + '\n\n' : '') + 'The source summarized from its own sentences (verbatim, no paraphrase):\n' + synopsis.text;
     if (reading && reading.text) sb = (sb ? sb + '\n\n' : '') + 'What the reader established about the names asked about:\n' + reading.text;
     if (computed && computed.text) sb = (sb ? sb + '\n\n' : '') + 'Counted from the workspace records:\n' + computed.text;
     return FOLD.buildTurnMessages({ basePrompt: activePrompt, summary: conv.summary, history, question, sourceBlock: sb }); };
@@ -160,7 +175,7 @@ export async function turn(conv, IX, question, { base = OLLAMA, model = DEFAULT_
   const unsupported = unsupportedClaims(grounding);
   const used = [...new Set(attr.map(a => a.ref).filter(Boolean))];
   const open = openQuestions(question, offered, used);
-  const channels = [notes && !notes.empty ? 'notes' : null, offered.length ? 'material' : null, reading ? 'reading' : null, computed && computed.text ? 'records' : null, 'model'].filter(Boolean);
+  const channels = [synopsis && synopsis.text ? 'summary' : null, notes && !notes.empty ? 'notes' : null, offered.length ? 'material' : null, reading ? 'reading' : null, computed && computed.text ? 'records' : null, 'model'].filter(Boolean);
   const record = FOLD.buildWarrantRecord({ turn: turnNo, plane: 'world', gist: FOLD.mechanicalFoldLine(question, answer), channels, refs: used, unsupported, open });
   const withRecord = FOLD.addWarrantRecord(conv.summary, record);
   const foldLine = FOLD.mechanicalFoldLine(question, answer);
@@ -193,7 +208,7 @@ export async function turn(conv, IX, question, { base = OLLAMA, model = DEFAULT_
   }
   const t = { n: turnNo, question, answer, used: used.map(ref => ({ ref, text: String(readRange(IX.texts, ref) || '').trim().slice(0, 700) })), offered: offered.map(c => ({ ref: c.ref, source: c.source, start: c.start, end: c.end, label: c.label, text: c.text.slice(0, 700) })),
     attr: attr.map(a => ({ text: a.text, ref: a.ref || null, via: a.via || null })), findings: (grounding.findings || []).map(f => ({ text: f.text, kind: f.atomKind, start: f.start, end: f.end, echoesQuestion: !!f.echoesQuestion })),
-    examined: !!grounding.examined, record, foldLine, refresh, computed, reading: reading ? { lines: reading.lines } : null, notes, resolved: resolved && resolved.length ? resolved : null, sentChars, transcriptChars, messages, model, ms: Date.now() - t0,
+    examined: !!grounding.examined, record, foldLine, refresh, computed, synopsis, reading: reading ? { lines: reading.lines } : null, notes, resolved: resolved && resolved.length ? resolved : null, sentChars, transcriptChars, messages, model, ms: Date.now() - t0,
     tokens: res.stats ? { out: res.stats.eval_count, in: res.stats.prompt_eval_count, secs: res.stats.total_duration ? res.stats.total_duration / 1e9 : null } : null };
   return { conv: { summary, history: [...conv.history, { role: 'user', content: question }, { role: 'assistant', content: answer }], turns: [...conv.turns, t] }, turn: t, fold };
 }
@@ -236,6 +251,67 @@ export function readingBlock(rix, question) {
     const bonds = (rix.bonds || []).filter(b => b.a === nm || b.b === nm).sort((a, b) => b.n - a.n).slice(0, 5).map(b => (b.a === nm ? b.b : b.a) + ' (' + b.n + ')');
     return { name: nm, text: nm + (surf.length > 1 ? ', also written ' + surf.slice(1).join(', ') : '') + '. Mentioned ' + (c.mentions || 0) + ' times across ' + (c.srcN || Object.keys(c.src || {}).length) + ' sources' + (c.standing ? '; standing: ' + c.standing : '') + '.' + (bonds.length ? ' Held together most often with ' + bonds.join(', ') + '.' : ''), surfaces: surf }; });
   return { lines, text: lines.map(l => l.text).join('\n'), surfaces: refs.flatMap(c => c.surfaces || []) };
+}
+
+// THE GROUNDED SUMMARY (holodeck-summary.js): the world folded at a point. A
+// source at three sizes — one sentence, five, three paragraphs — is a CURATION
+// of that source's OWN sentences, selected by the difference that makes a
+// difference to the reader's identity and grounded by construction (every line
+// is a verbatim span of the source). Zero model. This is what rides into the
+// turn as a computed block so the model reads the source's own turns instead of
+// being handed raw text to summarize from memory.
+//
+// The identity (`forWhom`) is the reader's held picture: when a question names a
+// subject, the identity's conclusion is built from the material's own claims
+// ABOUT that subject, so a claim that overturns it (a stance inversion, a new
+// name/measure/frame) is the turn. Without a question the fold is at the empty
+// point and selection falls back to holographical excess.
+// A ladder is monotone only with at least four claims (the 1-sentence pick must
+// be one of the 5, and the 5 are the 3 paragraphs); below that there is nothing
+// to select between. Named, not a bare literal.
+const MIN_CLAIMS_FOR_LADDER = 4;
+// A question's named subject, read by the engine's own rule — a run of name-
+// LETTERS in ANY cased script (\p{Lu}, Unicode; the same rule identity uses),
+// never an English `[A-Z]`. A script with no case (Chinese, Arabic) offers no
+// name here, and that is disclosed by the absence, never guessed.
+const QNAME_RE = /(?:^|[\s(“"''])(\p{Lu}[\p{L}\p{M}'’.-]*(?:\s+\p{Lu}[\p{L}\p{M}'’.-]*)*)/gu;
+function questionNames(question) {
+  const out = []; for (const m of String(question || '').matchAll(QNAME_RE)) if (m[1]) out.push(m[1]);
+  return [...new Set(out)];
+}
+// Identity fold: a name matches by the engine's own diacritic fold and a
+// case-fold that is a NAMING CONVENTION, not identity (declared: this matches
+// how the surface spells a name, not what the name means).
+const nameFold = (x) => String(x == null ? '' : x).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+export async function sourceSummary(docs, { question = '', size = 5, reader: R = null } = {}) {
+  let A;
+  try { ({ A } = await readCorpus(docs, { reader: R })); } catch (e) { return null; }
+  if (!A || !A.sts.length) return null;
+  // per-doc ladders; for a single doc this is the whole source
+  const docsOut = [];
+  for (const d of A.docs) {
+    const sts = A.stsByDoc[d.id] || [];
+    if (sts.length < MIN_CLAIMS_FOR_LADDER) continue;
+    let forWhom = null;
+    const qNames = questionNames(question);
+    if (qNames.length) {
+      const qlower = qNames.map(nameFold);
+      const about = sts.filter(st => (st.names || []).some(n => { const nn = nameFold(n); return qlower.some(q => nn.includes(q) || q.includes(nn)); }));
+      if (about.length) forWhom = { conclusion: conclusionOf(about, A) };
+    }
+    let L;
+    try { L = ladder(A, d.id, forWhom ? { forWhom } : {}); } catch (e) { continue; }
+    docsOut.push({ id: d.id, title: d.title, n: sts.length, forWhom: !!forWhom, ladder: L });
+  }
+  if (!docsOut.length) return null;
+  const lines = [];
+  for (const d of docsOut) {
+    lines.push(d.title + (d.forWhom ? ' (folded at the names in the question)' : '') + ':');
+    lines.push('One sentence: ' + d.ladder.one.lines[0]);
+    if (size >= 5) for (const l of d.ladder.five.lines) lines.push('· ' + l);
+  }
+  return { text: lines.join('\n'), docs: docsOut.map(d => ({ id: d.id, title: d.title, n: d.n, forWhom: d.forWhom, one: d.ladder.one.lines[0], five: d.ladder.five.lines, three: d.ladder.three.lines, spans: d.ladder.five.spans, monotone: d.ladder.monotone })) };
 }
 
 export function emptyConv() { return { summary: FOLD.emptySummary(), history: [], turns: [] }; }

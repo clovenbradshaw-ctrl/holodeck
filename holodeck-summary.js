@@ -1,6 +1,18 @@
 // holodeck-summary.js — A GROUNDED SUMMARY AT THREE SIZES: one sentence, five
 // sentences, three paragraphs. Zero model calls for selection and ordering.
 //
+// THE LAW (2026-10-02): THE WORLD MUST FOLD AT A POINT — AN IDENTITY: the world
+// at a point, from a particular perspective, BOUNDED BY DIFFERENCES THAT MAKE A
+// DIFFERENCE. A summary is what a text says TO someone — an identity with a
+// held conclusion (a genre's settled reading, a reader's prior, any being's
+// picture). The measure is therefore the DIFFERENCE from that identity's
+// conclusion, not salience: a claim the identity already holds is not news; a
+// claim that inverts its held stance, or introduces a name/measure/frame it
+// does not hold, is the turn. Folded at the empty point (no forWhom) the
+// measure degrades to holographical excess and a figure-less verdict is
+// invisible — that absence IS the law (holodeck-summary.test.mjs's R pair).
+//
+
 // THE PIPELINE (architecture law, 2026-10-02):
 //
 //   NL (the source)  →  language-specific grammar  →  EOT
@@ -153,8 +165,31 @@ export function vectors(sts, { namesOf = (st) => st.names || [] } = {}) {
 
 const NEG = /\b(not|no|never|denied|denies|without|failed to|did not|does not|was not|were not|has not|have not|cannot)\b/i;
 
+// A SINGLE CAPITALIZED WORD IS A NAME UNLESS THE DOCUMENT ITSELF WRITES IT
+// LOWERCASE — the engine's own rule (a capital the material also writes in
+// lowercase is a sentence start, not a name; CODING-LESSONS 63). The earlier
+// filter kept only multi-word names and ALL-CAPS acronyms, which dropped every
+// single proper noun ("Kupin") — so a first assertion about one had no name to
+// bond and scored zero (the N gap's second half). The document's lowercase
+// vocabulary is the veto; nothing is listed here.
+const _lowerCache = new WeakMap();
+function docLowerSet(A, docId) {
+  let m = _lowerCache.get(A); if (!m) { m = new Map(); _lowerCache.set(A, m); }
+  if (m.has(docId)) return m.get(docId);
+  const set = new Set();
+  for (const st of ((A.stsByDoc && A.stsByDoc[docId]) || A.sts.filter((s) => s.doc === docId))) {
+    for (const w of String(st.text || "").match(/\b[a-z][a-z'’-]+\b/g) || []) set.add(w);
+  }
+  m.set(docId, set); return set;
+}
+
 function fieldsOf(st, A) {
-  const ns = [...new Set((st.names || []).filter((n) => n && (/\s/.test(n) || /^[A-Z]{2,}$/.test(n))))].slice(0, 8);
+  const lower = docLowerSet(A, st.doc);
+  const ns = [...new Set((st.names || []).filter((n) => {
+    if (!n) return false;
+    if (/\s/.test(n) || /^[A-Z]{2,}$/.test(n)) return true;
+    return !lower.has(n.toLowerCase()); // single capitalized word: a name unless the doc writes it lowercase
+  }))].slice(0, 8);
   const fs = (st.figs || []).map((g) => { const v = +g.value; if (!isFinite(v) || !v) return null; const raw = clean(g.raw || String(v)); return { measure: clean(g.unit || ''), v, raw }; }).filter(Boolean);
   return { ns, fs, neg: NEG.test(String(st.text).replace(/\bnot yet\b|\bno doubt\b|\bnot only\b/gi, '')) };
 }
@@ -314,8 +349,18 @@ export function excessOf(st, H, A) {
   for (let i = 0; i < ns.length; i++) for (let j = i + 1; j < ns.length; j++) {
     const a = ns[i], b = ns[j]; if (a.includes(b) || b.includes(a)) continue;
     const ca = H.ent.get(a) || 0, cb = H.ent.get(b) || 0, had = H.bond.get(pk(a, b)) || 0;
-    if (!had) { if (ca >= 2 && cb >= 2) parts.push({ w: 1 + 0.5 * Math.log2(1 + Math.min(ca, cb)), kind: 'bond', text: a + ' and ' + b + ' held together for the first time' });
-      else if (ca || cb) parts.push({ w: 0.3 + 0.1 * Math.log2(1 + Math.max(ca, cb)), kind: 'enter', text: 'a name enters the picture' }); }
+    // A FIRST ASSERTION IS THE STRONGEST ENTRY SIGNAL, not a zero. The bond
+    // formula's own variable is how half-present the pair already was
+    // (min(ca,cb)); both names new is that variable at 0 — the whole bond is
+    // new — so it takes the bond weight at 0 rather than falling through both
+    // branches and scoring nothing (the inherited measure's first-assertion
+    // hole: a load-bearing opening claim had excess 0, so no resolver could
+    // form for it — holodeck-summary.test.mjs's N). (2026-10-02)
+    if (!had) {
+      if (ca >= 2 && cb >= 2) parts.push({ w: 1 + 0.5 * Math.log2(1 + Math.min(ca, cb)), kind: 'bond', text: a + ' and ' + b + ' held together for the first time' });
+      else if (ca === 0 && cb === 0) parts.push({ w: 1, kind: 'bond', text: a + ' and ' + b + ' enter together, held for the first time' });
+      else if (ca || cb) parts.push({ w: 0.3 + 0.1 * Math.log2(1 + Math.max(ca, cb)), kind: 'enter', text: 'a name enters the picture' });
+    }
     else if (neg && had >= 1) parts.push({ w: 1.5, kind: 'turn', text: 'negates a bond the record already held' });
   }
   fs.forEach((f) => { const L = H.val.get(f.measure) || []; if (!L.length) return; const last = L[L.length - 1]; if (Math.abs(last.v - f.v) / Math.max(Math.abs(last.v), 1e-9) < 0.005) return;
@@ -371,13 +416,23 @@ export function resolverEdges(A, docId, { top = 8 } = {}) {
   // derived from the data (the max), never set; ties are all refused.
   const maxDF = nameDF.size ? Math.max(...nameDF.values()) : 0;
   const selective = (n) => (nameDF.get(n) || 0) < maxDF || nameDF.size === 1;
+  // THE TURN'S OWN SUBJECT IS A LEGITIMATE LINK EVEN WHEN IT IS THE DOCUMENT'S
+  // MOST COMMON NAME. The selectivity gate exists to refuse a name-dense
+  // sentence that shares only the subject with every turn (the measured
+  // degeneracy); but a resolver must be ABOUT the turn, and a turn's own
+  // subject is exactly what it is about. `claimed` already keeps one resolver
+  // to one turn, so allowing the subject cannot re-flood: the flooder resolves
+  // at most one turn like any other sentence. (2026-10-02, the N gap's second
+  // half — without this the first-asserted turn's only link is its subject,
+  // which the gate refused, so no resolver formed.)
+  const subjectOf = (st) => fieldsOf(st, A).ns[0] || null;
   const ranked = [...by.entries()].map(([id, r]) => ({ st: claims.find((s) => s.id === id), r })).sort((a, b) => b.r.excess - a.r.excess).slice(0, top);
   const edges = []; const claimed = new Set();
   for (const { st, r } of ranked) {
-    const ta = namesOf(st); let best = null;
+    const ta = namesOf(st); const ts = subjectOf(st); let best = null;
     for (const o of claims) {
       if (o.id === st.id || claimed.has(o.id)) continue;      // a resolver explains one turn
-      const shared = [...namesOf(o)].some((n) => ta.has(n) && selective(n)); if (!shared) continue;
+      const shared = [...namesOf(o)].some((n) => ta.has(n) && (selective(n) || n === ts)); if (!shared) continue;
       // "In retrospect, less surprising": augment the baseline with the
       // resolver's PARTICIPANTS (its subject knowledge), not merely its bonds —
       // once you already hold the actor, the turn's name-bonds are no longer
@@ -467,13 +522,35 @@ const { dmdWindow } = await import('./vendor/eoreader7/native/kernel/activation.
  *  TO. Deterministic, model-free. */
 export function conclusionOf(claims, A) {
   const names = new Map(); const frames = new Map(); const figs = new Map();
+  let stance = 0;
   for (const st of claims) {
     fieldsOf(st, A).ns.forEach((n) => names.set(n, (names.get(n) || 0) + 1));
     frames.set(st.frame || 'fact', (frames.get(st.frame || 'fact') || 0) + 1);
     fieldsOf(st, A).fs.forEach((f) => figs.set(f.measure, (figs.get(f.measure) || 0) + 1));
+    stance += stanceOf(st.text);
   }
   const top = (m, n) => [...m.entries()].sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]))).slice(0, n).map((x) => x[0]);
-  return { names: top(names, 5), frames: top(frames, 3), measures: top(figs, 3), n: claims.length };
+  // STANCE is part of the conclusion: an identity concludes not only names,
+  // frames and measures but an EVALUATION of what it holds. A verdict often
+  // introduces no new name — it inverts the stance on a name already held — so
+  // without stance a conclusion can never see it (the R gap). The lexicon is an
+  // ENGLISH lens (giver below), recorded as such, never the universal layer.
+  return { names: top(names, 5), frames: top(frames, 3), measures: top(figs, 3), stance: Math.sign(stance), n: claims.length };
+}
+
+// THE ENGLISH EVALUATIVE LENS (Handle: the adapter's own grammar — an English
+// convention, not universal; a language's stance markers are its own). Used
+// only to let a fold-at-an-identity see a VERDICT as the inversion of the
+// identity's held evaluation, never as a content classifier.
+export const STANCE_GIVER = "English evaluative lens (adapter grammar) — not universal; replace per language";
+const STANCE_POS = /\b(good|best|better|warranted|justified|supports?|supported|works?|working|effective|reasonable|sensible|targeted|necessary|needed|solved?|improves?|improved|safe|safety|benefit\w*|goal|should|recommend\w*|valuable|worth|smart|common sense)\b/i;
+const STANCE_NEG = /\b(overreach|unnecessary|waste\w*|problem\w*|harm\w*|danger\w*|bad|fail\w*|broken|boondoggle|whin\w*|wrong|risk\w*|costly|excessive|unwarranted|fraud\w*|dismiss\w*|affront|silly|nonsense)\b/i;
+/** stanceOf(text) -> +1 (positive), -1 (negative), 0 (neutral) on the English lens. */
+export function stanceOf(text) {
+  const t = String(text ?? "");
+  const pos = (t.match(new RegExp(STANCE_POS, "gi")) || []).length;
+  const neg = (t.match(new RegExp(STANCE_NEG, "gi")) || []).length;
+  return Math.sign(pos - neg);
 }
 
 /** windowOf(orders, derivers) -> the shallowest depth within a set of claims at
@@ -527,24 +604,49 @@ const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
  *  carries OVER what its figures alone would earn, plus how central its names
  *  are to the document, plus whether it can be resolved by another claim —
  *  a claim that CAN be explained is a turn; a number cannot be explained. */
-export function worth(A, docId) {
+export function worth(A, docId, { forWhom = null } = {}) {
   const { by, claims } = surprisePass(A, docId);
   const edges = resolverEdges(A, docId, { top: 12 });
   const hasResolver = new Map(edges.map((e) => [e.turn.id, e.drop]));
   const central = new Map(); // a name's mention count in THIS document
   claims.forEach((st) => fieldsOf(st, A).ns.forEach((n) => central.set(n, (central.get(n) || 0) + 1)));
+  // THE FOLD AT A POINT (the governing law): the world is folded at an IDENTITY
+  // — a perspective with a held conclusion — and what belongs is what makes a
+  // DIFFERENCE to it. A claim that introduces a name, a measure or a frame the
+  // identity's conclusion does not already hold is a difference that makes a
+  // difference TO THAT IDENTITY; a claim the identity already concludes is not
+  // news to it. `forWhom` carries the identity's conclusion (its held picture,
+  // e.g. a genre's settled reading or a declared prior); without it the fold is
+  // at the empty point and the measure falls back to pure holographical excess.
+  const held = forWhom?.conclusion ?? null;
+  // A difference that makes a difference TO THE IDENTITY: a claim that inverts
+  // the identity's held STANCE (a verdict against what it believes) is the
+  // turn; then one that introduces content (a name/measure/frame) the identity
+  // does not hold. At a fold-point the difference DOMINATES the raw excess —
+  // the summary is FOR the difference, not for salience.
+  const departure = held ? (st) => {
+    const c = conclusionOf([st], A);
+    const nn = c.names.filter((n) => !held.names.includes(n)).length;
+    const nm = c.measures.filter((m) => !held.measures.includes(m)).length;
+    const nf = c.frames.filter((f) => !held.frames.includes(f)).length;
+    const flip = (c.stance !== 0 && held.stance !== 0 && c.stance !== held.stance) ? 1 : 0;
+    return { content: nn + nm + nf, flip };
+  } : () => ({ content: 0, flip: 0 });
   const score = new Map();
   for (const st of claims) {
     const ex = by.get(st.id) ? by.get(st.id).excess : 0;
     const figN = fieldsOf(st, A).fs.length;
     const cent = fieldsOf(st, A).ns.reduce((s, n) => s + (central.get(n) || 0), 0);
     const res = hasResolver.get(st.id) || 0;
-    // excess per figure (a claim that moves the picture without leaning on
-    // numbers), name centrality, and a resolvability bonus.
     const overFig = ex / (1 + figN);
-    score.set(st.id, { ex, figN, cent, res, s: 0.55 * overFig + 0.30 * Math.log2(1 + cent) + 0.15 * Math.min(2, res) });
+    const base = 0.55 * overFig + 0.30 * Math.log2(1 + cent) + 0.15 * Math.min(2, res);
+    const dep = departure(st);
+    // folded at an identity: a stance inversion is the turn (ranked in its own
+    // class), then content-departure, then the holographical base as a tiebreak.
+    const s = held ? dep.flip * 1000 + dep.content * 10 + base : base;
+    score.set(st.id, { ex, figN, cent, res, dep: dep.content, flip: dep.flip, s });
   }
-  return { score, by, claims, edges };
+  return { score, by, claims, edges, forWhom };
 }
 
 /** select(A, docId, { size, lambda }) -> { lines, spans, kind }.
@@ -632,8 +734,9 @@ export function render(proposition, lens = 'SVO') {
  *  source's own position. Every line is a verbatim span of the source AND every
  *  proposition carries its full provenance: the span, the signals, the
  *  resolver, and (given a genre) its departure. */
-export function select(A, docId, { size = 1, lambda = 0.6, genreConclusion = null } = {}) {
-  const { score, claims, edges } = worth(A, docId);
+export function select(A, docId, { size = 1, lambda = 0.6, genreConclusion = null, forWhom = null } = {}) {
+  const identity = forWhom ?? (genreConclusion ? { conclusion: genreConclusion } : null);
+  const { score, claims, edges } = worth(A, docId, { forWhom: identity });
   const edgeOf = new Map(edges.map((e) => [e.turn.id, e]));
   const V = vectors(claims, { namesOf: (st) => st.names || [] });
   const order = claims.slice().sort((a, b) => (score.get(b.id).s - score.get(a.id).s));
@@ -671,9 +774,9 @@ export function paragraphsOf(claims, picked) {
  *  construction: the same irredundant ranking feeds all three, so the 1-sentence
  *  pick is the first of the 5, and the 5 are the 3-paragraph set. Each carries
  *  the full provenance of every proposition. */
-export function ladder(A, docId, { lambda = 0.6, genreConclusion = null } = {}) {
-  const one = select(A, docId, { size: 1, lambda, genreConclusion });
-  const five = select(A, docId, { size: 5, lambda, genreConclusion });
+export function ladder(A, docId, { lambda = 0.6, genreConclusion = null, forWhom = null } = {}) {
+  const one = select(A, docId, { size: 1, lambda, genreConclusion, forWhom });
+  const five = select(A, docId, { size: 5, lambda, genreConclusion, forWhom });
   const fiveIds = new Set(five.spans.map((s) => s.id));
   const three = { lines: paragraphsToBlocks(five.lines), spans: five.spans, proves: five.proves, kind: 'paragraphs' };
   return { one, five, three, monotone: one.spans.every((s) => fiveIds.has(s.id)) };
