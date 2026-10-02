@@ -10,7 +10,7 @@ export function overviewSources(docs) {
   });
 }
 export function mountOverview(root, { docs, workspace, onRead }) {
-  let current = overviewSources(docs), selected = new Set(current.map(s => s.id)), product = null, stale = false;
+  let current = overviewSources(docs), selected = new Set(current.map(s => s.id)), product = null, stale = false, revision = 0;
   let draft = {};
   const key = 'hd:overview:' + workspace;
   try { draft = JSON.parse(localStorage.getItem(key) || '{}'); } catch {}
@@ -48,13 +48,13 @@ export function mountOverview(root, { docs, workspace, onRead }) {
       label.append(box, document.createTextNode(' ' + s.title + ' · ' + s.coverage)); list.append(label);
     }
   }
-  function invalidate(message) { if (!product) return; stale = true; frame.hidden = true; actions.hidden = true; setStatus(message); }
+  function invalidate(message) { revision++; if (!product) return; stale = true; frame.hidden = true; actions.hidden = true; setStatus(message); }
   form.addEventListener('input', e => { if (e.target.type !== 'checkbox') invalidate('Frame or inquiry changed. Rebuild before using this overview.'); });
   sourceList();
   form.addEventListener('submit', async e => {
-    e.preventDefault(); const button = form.querySelector('[type=submit]'); button.disabled = true; setStatus('Checking source versions and constructing the evidence record…');
+    e.preventDefault(); invalidate('Rebuilding from the current frame and sources…'); const startedAt = revision; const button = form.querySelector('[type=submit]'); button.disabled = true; setStatus('Checking source versions and constructing the evidence record…');
     try {
-      const fields = Object.fromEntries(['question', 'viewpoint', 'owner', 'experiencer', 'query', 'expected', 'basis', 'gapQuery', 'stakes', 'next'].map(k => [k, val(k)]));
+      const fields = Object.fromEntries(['question', 'viewpoint', 'owner', 'experiencer', 'query', 'expected', 'basis', 'gapQuery', 'stakes', 'next'].map(k => [k, ['query', 'gapQuery'].includes(k) ? form.elements.namedItem(k).value : val(k)]));
       const expects = fields.expected || fields.basis || fields.gapQuery || fields.stakes || fields.next;
       const recipe = { sources: scope(), frame: { question: fields.question, viewpoint: fields.viewpoint, owner: fields.owner, experiencer: fields.experiencer,
         query: form.elements.namedItem('query').value, selection: 'Exact case-sensitive text selection over selected source extractions; all nonempty lines if query is empty.' },
@@ -62,7 +62,7 @@ export function mountOverview(root, { docs, workspace, onRead }) {
       const signature = JSON.stringify(scope());
       const frameSignature = JSON.stringify([...form.querySelectorAll('input[type=text],textarea')].map(el => el.value));
       const p = await materializeOverview(recipe);
-      if (signature !== JSON.stringify(scope()) || frameSignature !== JSON.stringify([...form.querySelectorAll('input[type=text],textarea')].map(el => el.value))) throw new Error('Sources or framing changed during construction; rebuild.');
+      if (startedAt !== revision || signature !== JSON.stringify(scope()) || frameSignature !== JSON.stringify([...form.querySelectorAll('input[type=text],textarea')].map(el => el.value))) throw new Error('Sources or framing changed during construction; rebuild.');
       product = p; stale = false; frame.srcdoc = p.html; frame.hidden = false; actions.hidden = false;
       let saved = true;
       try { localStorage.setItem(key, JSON.stringify({ ...fields, sources: [...selected] })); } catch { saved = false; }
@@ -70,16 +70,27 @@ export function mountOverview(root, { docs, workspace, onRead }) {
       const links = root.querySelector('[data-read]'); links.replaceChildren();
       for (const s of recipe.sources) {
         const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Read in workspace: ' + s.title;
-        b.addEventListener('click', async () => { const v = await verifyMaterialization(product, scope()); if (!v.ok || stale) { invalidate('Source or scope changed. Rebuild before following this evidence.'); return; } onRead(s.id); }); links.append(b);
+        b.addEventListener('click', async () => { const verified = await checkedProduct(); if (verified && verified === product && !stale) onRead(s.id); }); links.append(b);
       }
     } catch (err) { product = null; actions.hidden = true; frame.hidden = true; setStatus('Cannot build: ' + err.message); }
     finally { button.disabled = false; }
   });
+  async function checkedProduct() {
+    if (!product || stale) return null;
+    const captured = product, capturedRevision = revision;
+    const v = await verifyMaterialization(captured, scope());
+    if (!v.ok || stale || revision !== capturedRevision || product !== captured) {
+      // A new build may have replaced the artifact while replay was pending.
+      // Refuse the old action without hiding that newer build.
+      if (product === captured) invalidate('Evidence or framing changed during verification. Rebuild before opening or exporting.');
+      return null;
+    }
+    return captured;
+  }
   async function download(kind) {
-    if (!product || stale) return;
-    const v = await verifyMaterialization(product, scope());
-    if (!v.ok) { invalidate('Evidence changed: ' + v.gap + '. Rebuild before exporting.'); return; }
-    const bytes = kind === 'html' ? product.html : JSON.stringify(product.overview, null, 2);
+    const verified = await checkedProduct();
+    if (!verified || verified !== product || stale) return;
+    const bytes = kind === 'html' ? verified.html : JSON.stringify(verified.overview, null, 2);
     const url = URL.createObjectURL(new Blob([bytes], { type: kind === 'html' ? 'text/html;charset=utf-8' : 'application/json' }));
     const a = document.createElement('a'); a.href = url; a.download = 'evidence-overview.' + kind; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
