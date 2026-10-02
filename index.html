@@ -2724,7 +2724,7 @@ function hdEngineMerge(t, ns, eng, hy) {
   return out.sort((a, b) => a.s - b.s);
 }
 // read-only handle for tests: the real functions, so a harness can recompute what a trace claims happened
-setTimeout(() => { try { window.__holodeck = Object.freeze({ analyze, holoKit, paradigms, splitSentences, findNames, isJunk, readAny, hdHygiene, hdPos: w => hdPos(w) }); } catch (e) {} }, 0);
+setTimeout(() => { try { window.__holodeck = Object.freeze({ analyze, holoKit, paradigms, splitSentences, findNames, isJunk, readAny, hdHygiene, hdPos: w => hdPos(w), hdDeclReady: () => !!HD_DECL }); } catch (e) {} }, 0);
 const hdCut = (t, n) => { t = String(t || '').replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
 function splitSentences(text, tr) {
   const out = []; const re = /[^\n]+?(?:[.!?]+(?=\s|$)|(?=\n)|$)/g; let m;
@@ -2759,6 +2759,17 @@ let HD_POS = null;
 const HD_POS_P = (typeof fetch === 'function' ? fetch(new URL('vendor/eoreader7/native/priors/pos-eng.json', location.href)).then(r => r.ok ? r.json() : null).then(j => { HD_POS = (j && j.forms) || null; return !!HD_POS; }).catch(() => false) : Promise.resolve(false));
 const HD_NOM = ['NOUN', 'PROPN', 'ADJ', 'NUM', 'X', 'SYM'];
 const hdPos = w => { if (!HD_POS || (/^[A-Z]{1,3}$/.test(w))) return null; return HD_POS[String(w).toLowerCase().replace(/['’]s$/, '').replace(/[.,;:!?)"”]+$/, '')] || null; };
+// SULLIVAN, wired in: a productive case fold over the received UniMorph declension
+// prior (declension-rus.json, its giver in its provenance). declension.js answers
+// PAIRWISE — "does this real observed surface reach that real observed surface" —
+// never a single word's lemma, which can corrupt a proper name (its own header). A
+// false merge would need two unrelated real surfaces to coincide on one transform.
+let HD_DECL = null, HD_ENDINGS = null;
+Promise.all([
+  import(new URL('vendor/eoreader7/native/adapters/text/declension.js', location.href)),
+  fetch(new URL('vendor/eoreader7/native/priors/declension-rus.json', location.href)).then(r => r.ok ? r.json() : null),
+]).then(([D, prior]) => { try { HD_DECL = D.createDeclensionFolder(prior); HD_ENDINGS = new Set((prior?.rules || []).map(r => r.from).filter(Boolean)); } catch (e) { HD_DECL = null; HD_ENDINGS = null; } }).catch(() => { HD_DECL = null; HD_ENDINGS = null; });
+const hdDeclReady = () => !!HD_DECL;
 // The RECEIVED ground for "normal": live_priors' General English set (books, encyclopedia articles, US/UK law), the same
 // baseline the surprise view uses, read for how often each word is capitalised mid-sentence. It is independent of the
 // material being judged, so a workspace full of junk cannot talk itself into calling its junk normal. Fetched once,
@@ -2967,10 +2978,17 @@ function analyze(corpus, htmlMap) {
     // Arabic نجيب محفوظ — is not, and the case convention that opens a name does not
     // hold there. Measured once, carried on the doc, disclosed below.
     x.hasCase = /[\p{Lu}\p{Ll}]/u.test(x.text);
+    // CHOMSKY/SULLIVAN: a script without case has no case convention to open a name,
+    // but the ARRANGEMENT (a name is what the material marks as a name) is universal —
+    // the source's OWN hyperlinks are its naming. Mined for caseless scripts only,
+    // so the case convention is never silently assumed absent AND never smuggled in.
+    if (!x.hasCase) x._linkNames = (x.links || []).map(l => ({ s: l.s, e: l.e, name: x.text.slice(l.s, l.e) }))
+      .filter(n => n.name.length >= 2 && n.name.length <= 18 && !/\d/.test(n.name)
+        && /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Arabic}\p{Script=Hebrew}\s·]+$/u.test(n.name));
     return x; });
   const sts = []; const found = []; const alias = {}; const info = {}; const HY = hdHygiene(docs);
-  docs.forEach(d => { const on = hdF(d.id); const ss = splitSentences(d.text, on ? (a, b, c, x) => hdT(a, b, c, { doc: d.id, ...x }) : null); if (on) hdT('sentences', 'split', 'Split into ' + ss.length + ' statements', { doc: d.id, n: ss.length }); const hy = HY ? HY.forDoc(d, on ? (k, what, why) => hdT('names', 'hygiene', why + ' (' + qW(what) + ')', { doc: d.id }) : null) : null; if (on && !d.hasCase) hdT('names', 'gap', 'This source carries no letter case — its script has none (or it is code): the case convention that opens a name does not apply, so no names are read here. A gap of the reader, never a claim the material names no one', { doc: d.id }); ss.forEach((se, i) => {
-    const ns = d.hasCase ? hdEngineMerge(se.t, findNames(se.t, hy), d.eng, hy) : [];
+  docs.forEach(d => { const on = hdF(d.id); const ss = splitSentences(d.text, on ? (a, b, c, x) => hdT(a, b, c, { doc: d.id, ...x }) : null); if (on) hdT('sentences', 'split', 'Split into ' + ss.length + ' statements', { doc: d.id, n: ss.length }); const hy = HY ? HY.forDoc(d, on ? (k, what, why) => hdT('names', 'hygiene', why + ' (' + qW(what) + ')', { doc: d.id }) : null) : null; if (on && !d.hasCase) hdT('names', 'gap', 'This source carries no letter case — its script has none (or it is code): the case convention that opens a name does not apply, so names are read from the source\u2019s own links, which is the material marking its own names. Where none are linked, none are claimed', { doc: d.id, linked: (d._linkNames || []).length }); ss.forEach((se, i) => {
+    const ns = d.hasCase ? hdEngineMerge(se.t, findNames(se.t, hy), d.eng, hy) : (d._linkNames || []).filter(l => l.s < se.e && l.e > se.s).map(l => ({ name: l.name, s: Math.max(0, l.s - se.s), e: Math.min(l.e, se.e) - se.s, via: 'link' }));
     ns.forEach(n => { if (n.alias) alias[n.alias] = n.name; });
     const st0 = { id: d.id + ':' + i, doc: d.id, s: se.s, e: se.e, text: se.t, rawNames: ns, figs: findFigures(se.t), dates: findDates(se.t), frame: frameOf(se.t) }; sts.push(st0);
     if (on) { const D = { doc: d.id, id: st0.id }; hdT('sentences', 'statement', 'Statement ' + (i + 1) + ': \u201c' + hdCut(se.t, 90) + '\u201d', { ...D, s: se.s, e: se.e });
@@ -3057,13 +3075,43 @@ function analyze(corpus, htmlMap) {
         if (PLACE.has(full) || ORG.has(full)) return;                 // a place or org head is not a person's surname
         let s = cand.get(full); if (!s) cand.set(full, s = new Set()); s.add(t); }); });
     cand.forEach((fulls, bare) => { if (fulls.size === 1) union(bare, [...fulls][0]); }); }
+  // SULLIVAN, wired in: the engine's productive case fold (declension.js over the
+  // received declension-rus.json, its giver in its provenance). PAIRWISE between two
+  // real observed surfaces — "Пушкина" reaches "Пушкин" under the language's own case
+  // rules; never a single word's lemma (declension.js: that corrupts a proper name).
+  // Same document, bracketed by first letter, capped, and only where Cyrillic is
+  // actually spoken (the prior declares its own language).
+  if (HD_DECL && HD_DECL.sameStem && !HD_DECL.sameStem.gap) {
+    const sameDoc = new Map();
+    sts.forEach(st => { st.rawNames.forEach(n => { let a = sameDoc.get(st.doc); if (!a) sameDoc.set(st.doc, a = []); a.push(n.name); }); });
+    const seenPair = new Set(); let budget = 300000;
+    const endsInRule = w => !!w && (HD_ENDINGS.has(w.slice(-1)) || HD_ENDINGS.has(w.slice(-2)) || HD_ENDINGS.has(w.slice(-3)) || HD_ENDINGS.has(w.slice(-4)));
+    sameDoc.forEach(names => {
+      const uniq = [...new Set(names)];
+      const byFirst = new Map(); uniq.forEach(n => { const k = n[0] || ''; let a = byFirst.get(k); if (!a) byFirst.set(k, a = []); a.push(n); });
+      byFirst.forEach(bucket => {
+        for (let i = 0; i < bucket.length; i++) for (let j = i + 1; j < bucket.length; j++) {
+          if (budget-- <= 0) return;
+          const a = bucket[i], b = bucket[j]; if (!/[\u0400-\u04ff]/.test(a + b)) continue;
+          if (!endsInRule(a) && !endsInRule(b)) continue;                 // neither could carry a case ending
+          const key = a < b ? a + '\u0001' + b : b + '\u0001' + a; if (seenPair.has(key)) continue; seenPair.add(key);
+          if (HD_DECL.sameStem(a, b) || HD_DECL.sameStem(b, a)) union(a, b); } }); });
+  }
   // THE CANONICAL SURFACE of a referent is its most descriptive and singular
-  // spelling: most tokens, then most mentions, then longest. Every other surface
-  // is carried as its alias.
+  // spelling: a surface other members decline INTO leads (the base/nominative form),
+  // then most tokens, then most mentions, then longest. Every other surface is
+  // carried as its alias.
   const members = new Map(); allRaw.forEach(n => { const r = find(n); let a = members.get(r); if (!a) members.set(r, a = []); a.push(n); });
   const rank = nm => [nm.split(/\s+/).length, rawN.get(nm) || 0, nm.length];
   const canonicalOf = new Map();
-  members.forEach((ms, r) => { canonicalOf.set(r, ms.slice().sort((x, y) => { const a = rank(x), b = rank(y); return (b[0] - a[0]) || (b[1] - a[1]) || (b[2] - a[2]); })[0]); });
+  members.forEach((ms, r) => {
+    // a group joined by declension is one word in its cases: the canonical is the
+    // base/citation form — the SHORTEST member (Пушкин, not Пушкина). Any other
+    // group keeps the most descriptive rule (most tokens, then mentions, then length).
+    const declGroup = ms.length > 1 && HD_DECL && HD_DECL.sameStem && ms.some((x, i) => ms.slice(i + 1).some(y => HD_DECL.sameStem(x, y) || HD_DECL.sameStem(y, x)));
+    if (declGroup) canonicalOf.set(r, ms.slice().sort((x, y) => (x.length - y.length) || ((rawN.get(y) || 0) - (rawN.get(x) || 0)))[0]);
+    else canonicalOf.set(r, ms.slice().sort((x, y) => { const a = rank(x), b = rank(y); return (b[0] - a[0]) || (b[1] - a[1]) || (b[2] - a[2]); })[0]);
+  });
   const canonOf = nm => canonicalOf.get(find(nm)) || nm;
   const names = {}; const aliasOf = {}; Object.keys(alias).forEach(a => { (aliasOf[alias[a]] = aliasOf[alias[a]] || []).push(a); });
   sts.forEach(st => {

@@ -28,6 +28,8 @@ const ES_SYNTH = txtDoc("d0", "Gabriel García Márquez",
   "Gabriel García Márquez escribió novelas. García Márquez escribió Cien años de soledad. La obra de García Márquez es famosa. Gabriel García Márquez ganó un premio.");
 const ZH = txtDoc("zh", "孙中山", "孙中山（1866年11月12日—1925年3月12日），名文，字载之，号逸仙，是中国近代民主革命家。孙中山出生于广东省香山县。孙文后来被尊称为国父。");
 const AR = txtDoc("ar", "نجيب محفوظ", "نجيب محفوظ كاتب مصري. وُلد نجيب محفوظ في القاهرة. حصل محفوظ على جائزة نوبل.");
+const ZH_LINKED = { id: "zh2", title: "孙中山", format: "html",
+  html: `<p><a href="https://zh.wikipedia.org/wiki/孙中山">孙中山</a>是中国近代民主革命家。<a href="https://zh.wikipedia.org/wiki/孙文">孙文</a>后来被尊称为国父。</p>` };
 const CODE = [
   txtDoc("c0", "user-service.js", `import { createServer } from "node:http";
 const Smith = { name: "John Smith", city: "New York" };
@@ -64,6 +66,7 @@ async function main() {
   const scope = [];
   try {
     await surf.page.waitForFunction(() => window.__holodeck && window.__holodeck.analyze, null, { timeout: 20000 });
+    await surf.page.waitForFunction(() => window.__holodeck.hdDeclReady && window.__holodeck.hdDeclReady(), null, { timeout: 20000 });
 
     // ── SAFETY: Spanish, real article — a shared surname must not chain people ──
     {
@@ -78,17 +81,22 @@ async function main() {
       scope.push("es0: " + es.names.filter((n) => n.sts >= 2).length + " recurring surfaces read");
     }
 
-    // ── SAFETY: Russian, real article — a distinct person (Dantes) is not Pushkin ──
+    // ── SAFETY + SULLIVAN: Russian, real article — Пушкина (genitive) IS Пушкин;
+    //    Дантес is a different person and must NOT be folded in ──
     {
       const [ru] = await analyze(surf, [RU_REAL]);
       if (ru.error) fails.push("ru0 threw: " + ru.error);
       const cyr = ru.names.filter((n) => hasCyrillic(n.name));
-      const pushkin = membersOf(ru.names, "Пушкин") || membersOf(ru.names, "Пушкина");
+      const pushkin = membersOf(ru.names, "Пушкин");
+      const pushkina = membersOf(ru.names, "Пушкина");
       const dantes = membersOf(ru.names, "Дантес");
       console.log("ru0 real: sts=" + ru.sts + " names=" + ru.names.length + " (Cyrillic " + cyr.length + ")  biggest=[" + ru.names.slice(0, 3).map((n) => n.name + ":" + n.sts).join(", ") + "]");
       if (!cyr.length) fails.push("ru0 read NO Cyrillic names — the Unicode reader is not reaching the script");
+      if (!pushkin || !pushkina) fails.push("ru0: Пушкин or Пушкина is missing entirely");
+      else if (pushkin.entry.name !== pushkina.entry.name) fails.push("ru0 did not fold Пушкина (genitive) into Пушкин — Sullivan's case fold did not fire");
+      else if (pushkin.entry.name !== "Пушкин") fails.push("ru0 canonical is " + JSON.stringify(pushkin.entry.name) + ", not the base/nominative Пушкин");
       if (pushkin && dantes && pushkin.set.has("Дантес")) fails.push("ru0 OVER-MERGED Дантес (a different person) into Пушкин");
-      scope.push("ru0: " + cyr.length + " Cyrillic surfaces read; Пушкин/Пушкина variants left " + (membersOf(ru.names, "Пушкина") && membersOf(ru.names, "Пушкин") && membersOf(ru.names, "Пушкина").entry.name === membersOf(ru.names, "Пушкин").entry.name ? "merged" : "apart (under-merge, safe)"));
+      scope.push("ru0: " + cyr.length + " Cyrillic surfaces read; Пушкина folded into Пушкин by the UniMorph declension rules (giver in the prior's provenance)");
     }
 
     // ── SAFETY: synthetic Spanish positive — the surname form folds to the full name ──
@@ -98,6 +106,15 @@ async function main() {
       console.log("es synth: " + JSON.stringify(es.names.map((n) => n.name + (n.aliases.length ? "[" + n.aliases.join(",") + "]" : ""))));
       if (!g || !g.set.has("García Márquez")) fails.push("es synth did not fold «García Márquez» into «Gabriel García Márquez»");
       if (g && g.entry.name !== "Gabriel García Márquez") fails.push("es synth canonical is " + JSON.stringify(g.entry.name) + ", not the most descriptive");
+    }
+
+    // ── CHOMSKY: a caseless script names by its own marking — the source's links ──
+    {
+      const [zh] = await analyze(surf, [ZH_LINKED]);
+      if (zh.error) fails.push("zh2 threw: " + zh.error);
+      const names = zh.names.map((n) => n.name);
+      console.log("zh linked: sts=" + zh.sts + " names=" + JSON.stringify(names.slice(0, 6)));
+      if (!names.length) fails.push("zh2: a caseless script that MARKS its own names (links) read none — Chomsky's universal arrangement (a name is what the material marks) is not wired");
     }
 
     // ── SCOPE: scripts without case — reported, never guessed ──
