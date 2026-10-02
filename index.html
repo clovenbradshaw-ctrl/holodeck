@@ -24,7 +24,7 @@ select option{background:var(--s1);color:var(--ink)}
 <div style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Hanken Grotesk',sans-serif;font-size:14px;line-height:1.5">
 <div style="display:flex;align-items:flex-start;min-height:100vh">
   <div style="{{ railStyle }}">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding:2px 2px 2px 10px">
+    <div style="{{ railHeadStyle }}">
       <sc-if value="{{ railOpen }}" hint-placeholder-val="{{ true }}"><div style="display:flex;align-items:center;gap:10px;min-width:0"><span style="width:12px;height:12px;border-radius:3px;background:#8b5cf6;flex:none"></span><span style="font:600 13px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);white-space:nowrap">Holodeck</span></div></sc-if>
       <div style="display:flex;align-items:center;gap:4px;flex:none">
         <sc-if value="{{ railOpen }}" hint-placeholder-val="{{ true }}"><button onClick="{{ toggleTheme }}" title="{{ themeTitle }}" style="background:none;border:1px solid var(--line2);border-radius:6px;width:24px;height:24px;cursor:pointer;font-size:13px;color:var(--ink);display:flex;align-items:center;justify-content:center" style-hover="border-color:var(--acc)">{{ themeIcon }}</button></sc-if>
@@ -33,7 +33,24 @@ select option{background:var(--s1);color:var(--ink)}
     </div>
     <sc-if value="{{ railOpen }}" hint-placeholder-val="{{ true }}">
     <div style="display:flex;flex-direction:column;gap:8px;padding:10px 2px 4px;border-top:1px solid var(--line)">
-      <span style="font:600 12px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--acc);padding:0 10px">Workspace</span>
+      <div style="display:flex;align-items:center;gap:8px;padding:0 10px">
+        <span style="font:600 12px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--acc)">Workspace</span>
+        <span style="flex:1"></span>
+        <button onClick="{{ newWs }}" title="Start a fresh workspace" style="background:none;border:1px solid var(--line2);border-radius:6px;padding:2px 8px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">＋ New</button>
+      </div>
+      <sc-if value="{{ wsRenaming }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;gap:6px;align-items:center">
+          <input value="{{ wsNameDraft }}" onChange="{{ onWsNameDraft }}" onKeyDown="{{ onWsNameKey }}" placeholder="Name this workspace — leave blank to auto-name from its topic" style="flex:1;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;color:var(--ink);font:500 14px 'Hanken Grotesk';padding:6px 10px;outline:none"></input>
+          <button onClick="{{ saveWsName }}" style="flex:none;background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 12px;cursor:pointer;font:600 13px 'Hanken Grotesk'">Save</button>
+          <button onClick="{{ cancelWsName }}" style="flex:none;background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2)">✕</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ wsRenameRow }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;gap:6px;padding:0 10px">
+          <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:500 13px 'Hanken Grotesk';color:var(--ink2)" title="{{ wsRenameTitle }}">{{ wsDisplayName }}</span>
+          <button onClick="{{ startWsRename }}" title="Rename this workspace" style="flex:none;background:none;border:0;color:var(--mut);cursor:pointer;font:500 13px 'Hanken Grotesk';padding:2px" style-hover="color:var(--acc)">✎</button>
+        </div>
+      </sc-if>
       <select value="{{ corpusId }}" onChange="{{ onCorpus }}" style="width:100%;box-sizing:border-box;background:var(--s2);border:1px solid var(--line2);border-radius:8px;color:var(--ink);font:500 14px 'Hanken Grotesk';padding:7px 10px;cursor:pointer;outline:none">
         <sc-for list="{{ corpusOptions }}" as="o" hint-placeholder-count="4">
           <option value="{{ o.id }}">{{ o.name }}</option>
@@ -68,7 +85,7 @@ select option{background:var(--s1);color:var(--ink)}
           </button>
         </sc-for>
         <button onClick="{{ toggleSegOpen }}" style="white-space:normal;text-align:left;cursor:pointer;padding:5px 12px 5px 20px;border-radius:8px;background:transparent;border:0;display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:4px" style-hover="background:var(--s2)">
-          <span style="font:500 14px 'Hanken Grotesk';color:var(--ink2)">{{ segToggleLabel }}</span>
+          <span style="display:flex;align-items:baseline;gap:7px;min-width:0"><span style="font:500 14px 'Hanken Grotesk';color:var(--ink2)">{{ segToggleLabel }}</span><span style="font:400 11px 'JetBrains Mono';color:var(--dim);flex:none">{{ segCaret }}</span></span>
           <span style="font:500 12px 'JetBrains Mono';color:var(--mut);white-space:nowrap">{{ segCount }}</span>
         </button>
         <sc-if value="{{ segOpen }}" hint-placeholder-val="{{ false }}">
@@ -523,16 +540,45 @@ select option{background:var(--s1);color:var(--ink)}
             </sc-if>
             <sc-if value="{{ ak.showCells }}" hint-placeholder-val="{{ true }}">
             <sc-for list="{{ ak.turns }}" as="t" hint-placeholder-count="0">
-              <div style="display:flex;flex-direction:column" data-cell="{{ t.i }}">
-                <div style="display:flex;gap:10px;align-items:baseline;background:var(--s2);border:1px solid var(--line);border-bottom:0;border-radius:12px 12px 0 0;padding:9px 16px;flex-wrap:wrap">
-                  <span style="font:600 11px 'JetBrains Mono';color:var(--acc);white-space:nowrap">In [{{ t.n }}]</span>
-                  <sc-if value="{{ ak.mChat }}" hint-placeholder-val="{{ true }}"><span style="font:500 18px/1.35 'Newsreader',serif;color:var(--ink);text-wrap:pretty;min-width:0;flex:1">{{ t.q }}</span></sc-if>
-                  <sc-if value="{{ ak.mNb }}" hint-placeholder-val="{{ false }}">
-                    <textarea defaultValue="{{ t.q }}" rows="1" title="Edit, then Run to re-ask with this text" style="flex:1;min-width:0;background:var(--s1);border:1px solid var(--line2);border-radius:6px;resize:vertical;font:400 14px/1.4 'JetBrains Mono';color:var(--ink);outline:none;padding:4px 8px"></textarea>
-                    <button onClick="{{ t.onRun }}" title="Run this cell — re-asks with the text above" style="flex:none;background:#8b5cf6;border:0;color:#fff;border-radius:6px;padding:4px 12px;cursor:pointer;font:600 13px 'Hanken Grotesk'">Run</button>
-                  </sc-if>
+              <sc-if value="{{ ak.mChat }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;gap:10px;padding:4px 0 8px">
+                <div style="display:flex;justify-content:flex-end">
+                  <div style="background:var(--sel);border:1px solid var(--line2);border-radius:16px 16px 4px 16px;padding:8px 14px;max-width:85%;font:500 15px/1.5 'Hanken Grotesk';color:var(--ink);text-wrap:pretty">{{ t.q }}</div>
                 </div>
-                <section style="background:var(--s1);border:1px solid var(--line);border-radius:0 0 14px 14px;padding:14px 18px 16px;display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;gap:10px;align-items:flex-start">
+                  <span style="flex:none;width:26px;height:26px;border-radius:50%;background:var(--acc2);color:#fff;display:flex;align-items:center;justify-content:center;font:600 13px 'Hanken Grotesk'">✦</span>
+                  <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">
+                    <p style="margin:0;font:400 16px/1.65 'Newsreader',serif;color:var(--ink);text-wrap:pretty"><sc-for list="{{ t.sents }}" as="x" hint-placeholder-count="3"><span style="text-decoration:{{ x.deco }};text-underline-offset:4px;text-decoration-thickness:1px">{{ x.t }}</span><sc-if value="{{ x.hasSrc }}" hint-placeholder-val="{{ false }}"><button onClick="{{ x.onSrc }}" title="Read the passage this sentence matches" style="all:unset;cursor:pointer;vertical-align:super;font:600 11px 'JetBrains Mono';color:var(--acc);margin:0 4px 0 -2px" style-hover="text-decoration:underline">{{ x.n }}</button></sc-if></sc-for></p>
+                    <sc-if value="{{ t.hasBad }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px 'Hanken Grotesk';color:var(--amber)">Not in the material: {{ t.bad }}</span></sc-if>
+                    <sc-if value="{{ t.noMaterial }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px 'Hanken Grotesk';color:var(--mut)">Answered from conversation — no workspace passages were used.</span></sc-if>
+                    <sc-if value="{{ t.hasSrcs }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;flex-direction:column">
+                        <sc-for list="{{ t.srcs }}" as="x" hint-placeholder-count="2">
+                          <div style="display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px 10px;border-top:1px solid var(--line);padding:10px 0">
+                            <span style="font:600 12px 'JetBrains Mono';color:var(--acc)">{{ x.n }}</span>
+                            <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+                              <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline"><span style="font:600 14px/1.35 'Hanken Grotesk';color:var(--ink);min-width:0">{{ x.title }}</span><span style="font:500 12px 'JetBrains Mono';color:var(--mut);white-space:nowrap">{{ x.date }}</span></div>
+                              <span style="font:400 15px/1.5 'Newsreader',serif;color:var(--ink2);text-wrap:pretty">{{ x.text }}</span>
+                              <div style="display:flex;gap:14px"><sc-if value="{{ x.canPin }}" hint-placeholder-val="{{ false }}"><button onClick="{{ x.onPin }}" style="all:unset;cursor:pointer;font:600 13px 'Hanken Grotesk';color:{{ x.pinColor }}" style-hover="text-decoration:underline">{{ x.pinLabel }}</button></sc-if><button onClick="{{ x.onRead }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="text-decoration:underline">Read in context →</button></div>
+                            </div>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ t.canGen }}" hint-placeholder-val="{{ false }}"><button onClick="{{ t.onGen }}" title="Turn this answer’s cited passages into a Draft document" style="align-self:flex-start;background:none;border:1px solid var(--line2);border-radius:8px;padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="border-color:var(--acc)">Generate a document →</button></sc-if>
+                  </div>
+                </div>
+              </div>
+              </sc-if>
+              <sc-if value="{{ ak.mNb }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;border-left:3px solid var(--acc2)" data-cell="{{ t.i }}">
+                <div style="display:flex;gap:10px;align-items:center;background:var(--s2);border:1px solid var(--line);border-left:0;border-bottom:0;border-radius:0 12px 0 0;padding:6px 16px;flex-wrap:wrap">
+                  <span style="font:600 11px 'JetBrains Mono';letter-spacing:.08em;color:var(--dim);white-space:nowrap">CELL</span>
+                  <span style="font:600 11px 'JetBrains Mono';color:var(--acc);white-space:nowrap">In [{{ t.n }}]</span>
+                    <textarea defaultValue="{{ t.q }}" rows="1" title="Edit, then Run to re-ask with this text" style="flex:1;min-width:0;background:var(--s1);border:1px solid var(--line2);border-radius:6px;resize:vertical;font:400 14px/1.4 'JetBrains Mono';color:var(--ink);outline:none;padding:4px 8px"></textarea>
+                    <button onClick="{{ t.onRun }}" title="Run this cell — re-asks with the text above" style="flex:none;background:#8b5cf6;border:0;color:#fff;border-radius:6px;padding:4px 12px;cursor:pointer;font:600 13px 'Hanken Grotesk'">Run ▸</button>
+                </div>
+                <section style="background:var(--s1);border:1px solid var(--line);border-left:0;border-radius:0 0 14px 0;padding:14px 18px 16px;display:flex;flex-direction:column;gap:12px">
                   <sc-if value="{{ t.hasRes }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ t.resLines }}" as="x" hint-placeholder-count="0"><span style="font:500 12px 'JetBrains Mono';color:{{ x.col }}">{{ x.t }}</span></sc-for></sc-if>
                   <sc-if value="{{ t.hasNotesLine }}" hint-placeholder-val="{{ false }}">
                     <details style="background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:8px 12px">
@@ -2706,7 +2752,7 @@ const whenOf = (st, d) => d.pubLabel || (d.year ? String(d.year) : 'Undated');
 const assertLine = (st, A) => { const d = A.docById[st.doc]; const w = whoSays(st, A); return (w ? w.who + (w.how === 'quoted' ? ' (quoted)' : w.how === 'publisher' ? '' : ' (' + w.how + ')') + ' · ' : '') + d.title + ' · ' + whenOf(st, d); };
 
 class Component extends DCLogic {
-  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, draftTitle: '', draftYear: '', draftText: '', repoVal: '', note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true } };
+  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, draftTitle: '', draftYear: '', draftText: '', repoVal: '', note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true }, wsRenaming: false, wsNameDraft: '' };
   _html = {};
 
   componentDidMount() {
@@ -3934,6 +3980,7 @@ class Component extends DCLogic {
     const ids = nd.map(d => d.id); const sts = A.sts.filter(s => ids.includes(s.doc));
     const nm = [...new Set(sts.flatMap(s => s.names))];
     const echoN = sts.filter(s => (A.echoes[s.id] || []).some(e => !ids.includes(A.byId[e.id].doc))).length;
+    if (id !== 'custom' && !loadWorkspaceNames()[id]) { const auto = this.autoWsName(A); if (auto) saveWorkspaceNames({ ...loadWorkspaceNames(), [id]: auto }); }
     this.setState({ added, just: { ids, title: nd.length === 1 ? nd[0].title : plural(nd.length, 'item'), n: sts.length, linked: nm.filter(n => prev.names[n]), fresh: nm.filter(n => !prev.names[n]), echoN, notes: list.map(x => x.note).filter(Boolean), first: nd[0].id }, view: aopt && aopt.open ? 'reader' : 'summary', sel: aopt && aopt.open ? { type: 'doc', id: nd[0].id } : null, f: {}, q: '', readDoc: aopt && aopt.open ? nd[0].id : null, readMode: 'original', draftTitle: '', draftYear: '', draftText: '', showAdd: false, busy: '', note: '' });
   }
 
@@ -4489,9 +4536,7 @@ class Component extends DCLogic {
     const hasAnc = crumbAnc.length > 0;
 
     const addN = k => (S.added[k] || []).length;
-    const wsNames = loadWorkspaceNames();
-    const opts = [{ id: 'custom', name: 'Your content' + (addN('custom') ? ' (' + addN('custom') + ')' : '') }]
-      .concat(Object.keys(S.added).filter(k => wsNames[k]).map(k => ({ id: k, name: wsNames[k] + ' (' + addN(k) + ')' })));
+    const opts = Object.keys(S.added).sort((a, b) => (a === 'custom' ? -1 : b === 'custom' ? 1 : 0)).map(k => ({ id: k, name: this.corpusNameFor(k) + (addN(k) ? ' (' + addN(k) + ')' : '') }));
     const cid = this.corpusId(); const J = S.just; const demo = DEMOS[cid] || DEMOS.custom;
     // segmenting: the same paradigms computed once, driving both the left-rail quick segment switcher
     // (persistent, via the existing per-workspace topic filter -- setMeta('__topic', ...) is the same
@@ -4512,7 +4557,7 @@ class Component extends DCLogic {
         onRemove: e => { e.stopPropagation(); this.removeFold(s.label); } };
     });
     const hasSegments = segList.length > 0;
-    const segOpen = S.segOpen; const segToggleLabel = 'Folds'; const segCount = String(segList.length);
+    const segOpen = S.segOpen; const segToggleLabel = 'Folds'; const segCount = String(segList.length); const segCaret = segOpen ? '▾' : '▸';
     const toggleSegOpen = () => { const open = !segOpen; try { localStorage.setItem('fold-explorer-segopen', open ? '1' : '0'); } catch (e) {} this.setState({ segOpen: open }); };
     const just = J ? { title: J.title, summary: plural(J.n, 'statement') + ' read. ' + (J.linked.length ? plural(J.linked.length, 'name') + ' matched things already here.' : J.n ? 'None of its names were here before.' : '') + (J.echoN ? ' ' + plural(J.echoN, 'statement') + ' echo something already here.' : ''), hasLinked: J.linked.length > 0, hasFresh: J.fresh.length > 0, linked: J.linked.slice(0, 16).map(n => ({ label: n, color: TYPE_C[A.names[n] ? A.names[n].type : 'other'], onClick: selN(n) })), fresh: J.fresh.slice(0, 12).map(n => ({ label: n, onClick: selN(n) })).concat(J.fresh.length > 12 ? [{ label: '+' + (J.fresh.length - 12) + ' more', onClick: () => this.go('names') }] : []), notes: J.notes.map(x => ({ text: x })), onRead: () => this.read(J.first), onConnections: () => this.go('connections'), onPatterns: () => this.go('patterns') } : { linked: [], fresh: [], notes: [] };
     const allYears = [...new Set(A.docs.map(d => d.year).filter(Boolean))].sort();
@@ -4538,13 +4583,13 @@ class Component extends DCLogic {
     ];
     const gHi = on => ({ bg: on ? 'var(--sel)' : 'transparent', bd: on ? '#8b5cf6' : 'transparent', weight: on ? 600 : 500 });
     const goalNav = [{ id: 'summary', label: 'Start here', count: '' }, { id: 'draft', label: 'Draft', count: this.activePins().length ? String(this.activePins().length) : '' }, { id: 'ask', label: 'Ask the Fold', count: this._conv && this._conv.turns && this._conv.turns.length ? String(this._conv.turns.length) : '' }, { id: 'records', label: 'Records', count: this._db ? String(this._db.schema.tables.length) : '' }, { id: 'ingest', label: 'Ingest & publish', count: (this._net && this._net.chain && this._net.chain.length) ? String(this._net.chain.length) : '' }, ...GOALS.map(g => ({ id: g[0], label: g[1], count: counts[g[0]] }))].map(g => ({ ...g, ...gHi(view === g.id), onClick: () => this.go(g.id) }));
-    const NAVG = [['', [['summary', 'Start here'], ['ask', 'Ask the Fold']]], ['Read', [['sources', 'Sources'], ['names', 'Names'], ['records', 'Assertions']]], ['Explore', [['connections', 'Connections']]], ['Your work', [['draft', 'Draft'], ['ingest', 'Add & publish']]]];
+    const NAVG = [['', [['summary', 'Start here']]], ['Read', [['sources', 'Sources'], ['names', 'Names'], ['records', 'Assertions']]], ['Explore', [['connections', 'Connections']]], ['Your work', [['ask', 'Chats'], ['draft', 'Draft'], ['ingest', 'Add & publish']]]];
     const countFor = id => ({
       sources: String(A.docs.filter(d => this.counted(d)).length), names: String(D.nameList.length), records: String(F.length),
       connections: String(D.edgeList.length),
       draft: this.activePins().length ? String(this.activePins().length) : '',
       ingest: (this._net && this._net.chain && this._net.chain.length) ? String(this._net.chain.length) : '',
-      ask: (this._conv && this._conv.turns && this._conv.turns.length) ? String(this._conv.turns.length) : '',
+      ask: (() => { if (this._conv && this._conv.turns && this._conv.turns.length) return String(this._conv.turns.length); try { const c = JSON.parse(localStorage.getItem(this.convKey()) || 'null'); return c && c.turns && c.turns.length ? String(c.turns.length) : ''; } catch (e) { return ''; } })(),
     }[id] || '');
     const navGroups = NAVG.map(([label, items]) => ({ label, hasLabel: !!label, items: items.map(([id, lab]) => ({ label: lab, count: countFor(id), ...gHi(view === id), onClick: () => this.go(id) })) }));
     // split so Folds can sit right under The reading / Connections, inside Explore
@@ -4652,12 +4697,15 @@ class Component extends DCLogic {
       readerFold: S.readDoc && this._fold.length ? ' ' + (A.stsByDoc[S.readDoc] || []).filter(s => this.inFold(s)).length + ' of its statements touch the topic.' : '',
       readerKeep: () => this.setMeta(S.readDoc, { status: 'source' }), readerDiscard: () => this.discard(S.readDoc),
       justSeen: !!(S.just && A.docById[S.just.first] && this.mOf(A.docById[S.just.first]).status === 'seen'), justKeep: () => S.just && this.setMeta(S.just.first, { status: 'source' }),
-      corpusId: cid, corpusOptions: opts, q: S.q, corpusName: this.corpusName(), segList, hasSegments, segOpen, segToggleLabel, segCount, toggleSegOpen, addAsFold, navTop, navRead, navExplore, navRest,
+      corpusId: cid, corpusOptions: opts, q: S.q, corpusName: this.corpusName(), wsDisplayName: this.wsDisplayName(), wsRenameTitle: this.wsDisplayName(), wsRenaming: S.wsRenaming, wsRenameRow: !S.wsRenaming, wsNameDraft: S.wsNameDraft, onWsNameDraft: e => this.setState({ wsNameDraft: e.target.value }), onWsNameKey: e => { if (e.key === 'Enter') this.saveWsName(); if (e.key === 'Escape') this.setState({ wsRenaming: false }); }, saveWsName: () => this.saveWsName(), cancelWsName: () => this.setState({ wsRenaming: false }), startWsRename: () => this.startWsRename(), newWs: () => this.newWs(), segList, hasSegments, segOpen, segToggleLabel, segCount, segCaret, toggleSegOpen, addAsFold, navTop, navRead, navExplore, navRest,
       addr: S.addr || '', onAddr: e => this.setState({ addr: e.target.value }), bookmarkletRef: this.bookmarkletRef,
       onAddrKey: e => { if (e.key === 'Enter') { const u = (S.addr || '').trim(); if (u) { this.setState({ addr: '' }); this.ingestUrl(/^https?:\/\//.test(u) ? u : 'https://' + u, { open: true }); } } },
       openAddr: () => { const u = (S.addr || '').trim(); if (u) { this.setState({ addr: '' }); this.ingestUrl(/^https?:\/\//.test(u) ? u : 'https://' + u, { open: true }); } },
       toggleTheme: () => { const th = S.theme === 'dark' ? 'light' : 'dark'; try { localStorage.setItem('fold-explorer-theme', th); } catch (e) {} this.setState({ theme: th }); },
       railOpen: S.railOpen, railIcon: S.railOpen ? '‹' : '›', railTitle: S.railOpen ? 'Collapse' : 'Expand',
+      railHeadStyle: S.railOpen
+        ? 'display:flex;align-items:center;justify-content:space-between;gap:6px;padding:2px 2px 2px 10px'
+        : 'display:flex;align-items:center;justify-content:center;padding:0',
       railStyle: S.railOpen
         ? 'flex:0 0 250px;position:sticky;top:0;height:100vh;overflow:auto;box-sizing:border-box;border-right:1px solid var(--line);background:var(--s1);padding:16px 12px 20px;display:flex;flex-direction:column;gap:18px'
         : 'flex:0 0 40px;position:sticky;top:0;height:100vh;overflow:hidden;box-sizing:border-box;border-right:1px solid var(--line);background:var(--s1);padding:16px 8px 20px;display:flex;flex-direction:column;gap:18px',
@@ -4666,7 +4714,7 @@ class Component extends DCLogic {
       dragging: S.dragging, isBusy: !!S.busy, busy: S.busy,
       hasJust: !!J && view !== 'reader', just, dismissJust: () => this.setState({ just: null }), showDropStrip: !J && view === 'summary',
       demo: { title: demo.title, label: demo.url ? demo.title + ' — Wikipedia link' : demo.title + '.txt', onClick: () => demo.url ? this.ingestUrl(demo.url, { title: demo.title, year: demo.year, fallback: demo.text }) : this.addDocs([{ title: demo.title, year: demo.year, type: 'Text', text: demo.text }]), onDragStart: e => { if (demo.url) { e.dataTransfer.setData('text/uri-list', demo.url); e.dataTransfer.setData('text/plain', demo.url); e.dataTransfer.setData('application/x-fold-fallback', demo.text); } else e.dataTransfer.setData('text/plain', demo.text); e.dataTransfer.setData('application/x-fold-title', demo.title); e.dataTransfer.setData('application/x-fold-year', String(demo.year)); e.dataTransfer.effectAllowed = 'copy'; } },
-      onCorpus: e => this.setState({ corpus: e.target.value, view: 'summary', sel: null, f: {}, readDoc: null }),
+      onCorpus: e => this.setState({ corpus: e.target.value, view: 'summary', sel: null, f: {}, readDoc: null, wsRenaming: false }),
       onSearch: e => this.setState({ q: e.target.value }),
       yearVal: f.year ? String(f.year) : '', yearOptions: [{ v: '', label: 'Any time' }, ...allYears.map(y => ({ v: String(y), label: 'up to ' + y }))],
       onYear: e => this.setF('year', e.target.value ? +e.target.value : null),
@@ -4747,7 +4795,39 @@ class Component extends DCLogic {
     };
   }
 
-  corpusName() { const id = this.corpusId(); return id === 'custom' ? 'Your content' : SAMPLES[id] ? SAMPLES[id].name.replace(/\s*·\s*GitHub$/i, '') : loadWorkspaceNames()[id] || 'Your content'; }
+  corpusNameFor(id) { const named = loadWorkspaceNames()[id]; if (named) return named; if (id === 'custom') return 'Your content'; if (SAMPLES[id]) return SAMPLES[id].name.replace(/\s*·\s*GitHub$/i, ''); return 'Untitled'; }
+  corpusName() { return this.corpusNameFor(this.corpusId()); }
+  autoWsName(A) {
+    if (!A) A = this.analysis();
+    const titles = A.docs.filter(d => this.counted(d)).map(d => d.title.toLowerCase());
+    const L = Object.values(A.names || {});
+    const hit = L.filter(n => n.name.length > 3 && titles.some(t => t.includes(n.name.toLowerCase()))).sort((a, b) => b.docs.size - a.docs.size || b.sts.length - a.sts.length)[0]
+      || L.slice().sort((a, b) => b.docs.size - a.docs.size || b.sts.length - a.sts.length)[0];
+    return hit ? hit.name : '';
+  }
+  wsDisplayName() {
+    const id = this.corpusId();
+    const named = loadWorkspaceNames()[id];
+    if (named) return named;
+    if (id === 'custom' || SAMPLES[id]) return this.corpusNameFor(id);
+    const auto = this.autoWsName();
+    return auto || 'Untitled';
+  }
+  newWs() {
+    const id = 'ws-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    const added = { ...this.state.added, [id]: [] };
+    this.saveAdded(added);
+    this.setState({ added, corpus: id, view: 'summary', sel: null, f: {}, q: '', readDoc: null, just: null, wsRenaming: false });
+  }
+  startWsRename() { this.setState({ wsRenaming: true, wsNameDraft: this.wsDisplayName() }); }
+  saveWsName() {
+    const id = this.corpusId(); const t = (this.state.wsNameDraft || '').trim();
+    const w = loadWorkspaceNames();
+    if (t) w[id] = t;
+    else { delete w[id]; if (id !== 'custom') { const auto = this.autoWsName(); if (auto) w[id] = auto; } }
+    saveWorkspaceNames(w);
+    this.setState({ wsRenaming: false });
+  }
 
   graph(D, selName, F, A) {
     const h = React.createElement;

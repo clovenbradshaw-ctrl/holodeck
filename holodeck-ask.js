@@ -50,7 +50,17 @@ async function chatWebLLM(id, messages, { onToken, format, maxTokens, signal } =
   } finally { if (signal) signal.removeEventListener('abort', onAbort); }
 }
 export const OLLAMA = 'http://localhost:11434';
-const BASE_PROMPT = 'You are helping a reporter read the documents in their workspace: audits, meeting transcripts, reports, pages and records. Answer the question in plain prose. Where the passages below cover it, answer from them. Where they do not, say what is missing instead of filling it in.';
+export const BASE_PROMPT = 'You are helping a reporter read the documents in their workspace: audits, meeting transcripts, reports, pages and records. Answer the question in plain prose. Where the passages below cover it, answer from them. Where they do not, say what is missing instead of filling it in.';
+// Plain conversation — no material, or small talk that is not a research
+// question at all. Never mentions reporters, documents, passages, or the
+// workspace unless the person asked about them. A greeting gets a greeting,
+// not a request for passages.
+export const CHAT_PROMPT = 'You are a helpful conversational assistant. Reply directly, briefly, and naturally, the way a person would. Do not mention reporters, documents, passages, sources, or a workspace unless the person asked about them. If they just say hi or ask how you are, answer in kind and offer to help — never ask them to provide passages.';
+const SMALLTALK_RE = /^(hi|hey|hello|yo|sup|good\s?(morning|afternoon|evening)|how are you|how's it going|how is it going|thanks|thank you|bye|goodbye|good night|see you)\b/i;
+export function isSmallTalk(question) {
+  const q = String(question ?? '').trim();
+  return q.length > 0 && q.length < 60 && SMALLTALK_RE.test(q);
+}
 
 export async function probe(base = OLLAMA) {
   try {
@@ -107,12 +117,19 @@ export async function turn(conv, IX, question, { base = OLLAMA, model = DEFAULT_
   let relations = null, factBlock = null;
   try { const R = await reader(); relations = R(ranked); factBlock = buildFactBlock(relations, ranked, question); } catch (e) { factBlock = null; }
   const spanBlock = factBlock && factBlock.spans && factBlock.spans.length ? factBlock.spans.map(sp => '"' + sp.text + '"').join('\n\n') : null;
+  // Greetings and materialless small talk are never run under the reporter
+  // prompt: with no passages in view that prompt's "say what is missing"
+  // instruction makes the model answer "how are you" with a request for
+  // passages. Plain conversation gets the plain prompt instead.
+  const hasMaterial = offered.length > 0 || !!((computed && computed.text) || (reading && reading.text));
+  const chatMode = isSmallTalk(question) || !hasMaterial;
+  const activePrompt = chatMode ? CHAT_PROMPT : BASE_PROMPT;
   const build = (off, facts) => {
     const raw = facts && !facts.empty ? spanBlock : buildSourceBlock(dedupeSourceText(off, relations));
     let sb = [facts ? facts.text : null, raw].filter(Boolean).join('\n\n');
     if (reading && reading.text) sb = (sb ? sb + '\n\n' : '') + 'What the reader established about the names asked about:\n' + reading.text;
     if (computed && computed.text) sb = (sb ? sb + '\n\n' : '') + 'Counted from the workspace records:\n' + computed.text;
-    return FOLD.buildTurnMessages({ basePrompt: BASE_PROMPT, summary: conv.summary, history, question, sourceBlock: sb }); };
+    return FOLD.buildTurnMessages({ basePrompt: activePrompt, summary: conv.summary, history, question, sourceBlock: sb }); };
   let offered = ranked.slice(); let messages = build(offered, factBlock);
   while (offered.length > 1 && approxTokens(messages) > ctx - 760) { offered = offered.slice(0, -1); messages = build(offered, factBlock); }
   if (approxTokens(messages) > ctx - 760 && factBlock && factBlock.lines) { const fb = { ...factBlock, text: factBlock.text.split('\n').slice(0, 14).join('\n') }; messages = build(offered.slice(0, 2).map(c => ({ ...c, text: c.text.slice(0, 500) })), fb); }
