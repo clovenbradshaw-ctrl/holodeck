@@ -254,7 +254,9 @@ select option{background:var(--s1);color:var(--ink)}
         </sc-if>
       </sc-if>
 
+      <sc-if value="{{ v.overview }}" hint-placeholder-val="{{ false }}"><div id="overview-surface"></div></sc-if>
       <sc-if value="{{ v.summary }}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{ goOverview }}" style="align-self:flex-start;padding:10px 16px;border:1px solid var(--line2);border-radius:8px;background:var(--s1);color:var(--ink);font:inherit;cursor:pointer">Build evidence overview · sources and negative spaces</button>
         <section style="display:flex;flex-direction:column;gap:8px">
           <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Topic · what this workspace folds around</span>
           <input value="{{ topic }}" onChange="{{ onTopic }}" placeholder="{{ topicPlaceholder }}" style="background:var(--s1);border:1px solid var(--line2);border-radius:10px;color:var(--ink);font:400 22px 'Newsreader',serif;padding:10px 14px;outline:none">
@@ -2312,7 +2314,7 @@ select option{background:var(--s1);color:var(--ink)}
 function digammaH(x) { let r = 0; while (x < 6) { r -= 1 / x; x += 1; } const f = 1 / (x * x); return r + Math.log(x) - 0.5 / x - f * (1 / 12 - f * (1 / 120 - f * (1 / 252 - f * (1 / 240 - f / 132)))); }
 const klAdmitH = (bv, B) => Math.max(0, Math.log(B) - Math.log(bv) + digammaH(bv + 1) - digammaH(B + 1));
 const holoTokens = t => [...new Set((clean(t).toLowerCase().replace(/[\u2019']/g, '').match(/[a-z][a-z-]{2,}/g) || []).filter(w => !STOP.has(w) && !/^-|-$/.test(w)))];
-const VIEW_LABEL = { summary: 'Overview', search: 'Search', sources: 'Sources', names: 'Names', types: 'Types', figures: 'Figures', statements: 'Statements', connections: 'Connections', framing: 'Framing', views: 'Views', patterns: 'Patterns', surprise: 'Surprise', reader: 'Sources', profile: 'Names', draft: 'Draft', records: 'Records', ask: 'Ask the Fold', ingest: 'Add & publish' };
+const VIEW_LABEL = { overview: 'Evidence overview', summary: 'Overview', search: 'Search', sources: 'Sources', names: 'Names', types: 'Types', figures: 'Figures', statements: 'Statements', connections: 'Connections', framing: 'Framing', views: 'Views', patterns: 'Patterns', surprise: 'Surprise', reader: 'Sources', profile: 'Names', draft: 'Draft', records: 'Records', ask: 'Ask the Fold', ingest: 'Add & publish' };
 const SU_CURSORS = [
   { id: 'loo', label: 'Everything else', desc: 'Each statement against normal text plus everything the other sources in this view say, regardless of date: what this source says that nothing else in view, and nothing normal, prepares you for.' },
   { id: 'pub', label: 'When published', desc: 'Sources in the order they were published: what a reader following the story would have learned, and when.' },
@@ -3275,6 +3277,18 @@ const whenOf = (st, d) => d.pubLabel || (d.year ? String(d.year) : 'Undated');
 const assertLine = (st, A) => { const d = A.docById[st.doc]; const w = whoSays(st, A); return (w ? w.who + (w.how === 'quoted' ? ' (quoted)' : w.how === 'publisher' ? '' : ' (' + w.how + ')') + ' · ' : '') + d.title + ' · ' + whenOf(st, d); };
 
 class Component extends DCLogic {
+  syncOverview() {
+    const root = document.getElementById('overview-surface');
+    if (!root) return;
+    const options = { docs: this.analysis().docs, workspace: this.state.corpus || 'content', onRead: id => this.read(id) };
+    if (this._overviewRoot === root && this._overviewMount) { this._overviewMount.update(options); return; }
+    if (this._overviewLoading === root) return;
+    this._overviewLoading = root;
+    import(new URL('holodeck-overview.js', location.href).href).then(M => {
+      this._overviewLoading = null; if (!root.isConnected) return;
+      this._overviewRoot = root; this._overviewMount = M.mountOverview(root, { ...options, docs: this.analysis().docs });
+    }).catch(e => { this._overviewLoading = null; root.textContent = 'Overview unavailable: ' + e.message; });
+  }
   state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, showSettings: false, draftTitle: '', draftYear: '', draftText: '', fw: {}, note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true } };
   _html = {};
 
@@ -3302,7 +3316,7 @@ class Component extends DCLogic {
     window.addEventListener('dragenter', this._h.enter); window.addEventListener('dragleave', this._h.leave); window.addEventListener('dragover', this._h.over); window.addEventListener('drop', this._h.drop); window.addEventListener('paste', this._h.paste);
   }
   componentWillUnmount() { window.removeEventListener('resize', this._onRz); if (this._pdfRo) { try { this._pdfRo.disconnect(); } catch (e) {} } window.removeEventListener('message', this._onYt); document.removeEventListener('selectionchange', this._onSelCh); window.removeEventListener('scroll', this._onSelCh, true); window.removeEventListener('message', this._onMsg); const h = this._h; window.removeEventListener('dragenter', h.enter); window.removeEventListener('dragleave', h.leave); window.removeEventListener('dragover', h.over); window.removeEventListener('drop', h.drop); window.removeEventListener('paste', h.paste); }
-  componentDidUpdate() { this.applyTheme(); this.measureHdr(); if (this._prevCorpus !== this.state.corpus || this._prevAdded !== this.state.added) { this._prevCorpus = this.state.corpus; this._prevAdded = this.state.added; this.loadHtml(); } const rd0 = this.state.readDoc && this.analysis().docById[this.state.readDoc]; if (rd0 && rd0.media && rd0.media.kind === 'local') { this.ensureMediaUrl(rd0); } this.hookLocal(); this.syncReader(); this.ytHook(); this.syncOmni();
+  componentDidUpdate() { this.syncOverview(); this.applyTheme(); this.measureHdr(); if (this._prevCorpus !== this.state.corpus || this._prevAdded !== this.state.added) { this._prevCorpus = this.state.corpus; this._prevAdded = this.state.added; this.loadHtml(); } const rd0 = this.state.readDoc && this.analysis().docById[this.state.readDoc]; if (rd0 && rd0.media && rd0.media.kind === 'local') { this.ensureMediaUrl(rd0); } this.hookLocal(); this.syncReader(); this.ytHook(); this.syncOmni();
     const S = this.state;
     const askEl = document.getElementById('ak-composer');
     if (S.view === 'ask' && askEl) {
@@ -5001,7 +5015,7 @@ class Component extends DCLogic {
     const T = hdTraceStart(list.length === 1 ? (list[0].title || 'Untitled') : plural(list.length, 'item'));
     const id = this.corpusId(); const prev = this.analysis();
     { const nu = u => (u || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '').toLowerCase(); const have = {}; prev.docs.forEach(d => { if (d.url) have[nu(d.url)] = d; }); const dup = list.filter(x => x.url && have[nu(x.url)]); if (dup.length) { list = list.filter(x => !(x.url && have[nu(x.url)])); if (!list.length) { HD_TR = null; this.setState({ busy: '', view: 'reader', readDoc: have[nu(dup[0].url)].id, note: 'Already in this workspace — opened it.' }); return; } } }
-    const nd = list.map(x => ({ id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: x.title || 'Untitled', year: x.year || null, type: x.type || 'Text', format: x.format || 'text', hasHtml: !!x.html, url: x.url || null, pages: x.pages || null, ...(x.extra || {}), measured: !!x.measured, text: x.format === 'pdf' ? (x.text || '') : x.html ? pageText(x.html, x.format).slice(0, 60000) : (x.text || '') }));
+    const nd = list.map(x => ({ ...(typeof x.text === 'string' && (!x.format || x.format === 'text') && !x.html && !x.extra?.media ? { overviewReceivedText: x.text } : {}), id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: x.title || 'Untitled', year: x.year || null, type: x.type || 'Text', format: x.format || 'text', hasHtml: !!x.html, url: x.url || null, pages: x.pages || null, ...(x.extra || {}), measured: !!x.measured, text: x.format === 'pdf' ? (x.text || '') : x.html ? pageText(x.html, x.format).slice(0, 60000) : (x.text || '') }));
     // The hang (holodeck-hang.js): which lens reveals the most meaning here, measured per doc, never assumed.
     // Directions in localStorage hd:hang-directions can prefer one hang over another; every flip is logged.
     try {
@@ -5582,6 +5596,7 @@ class Component extends DCLogic {
       : view === 'reader' && S.readDoc ? { eyebrow: 'Reading · ' + docMeta(A.docById[S.readDoc]), title: A.docById[S.readDoc].title, sub: plural((A.stsByDoc[S.readDoc] || []).length, 'statement') + ' · names, figures and dates are marked', color: 'var(--acc)' }
       : view === 'reading' ? { eyebrow: 'The constitutional reading', title: 'Every name, found automatically', sub: 'A mechanical pass over every source (no AI) — every name it found, which spellings it merged into the same person or org as evidence came in, and who keeps turning up together.' }
       : view === 'ingest' ? { eyebrow: 'Ingest and publish', title: 'Bring in more, and make it public', sub: 'Find new material, transcribe it here, and publish what you keep.' }
+      : view === 'overview' ? { eyebrow: 'Situated reading', title: 'Evidence and negative spaces', sub: 'Compose a view, reopen its ground, and pursue what remains unknown.', color: 'var(--acc)' }
       : view === 'records' ? { eyebrow: 'Assertions', title: 'The workspace as tables', sub: 'Every source, statement, name, figure and date, linked back to where it came from.', color: 'var(--acc)' }
       : view === 'ask' ? { eyebrow: 'Ask the Fold', title: 'Ask the sources', sub: 'Answered by a small model running in this tab, from material found by the question\'s own words. Afterwards every sentence is checked: a numbered address where it matches something in the sources, a dotted line where it is the model\'s own, a wavy line where a figure or name is not in the material.', color: 'var(--acc)' }
       : view === 'draft' ? { eyebrow: 'Draft', title: 'Claims and the excerpts behind them', sub: 'Private to this browser — pinned passages keep their source.', color: 'var(--acc)' }
@@ -5683,7 +5698,7 @@ class Component extends DCLogic {
         onRead: () => this.read(J.first), onConnections: () => this.go('connections'), onPatterns: () => this.go('patterns') }; })() : { names: [] };
     const allYears = [...new Set(A.docs.map(d => d.year).filter(Boolean))].sort();
     const isEmpty = A.docs.length === 0;
-    const V = {}; ['draft', 'summary', 'search', 'sources', 'surprise', 'names', 'types', 'figures', 'statements', 'connections', 'framing', 'views', 'patterns', 'reader', 'profile', 'ingest', 'reading'].forEach(k => { V[k] = !isEmpty && view === k; });
+    const V = {}; ['overview', 'draft', 'summary', 'search', 'sources', 'surprise', 'names', 'types', 'figures', 'statements', 'connections', 'framing', 'views', 'patterns', 'reader', 'profile', 'ingest', 'reading'].forEach(k => { V[k] = !isEmpty && view === k; });
 
     const SU = isEmpty ? null : this.surprise(A); const Fid = new Set(F.map(st => st.id));
     const suF = SU ? SU.list.filter(x => Fid.has(x.st.id)) : [];
@@ -5703,7 +5718,7 @@ class Component extends DCLogic {
       ['connections', 'See who is connected', 'Names that appear in the same statements.'],
     ];
     const gHi = on => ({ bg: on ? 'var(--sel)' : 'transparent', bd: on ? '#8b5cf6' : 'transparent', weight: on ? 600 : 500 });
-    const goalNav = [{ id: 'summary', label: 'Start here', count: '' }, { id: 'draft', label: 'Draft', count: this.activePins().length ? String(this.activePins().length) : '' }, { id: 'ask', label: 'Ask the Fold', count: this._conv && this._conv.turns && this._conv.turns.length ? String(this._conv.turns.length) : '' }, { id: 'records', label: 'Records', count: this._db ? String(this._db.schema.tables.length) : '' }, { id: 'ingest', label: 'Ingest & publish', count: (this._net && this._net.chain && this._net.chain.length) ? String(this._net.chain.length) : '' }, ...GOALS.map(g => ({ id: g[0], label: g[1], count: counts[g[0]] }))].map(g => ({ ...g, ...gHi(view === g.id), onClick: () => this.go(g.id) }));
+    const goalNav = [{ id: 'overview', label: 'Evidence overview', count: '' }, { id: 'summary', label: 'Start here', count: '' }, { id: 'draft', label: 'Draft', count: this.activePins().length ? String(this.activePins().length) : '' }, { id: 'ask', label: 'Ask the Fold', count: this._conv && this._conv.turns && this._conv.turns.length ? String(this._conv.turns.length) : '' }, { id: 'records', label: 'Records', count: this._db ? String(this._db.schema.tables.length) : '' }, { id: 'ingest', label: 'Ingest & publish', count: (this._net && this._net.chain && this._net.chain.length) ? String(this._net.chain.length) : '' }, ...GOALS.map(g => ({ id: g[0], label: g[1], count: counts[g[0]] }))].map(g => ({ ...g, ...gHi(view === g.id), onClick: () => this.go(g.id) }));
     const NAVG = [['', [['summary', 'Start here'], ['ask', 'Ask the Fold']]], ['Read', [['sources', 'Sources'], ['names', 'Names'], ['records', 'Assertions']]], ['Explore', [['connections', 'Connections']]], ['Your work', [['draft', 'Draft'], ['ingest', 'Add & publish']]]];
     const countFor = id => ({
       sources: String(A.docs.filter(d => this.counted(d)).length), names: String(D.nameList.length), records: String(F.length),
@@ -5849,7 +5864,7 @@ class Component extends DCLogic {
       openAdd: () => { this._add = null; this.addState().baseAdded = (S.added[cid] || []).length; this.setState({ showAdd: true }); }, closeAdd: () => this.setState({ showAdd: false }),
       openNewWs: () => this.createWorkspace(), openTask: () => this.go('ingest'),
       closeAddBg: e => { if (e.target === e.currentTarget) this.setState({ showAdd: false }); },
-      goSummary: () => this.go('summary'), summaryBtn: hi(view === 'summary'),
+      goOverview: () => this.go('overview'), goSummary: () => this.go('summary'), summaryBtn: hi(view === 'summary'),
       isEmpty, hasContent: !isEmpty, v: V, hdr, summaryRows,
       docCards, gaps, nameGroups, nameTable, corr: this.corrVals(), typeBlocks, measures, noMeasures: !measures.length, ...(() => { const c = this.capL('stg', stGroups, 8); return { stGroups: c.items.map(g => ({ ...g, ...this.capL('stg:' + g.title, g.items, 4) })), stgMore: c }; })(),
       graphEl, timeInfo, ...orbX, ...(() => { const c = this.capL('pairs', pairs, 12); return { pairs: c.items, pairsMore: c }; })(), noPairs: !pairs.length, frameCols: frameCols.map(c => ({ ...c, ...this.capL('fr:' + c.label, c.items, 5) })), timeBars, ...(() => { const c = this.capL('topics', topicChips, 24); return { topicChips: c.items, topicMore: c }; })(), ...(() => { const c = this.capL('srcbars', [...sourceBars].sort((a, b) => +b.n - +a.n), 12); return { sourceBars: c.items, srcBarMore: c }; })(), shapes, noShapes: !shapes.length, hasRoutine: (this._routineN || 0) > 0, routineLine: plural(this._routineN || 0, 'routine agreement') + ' hidden: repeated by several sources, but about names and words that appear together in most sources anyway.', holds, breaks, noBreaks: !breaks.length,

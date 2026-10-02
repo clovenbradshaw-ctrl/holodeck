@@ -31,3 +31,16 @@ date: 2026-09-25T19:46:51Z
 - 2026-09-24T14:25:59Z · ohs-custody — bytes captures, headings, surprise view, filters in hero/side panel
 - 2026-09-24T05:53:55Z · ohs-custody — first load of the manifest and derived texts into v5
 - 2026-09-23T22:39:49Z · clovenbradshaw-ctrl/eoreader7 (native/) — kernel terrain, patterns, shadow/echo → Fold Explorer.dc.html
+
+## Situated overview blocks · 2026-10-02
+
+The new evidence-overview surface vendors two modules byte-identically:
+- eoreader7 `native/organs/overview.js` → `vendor/eoreader7/native/organs/overview.js`
+- Penelope `organs/generation/overview.mjs` → `vendor/penelope/organs/generation/overview.mjs`
+
+`vendor/overview-manifest.json` pins their SHA-256 values. The DOM integration
+suite verifies these hashes and compares canonical siblings when present.
+The relative seam resolves inside vendor/ without another build or model path.
+Penelope's native overview adapter runs ethos/logos/pathos; its browser-portable
+materializer does not claim native clearance. Plain received text is preserved
+before rendering; legacy/media extracts disclose their separate address space.

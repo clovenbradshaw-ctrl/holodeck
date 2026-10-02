@@ -84,3 +84,24 @@ organs, layout library, ladder records). Nothing here changes: ingest,
 hang, and the local finder are untouched, and the engine-reader
 relationship above is as measured. Builds that need generated artifacts
 route through Penelope's doors, not through ingest.
+
+## Evidence overviews and negative spaces (2026-10-02)
+
+Start here → **Build evidence overview**, or **Evidence overview** in navigation.
+Declare a question, viewpoint, framing owner and experiencer; select sources;
+optionally specify an expected perspective/evidence, why it matters, exact search
+wording, proposed stakes and a next inquiry. Build without a model. Negative
+spaces appear beside the record's limits, ahead of selected passages. A lexical
+match is not proof of representation; a lexical absence is not a missing voice.
+
+Open passages in context, read the full preserved source text, and select source
+text to see the blocks that depend on it. Export portable HTML or the full JSON
+construction record. Changing the scope, frame or bytes invalidates the result.
+New plain text is retained before rendering; legacy text extractions remain
+partial and disclose missing original-media address mapping. This browser route
+claims provenance replay, not native ethos clearance. Penelope's native overview
+API separately runs ethos, logos and pathos (artifact rhythm, not comprehension).
+
+`npm install --ignore-scripts && npm run test:overview` runs DOM and byte-contract
+integration controls. No build step was added. The existing all-tests command
+also needs the external `../eo-compendium/essays/nine-jobs.md` fixture.
