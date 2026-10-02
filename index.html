@@ -3709,6 +3709,7 @@ class Component extends DCLogic {
   componentDidMount() {
     setTimeout(() => { try { this.netInit(); } catch (e) {} }, 800);
     setTimeout(() => this.measureHdr(), 400);
+    setTimeout(() => { try { this.akAutoLoad(); } catch (e) {} }, 2500);
     this.applyTheme(); this._c = 0; import(new URL('holodeck-match.js', location.href).href).then(M => { this._mt = M; this._qc = null; this.forceUpdate(); }).catch(() => {}); import(new URL('holodeck-profile.js', location.href).href).then(M => { _hdProf = M; this._pbA = null; this.forceUpdate(); }).catch(() => {}); import(new URL('holodeck-lang.js', location.href).href).then(M => { _hdLang = M; this._pfLang = null; this.loadLangPriors(); this.forceUpdate(); }).catch(() => {}); this.loadHtml(); if (typeof location !== 'undefined' && /fx-share=/.test(location.hash)) { this.netInit(); this.setState({ view: 'draft' }); }
     this._onRz = () => { this.measureHdr(); if ((window.innerWidth < SIDE_PANEL_MIN_VW) !== this._narrow) this.forceUpdate(); }; window.addEventListener('resize', this._onRz);
 
@@ -3730,7 +3731,7 @@ class Component extends DCLogic {
     window.addEventListener('dragenter', this._h.enter); window.addEventListener('dragleave', this._h.leave); window.addEventListener('dragover', this._h.over); window.addEventListener('drop', this._h.drop); window.addEventListener('paste', this._h.paste);
   }
   componentWillUnmount() { window.removeEventListener('resize', this._onRz); if (this._pdfRo) { try { this._pdfRo.disconnect(); } catch (e) {} } window.removeEventListener('message', this._onYt); document.removeEventListener('selectionchange', this._onSelCh); window.removeEventListener('scroll', this._onSelCh, true); window.removeEventListener('message', this._onMsg); const h = this._h; window.removeEventListener('dragenter', h.enter); window.removeEventListener('dragleave', h.leave); window.removeEventListener('dragover', h.over); window.removeEventListener('drop', h.drop); window.removeEventListener('paste', h.paste); }
-  componentDidUpdate() { this.applyTheme(); this.measureHdr(); if (this._prevCorpus !== this.state.corpus || this._prevAdded !== this.state.added) { this._prevCorpus = this.state.corpus; this._prevAdded = this.state.added; this.loadHtml(); } const rd0 = this.state.readDoc && this.analysis().docById[this.state.readDoc]; if (rd0 && rd0.media && rd0.media.kind === 'local') { this.ensureMediaUrl(rd0); } this.hookLocal(); this.syncReader(); this.ytHook(); this.syncOmni();
+  componentDidUpdate() { this.applyTheme(); this.measureHdr(); if (this._prevCorpus !== this.state.corpus || this._prevAdded !== this.state.added) { this._prevCorpus = this.state.corpus; this._prevAdded = this.state.added; this.loadHtml(); this.akAutoLoad(); } const rd0 = this.state.readDoc && this.analysis().docById[this.state.readDoc]; if (rd0 && rd0.media && rd0.media.kind === 'local') { this.ensureMediaUrl(rd0); } this.hookLocal(); this.syncReader(); this.ytHook(); this.syncOmni();
     const S = this.state;
     const askEl = document.getElementById('ak-composer');
     if (S.view === 'ask' && askEl) {
@@ -4573,6 +4574,21 @@ class Component extends DCLogic {
     this.setState({ akLoad: { text: 'Starting…', p: 0 }, akErr: '' }); let last = 0;
     try { await M.loadWebLLM(m.slice(7), pr => { const now = Date.now(); if (now - last > 150) { last = now; this.setState({ akLoad: { text: pr.text || '', p: pr.progress || 0 } }); } }); this.setState({ akLoad: null }); return true; }
     catch (e) { this.setState({ akLoad: null, akErr: 'The model didn’t load: ' + String(e && e.message || e) }); return false; } }
+  // The in-tab model is fetched automatically, in the background, once the workspace holds anything to ask about —
+  // so by the time a question is typed the weights are already in this browser. A stalled or failed download is
+  // retried a few times; the Ask view still offers Load for a manual start.
+  async akAutoLoad() {
+    if (this._akAutoBusy) return;
+    this._akAutoBusy = true;
+    try {
+      const m = this.akModel(); if (!m.startsWith('webllm:')) return;
+      const M = await this.askMod().catch(() => null); if (!M || !M.webgpu()) return;
+      if (M.webllmLoaded(m.slice(7))) return;
+      const A = this.analysis(); if (!A.docs.some(d => this.counted(d))) return;
+      for (let i = 0; i < 3; i++) { if (await this.akLoad()) break; await new Promise(r => setTimeout(r, 4000 * (i + 1))); }
+    } catch (e) {}
+    finally { this._akAutoBusy = false; }
+  }
   akProbe() { this._oll = { pending: true }; this.askMod().then(M => M.probe()).then(p => { this._oll = p; this.forceUpdate(); }).catch(e => { this._oll = { ok: false, why: String(e && e.message || e) }; this.forceUpdate(); }); }
   convKey() { return 'holodeck-fold:' + this.corpusId(); }
   saveConv() { try { const c = this._conv; localStorage.setItem(this.convKey(), JSON.stringify({ ...c, turns: c.turns.map(t => ({ ...t, messages: undefined })) })); } catch (e) {} }
@@ -4796,7 +4812,7 @@ class Component extends DCLogic {
     return { ak: { on: true, ready: this.llmOk(), pending: false, refuse, gap: isWL ? !gpu && !!MM : !(O && O.ok), why: isWL ? 'navigator.gpu is not available in this browser' : (O.why || ''), isWL, noGpu: isWL && MM && !gpu, needLoad: isWL && gpu && !loaded && !LD, loading: !!LD, loadText: LD ? LD.text : '', loadPct: LD ? Math.round((LD.p || 0) * 100) + '%' : '0%', load: () => this.akLoad(), mName: mInfo.name, mSize: mInfo.size || '',
       dot: isWL ? (loaded ? 'var(--ok)' : gpu ? 'var(--amber)' : 'var(--bad)') : O.ok ? 'var(--ok)' : 'var(--bad)',
       status: isWL ? (loaded ? mInfo.name + ' running in this tab · nothing leaves it' : !MM ? 'Starting…' : gpu ? mInfo.name + ' runs in this tab once loaded' : 'This browser can’t run a model in the tab') : O.ok ? model + ' via Ollama on this machine' : 'Ollama isn’t reachable',
-      models: ms.map(m => ({ v: m.v, label: m.label })), hasModels: ms.length > 1, model, onModel: e => { const v = e.target.value; try { localStorage.setItem('fold-explorer-ak-model', v); } catch (er) {} this.setState({ akModel: v }); }, retry: () => this.akProbe(),
+      models: ms.map(m => ({ v: m.v, label: m.label })), hasModels: ms.length > 1, model, onModel: e => { const v = e.target.value; try { localStorage.setItem('fold-explorer-ak-model', v); } catch (er) {} this.setState({ akModel: v }); setTimeout(() => { try { this.akAutoLoad(); } catch (er) {} }, 0); }, retry: () => this.akProbe(),
       ixLine: this._ix ? plural(this._ix.chunks.length, 'passage') + ' from ' + plural(Object.keys(this._ix.texts).length, 'source') : 'Indexing passages…',
       turns, hasTurns: turns.length > 0, noTurns: turns.length === 0 && !S.akPending,
       nextN: String(conv.turns.length ? parseInt(conv.turns[conv.turns.length - 1].n) + 1 : 1),
