@@ -44,6 +44,9 @@ const TWO_SMITHS_DOCS = [
 // ambiguity with no deciding evidence at all: two bearers, no links, no full-name title
 const TWO_SMITHS_AMBIGUOUS = [doc("d0", "Report", `<p>John Smith met Jane Smith at the meeting. The report also names Smith as a witness.</p>`)];
 
+const PRONOUN = [doc("d0", "Susan Sarandon", `<p>Actress Susan Sarandon won an Academy Award in 1995. She was born in New York City. Later, she moved to Connecticut.</p>`)];
+const PRONOUN_AMBIG = [doc("d0", "Report", `<p>John Smith met Jane Smith at the fair. She left early, and he stayed.</p>`)];
+
 const CASES = [
   { id: "merge-three-way", label: "one referent, three surfaces", docs: SARANDON,
     expect: { oneOf: ["Susan Sarandon", "Susan Abigail Tomalin", "Sarandon"], members: ["Susan Sarandon", "Susan Abigail Tomalin", "Sarandon"], canonical: "Susan Abigail Tomalin", type: "person", separate: ["Chris Sarandon"] } },
@@ -58,6 +61,10 @@ const CASES = [
   { id: "appositive-anchors-nearest", label: "alias binds the name nearest it, not the sentence's lead",
     docs: [doc("d0", "Report", `<p>Susan Sarandon met Louis Malle, known as Malle, in Paris.</p><p>Louis Malle directed the film.</p>`)],
     expect: { oneOf: ["Louis Malle"], members: ["Louis Malle", "Malle"], separate: ["Susan Sarandon"] } },
+  { id: "pronoun-binds-only-the-referent", label: "she never binds to the wrong referent", docs: PRONOUN,
+    expect: { oneOf: ["Susan Sarandon"], members: ["Susan Sarandon"], pronOnlyOf: "Susan Sarandon" } },
+  { id: "pronoun-ambiguous-unbound", label: "a pronoun with two candidates stays unbound", docs: PRONOUN_AMBIG,
+    expect: { noProns: true } },
 ];
 
 const norm = (s) => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
@@ -91,6 +98,16 @@ function check(names, expect) {
     if (!e) fails.push("the ambiguous bare " + JSON.stringify(expect.bareAlone) + " vanished instead of standing alone");
     else if ((e.aliases || []).length || names.some((n) => n.name !== e.name && (n.aliases || []).includes(expect.bareAlone))) fails.push("the ambiguous bare " + JSON.stringify(expect.bareAlone) + " was folded to a bearer on no evidence");
   }
+  if (expect.pronOnlyOf) {
+    // the engine's resolvePronouns may recall a binding or honestly report a gap —
+    // either way a pronoun is NEVER placed on the wrong referent. That is the
+    // safety property falsified here.
+    for (const n of names) if (n.name !== expect.pronOnlyOf && (n.pronouns || 0) > 0) fails.push("pronoun bound to the wrong referent " + JSON.stringify(n.name) + " (pronouns=" + n.pronouns + ")");
+  }
+  if (expect.noProns) {
+    const total = names.reduce((s, n) => s + (n.pronouns || 0), 0);
+    if (total) fails.push("ambiguous pronouns were bound (" + total + ")");
+  }
   return fails;
 }
 
@@ -98,9 +115,10 @@ async function main() {
   const surf = await openSurface({ headless: true });
   try {
     await surf.page.waitForFunction(() => window.__holodeck && typeof window.__holodeck.analyze === "function", null, { timeout: 20000 });
+    await surf.page.waitForFunction(() => window.__holodeck.hdDeclReady && window.__holodeck.hdDeclReady() && window.__holodeck.hdEngineReady && window.__holodeck.hdEngineReady(), null, { timeout: 20000 });
     let failed = 0;
     for (const c of CASES) {
-      const names = await surf.page.evaluate((docs) => Object.values(window.__holodeck.analyze({ docs }).names).map((n) => ({ name: n.name, type: n.type, aliases: n.aliases || [] })), c.docs);
+      const names = await surf.page.evaluate((docs) => Object.values(window.__holodeck.analyze({ docs }).names).map((n) => ({ name: n.name, type: n.type, aliases: n.aliases || [], pronouns: n.pronouns || 0 })), c.docs);
       names.sort((a, b) => a.name.localeCompare(b.name));
       const fails = check(names, c.expect);
       console.log((fails.length ? "FAIL " : "PASS ") + c.id.padEnd(28) + c.label);

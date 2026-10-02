@@ -2658,6 +2658,10 @@ const ORG_LOWER = new Set([...ORG].map(w => w.toLowerCase()).concat(['inc.', 'lt
 const PLACE = W('Bridge Avenue Street Road River Park Square City County District Station Corridor Lane Way Valley Hill Harbor Harbour Island Bay Lake Coast Airport Market Centre Plaza Quarter North South East West Point Terminal Channel Tunnel Ocean Sea States Kingdom Chile Maryland Virginia Baltimore Singapore Asia America Europe Africa Dundalk');
 const TYPE_C = { person: 'var(--pink)', organisation: 'var(--blue)', place: 'var(--green)', other: 'var(--mut)' };
 const TYPE_L = { person: 'People', organisation: 'Organisations', place: 'Places', other: 'Other names' };
+// The narrow, safe subset of PERSON_ROLE used to SPLIT a leading profession off a
+// name ("Actress Susan Sarandon"): professions that never begin a common title, and
+// never a noble title ("Princess Bride" stays one surface) or a word TITLES already owns.
+const TITLE_ROLES = new Set(('actress actor singer songwriter musician composer pianist violinist filmmaker screenwriter playwright novelist poet essayist journalist reporter columnist editor publisher illustrator painter sculptor photographer architect designer inventor engineer scientist physicist chemist astronomer biologist historian archaeologist anthropologist sociologist psychologist economist linguist philosopher theologian lawyer attorney surgeon nurse activist feminist humanitarian revolutionary entrepreneur industrialist businessman businesswoman executive philanthropist comedian performer entertainer').split(' '));
 // A person's profession, used two ways: a role word right BEFORE a name ("actress
 // Susan Sarandon") or after a copula ("Louis Malle was a French filmmaker") marks
 // the name a person. A closed set of human roles — a machine or an institution
@@ -2729,7 +2733,7 @@ function hdEngineMerge(t, ns, eng, hy) {
   return out.sort((a, b) => a.s - b.s);
 }
 // read-only handle for tests: the real functions, so a harness can recompute what a trace claims happened
-setTimeout(() => { try { window.__holodeck = Object.freeze({ analyze, holoKit, paradigms, splitSentences, findNames, isJunk, readAny, hdHygiene, hdPos: w => hdPos(w), hdDeclReady: () => !!HD_DECL }); } catch (e) {} }, 0);
+setTimeout(() => { try { window.__holodeck = Object.freeze({ analyze, holoKit, paradigms, splitSentences, findNames, isJunk, readAny, hdHygiene, hdPos: w => hdPos(w), hdDeclReady: () => !!HD_DECL, hdEngineReady: () => !!HD_ENGINE }); } catch (e) {} }, 0);
 const hdCut = (t, n) => { t = String(t || '').replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
 function splitSentences(text, tr) {
   const out = []; const re = /[^\n]+?(?:[.!?]+(?=\s|$)|(?=\n)|$)/g; let m;
@@ -2775,6 +2779,16 @@ Promise.all([
   fetch(new URL('vendor/eoreader7/native/priors/declension-rus.json', location.href)).then(r => r.ok ? r.json() : null),
 ]).then(([D, prior]) => { try { HD_DECL = D.createDeclensionFolder(prior); HD_ENDINGS = new Set((prior?.rules || []).map(r => r.from).filter(Boolean)); } catch (e) { HD_DECL = null; HD_ENDINGS = null; } }).catch(() => { HD_DECL = null; HD_ENDINGS = null; });
 const hdDeclReady = () => !!HD_DECL;
+// THE PIPELINE, not a re-invention: analyze feeds the engine's OWN organs the same
+// way holodeck-reader.js does — discoverReferents (namesCorefer over the declension
+// sameStem) is the form-identity fold, resolvePronouns is the pronoun binding, with
+// the reader's own declared gates (PRONOUN_MIN_ACTIVATION/MARGIN, hypergraph.js).
+let HD_ENGINE = null;
+Promise.all([
+  import(new URL('vendor/eoreader7/native/adapters/text/surfaces.js', location.href)),
+  import(new URL('vendor/eoreader7/native/adapters/text/pronouns.js', location.href)),
+]).then(([S, Pr]) => { HD_ENGINE = { discoverReferents: S.discoverReferents, resolvePronouns: Pr.resolvePronouns }; }).catch(() => { HD_ENGINE = null; });
+const hdEngineReady = () => !!HD_ENGINE;
 // The RECEIVED ground for "normal": live_priors' General English set (books, encyclopedia articles, US/UK law), the same
 // baseline the surprise view uses, read for how often each word is capitalised mid-sentence. It is independent of the
 // material being judged, so a workspace full of junk cannot talk itself into calling its junk normal. Fetched once,
@@ -2879,8 +2893,12 @@ function findNames(t, hy) {
   const next = (idx, w) => { const rest = t.slice(idx + w.length); return idx + w.length + (rest.match(/^\s+/) || [''])[0].length; };
   while ((m = re.exec(t))) {
     const words = m[0].split(/\s+/); const after = t.slice(m.index + m[0].length);
-    // split at a title word: "Maryland Governor Wes Moore" -> Maryland | (Governor) Wes Moore
-    let ti = words.findIndex(w => TITLES.has(w.replace(/\.$/, '')));
+    // split at a title word — or a leading PROFESSION ("Actress Susan Sarandon" ->
+    // (Actress) "Susan Sarandon"): a capitalised human role opens a name the way a
+    // title does, and the role is not part of the name. TITLE_ROLES is the narrow,
+    // safe subset of PERSON_ROLE — professions, never noble titles ("Princess Bride"
+    // must stay one surface) and never title-ish words TITLES already owns.
+    let ti = words.findIndex(w => TITLES.has(w.replace(/\.$/, '')) || TITLE_ROLES.has(w.toLowerCase().replace(/[.,;:]+$/, '')));
     if (ti >= 0) {
       let idx = m.index; for (let i = 0; i < ti; i++) idx = next(idx, words[i]);
       if (ti > 0) push(words.slice(0, ti), m.index, null, m, ' ' + words[ti]);
@@ -3015,13 +3033,7 @@ function analyze(corpus, htmlMap) {
       st0.dates.forEach(g => hdT('dates', 'date', 'Date \u201c' + g.raw + '\u201d' + (g.year ? ' (year ' + g.year + ')' : ''), { ...D, s: se.s + g.s, e: se.s + g.e }));
       hdT('frame', 'frame', 'Frame: ' + st0.frame + ({ uncertain: ' (a hedge word)', attributed: ' (a reporting verb)', plan: ' (a future or intent word)', fact: ' (no hedge, report or plan word)' })[st0.frame], { ...D, frame: st0.frame }); }
   }); });
-  const lastMap = {};
-  sts.forEach(st => st.rawNames.forEach(n => { const w = n.name.split(' '); const l = w[w.length - 1]; if (w.length > 1 && !ORG.has(l) && !PLACE.has(l)) (lastMap[l] = lastMap[l] || new Set()).add(n.name); }));
   const allRaw = [...new Set(sts.flatMap(st => st.rawNames.map(n => n.name)))];
-  const nest = (short, long) => { const a = short.split(' '), b = long.split(' '); if (b.length <= a.length) return false; return a.every((w, i) => b[i] === w) || a.every((w, i) => b[b.length - a.length + i] === w); };
-  const byFirst = new Map(), byLast = new Map(); allRaw.forEach(o => { if (!o.includes(' ')) return; const w = o.split(' '); const f0 = w[0], l0 = w[w.length - 1]; (byFirst.get(f0) || byFirst.set(f0, []).get(f0)).push(o); (byLast.get(l0) || byLast.set(l0, []).get(l0)).push(o); });
-  // a longer name may absorb a shorter one only if the longer one recurs itself (2+ statements, the bar holoName uses):
-  // otherwise one stray capitalised run (measured: word salad's “Office The Brookmeade Park”) renames a real place everywhere
   const rawN = new Map(); sts.forEach(st => new Set(st.rawNames.map(n => n.name)).forEach(n => rawN.set(n, (rawN.get(n) || 0) + 1)));
   // ── REFERENT IDENTITY ──────────────────────────────────────────────────────
   // A surface is a spelling; a referent is what the SOURCE means by it. Surfaces
@@ -3054,12 +3066,22 @@ function analyze(corpus, htmlMap) {
   const find = x => { let r = x; while (parent.get(r) !== r) r = parent.get(r); return r; };
   const union = (a, b) => { if (!parent.has(a) || !parent.has(b)) return; const ra = find(a), rb = find(b); if (ra !== rb) parent.set(ra, rb); };
   allRaw.forEach(nm => { if (alias[nm] && parent.has(alias[nm])) union(nm, alias[nm]); });  // a parenthetical alias is stated identity
-  const containTarget = nm => {
-    if (nm.includes(' ')) { const w = nm.split(' '); const pool = [...new Set([...(byFirst.get(w[0]) || []), ...(byLast.get(w[w.length - 1]) || [])])];
-      const c = pool.filter(o => nest(nm, o)).sort((x, y) => y.split(' ').length - x.split(' ').length || y.length - x.length);
-      return c[0] || null; }
-    return lastMap[nm] && lastMap[nm].size === 1 ? [...lastMap[nm]][0] : null; };
-  allRaw.forEach(nm => { const t = containTarget(nm); if (t && (rawN.get(t) || 0) >= 2) union(nm, t); });
+  // THE ENGINE'S WHEEL, not a re-derivation: discoverReferents (namesCorefer over the
+  // declension sameStem) is the FORM-identity fold — containment into a fuller name,
+  // shared-final-token, productive case declension, common-noun guards — the same
+  // machinery holodeck-reader.js assembles for the pipeline. Analyze feeds it the
+  // surfaces its own reader extracted and takes the referent edges back.
+  if (HD_ENGINE && HD_ENGINE.discoverReferents) {
+    try {
+      const perDoc = new Map(); sts.forEach(st => st.rawNames.forEach(n => { let a = perDoc.get(st.doc); if (!a) perDoc.set(st.doc, a = []); a.push(n.name); }));
+      const all = [], groups = [];
+      perDoc.forEach(ns => { const g = []; groups.push(g); [...new Set(ns)].forEach(surface => { const e = { surface, sentences: rawN.get(surface) || 1, group: g }; all.push(e); g.push(e); }); });
+      const disc = HD_ENGINE.discoverReferents(all, { groups, sameStem: HD_DECL && HD_DECL.sameStem ? HD_DECL.sameStem : null });
+      const byRef = new Map();
+      (disc.events || []).forEach(e => { let a = byRef.get(e.referent_id); if (!a) byRef.set(e.referent_id, a = []); a.push(e.surface); });
+      byRef.forEach(ms => { for (let i = 1; i < ms.length; i++) if (parent.has(ms[0]) && parent.has(ms[i])) union(ms[0], ms[i]); });
+    } catch (e) { /* an organ failure leaves only the stated-evidence edges — a gap, never a guess */ }
+  }
   { const linkOf = {}; docs.forEach(d => { linkOf[d.id] = d.links || []; });
     const byHref = new Map();
     sts.forEach(st => { const L = linkOf[st.doc]; if (!L || !L.length) return;
@@ -3093,12 +3115,11 @@ function analyze(corpus, htmlMap) {
         if (PLACE.has(full) || ORG.has(full)) return;                 // a place or org head is not a person's surname
         let s = cand.get(full); if (!s) cand.set(full, s = new Set()); s.add(t); }); });
     cand.forEach((fulls, bare) => { if (fulls.size === 1) union(bare, [...fulls][0]); }); }
-  // SULLIVAN, wired in: the engine's productive case fold (declension.js over the
-  // received declension-rus.json, its giver in its provenance). PAIRWISE between two
-  // real observed surfaces — "Пушкина" reaches "Пушкин" under the language's own case
-  // rules; never a single word's lemma (declension.js: that corrupts a proper name).
-  // Same document, bracketed by first letter, capped, and only where Cyrillic is
-  // actually spoken (the prior declares its own language).
+  // THE DECLENSION FOLD, from declension.js itself (pairwise, the engine's design): a
+  // surface reaches another under the language's own case rules — "Пушкина" reaches
+  // "Пушкин" — even when discoverReferents' containment path never pairs two single
+  // tokens (namesCorefer+sameStem proves true, but the discover pass admits them
+  // separately). Same document, bracketed by first letter, capped, Cyrillic only.
   if (HD_DECL && HD_DECL.sameStem && !HD_DECL.sameStem.gap) {
     const sameDoc = new Map();
     sts.forEach(st => { st.rawNames.forEach(n => { let a = sameDoc.get(st.doc); if (!a) sameDoc.set(st.doc, a = []); a.push(n.name); }); });
@@ -3111,7 +3132,7 @@ function analyze(corpus, htmlMap) {
         for (let i = 0; i < bucket.length; i++) for (let j = i + 1; j < bucket.length; j++) {
           if (budget-- <= 0) return;
           const a = bucket[i], b = bucket[j]; if (!/[\u0400-\u04ff]/.test(a + b)) continue;
-          if (!endsInRule(a) && !endsInRule(b)) continue;                 // neither could carry a case ending
+          if (!endsInRule(a) && !endsInRule(b)) continue;
           const key = a < b ? a + '\u0001' + b : b + '\u0001' + a; if (seenPair.has(key)) continue; seenPair.add(key);
           if (HD_DECL.sameStem(a, b) || HD_DECL.sameStem(b, a)) union(a, b); } }); });
   }
@@ -3155,6 +3176,24 @@ function analyze(corpus, htmlMap) {
     st.topics = [...new Set(words.filter(w => !STOP.has(w) && !nameWords.has(w) && !MONTHS.has(w[0].toUpperCase() + w.slice(1))).map(w => w.length > 4 ? w.replace(/(ies)$/, 'y').replace(/([^s])s$/, '$1') : w))];
   });
   Object.values(names).forEach(n => { const I = info[n.name] || {}; n.type = nameType(n.name, I); n.aliases = [...(I.aliases || [])]; });
+  // PRONOUN BINDING — the engine's own organ (resolvePronouns, the one holodeck-reader
+  // assembles), with the reader's own declared gates. She/he binds to an established
+  // referent by one-hop activation recall over the cast; a pronoun it cannot resolve
+  // is a reported gap, never a guess.
+  if (HD_ENGINE && HD_ENGINE.resolvePronouns) {
+    try {
+      const surfaceToRef = new Map();
+      sts.forEach(st => st.rawNames.forEach(n => { if (!surfaceToRef.has(n.name)) surfaceToRef.set(n.name, canonOf(n.name)); }));
+      const sentences = sts.map((st, i) => ({ text: st.text, offset: st.s, order: i }));
+      const nonPersonal = new Set(Object.values(names).filter(n => n.type !== 'person').map(n => n.name));
+      const r = HD_ENGINE.resolvePronouns(sentences, surfaceToRef, { minActivation: 0.05, minMargin: 0.2, nonPersonal });
+      for (const b of (r && r.bindings) || []) {
+        const who = b.referentId; const N = names[who]; if (!N) continue;
+        const st = sts.find(x => x.s <= b.offset && b.offset < x.e); if (!st) continue;
+        st.pron = who; N.pronouns = (N.pronouns || 0) + 1;
+      }
+    } catch (e) { /* the organ reports its own gap; never guessed here */ }
+  }
   if (HD_TR) Object.values(names).forEach(n => { if (![...n.docs].some(hdF)) return; const I = info[n.name] || {}; hdT('canon', 'type', n.name + ' \u2192 ' + n.type + (I.person ? ' (had a title)' : I.said ? ' (followed by a reporting verb)' : I.acr ? ' (an acronym)' : n.type === 'other' ? ' (no rule matched)' : ' (by its first or last word)') + ' \u00b7 ' + n.sts.length + ' mention' + (n.sts.length === 1 ? '' : 's') + ' in ' + n.docs.size + ' source' + (n.docs.size === 1 ? '' : 's'), { name: n.name, type: n.type, mentions: n.sts.length, docsN: n.docs.size }); });
   { const DM = new Map(docs.map(x => [x.id, x])); sts.forEach(st => { st.where = whereOf(DM.get(st.doc), st.s); }); }
   const furn = {}; docs.forEach(d => { const set = new Set(); const nt = t => clean(t).toLowerCase().replace(/[^a-z0-9]/g, ''); if (d.title) set.add(nt(d.title)); (d.heads || []).forEach(h => set.add(nt(h.text))); const H = d.heads || []; const back = []; H.forEach((h, i) => { if (!/^(external links|references|further reading|notes|citations|sources|bibliography|see also|footnotes|works cited|general and cited references)\b/i.test(h.text)) return; let e = Infinity; for (let j = i + 1; j < H.length; j++) if (H[j].lv <= h.lv) { e = H[j].o; break; } back.push([h.o, e]); }); furn[d.id] = { set, nt, back }; });

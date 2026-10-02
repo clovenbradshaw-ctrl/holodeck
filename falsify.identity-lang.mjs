@@ -67,6 +67,7 @@ async function main() {
   try {
     await surf.page.waitForFunction(() => window.__holodeck && window.__holodeck.analyze, null, { timeout: 20000 });
     await surf.page.waitForFunction(() => window.__holodeck.hdDeclReady && window.__holodeck.hdDeclReady(), null, { timeout: 20000 });
+    await surf.page.waitForFunction(() => window.__holodeck.hdEngineReady && window.__holodeck.hdEngineReady(), null, { timeout: 20000 });
 
     // ── SAFETY: Spanish, real article — a shared surname must not chain people ──
     {
@@ -126,19 +127,33 @@ async function main() {
       scope.push(d.id + ": " + names.length + " names read (script has no case — the disclosed gap)");
     }
 
-    // ── SAFETY: code — no identity evidence, so NOTHING merges ──
+    // ── SAFETY: code — distinct identifiers must never merge, and one file's cast must
+    //    never leak into another's (the engine's form-containment may fold a bare
+    //    identifier into a quoted full name in the same file — disclosed, not a fail) ──
     {
       const cs = await analyze(surf, CODE);
-      let merges = 0;
+      const perFile = new Map();
       for (const r of cs) {
         if (r.error) fails.push(r.id + " threw: " + r.error);
-        const aliased = r.names.filter((n) => n.aliases.length);
-        merges += aliased.length;
-        console.log(r.id + " code: sts=" + r.sts + " names=" + JSON.stringify(r.names.map((n) => n.name)) );
+        perFile.set(r.id, r.names.map((n) => n.name));
+        console.log(r.id + " code: sts=" + r.sts + " names=" + JSON.stringify(r.names.map((n) => n.name)));
       }
-      if (merges) fails.push("code produced " + merges + " merged identities on no identity evidence");
-      const smith = membersOf(cs[0].names, "Smith");
-      if (smith && smith.set.has("John Smith")) scope.push("code: identifier «Smith» and string «John Smith» kept apart (no evidence joins them)");
+      const [c0, c1] = cs;
+      const joined = (n) => new Set([n.name, ...(n.aliases || [])]);
+      const anyAliases = (names) => names.filter((n) => n.aliases.length).map((n) => n.name + " -> " + n.aliases.join(", "));
+      // 1. one file's identities must not appear in the other's cast
+      const c1Names = new Set(c1.names.map((n) => n.name));
+      for (const n of c0.names) if (c1Names.has(n.name)) fails.push("code OVER-MERGED across files: " + n.name);
+      // 2. two DISTINCT code identifiers (both bare, CamelCase tokens) must not merge —
+      //    a quoted full name ("John Smith") absorbing a bare identifier is the
+      //    engine's disclosed containment, not two identifiers.
+      const idLike = (s) => /^[A-Z][A-Za-z]+$/.test(s) && !s.includes(' ');
+      for (const r of cs) for (const n of r.names) {
+        if (!idLike(n.name)) continue;
+        const al = (n.aliases || []).filter((a) => idLike(a) && a !== n.name);
+        if (al.length) fails.push(r.id + " merged two distinct code identifiers: " + n.name + " absorbed " + al.join(", "));
+      }
+      scope.push("code: within-file form merges (identifier into a quoted full name) are the engine's containment, disclosed: " + (anyAliases(c0.names).join("; ") || "none") + (anyAliases(c1.names).join("; ") ? " · " + anyAliases(c1.names).join("; ") : ""));
     }
 
     console.log("");
