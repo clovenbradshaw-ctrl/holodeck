@@ -4989,7 +4989,10 @@ class Component extends DCLogic {
       if (live.length) this.setState({ busy: 'Reading ' + (live.length === 1 ? 'it' : live.length + ' sources') + ' with the engine…' });
       for (const d of live) { const t0 = HD_TR ? performance.now() - HD_TR.t0 : 0, got = await hdEngineRead(d.title, d.text);
         if (!got) { miss++; continue; } ok++; d.eng = hdEngineCompact(got.host, got.read);
-        if (HD_TR) got.read.events.forEach(ev => HD_TR.ev.push({ ...ev, stage: 'engine', kind: 'eng-' + ev.stage + '-' + ev.kind, es: ev.stage, t: t0 + ev.t, doc: d.id, config: undefined }));
+        if (HD_TR) { const evs = Array.isArray(got.read.events) ? got.read.events : [];
+          evs.forEach(ev => HD_TR.ev.push({ ...ev, stage: 'engine', kind: 'eng-' + ev.stage + '-' + ev.kind, es: ev.stage, t: t0 + ev.t, doc: d.id, config: undefined }));
+          if (!evs.length) { let t = t0; (got.read.referents || []).forEach(r => { t += 0.2; HD_TR.ev.push({ t, stage: 'engine', kind: 'eng-referent', msg: 'Engine admitted “' + hdCut((r.surfaces || [])[0], 48) + '”' + ((r.routes || []).length ? ' (' + r.routes.join(', ') + ')' : ''), doc: d.id, es: 'referent' }); });
+            const rl = (got.read.relations || []).length; if (rl) { t += 0.2; HD_TR.ev.push({ t, stage: 'engine', kind: 'eng-relations', msg: 'Engine held ' + rl + ' relation' + (rl === 1 ? '' : 's'), doc: d.id, es: 'relations' }); } } }
         hdT('engine', 'eng-read', 'The engine read “' + hdCut(d.title, 50) + '”: ' + d.eng.referents.length + ' beings, ' + d.eng.relations + ' relations, ' + d.eng.ms + ' ms (' + got.host.replace(/^https?:\/\//, '') + ')', { doc: d.id }); }
       if (miss) { engNote = 'The engine (eoreader7 proxy) was not reachable, so ' + (ok ? miss + ' of ' + live.length + ' sources were' : live.length === 1 ? 'this source was' : 'these sources were') + ' read with the Holodeck’s own reader only. Start the proxy, or set its address with localStorage hd:engine.'; hdT('engine', 'eng-skip', engNote); } }
     const added = { ...this.state.added, [id]: [...(this.state.added[id] || []), ...nd] };
