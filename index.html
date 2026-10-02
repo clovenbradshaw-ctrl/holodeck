@@ -2903,58 +2903,93 @@ function analyze(corpus, htmlMap) {
   // exact sparse vectors, no hashing: a topic word counts by how rare it is among the claims compared, a name twice that (holodeck-echo.js)
   const dfT = new Map(); IX.forEach(i => { sts[i].topics.forEach(w => dfT.set(w, (dfT.get(w) || 0) + 1)); sts[i].names.forEach(n => dfT.set('n:' + n, (dfT.get('n:' + n) || 0) + 1)); });
   const wt = (k, m) => m * Math.log(1 + N / dfT.get(k));
-  const EC = N > 1 ? HDEcho.echoPairs(IX.map(i => { const t = new Map(); sts[i].topics.forEach(w => t.set(w, wt(w, 1))); sts[i].names.forEach(n => t.set('n:' + n, wt('n:' + n, 2))); return { doc: sts[i].doc, terms: t }; })) : { pairs: [], floor: 1, maxima: [] };
+  const vecs = IX.map(i => { const t = new Map(); sts[i].topics.forEach(w => t.set(w, wt(w, 1))); sts[i].names.forEach(n => t.set('n:' + n, wt('n:' + n, 2))); return { doc: sts[i].doc, terms: t }; });
+  const EC = N > 1 ? HDEcho.echoPairs(vecs) : { pairs: [], floor: 1, maxima: [] };
   const echoFloor = EC.floor;
   if (HD_TR && HD_TR.focus.size) { const mine = sts.filter(st => hdF(st.doc) && st.claimy && !st.ref).length, inIX = IX.filter(i => hdF(sts[i].doc)).length; hdT('echo', 'vectors', 'Weighted each claim\u2019s topic words (rarer words count more) and names (twice) into an exact word vector, with no hashing; ' + inIX + ' of your ' + mine + ' claims are among the ' + N + ' compared', { n: N, mine, inIX }); hdT('echo', 'null', 'Null: the same words shuffled across the claims ' + EC.maxima.length + ' times; the largest cosine each claim reached to another source in any draw is its own floor (lowest ' + EC.floor.toFixed(3) + ', shortest claims highest)', { floor: EC.floor, nullN: EC.maxima.length, hist: EC.maxima }); }
   const echoes = {};
   EC.pairs.forEach(({ a, b, sim, ab, ba }) => { const i = IX[a], j = IX[b]; if (sts[i].text === sts[j].text) return; if (ab) (echoes[sts[i].id] = echoes[sts[i].id] || []).push({ id: sts[j].id, sim }); if (ba) (echoes[sts[j].id] = echoes[sts[j].id] || []).push({ id: sts[i].id, sim }); });
   Object.values(echoes).forEach(l => { l.sort((a, b) => b.sim - a.sim); l.length = Math.min(l.length, 4); });
+  // A relaxed, MUTUAL near-echo graph for topic detection. The strict floor above is a precision floor -- the
+  // patterns view must not call a shuffled collision a repeated claim -- but it is corpus-size-dependent (more
+  // claims raise every claim's floor), so a genuine re-reporting of the same story falls below it exactly when
+  // the workspace grows truly disparate, the case topic detection exists for. Re-ran against the same vectors
+  // with fewer shuffle draws and requiring the cosine to beat BOTH claims' floors, so a one-sided collision can
+  // never tie two documents; paradigms() uses this as its echo connector.
+  const ECnear = N > 1 ? HDEcho.echoPairs(vecs, { draws: 7, seed: 20260931 }) : { pairs: [], floors: new Float32Array(N) };
+  const echoesNear = {};
+  ECnear.pairs.forEach(({ a, b, sim, ab, ba }) => { const i = IX[a], j = IX[b]; if (sts[i].text === sts[j].text || !ab || !ba) return;
+    (echoesNear[sts[i].id] = echoesNear[sts[i].id] || []).push({ id: sts[j].id, sim }); (echoesNear[sts[j].id] = echoesNear[sts[j].id] || []).push({ id: sts[i].id, sim }); });
+  Object.values(echoesNear).forEach(l => { l.sort((a, b) => b.sim - a.sim); l.length = Math.min(l.length, 4); });
   if (HD_TR && HD_TR.focus.size) { const byIdE = new Map(sts.map(x => [x.id, x])); const dt = id => (docs.find(x => x.id === id) || {}).title || id; sts.forEach(st => { if (!hdF(st.doc)) return; (echoes[st.id] || []).forEach(e => { const o = byIdE.get(e.id); hdT('echo', 'pair', 'Echo ' + e.sim.toFixed(2) + ' with \u201c' + hdCut(o.text, 50) + '\u201d in ' + hdCut(dt(o.doc), 40), { doc: st.doc, id: st.id, other: e.id, otherDoc: o.doc, otherTitle: dt(o.doc), sim: e.sim, mine: hdF(o.doc) }); }); }); }
   const stsByDoc = {}; sts.forEach(s => { (stsByDoc[s.doc] = stsByDoc[s.doc] || []).push(s); });
-  return { stsByDoc, echoes, echoFloor, docs, sts, names, byId: Object.fromEntries(sts.map(s => [s.id, s])), docById: Object.fromEntries(docs.map(d => [d.id, d])) };
+  return { stsByDoc, echoes, echoesNear, echoFloor, docs, sts, names, byId: Object.fromEntries(sts.map(s => [s.id, s])), docById: Object.fromEntries(docs.map(d => [d.id, d])) };
 }
 // paradigms: which documents actually belong to the same conversation, discovered rather than declared.
-// A name that touches too much of the corpus is ordinary vocabulary, not a real connection (measured
-// live: "Metro" merged 160 of 205 real OHS documents into one fake cluster, although only 8 of its 420
-// mentions are boilerplate -- it's just the word this corpus's genuine, unrelated prose uses for the city
-// government); a name is trusted as a connector, or as a group's label, only when its reach is at most
-// sqrt(docs)+1 -- the standard "too common to be selective" line, scaled to this corpus's own size so it
-// doesn't wrongly exclude a name that legitimately spans most of a small, genuinely single-topic
-// workspace. That alone was still not enough, found by testing it live: two documents sharing exactly one
-// individually-rare administrative term (Recipient, 7 of 205 docs, a template contract clause repeated
-// near-verbatim -- confirmed not furniture either, 0 of 366 mentions flagged .ref) still chained an
-// entire template-generated corpus into one meaningless blob by transitivity, since each pairwise edge
-// was individually plausible even though no two of those documents were about the same thing. Two
-// documents are now connected only when they share TWO OR MORE distinct non-hub names together, not one
-// -- incidental single-term boilerplate overlap can't form an edge, but a real shared story (which repeats
-// several of the same names together) still can. A lone, unconnected document is never a paradigm -- by
-// definition a paradigm is a pattern across more than one source -- so single-document components are
-// counted only in strayN, never labelled or offered individually.
+// The connector is the holograph, not name proximity: two documents are in the same topic when the SAME
+// claim is restated in both (an echo, above the shuffle-null floor), when both attach a figure to the same
+// measure of the same anchor, or when the SAME relationship (a bonded pair of people/orgs) is co-mentioned
+// in both. A name that merely recurs in both documents is NOT an edge -- two unrelated stories can share a
+// person or a funder -- so recurrence only ever sits on top of a structural link, never alone. Measured
+// against a falsification corpus (falsify.topics.mjs) the name-only version over-merged two genuinely
+// different stories that shared a funder and an architect (Carter Family Foundation n=4, purity 0.5) and
+// left stray the same-story-different-names pairs; the holograph version holds all three signals.
+// A name/bond that touches too much of the corpus is ordinary vocabulary, not a real connection (measured
+// live: "Metro" merged 160 of 205 real OHS documents into one fake cluster -- it's just the word this
+// corpus's genuine, unrelated prose uses for the city government); a connector is trusted only when its
+// reach is at most sqrt(docs)+1 -- the standard "too common to be selective" line, scaled to this corpus's
+// own size. The bar for "real" overlap is this workspace's own 99th percentile of pairwise link scores
+// (never below 2) -- the same derive-a-floor-from-the-data convention this file's echoFloor already uses --
+// so it rises automatically where most pairs share several incidental links from a shared template.
+// A near-duplicate PAIR (sharing nearly all of the smaller document's own names -- a real, measured
+// instability: two duplicate documents in the real OHS corpus shared 263 names, and that single outlier
+// pushed the 99th percentile from 5 to 112, silently dropping every real connection) is excluded from
+// what the floor is derived from -- it still unions normally once found, since duplicates genuinely are
+// the same thing, but its extreme score must not set the bar for every other, non-duplicate pair.
+// A lone, unconnected document is never a paradigm -- by definition a paradigm is a pattern across more
+// than one source -- so single-document components are counted only in strayN, never labelled or offered.
 function paradigms(A) {
   const none = { groups: [], strayN: 0 };
   if (A.docs.length < 2) return none;
   const hubFloor = Math.sqrt(A.docs.length) + 1;
-  const pairShared = new Map(); const nonHubNames = {};
-  Object.values(A.names).forEach(n => { if (n.docs.size < 2 || n.docs.size > hubFloor) return; const ds = [...n.docs].sort();
-    ds.forEach(id => { nonHubNames[id] = (nonHubNames[id] || 0) + 1; });
-    for (let i = 0; i < ds.length; i++) for (let j = i + 1; j < ds.length; j++) { const k = ds[i] + '|' + ds[j]; pairShared.set(k, (pairShared.get(k) || 0) + 1); } });
-  const parent = {}; A.docs.forEach(d => { parent[d.id] = d.id; });
-  const find = x => { while (parent[x] !== x) x = parent[x] = parent[parent[x]] || parent[x]; return x; };
-  const union = (a, b) => { a = find(a); b = find(b); if (a !== b) parent[a] = b; };
-  // the bar for "real" overlap is this workspace's own 99th percentile of pair shared-name counts (never
-  // below 2) -- the same derive-a-floor-from-the-data convention this file's echoFloor already uses --
-  // so it rises automatically where most pairs share several generic terms from a shared document template.
+  const K = holoKit(A, { cur: 'pub', srcShort: () => '' });
+  const reach = {}; Object.values(A.names).forEach(n => { reach[n.name] = n.docs.size; });
+  // per-document holograph signatures: bonded pairs, measure-anchor keys, echo partners, names, topic words
+  const docBond = {}, docMeas = {}, docEcho = {}, docNames = {}, docTop = {};
+  A.docs.forEach(d => { docBond[d.id] = new Map(); docMeas[d.id] = new Set(); docEcho[d.id] = new Set(); docNames[d.id] = new Set(); docTop[d.id] = new Map(); });
+  A.sts.forEach(st => { if (st.ref) return; const d = st.doc; const ns = K.namesOf(st);
+    ns.forEach(n => docNames[d].add(n));
+    for (let i = 0; i < ns.length; i++) for (let j = i + 1; j < ns.length; j++) { const a = ns[i], b = ns[j]; if (a.includes(b) || b.includes(a)) continue;
+      if (reach[a] <= hubFloor && reach[b] <= hubFloor) { const k = a < b ? a + '\u0001' + b : b + '\u0001' + a; docBond[d].set(k, (docBond[d].get(k) || 0) + 1); } }
+    K.figsOf(st, ns).forEach(f => { if (f.key && f.anchor) docMeas[d].add(f.key); });
+    st.topics.forEach(w => docTop[d].set(w, (docTop[d].get(w) || 0) + 1)); });
+  A.sts.forEach(st => { if (st.ref) return; (A.echoes[st.id] || []).forEach(e => { const o = A.byId[e.id]; if (o && o.doc !== st.doc) docEcho[st.doc].add(o.doc); }); (A.echoesNear && (A.echoesNear[st.id] || []).forEach(e => { const o = A.byId[e.id]; if (o && o.doc !== st.doc) docEcho[st.doc].add(o.doc); })); });
+  // pair link score: echo 3 (the same claim restated, near-echo graph above), shared measure-anchor 2 (the
+  // same value-slot), shared bond 1 (the same relationship restated). Recurrence alone scores nothing.
+  const pairLink = new Map();
+  const ids = A.docs.map(d => d.id);
+  for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) {
+    const a = ids[i], b = ids[j]; const k = a + '|' + b; let link = 0;
+    if (docEcho[a].has(b) || docEcho[b].has(a)) link += 3;
+    let m = 0; docMeas[a].forEach(v => { if (docMeas[b].has(v)) m++; }); link += 2 * Math.min(m, 2);
+    let bn = 0; docBond[a].forEach((c, p) => { if (docBond[b].has(p)) bn++; }); link += bn;
+    if (link > 0) pairLink.set(k, link);
+  }
   // A near-duplicate PAIR (sharing nearly all of the smaller document's own names -- a real, measured
   // instability: two duplicate documents in the real OHS corpus shared 263 names, and that single outlier
   // pushed the 99th percentile from 5 to 112, silently dropping every real connection) is excluded from
   // what the floor is derived from -- it still unions normally once found, since duplicates genuinely are
-  // the same thing, but its extreme count must not set the bar for every other, non-duplicate pair
-  const pairCounts = [...pairShared.entries()].filter(([k, c]) => { const [a, b] = k.split('|'); return c < 0.8 * Math.min(nonHubNames[a] || 1, nonHubNames[b] || 1); }).map(([, c]) => c).sort((a, b) => a - b);
+  // the same thing, but its extreme score must not set the bar for every other, non-duplicate pair.
+  const pairCounts = [...pairLink.entries()].filter(([k, c]) => { const [a, b] = k.split('|'); const sn = [...docNames[a]].filter(n => docNames[b].has(n)).length; const ex = Math.min(docNames[a].size, docNames[b].size); return !(ex >= 2 && sn >= 0.8 * ex); }).map(([, c]) => c).sort((a, b) => a - b);
   // an extreme percentile needs real sample size to mean anything -- with too few pairs it just lands near
   // the max (measured live: 3 samples [4,4,5] put the "99th percentile" on 5, dropping a real connection);
-  // below that, fall back to the plain, already-verified floor of 2 rather than an unstable estimate
-  const floor = pairCounts.length >= 20 ? Math.max(2, pairCounts[Math.floor(pairCounts.length * 0.99)]) : 2;
-  pairShared.forEach((count, k) => { if (count < floor) return; const [a, b] = k.split('|'); union(a, b); });
+  // below that, fall back to the plain, already-verified floor of 2 rather than an unstable estimate. In a
+  // workspace of four or fewer documents even one structural link is strong evidence, so the floor drops to 1.
+  const floor = A.docs.length <= 4 ? 1 : pairCounts.length >= 20 ? Math.max(2, pairCounts[Math.floor(pairCounts.length * 0.99)]) : 2;
+  const parent = {}; A.docs.forEach(d => { parent[d.id] = d.id; });
+  const find = x => { while (parent[x] !== x) x = parent[x] = parent[parent[x]] || parent[x]; return x; };
+  const union = (a, b) => { a = find(a); b = find(b); if (a !== b) parent[a] = b; };
+  pairLink.forEach((link, k) => { if (link < floor) return; const [a, b] = k.split('|'); union(a, b); });
   const groups = {}; A.docs.forEach(d => { const r = find(d.id); (groups[r] = groups[r] || []).push(d); });
   const comps = Object.values(groups);
   const real = comps.filter(ds => ds.length > 1);
@@ -2965,7 +3000,11 @@ function paradigms(A) {
     // most mentions inside this component, not full containment -- a component can be a chain (A-B via one
     // name, B-C via another) with no single name spanning every member, and still be a real paradigm
     Object.values(A.names).forEach(n => { if (n.docs.size > hubFloor) return; const inside = n.sts.filter(id => idSet.has(A.byId[id].doc)).length; if (inside > bestN) { bestN = inside; best = n; } });
-    return { docs: ds, label: best ? best.name : ds[0].title, n: ds.length };
+    let label = best ? best.name : null;
+    // a topic held together by the holograph may have no name spanning it (the same story told with
+    // different proper names) -- name it by the content word its statements repeat most, else the first title
+    if (!label) { const c = new Map(); ds.forEach(d => (docTop[d.id] || new Map()).forEach((cnt, w) => c.set(w, (c.get(w) || 0) + cnt))); let bw = null, bn = 0; c.forEach((cnt, w) => { if (cnt > bn) { bn = cnt; bw = w; } }); label = bw || ds[0].title; }
+    return { docs: ds, label, n: ds.length };
   }).sort((a, b) => b.n - a.n);
   return { groups: groupsOut, strayN };
 }
