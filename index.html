@@ -119,6 +119,7 @@ select option{background:var(--s1);color:var(--ink)}
       </div>
       <button onClick="{{ openSettings }}" title="Settings — account, sync and sharing" style="flex:none;display:flex;align-items:center;gap:8px;background:none;border:1px solid var(--line2);border-radius:999px;padding:5px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)"><span style="width:8px;height:8px;border-radius:50%;background:{{ acctOn ? 'var(--ok)' : 'var(--dim)' }}"></span>{{ acctLabel }} <span style="font-size:15px">⚙</span></button>
     </div>
+    <div aria-label="Current viewpoint" style="padding:0 20px 8px;font:400 12px/1.5 'Hanken Grotesk';color:var(--mut)">{{ viewpoint }}</div>
   </header>
 
   <div style="max-width:1230px;padding:20px;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
@@ -937,7 +938,12 @@ select option{background:var(--s1);color:var(--ink)}
                   <sc-if value="{{ c.canGround }}" hint-placeholder-val="{{ false }}"><button onClick="{{ c.onGround }}" style="all:unset;cursor:pointer;font:600 13px 'Hanken Grotesk';color:var(--acc);white-space:nowrap" style-hover="text-decoration:underline">{{ c.groundLabel }}</button></sc-if>
                   <button onClick="{{ c.onDelete }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--dim)" style-hover="color:var(--bad)">Remove</button>
                 </div>
-                <textarea key="{{ c.id }}" defaultValue="{{ c.text }}" onChange="{{ c.onText }}" onFocus="{{ c.onFocus }}" placeholder="State one claim…" rows="{{ c.rows }}" style="background:transparent;border:0;resize:vertical;font:400 19px/1.5 'Newsreader',serif;color:var(--ink);outline:none;padding:0;width:100%;box-sizing:border-box"></textarea>
+                <textarea key="{{ c.id }}" defaultValue="{{ c.text }}" onChange="{{ c.onText }}" onFocus="{{ c.onFocus }}" placeholder="Write a thought or claim…" rows="{{ c.rows }}" style="background:transparent;border:0;resize:vertical;font:400 19px/1.5 'Newsreader',serif;color:var(--ink);outline:none;padding:0;width:100%;box-sizing:border-box"></textarea>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                  <select aria-label="Ground or exploratory state" value="{{ c.mode }}" onChange="{{ c.onMode }}" style="background:var(--s2);color:var(--ink);border:1px solid var(--line2);padding:5px;border-radius:6px"><sc-for list="{{ c.modes }}" as="m"><option value="{{ m.v }}">{{ m.label }}</option></sc-for></select>
+                  <sc-if value="{{ c.owned }}"><input aria-label="Who owns this statement" key="{{ c.id + c.mode }}" defaultValue="{{ c.giver }}" onBlur="{{ c.onGiver }}" placeholder="Who is speaking?" style="background:var(--s2);color:var(--ink);border:1px solid var(--line2);padding:5px"><textarea aria-label="Ground and search scope" key="{{ c.id + c.mode }}" defaultValue="{{ c.note }}" onBlur="{{ c.onNote }}" placeholder="Your basis; for absence, what you searched and over what period" style="flex:1;min-width:220px;background:var(--s2);color:var(--ink);border:1px solid var(--line2);padding:5px"></textarea></sc-if>
+                </div>
+                <span style="font:400 12px 'Hanken Grotesk';color:var(--mut)">{{ c.counterNote }}</span>
                 <sc-if value="{{ c.hasEv }}" hint-placeholder-val="{{ false }}">
                   <div style="display:flex;flex-direction:column;gap:8px">
                     <sc-for list="{{ c.ev }}" as="e" hint-placeholder-count="1">
@@ -983,6 +989,7 @@ select option{background:var(--s1);color:var(--ink)}
               </sc-if>
             </sc-for>
             <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px">
+              <button onClick="{{ dr.addThought }}" style="border:1px dashed var(--line2);background:none;border-radius:12px;padding:12px;cursor:pointer;color:var(--mut)">+ Add thought</button>
               <button onClick="{{ dr.addClaim }}" style="border:1px dashed var(--line2);background:none;border-radius:12px;padding:12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink);border-color:var(--acc)">+ Add claim</button>
               <button onClick="{{ dr.addHeading }}" style="border:1px dashed var(--line2);background:none;border-radius:12px;padding:12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink);border-color:var(--acc)">+ Add heading</button>
             </div>
@@ -2308,6 +2315,7 @@ select option{background:var(--s1);color:var(--ink)}
   </sc-if>
 </div>
 </x-dc>
+<script src="holodeck-ground.js"></script>
 <script type="text/x-dc" data-dc-script data-props="{&quot;showTerrainNames&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Display&quot;}}">
 function digammaH(x) { let r = 0; while (x < 6) { r -= 1 / x; x += 1; } const f = 1 / (x * x); return r + Math.log(x) - 0.5 / x - f * (1 / 12 - f * (1 / 120 - f * (1 / 252 - f * (1 / 240 - f / 132)))); }
 const klAdmitH = (bv, B) => Math.max(0, Math.log(B) - Math.log(bv) + digammaH(bv + 1) - digammaH(B + 1));
@@ -3236,7 +3244,7 @@ async function readText(file, M) {
 function MapView(p) {
   const R = React, host = R.useRef(null), ctl = R.useRef(null), cur = R.useRef(p); cur.current = p;
   R.useEffect(() => { let dead = false;
-    import(new URL('holodeck-map.js', location.href).href).then(M => { if (dead || !host.current) return; ctl.current = M.mountMap(host.current, { legend: true, padBottom: 44, onProfile: n => cur.current.onProfile(n) }); ctl.current.set(cur.current.data); }).catch(e => console.warn('holodeck map', e));
+    import(new URL('holodeck-map.js', location.href).href).then(M => { if (dead || !host.current) return; ctl.current = M.mountMap(host.current, { legend: true, padBottom: 44, onProfile: n => cur.current.onProfile(n), onWitness: o => cur.current.onWitness && cur.current.onWitness(o) }); ctl.current.set(cur.current.data); }).catch(e => console.warn('holodeck map', e));
     return () => { dead = true; if (ctl.current) ctl.current.destroy(); ctl.current = null; }; }, []);
   R.useEffect(() => { if (ctl.current) ctl.current.set(p.data); });
   return R.createElement('div', { ref: host, style: { position: 'relative', height: '560px' } });
@@ -3716,14 +3724,19 @@ class Component extends DCLogic {
     const bo = one(bondOnly).sort(byT);
     return { verdict: 'author', why: 'The picture holds ' + c.es.join(' — ') + ' in ' + plural(bo.length, 'statement') + ', but none of them ' + (P0.length ? 'as ' + P0.join('/') : '') + (c.nums.length ? (P0.length ? ' with ' : 'with ') + c.nums.map(x => x.raw).join(', ') : '') + '.', closest: bo[0] ? bo[0].st.id : null, sts: [], con: [], shape };
   }
+  positionSnapshot() { const A = this.analysis(), S = this.state, t = this.filterTuple();
+    return { workspace: this.corpusName(), giver: 'the reader', question: (S.q || '').trim() || (this._fold || []).join(' ') || 'Explore this workspace',
+      frame: VIEW_LABEL[S.view] || S.view || 'Overview', sources: A.docs.filter(d => this._cnt && this._cnt.has(d.id) && !(S.offDocs || {})[d.id]).map(d => ({ id: d.id, title: d.title })),
+      filters: t.filters, timeThrough: S.tMax || null, lens: S.suLens || null, cursor: S.cursor || null, centeredOn: S.sel && (S.sel.name || S.sel.id) || null, capturedAt: new Date().toISOString() }; }
+  positionLine(p) { return p.workspace + ' · ' + p.sources.length + ' selected sources · Question: ' + p.question + ' · Reading as: ' + p.frame + (p.filters.length ? ' · Filters: ' + p.filters.map(f => f.key + '=' + String(f.value) + ' for ' + (f.forWhom?.giver || 'the reader')).join('; ') : '') + (p.timeThrough ? ' · Through ' + p.timeThrough : '') + (p.lens ? ' · Lens: ' + (p.lens.v || p.lens.k) : '') + (p.cursor ? ' · Sequence: ' + (SU_CURSORS.find(c => c.id === p.cursor)?.label || p.cursor) : '') + ' · As of ' + p.capturedAt.slice(0, 10) + ' · Your current reading'; }
   groundClaims(only) { this.flush(); const A = this.analysis(); let n = 0, src = 0, cont = 0, auth = 0;
-    this.setPinData(D => { D.claims.forEach(c => { if (c.kind === 'heading' || !(c.text || '').trim()) return; if (only && !only.includes(c.id)) return;
-      const r = this.groundText(A, c.q || c.text); n++; const keep = (c.pins || []).filter(pid => { const p = D.pins.find(q => q.id === pid); return p && (!p.auto || (c.fixed || []).includes(pid)); });
+    this.setPinData(D => { D.claims.forEach(c => { if (c.kind === 'heading' || c.mode === 'thought' || c.mode === 'hypothesis' || !(c.text || '').trim()) return; if (only && !only.includes(c.id)) return;
+      const r = this.groundText(A, c.text); n++; const keep = (c.pins || []).filter(pid => { const p = D.pins.find(q => q.id === pid); return p && (!p.auto || (c.fixed || []).includes(pid)); });
       const conIds = (r.con || []).map(x => x.st.id); const conWhy = Object.fromEntries((r.con || []).map(x => [x.st.id, x.why]));
       if (r.verdict === 'source' || r.verdict === 'contested' || r.verdict === 'superseded') { src++; if (r.verdict === 'contested') cont++; c.pins = [...new Set([...keep, ...r.sts.map(st => this.ensurePin(D, A, st))])]; }
       else { auth++; c.pins = keep; }
-      c.g = { verdict: keep.length && r.verdict === 'author' ? 'source' : r.verdict, why: r.why, shape: r.shape, closest: r.closest, con: conIds, conWhy, nSrc: r.nSrc || 0, at: Date.now(), ack: false, text: c.text }; }); return D; });
-    if (n) this.toast(n === 1 ? (src ? (cont ? 'Grounded, but contested' : 'Grounded') : 'Attributed to you') : src + ' of ' + n + ' grounded' + (cont ? ', ' + cont + ' contested' : '') + (auth ? ', ' + auth + ' attributed to you' : '')); }
+      c.g = { verdict: keep.length && r.verdict === 'author' ? 'source' : r.verdict, why: r.why, shape: r.shape, closest: r.closest, con: conIds, conWhy, nSrc: r.nSrc || 0, at: Date.now(), position: { ...this.positionSnapshot(), sources: A.docs.map(d => ({id:d.id,title:d.title})), method: 'name, predicate and figure matching across the loaded workspace (not an exhaustive search)' }, ack: false, text: c.text }; }); return D; });
+    if (n) this.toast(n === 1 ? (src ? (cont ? 'Grounded, but contested' : 'Grounded') : 'No supporting match found; choose a ground or keep exploring') : src + ' of ' + n + ' grounded' + (cont ? ', ' + cont + ' contested' : '') + (auth ? ', ' + auth + ' without a supporting match' : '')); }
   groundWriting() { const A = this.analysis(); const t = (this._wText || '').trim(); if (!t) return;
     const sents = (t.replace(/\s+/g, ' ').match(/[^.!?]+(?:[.!?]+["”’)]*|$)/g) || []).map(s => s.trim()).filter(s => s.split(' ').length >= 3);
     const ids = []; this.setPinData(D => { sents.forEach(s => { const c = { id: 'claim-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text: s, pins: [], by: 'writer' }; ids.push(c.id); D.claims.push(c); }); return D; });
@@ -4481,7 +4494,7 @@ class Component extends DCLogic {
       delMsg: 'Delete “' + (curDoc.title || 'Untitled document') + '” and its ' + plural(curDoc.claims ? curDoc.claims.length : 0, 'claim') + '? Pins stay.',
       onDelYes: () => { this.setDocs(X => { const docs = X.docs.filter(d => d.id !== X.cur); return { docs, cur: docs.length ? docs[docs.length - 1].id : null }; }); this.setState({ dDel: null, dFocus: null }); },
       count: plural(P.docs.length, 'document') };
-    const newClaim = () => ({ id: 'claim-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), text: '', pins: [] });
+    const newClaim = (mode = 'claim') => ({ mode, id: 'claim-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), text: '', pins: [] });
     const attach = (cid, pid) => { if (!pid) return; let target = cid; this.setPinData(D => { let c = D.claims.find(x => x.id === target); if (!c) { c = newClaim(); D.claims.push(c); target = c.id; } if (!c.pins.includes(pid)) c.pins.push(pid); return D; }); this.setState({ dFocus: target }); };
     const src = p => p.docTitle + (p.year && !p.docTitle.includes(String(p.year)) ? ' · ' + p.year : '');
     const frag = p => { if (!p.url || /\.pdf($|\?)/i.test(p.url)) return ''; const w = p.excerpt.split(' '); const enc = x => encodeURIComponent(x).replace(/-/g, '%2D'); return p.url.split('#')[0] + '#:~:text=' + (w.length > 10 ? enc(w.slice(0, 5).join(' ')) + ',' + enc(w.slice(-5).join(' ')) : enc(p.excerpt)); };
@@ -4495,23 +4508,28 @@ class Component extends DCLogic {
     const active = P.pins.filter(p => !p.discardedAt), gone = P.pins.filter(p => p.discardedAt);
     const kind = (P.doc && P.doc.kind) || 'brief'; const isTL = kind === 'timeline';
     const statusOf = c => { if (c.kind === 'heading' || !(c.text || '').trim()) return null; const k = this.checkClaimM(c, byId); const g = c.g && (!c.g.text || c.g.text === c.text) ? c.g : null;
+      if (c.mode === 'thought' || c.mode === 'hypothesis') return { v: 'thought', k, g };
+      const owned = HDGround.declaration(c); if (owned) return { v: 'author', k, g, owned };
       if (k.ev.length && k.hard.length) return { v: 'fail', k, g };
-      if (g && (g.verdict === 'contested' || g.verdict === 'refuted')) return { v: g.ack ? (g.verdict === 'refuted' ? 'author' : 'noted') : g.verdict, k, g };
+      if (g && (g.verdict === 'contested' || g.verdict === 'refuted')) return { v: g.ack ? (g.verdict === 'refuted' ? 'untried' : 'noted') : g.verdict, k, g };
       if (g && g.verdict === 'superseded') return { v: 'asof', k, g };
-      if (k.ev.length) return { v: 'source', k, g }; if (g && g.verdict === 'author') return { v: 'author', k, g }; return { v: 'untried', k, g }; };
-    const ST = { source: ['Grounded', 'var(--ok)'], asof: ['Grounded as of its date', 'var(--ok)'], noted: ['Grounded, disagreement noted', 'var(--amber)'], contested: ['Contested', 'var(--amber)'], refuted: ['Held otherwise by the sources', 'var(--bad)'], fail: ['Doesn’t match its excerpts', 'var(--amber)'], author: ['Attributed to you', 'var(--mut)'], untried: ['Not checked yet', 'var(--dim)'] };
+      if (k.ev.length) return { v: 'source', k, g };  return { v: 'untried', k, g }; };
+    const ST = { thought: ['Exploring · excluded from report', 'var(--mut)'], source: ['Source match', 'var(--ok)'], asof: ['Source match as of its date', 'var(--ok)'], noted: ['Source match, disagreement noted', 'var(--amber)'], contested: ['Contested', 'var(--amber)'], refuted: ['Held otherwise by the sources', 'var(--bad)'], fail: ['Doesn’t match its excerpts', 'var(--amber)'], author: ['Attributed to you', 'var(--mut)'], untried: ['Not checked yet', 'var(--dim)'] };
     const dLabel = iso => { if (!iso) return ''; const m = String(iso).match(/^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?/); if (!m) return iso; return (m[3] ? +m[3] + ' ' : '') + (m[2] ? MON_N[+m[2]] + ' ' : '') + m[1]; };
     const claimDate = c => c.date || (() => { const p = (c.pins || []).map(pid => byId[pid]).find(Boolean); const d = p && A.docById[p.docId]; return d ? (d.published || (d.year ? String(d.year) : '')) : ''; })();
     let ci = 0;
     const claims = P.claims.filter(inFold).map(c => { const isHead = c.kind === 'heading'; if (!isHead) ci++; const st = statusOf(c); const ev = (c.pins || []).map(pid => byId[pid]).filter(Boolean);
       const cl = st && st.v === 'author' && st.g && st.g.closest ? A.byId[st.g.closest] : null;
-      const why = !st ? '' : st.v === 'fail' ? st.k.hard.join(' · ') : st.v === 'untried' ? 'Press Ground: it is checked against the picture for every source that holds it and every source that holds it otherwise.' : st.v === 'author' ? ((st.g ? st.g.why : '') + ' It will be marked as your own claim.') : (st.g ? st.g.why : 'Backed by the excerpts you attached. Press Ground to test it against every source.');
+      const why = !st ? '' : st.owned ? HDGround.summary(st.owned) : st.v === 'thought' ? 'Yours to explore. Promote when you are ready to declare its ground.' : st.v === 'fail' ? st.k.hard.join(' · ') : st.v === 'untried' ? 'Ground can look for matching names, relations and figures in the loaded workspace. No match declares no ownership: pin evidence, own your statement, or keep it as a thought.' : st.v === 'author' ? ((st.g ? st.g.why : '') + ' It will be marked as your own claim.') : ((st.g ? st.g.why : 'Attached excerpts; a citation alone does not establish entailment.') + (st.g?.position ? ' Checked ' + st.g.position.sources.length + ' loaded sources by name, predicate and figure matching; this is not an exhaustive search.' : ''));
       const conL = st && st.g && st.g.con ? st.g.con.map(id => A.byId[id]).filter(Boolean).map(o => ({ text: short(o.text, 280), src: this.srcShort(A, o) + (this.dateOf(A, o).label ? ', ' + this.dateOf(A, o).label : ''), why: (st.g.conWhy || {})[o.id] || '', onOpen: () => this.read(o.doc, o.id) })) : [];
       const ackable = st && (st.v === 'contested' || st.v === 'refuted');
+      const setDeclaration = patch => this.setPinData(D => { const x = D.claims.find(y => y.id === c.id); if (!x) return D; x.mode = patch.mode || x.mode || 'claim'; if (['analysis', 'account', 'position', 'absence'].includes(x.mode)) { const old = x.declaration || {}; if (x.declaration) x.declarations = [...(x.declarations || []), x.declaration]; x.declaration = HDGround.declare(x, x.mode, patch.giver !== undefined ? patch.giver : old.giver || 'Me (workspace author)', patch.note !== undefined ? patch.note : old.note || '', this.positionSnapshot()); } else { if (x.declaration) x.declarations = [...(x.declarations || []), x.declaration]; delete x.declaration; } return D; });
       const setAck = on => this.setPinData(D => { const x = D.claims.find(y => y.id === c.id); if (x && x.g) x.g.ack = on; return D; });
-      return { isHead, isClaim: !isHead, id: c.id, n: 'Claim ' + ci, text: c.text, rows: String(Math.max(2, Math.ceil((c.text || '').length / 58))), bd: c.id === focus ? '#8b5cf6' : 'var(--line)', evCount: ev.length ? plural(ev.length, 'excerpt') : '', hasEv: ev.length > 0,
+      return { isHead, isClaim: !isHead, id: c.id, n: (HDGround.modes[c.mode] || 'Claim') + ' ' + ci,
+        mode: c.mode || 'claim', modes: Object.entries(HDGround.modes).map(([v,label]) => ({v,label})), onMode: e => { this.flush(); setDeclaration({mode: e.target.value}); }, owned: ['analysis','account','position','absence'].includes(c.mode), giver: c.declaration?.giver || '', note: c.declaration?.note || '', onGiver: e => setDeclaration({giver:e.target.value}), onNote: e => setDeclaration({note:e.target.value}),
+        counterNote: conL.length ? '' : 'No counter-ground has been admitted' + (c.g?.position ? ' in this check of ' + c.g.position.sources.length + ' loaded sources.' : ' yet.'), text: c.text, rows: String(Math.max(2, Math.ceil((c.text || '').length / 58))), bd: c.id === focus ? '#8b5cf6' : 'var(--line)', evCount: ev.length ? plural(ev.length, 'excerpt') : '', hasEv: ev.length > 0,
         stLabel: st ? ST[st.v][0] : '', stColor: st ? ST[st.v][1] : 'var(--dim)', why, hasStatus: !!st, byLabel: c.by === 'model' ? 'Model' : c.by === 'template' ? 'Quoted' : '', hasBy: c.by === 'model' || c.by === 'template',
-        canGround: !isHead && !!(c.text || '').trim(), groundLabel: c.g ? 'Re-test' : 'Ground', hasCon: conL.length > 0, con: conL, conTitle: st && st.v === 'refuted' ? 'Held otherwise' : 'Held otherwise · ' + conL.length, ackable, ackLabel: st && st.v === 'refuted' ? 'Keep it as my claim' : 'Keep it, and footnote the disagreement', onAck: () => setAck(true), hasUnack: !!(st && st.g && st.g.ack), onUnack: () => setAck(false), shape: st && st.g && st.g.shape ? st.g.shape : '', hasShape: !!(st && st.g && st.g.shape), onGround: e => { if (e && e.stopPropagation) e.stopPropagation(); this.groundClaims([c.id]); },
+        canGround: !isHead && c.mode !== 'thought' && c.mode !== 'hypothesis' && !!(c.text || '').trim(), groundLabel: c.g ? 'Re-test' : 'Ground', hasCon: conL.length > 0, con: conL, conTitle: st && st.v === 'refuted' ? 'Held otherwise' : 'Held otherwise · ' + conL.length, ackable, ackLabel: st && st.v === 'refuted' ? 'Keep as hypothesis' : 'Keep it, and footnote the disagreement', onAck: () => { if (st && st.v === 'refuted') setDeclaration({mode:'hypothesis'}); else setAck(true); }, hasUnack: !!(st && st.g && st.g.ack), onUnack: () => setAck(false), shape: st && st.g && st.g.shape ? st.g.shape : '', hasShape: !!(st && st.g && st.g.shape), onGround: e => { if (e && e.stopPropagation) e.stopPropagation(); this.groundClaims([c.id]); },
         hasClosest: !!cl, closest: cl ? short(cl.text, 260) : '', closestSrc: cl ? this.srcShort(A, cl) + (this.dateOf(A, cl).label ? ', ' + this.dateOf(A, cl).label : '') : '',
         onUseClosest: () => { if (!cl) return; this.setPinData(D => { const x = D.claims.find(y => y.id === c.id); if (x) { x.pins = [this.ensurePin(D, A, cl)]; delete x.g; } return D; }); },
         isTL: isTL && !isHead, date: c.date || '', dateHint: isTL && !c.date ? dLabel(claimDate(c)) : '', onDate: e => { const v = e.target.value; this.later('date:' + c.id, () => this.setPinData(D => { const x = D.claims.find(y => y.id === c.id); if (x) x.date = v; return D; })); },
@@ -4523,20 +4541,21 @@ class Component extends DCLogic {
           onDetach: () => this.setPinData(D => { const x = D.claims.find(y => y.id === c.id); if (x) x.pins = x.pins.filter(q => q !== p.id); return D; }) })) }; });
     // ---- output
     const docTitle = (P.doc && P.doc.title) || 'Untitled document';
-    let blocks = P.claims.filter(c => (c.text || '').trim() && inFold(c)); if (isTL) blocks = blocks.filter(c => c.kind !== 'heading').map((c, i) => ({ c, i, d: claimDate(c) })).sort((a, b) => (a.d || '9999').localeCompare(b.d || '9999') || a.i - b.i).map(x => x.c);
+    let blocks = P.claims.filter(c => c.mode !== 'thought' && c.mode !== 'hypothesis' && (c.text || '').trim() && inFold(c)); if (isTL) blocks = blocks.filter(c => c.kind !== 'heading').map((c, i) => ({ c, i, d: claimDate(c) })).sort((a, b) => (a.d || '9999').localeCompare(b.d || '9999') || a.i - b.i).map(x => x.c);
     const notes = []; const noteKey = {}; const noteN = (key, text, url) => { if (!noteKey[key]) { notes.push({ text, url }); noteKey[key] = notes.length; } return noteKey[key]; };
     const AUTH = 'The writer’s own claim. The sources were searched and hold nothing that supports it.';
     let nFail = 0, nUntried = 0, nAuthor = 0, nSrc = 0, nCont = 0;
     const items = blocks.map(c => { if (c.kind === 'heading') return { isH: true, isP: false, isT: false, text: c.text.trim() };
       const st = statusOf(c); if (st.v === 'fail') nFail++; if (st.v === 'untried') nUntried++; if (st.v === 'author') nAuthor++; if (st.v === 'source' || st.v === 'asof' || st.v === 'noted') nSrc++; if (st.v === 'contested' || st.v === 'refuted') nCont++;
-      const dis = (st.v === 'noted' || st.v === 'asof') && st.g && st.g.con ? st.g.con.map(id => A.byId[id]).filter(Boolean).slice(0, 3) : []; const disN = dis.map(o => noteN('dis:' + o.id, (st.v === 'asof' ? 'Later, ' : 'Disputed: ') + this.srcShort(A, o) + (this.dateOf(A, o).label ? ' (' + this.dateOf(A, o).label + ')' : '') + ' ' + ((st.g.conWhy || {})[o.id] || 'holds it otherwise') + ': “' + short(o.text, 200) + '”', (A.docById[o.doc] || {}).url || ''));
-      const refs = [...(st.v === 'source' || st.v === 'fail' || st.v === 'asof' || st.v === 'noted' ? st.k.ev.map(p => noteN(p.id, '“' + short(p.excerpt, 240) + '” ' + p.docTitle + (p.pub && !p.docTitle.includes(p.pub) ? ', ' + p.pub : !p.pub && p.year && !p.docTitle.includes(String(p.year)) ? ', ' + p.year : '') + '.', p.url)) : st.v === 'author' ? [noteN('author', AUTH, '')] : []), ...disN];
+      const dis = (st.v === 'author' || st.v === 'noted' || st.v === 'asof') && st.g && st.g.con ? st.g.con.map(id => A.byId[id]).filter(Boolean).slice(0, 3) : []; const disN = dis.map(o => noteN('dis:' + o.id, (st.v === 'asof' ? 'Later, ' : 'Disputed: ') + this.srcShort(A, o) + (this.dateOf(A, o).label ? ' (' + this.dateOf(A, o).label + ')' : '') + ' ' + ((st.g.conWhy || {})[o.id] || 'holds it otherwise') + ': “' + short(o.text, 200) + '”', (A.docById[o.doc] || {}).url || ''));
+      const refs = [...(st.v === 'source' || st.v === 'fail' || st.v === 'asof' || st.v === 'noted' ? st.k.ev.map(p => noteN(p.id, '“' + short(p.excerpt, 240) + '” ' + p.docTitle + (p.pub && !p.docTitle.includes(p.pub) ? ', ' + p.pub : !p.pub && p.year && !p.docTitle.includes(String(p.year)) ? ', ' + p.year : '') + '.', p.url)) : st.v === 'author' ? [noteN('author:' + c.id, st.owned ? HDGround.summary(st.owned) : AUTH, ''), ...st.k.ev.map(p => noteN(p.id, 'Context for the declared statement (not a claim of entailment): “' + short(p.excerpt, 240) + '” ' + p.docTitle, p.url))] : []), ...(st.g?.position ? [noteN('check:' + c.id, 'Ground check: ' + this.positionLine(st.g.position) + ' · Method: ' + st.g.position.method, '')] : []), ...disN];
       return { isH: false, isP: !isTL, isT: isTL, text: c.text.trim(), refs, sup: refs.join(','), date: dLabel(claimDate(c)), deco: st.v === 'fail' ? 'underline wavy var(--amber)' : st.v === 'untried' ? 'underline dotted var(--dim)' : 'none', v: st.v }; });
     const blocked = nFail + nUntried + nCont > 0; const hasOut = items.some(x => !x.isH);
     const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const asMd = () => ['# ' + docTitle, '', ...items.map(x => x.isH ? '## ' + x.text + '\n' : (x.isT ? '- **' + (x.date || 'Undated') + '** ' : '') + x.text + x.refs.map(n => '[^' + n + ']').join('') + (x.isT ? '' : '\n')), '', ...notes.map((n, i) => '[^' + (i + 1) + ']: ' + n.text + (n.url ? ' ' + n.url : ''))].join('\n');
-    const asTxt = () => [docTitle, '', ...items.map(x => x.isH ? x.text.toUpperCase() + '\n' : (x.isT ? (x.date || 'Undated') + ' - ' : '') + x.text + x.refs.map(n => ' [' + n + ']').join('') + (x.isT ? '' : '\n')), '', 'Notes', ...notes.map((n, i) => '[' + (i + 1) + '] ' + n.text + (n.url ? ' ' + n.url : ''))].join('\n');
-    const asHtml = () => '<h1>' + esc(docTitle) + '</h1>' + (isTL ? '<table style="border-collapse:collapse">' : '') + items.map(x => { const sup = x.refs.length ? '<sup>' + x.refs.join(',') + '</sup>' : ''; return x.isH ? '<h2>' + esc(x.text) + '</h2>' : x.isT ? '<tr><td style="vertical-align:top;padding:4px 16px 4px 0;white-space:nowrap"><b>' + esc(x.date || 'Undated') + '</b></td><td style="padding:4px 0">' + esc(x.text) + sup + '</td></tr>' : '<p>' + esc(x.text) + sup + '</p>'; }).join('') + (isTL ? '</table>' : '') +
+    const reportPosition = this.positionLine(this.positionSnapshot());
+    const asMd = () => ['# ' + docTitle, '', reportPosition, '', ...items.map(x => x.isH ? '## ' + x.text + '\n' : (x.isT ? '- **' + (x.date || 'Undated') + '** ' : '') + x.text + x.refs.map(n => '[^' + n + ']').join('') + (x.isT ? '' : '\n')), '', ...notes.map((n, i) => '[^' + (i + 1) + ']: ' + n.text + (n.url ? ' ' + n.url : ''))].join('\n');
+    const asTxt = () => [docTitle, '', reportPosition, '', ...items.map(x => x.isH ? x.text.toUpperCase() + '\n' : (x.isT ? (x.date || 'Undated') + ' - ' : '') + x.text + x.refs.map(n => ' [' + n + ']').join('') + (x.isT ? '' : '\n')), '', 'Notes', ...notes.map((n, i) => '[' + (i + 1) + '] ' + n.text + (n.url ? ' ' + n.url : ''))].join('\n');
+    const asHtml = () => '<h1>' + esc(docTitle) + '</h1><p>' + esc(reportPosition) + '</p>' + (isTL ? '<table style="border-collapse:collapse">' : '') + items.map(x => { const sup = x.refs.length ? '<sup>' + x.refs.join(',') + '</sup>' : ''; return x.isH ? '<h2>' + esc(x.text) + '</h2>' : x.isT ? '<tr><td style="vertical-align:top;padding:4px 16px 4px 0;white-space:nowrap"><b>' + esc(x.date || 'Undated') + '</b></td><td style="padding:4px 0">' + esc(x.text) + sup + '</td></tr>' : '<p>' + esc(x.text) + sup + '</p>'; }).join('') + (isTL ? '</table>' : '') +
       '<hr><ol style="font-size:0.85em">' + notes.map(n => '<li>' + esc(n.text) + (n.url ? ' <a href="' + esc(n.url) + '">' + esc(n.url) + '</a>' : '') + '</li>').join('') + '</ol>';
     const fname = ext => (docTitle.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-').toLowerCase() || 'document') + ext;
     const dl = (txt, type, ext) => { const b = new Blob([txt], { type }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = fname(ext); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); };
@@ -4557,7 +4576,7 @@ class Component extends DCLogic {
       onRun: () => this.generate(), isModel: gm === 'model', llmUrl: this.llmCfg().url, llmModel: this.llmCfg().model, onLlmUrl: e => this.setLlm({ url: e.target.value.trim() }), onLlmModel: e => this.setLlm({ model: e.target.value.trim() }), onLlmTest: () => this.testLLM(), llmTest: S.llmTest || 'Runs on your machine. Ollama (…:11434) or any OpenAI-compatible server (LM Studio …:1234/v1). Nothing is sent anywhere else.', runLabel: S.gen ? 'Working…' : 'Fill the document', op: S.gen ? 0.6 : 1,
       hint: (gk === 'timeline' ? 'Finds dated statements that name the subject, one per source, in date order.' : 'Runs four searches (who leads it, budget, what audits found, how it responded) and adds each section with its excerpts.') + (gm === 'model' ? ' Your local model writes each sentence from those excerpts only; the same mechanical check runs on everything it writes.' : ' Each claim is a quote, so every word comes from the source.') };
     const wr = { wKey: String(S.wKey || 0), onText: e => { const had = !!(this._wText || '').trim(); this._wText = e.target.value; if (had !== !!this._wText.trim()) this.forceUpdate(); }, onGround: () => this.groundWriting(), op: (this._wText || '').trim() ? 1 : 0.5 };
-    return { gen, wr, out, docBar, dr: { claims, noClaims: !claims.length, isTL, addClaim: () => { const c = newClaim(); this.setPinData(D => { D.claims.push(c); return D; }); this.setState({ dFocus: c.id }); },
+    return { gen, wr, out, docBar, dr: { addThought: () => { const c = newClaim('thought'); this.setPinData(D => { D.claims.push(c); return D; }); this.setState({dFocus: c.id}); }, claims, noClaims: !claims.length, isTL, addClaim: () => { const c = newClaim(); this.setPinData(D => { D.claims.push(c); return D; }); this.setState({ dFocus: c.id }); },
       addHeading: () => this.setPinData(D => { D.claims.push({ id: 'claim-' + Date.now().toString(36), kind: 'heading', text: '', pins: [] }); return D; }),
       pins: active.map(card), noPins: !active.length, pinCount: String(active.length), hasGone: gone.length > 0, showGone: !!S.dShowGone, gone: gone.map(card),
       goneLabel: (S.dShowGone ? '− ' : '+ ') + plural(gone.length, 'unpinned excerpt') + ' · kept, can be restored', toggleGone: () => this.setState({ dShowGone: !S.dShowGone }) } };
@@ -5769,6 +5788,7 @@ class Component extends DCLogic {
     _m('header+chips+extra');
     return {
       ...this._extra,
+      viewpoint: this.positionLine(this.positionSnapshot()),
 ...svVals, hasFacets: false, srcGroups: svVals.svCardGroups.map(g => ({ ...g, ...this.capL('sg:' + g.label, g.items, 60) })), srcFacets,
       topic: topicStr, hasTopic: this._fold.length > 0, onTopic: e => this.setMeta('__topic', e.target.value),
       inferredTopic: inferred ? inferred.name : '', topicPlaceholder: inferred ? 'e.g. ' + inferred.name : 'e.g. the bridge collapse',
@@ -5904,7 +5924,7 @@ class Component extends DCLogic {
       for (let i = 0; i < pool.length; i++) for (let j = i + 1; j < pool.length; j++) { const a = S[i], b = S[j]; let k = 0; const [sm, lg] = a.size < b.size ? [a, b] : [b, a]; sm.forEach(v => { if (lg.has(v)) k++; }); if (k && dmdCo(k, a.size, b.size, F.length)) edges.push({ a: pool[i].name, b: pool[j].name, c: k }); }
       M = this._mapMemo = { key, nodes: pool.map(n => ({ n: n.name, c: n.sts.length, color: TYPE_C[n.type] })), edges, occ: new Map(pool.map(n => [n.name, n.sts.map(x => ({ doc: x.doc, id: x.id, t: short(x.text, 240) }))])) };
     }
-    return h(MapView, { data: { sig: M.key, nodes: M.nodes, edges: M.edges, docs, occ: M.occ, sel: selName || null }, onProfile: id => this.setState({ sel: { type: 'name', id }, selAll: false, pfIdx: 0, pfAll: false, view: 'profile', readDoc: null }) });
+    return h(MapView, { onWitness: o => this.read(o.doc, o.id), data: { sig: M.key, nodes: M.nodes, edges: M.edges, docs, occ: M.occ, sel: selName || null }, onProfile: id => this.setState({ sel: { type: 'name', id }, selAll: false, pfIdx: 0, pfAll: false, view: 'profile', readDoc: null }) });
   }
 
   orbitUi(A, selName) {

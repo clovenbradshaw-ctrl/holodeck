@@ -76,3 +76,31 @@ organs, layout library, ladder records). Nothing here changes: ingest,
 hang, and the local finder are untouched, and the engine-reader
 relationship above is as measured. Builds that need generated artifacts
 route through Penelope's doors, not through ingest.
+
+## Located statements (2026-10-02)
+
+The header shows the current question, workspace, selected source count and view.
+The map names its center and why it was selected; click a connecting line to see
+shared-statement witnesses and open them in their sources. Map distance describes
+those counts, not ownership, coordination or control. Grouping links with no
+available witness say so.
+
+Draft distinguishes thoughts and hypotheses from source claims, owned analysis,
+witnessed accounts, positions and documented absence. Thoughts and hypotheses
+remain editable and are excluded from report exports. A failed source match never
+declares authorship. Ownership is a deliberate choice with a named giver; absence
+also requires a search note, corpus and question. Declarations retain their
+question, frame, source identities and date; superseded declarations remain in
+the document record. Changing the sentence invalidates its declaration. Owned
+statements export with their declaration rather than a generic author footnote.
+Ownership declares responsibility; it does not certify truth or source entailment.
+
+Ground checks still use the existing name/predicate/figure matcher over the loaded
+workspace. Their recorded scope says so; they are not exhaustive searches. Empty
+counter-ground means no counter-ground was admitted, not that none exists.
+
+Run the grounding regression battery with:
+
+```bash
+node --test holodeck-ground.test.mjs holodeck-holons.test.mjs holodeck-doors.test.mjs holodeck-heimdall.test.mjs
+```
