@@ -110,6 +110,38 @@ The roster filters reasoning models out of **both** lanes, by name (`isThinkingM
 
 Settings → **Compute workers · Heimdall**: mint a heimdall compute invite under your own Matrix account. The fleet room is born with a short local alias, so the invite link is just `?r=<code>` — something you can actually type by hand on a remote computer (`clovenbradshaw-ctrl.github.io/heimdall/?r=h7q2x`). Record the worker's 6-digit pairing code into the account's `org.heimdall.codes` registry — the same registry the heimdall site confirms acceptance against, so an invite minted here is confirmable there and vice versa. Pure logic in `holodeck-heimdall.js` (the fold's `heimdall-invite.js` pattern); the crossings live in `fold-net.js`.
 
+## Full-screen Chat · Fold · Notebook
+
+Open **Ask**, then choose **Chat**, **Fold**, or **Notebook**. **Full screen** hides the workspace navigation and reading controls; Escape restores them. The workspace name and source count remain visible. Switching modes preserves the conversation, artifacts and notebook edits. Direct entry: `?work=chat`, `?work=fold`, or `?work=notebook`; add `&fullscreen=1` for a focused workspace.
+
+**Chat** uses the existing source-grounded conversational reader. **Fold** uses the existing artifact pipeline and keeps its preview, versions and evidence ledger. **Notebook** now uses a genuine persistent Jupyter/IPython kernel: variables survive between cells, execution counts follow actual execution order, Python exceptions and rich outputs are recorded, matplotlib figures appear inline, and Markdown cells remain editable.
+
+From this Holodeck checkout, install Python dependencies once and start the local runtime:
+
+```bash
+python3 -m pip install -r tools/notebook-requirements.txt
+npm run notebook
+```
+
+Open `http://127.0.0.1:8900/?work=notebook&fullscreen=1`. Node serves the app and notebook API together. For another interpreter, port, or ledger directory:
+
+```bash
+npm run notebook -- --python /path/to/python --port 8910 --dir /path/to/notebooks --by human:your-name
+```
+
+- Add code or Markdown cells. Shift+Enter saves, runs and advances; Ctrl/Cmd+Enter stays in the cell. **Run all** saves pending edits before executing in cell order and stops on the first error. **Restart & run all** starts a fresh kernel first.
+- **Interrupt** stops a running cell. **Restart kernel** clears variables while retaining the recorded output history. Each notebook tab and each Holodeck workspace has its own kernel and ledger. Kernels restart empty after server shutdown; notebooks and outputs remain on disk.
+- **Upload data** or drop files into the notebook. Original bytes are available under `./data/<filename>`. Install any additional scientific packages in the selected Python environment.
+- Import a `.ipynb` into a new notebook tab; imported outputs are marked as produced elsewhere and are not presented as runs performed here. Export produces nbformat 4.5 with real Jupyter MIME outputs, execution counts, kernel metadata and run seals. Figures and HTML tables round-trip; HTML output renders in a sandboxed iframe.
+- Cell edits are backed up in this browser while you type. Running, switching notebook tabs, or exporting saves edits to the local ledger. The page re-verifies its append-only notebook, claim and workspace chains. Each run records its code, input hashes, outputs, kernel execution count and preceding run seal.
+- Forking preserves the parent's sealed prefix and starts a separate empty kernel; run cells in the fork to rebuild its variables. Human claim promotions remain with the parent.
+
+The Python runtime is a local ipykernel worker per conversation, using Jupyter's in-process message transport. It runs your code with your machine's permissions. It supports Python, not arbitrary remote Jupyter servers or custom kernels. It does not claim the legacy ant-colony analysis, learned-skills UI, or reproducible bundle export; those remain features of the separate EOReader7 notebook server. The old `NOTEBOOK-FALSIFICATION.md` documents that earlier server's measured behavior, not this kernel integration.
+
+To connect a hosted Holodeck page, start the runtime with `--origin https://your-holodeck-host` and set `localStorage['hd:notebook']` to its loopback URL (or pass `?notebook=http://127.0.0.1:8900`). The runtime rejects other external origins and requires a custom header for executable requests.
+
+Verification: `npm run test:notebook`, `node vendor-sync.mjs --check`, and `node tests/fullscreen-notebook.browser.mjs` (Playwright Chromium required). The browser test accepts `PLAYWRIGHT_MODULE`, `CHROMIUM_PATH` and `REACT_VENDOR_DIR` when these dependencies are supplied separately.
+
 ## The engine reads first
 
 Each added document is posted to eoreader7's `POST /v1/read` (model-free; tries `localStorage hd:engine`, then `127.0.0.1:11436`, then `:11476`). The replay draws the engine's own events under an **Engine** stage, and its beings are a *witness* beside the Holodeck's finder: it adds lowercase names and recurring descriptions the local finder cannot see (`kutuzov`, `the contractor`, `the camp`), after the same hygiene every local name passes, and Fort gets an `engine` ant that votes *real* when the engine also admitted a name and stays silent otherwise. If the proxy is down the document is read locally and the Added card says so.
