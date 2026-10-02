@@ -1420,7 +1420,7 @@ select option{background:var(--s1);color:var(--ink)}
                 <div style="display:grid;grid-template-columns:1.4fr auto 1.8fr;gap:10px;align-items:center;padding:5px 0;border-top:1px solid var(--line)">
                   <span style="font:600 13px 'Hanken Grotesk';color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.star }} {{ r.rel }}</span>
                   <span style="font:600 10px 'JetBrains Mono';border:1px solid var(--line2);border-radius:99px;padding:1px 7px;color:var(--mut);white-space:nowrap">{{ r.standing }}</span>
-                  <span style="font:400 13px 'Hanken Grotesk';color:var(--ink2);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ r.vals }}">{{ r.vals }}</span>
+                  <span style="font:400 13px 'Hanken Grotesk';color:var(--ink2);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.vals }}</span>
                 </div>
               </sc-for>
             </div>
@@ -1587,7 +1587,7 @@ select option{background:var(--s1);color:var(--ink)}
               </div>
               <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:2px 12px;max-height:280px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px">
                 <sc-for list="{{ srcT }}" as="s" hint-placeholder-count="5">
-                  <button title="{{ s.tip }}" onClick="{{ s.onClick }}" onDoubleClick="{{ s.onOnly }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;color:{{ s.col }};font:500 13px 'Hanken Grotesk';min-width:0" style-hover="background:var(--s2)"><span style="flex:none;width:12px;height:12px;border-radius:3px;border:1.5px solid #8b5cf6;background:{{ s.box }}"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.tip }}</span></button>
+                  <button onClick="{{ s.onClick }}" onDoubleClick="{{ s.onOnly }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;color:{{ s.col }};font:500 13px 'Hanken Grotesk';min-width:0" style-hover="background:var(--s2)"><span style="flex:none;width:12px;height:12px;border-radius:3px;border:1.5px solid #8b5cf6;background:{{ s.box }}"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.tip }}</span></button>
                 </sc-for>
               </div>
             </sc-if>
@@ -1697,7 +1697,7 @@ select option{background:var(--s1);color:var(--ink)}
                   <div style="display:flex;flex-direction:column;gap:6px;padding:12px 0;border-top:1px solid var(--line)">
                     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px"><span style="font:600 14px/1.35 'Hanken Grotesk';color:var(--ink);min-width:0">{{ x.src }}</span><span style="flex:none;white-space:nowrap;font:500 12px 'JetBrains Mono';color:var(--mut)">{{ x.date }}</span></div>
                     <p style="margin:0;font:400 17px/1.55 'Newsreader',serif;color:var(--ink);text-wrap:pretty"><sc-for list="{{ x.parts }}" as="p" hint-placeholder-count="1"><span style="font-weight:{{ p.fw }};background:{{ p.bg }};border-radius:3px">{{ p.t }}</span></sc-for></p>
-                    <div style="display:flex;gap:14px;align-items:baseline;font:400 13px 'Hanken Grotesk';color:var(--dim)"><span style="flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ x.by }}">{{ x.by }}</span><button onClick="{{ x.onPin }}" title="Pin this passage for the Draft" style="all:unset;flex:none;white-space:nowrap;cursor:pointer;font:600 13px 'Hanken Grotesk';color:{{ x.pinColor }}" style-hover="text-decoration:underline">{{ x.pinLabel }}</button><button onClick="{{ x.onRead }}" style="all:unset;flex:none;white-space:nowrap;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="text-decoration:underline">Read in context →</button></div>
+                    <div style="display:flex;gap:14px;align-items:baseline;font:400 13px 'Hanken Grotesk';color:var(--dim)"><span style="flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" >{{ x.by }}</span><button onClick="{{ x.onPin }}" title="Pin this passage for the Draft" style="all:unset;flex:none;white-space:nowrap;cursor:pointer;font:600 13px 'Hanken Grotesk';color:{{ x.pinColor }}" style-hover="text-decoration:underline">{{ x.pinLabel }}</button><button onClick="{{ x.onRead }}" style="all:unset;flex:none;white-space:nowrap;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="text-decoration:underline">Read in context →</button></div>
                   </div>
                 </sc-for>
                 <sc-if value="{{ qa.hasMoreBoth }}" hint-placeholder-val="{{ false }}"><button onClick="{{ qa.onMoreBoth }}" style="all:unset;cursor:pointer;padding-top:8px;font:500 14px 'Hanken Grotesk';color:var(--acc)">{{ qa.moreBoth }}</button></sc-if>
@@ -1770,7 +1770,7 @@ select option{background:var(--s1);color:var(--ink)}
                 <div style="display:flex;flex-direction:column;gap:6px;padding:12px 0;border-top:1px solid var(--line)">
                   <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px"><span style="font:600 14px/1.35 'Hanken Grotesk';color:var(--ink);min-width:0">{{ x.src }}</span><span style="flex:none;white-space:nowrap;font:500 12px 'JetBrains Mono';color:var(--mut)">{{ x.date }}</span></div>
                   <p style="margin:0;font:400 17px/1.55 'Newsreader',serif;color:var(--ink);text-wrap:pretty"><sc-for list="{{ x.parts }}" as="p" hint-placeholder-count="1"><span style="font-weight:{{ p.fw }};background:{{ p.bg }};border-radius:3px">{{ p.t }}</span></sc-for></p>
-                  <div style="display:flex;gap:14px;align-items:baseline;font:400 13px 'Hanken Grotesk';color:var(--dim)"><span style="flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ x.by }}">{{ x.by }}</span><button onClick="{{ x.onPin }}" title="Pin this passage for the Draft" style="all:unset;flex:none;white-space:nowrap;cursor:pointer;font:600 13px 'Hanken Grotesk';color:{{ x.pinColor }}" style-hover="text-decoration:underline">{{ x.pinLabel }}</button><button onClick="{{ x.onRead }}" style="all:unset;flex:none;white-space:nowrap;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="text-decoration:underline">Read in context →</button></div>
+                  <div style="display:flex;gap:14px;align-items:baseline;font:400 13px 'Hanken Grotesk';color:var(--dim)"><span style="flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" >{{ x.by }}</span><button onClick="{{ x.onPin }}" title="Pin this passage for the Draft" style="all:unset;flex:none;white-space:nowrap;cursor:pointer;font:600 13px 'Hanken Grotesk';color:{{ x.pinColor }}" style-hover="text-decoration:underline">{{ x.pinLabel }}</button><button onClick="{{ x.onRead }}" style="all:unset;flex:none;white-space:nowrap;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="text-decoration:underline">Read in context →</button></div>
                 </div>
               </sc-for>
             </div>
@@ -2406,6 +2406,15 @@ select option{background:var(--s1);color:var(--ink)}
             </sc-if>
           </section>
           <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
+            <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Reading engine · eoreader7</span>
+            <span style="font:400 13px/1.5 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">A source added now is read by the eoreader7 engine (model-free) when it is reachable; a source already in this workspace was read with the surface’s own reader only. Point at the engine here and re-read what is already here, without re-adding it. Leave blank for the defaults <code>http://127.0.0.1:11436</code> and <code>:11476</code>.</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <input defaultValue="{{ ing.engine }}" onChange="{{ ing.onEngine }}" placeholder="http://127.0.0.1:11436" style="flex:1 1 200px;min-width:0;background:var(--s2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font:500 13px 'JetBrains Mono';color:var(--ink);outline:none"></input>
+              <button onClick="{{ ing.engineReadExisting }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:6px 14px;cursor:pointer;font:600 14px 'Hanken Grotesk';white-space:nowrap">{{ ing.engineBtn }}</button>
+            </div>
+            <sc-if value="{{ ing.engineNote }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px/1.45 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">{{ ing.engineNote }}</span></sc-if>
+          </section>
+          <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
             <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">YouTube captions · yt-dlp on this machine</span>
             <span style="font:400 13px/1.5 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">The browser cannot read YouTube, and neither can Pyodide — its networking is the browser’s own fetch, under the same CORS rules. <code>tools/ytdl-helper.py</code> runs yt-dlp natively beside eoreader7, so captions are read from your own machine, not a relay. Leave blank for the default <code>http://127.0.0.1:11450</code>.</span>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -2466,6 +2475,7 @@ select option{background:var(--s1);color:var(--ink)}
           <div style="display:flex;flex-direction:column;gap:12px">
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <label style="display:inline-flex;align-items:center;border:1px solid var(--line2);border-radius:999px;padding:8px 16px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)">Upload files<input type="file" multiple="{{ true }}" onChange="{{ onFiles }}" style="display:none"></label>
+              <label style="display:inline-flex;align-items:center;border:1px solid var(--line2);border-radius:999px;padding:8px 16px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)">Choose a folder<input id="fold-folder-input" data-fold-folder type="file" webkitdirectory directory multiple onChange="{{ onFolder }}" style="display:none"></label>
               <button onClick="{{ add.onLinkPill }}" style="border:1px solid var(--line2);background:{{ add.linkBg }};border-radius:999px;padding:8px 16px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)">Link</button>
               <button onClick="{{ add.onTextPill }}" style="border:1px solid var(--line2);background:{{ add.textBg }};border-radius:999px;padding:8px 16px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)">Paste text</button>
             </div>
@@ -2486,7 +2496,7 @@ select option{background:var(--s1);color:var(--ink)}
             </sc-if>
             <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;border:1.5px dashed var(--line2);border-radius:12px;padding:26px 18px;cursor:pointer" style-hover="border-color:var(--acc)">
               <span style="font:500 15px 'Hanken Grotesk';color:var(--ink)">Drop files here, or click to choose</span>
-              <span style="font:400 13px/1.5 'Hanken Grotesk';color:var(--mut);max-width:520px;text-wrap:pretty">PDFs, Word, slides, spreadsheets, audio, video, images, web pages, data and notes. Links and text can be dropped anywhere on the page.</span>
+              <span style="font:400 13px/1.5 'Hanken Grotesk';color:var(--mut);max-width:520px;text-wrap:pretty">PDFs, Word, slides, spreadsheets, audio, video, images, web pages, data and notes — or a whole folder. Links and text can be dropped anywhere on the page.</span>
               <input type="file" multiple="{{ true }}" onChange="{{ onFiles }}" style="display:none">
             </label>
           </div>
@@ -2626,6 +2636,10 @@ async function opfsRead(path) { try { const parts = path.split('/'); const name 
 async function opfsWrite(path, buf) { try { const parts = path.split('/'); const name = parts.pop(); const d = await opfsDir(parts.join('/')); const fh = await d.getFileHandle(name, { create: true }); const w = await fh.createWritable(); await w.write(buf); await w.close(); return true; } catch (e) { return false; } }
 // Reading index loader: prefer the binary FRIX file (one arrayBuffer(), no JSON.parse —
 // the single-decode discipline from eodb 7cac452). Falls back to the historical JSON.
+// The reading corpus is vendored beside the app (fixtures/reading/), so the view carries its own
+// source and never reaches a clovenbradshaw repo at runtime. `hd:reading` overrides it with any
+// absolute .jsonl.zst (or its sibling .index.json) URL.
+function hdReadingSrc() { let u = null; try { u = localStorage.getItem('hd:reading'); } catch (e) {} return u || new URL('fixtures/reading/f3affd2e11370118-causalTextPerceiver_reviseTextFold_refresh25.jsonl.zst', location.href).href; }
 let _rdIdxCache = null; let _rdIdxP = null;
 async function loadReadingIndex(force) {
   if (force) { _rdIdxCache = null; _rdIdxP = null; }
@@ -2759,6 +2773,19 @@ const hdPos = w => { if (!HD_POS || (/^[A-Z]{1,3}$/.test(w))) return null; retur
 // baseline the surprise view uses, read for how often each word is capitalised mid-sentence. It is independent of the
 // material being judged, so a workspace full of junk cannot talk itself into calling its junk normal. Fetched once,
 // kept in IndexedDB with its provenance (source URL and file list).
+// The received ground for "normal" is live_priors' General English set (books, encyclopedia
+// articles, US/UK law): fetched as data, never a model, and read for how often each word is
+// capitalised mid-sentence. It is independent of the material being judged, so a workspace full
+// of junk cannot talk itself into calling its junk normal. `hd:priors` overrides the base URL
+// (the corpus becomes ethos under scores-patch-points; set it there once the rename lands).
+const LP_RAW = (() => { try { return (typeof localStorage !== 'undefined' && localStorage.getItem('hd:priors')) || 'https://raw.githubusercontent.com/clovenbradshaw-ctrl/live_priors/main/'; } catch (e) { return 'https://raw.githubusercontent.com/clovenbradshaw-ctrl/live_priors/main/'; } })();
+const LP_SETS = {
+  gov: { label: 'Government & legal', desc: 'US Code and UK Acts from live_priors (06-government-legal)', paths: ['USC-T1-S1', 'USC-T12-S1', 'USC-T13-S3', 'USC-T15-S1', 'USC-T15-S3', 'USC-T18-S1', 'USC-T19-S1', 'USC-T19-S2', 'USC-T26-S1', 'USC-T26-S2', 'USC-T28-S1', 'USC-T29-S2', 'USC-T3-S1', 'USC-T30-S1', 'USC-T33-S1', 'USC-T35-S1', 'USC-T35-S2', 'USC-T4-S1', 'USC-T7-S1', 'USC-T7-S2'].map(x => '06-government-legal/world-legislation/us/' + x + '.md').concat(['ukpga-2015-1', 'ukpga-2017-1', 'asp-2017-1', 'asp-2020-1', 'asp-2021-1', 'nia-2016-1', 'asc-2020-1'].map(x => '06-government-legal/world-legislation/uk/' + x + '.md')) },
+  ency: { label: 'Encyclopedic', desc: 'Wikipedia articles from live_priors (02-encyclopedic)', paths: ['Aristotle', 'Byzantine_Empire', 'Chemistry', 'Christianity', 'Cold_War', 'Confucianism', 'DNA', 'Drama', 'Entropy', 'Evolution', 'Epistemology', 'Ethics', 'Friedrich_Nietzsche', 'General_relativity', 'Hinduism', 'Homer', 'Immanuel_Kant', 'Industrial_Revolution', 'Islam', 'Judaism', 'Leo_Tolstoy', 'Logic', 'Mathematics', 'Ming_dynasty', 'Mongol_Empire', 'Neuroscience', 'Novel', 'Plato', 'Poetry', 'Quantum_mechanics', 'Renaissance'].map(x => '02-encyclopedic/wikipedia/' + x + '.txt') },
+  lit: { label: 'Books', desc: 'English books from live_priors (01-literature-books/gutenberg)', paths: ['pg1342_Pride_and_Prejudice', 'pg1661_The_Adventures_of_Tom_Sawyer', 'pg174_The_Picture_of_Dorian_Gray', 'pg345_Dracula', 'pg768_The_Adventures_of_Sherlock_Holmes', 'pg62168_The_Origin_of_Species_by_Darwin', 'pg59129_Leviathan_by_Hobbes', 'pg11_Alice_s_Adventures_in_Wonderland'].map(x => '01-literature-books/gutenberg/' + x + '.txt') },
+};
+LP_SETS.general = { label: 'General English', desc: 'books, encyclopedia articles, and US/UK law from live_priors', paths: LP_SETS.lit.paths.concat(LP_SETS.ency.paths, LP_SETS.gov.paths) };
+async function ohsPool(items, n, f) { const out = new Array(items.length); let i = 0; await Promise.all(Array.from({ length: n }, async () => { while (i < items.length) { const k = i++; out[k] = await f(items[k], k); } })); return out; }
 let HD_REF = null;
 async function hdLoadReference() {
   if (HD_REF) return true; const set = LP_SETS.general, key = 'ref:casing:v1:' + set.paths.length;
@@ -2807,8 +2834,13 @@ function findNames(t, hy) {
   const out = [];
   // a hyphen only continues the same capitalized word when what follows it is ALSO capitalized
   // (Winston-Salem, Coca-Cola) -- a lowercase continuation (Atlanta-based) is a modifier, not part of the name
-  const WORD = "[A-Z][A-Za-z'\\u2019&.]*(?:-[A-Z][A-Za-z'\\u2019&.]*)*";
-  const re = new RegExp(WORD + '(?:\\s+(?:of\\s+|and\\s+|&\\s+)?' + WORD + ')*', 'g'); let m;
+  // CHOMSKY: the arrangement (a name is a run of name-letters; a referent is the fold
+  // of its surfaces) is universal — the CASE convention that opens a name is the
+  // language's, declared here (\p{Lu}, any cased script), never ASCII A-Z assumed as
+  // universal. The ASCII class silently truncated "García" to "Garc" and "Márquez" to
+  // "M", fragments that then collided and merged unrelated people.
+  const WORD = "[\\p{Lu}][\\p{L}\\p{M}'\\u2019&.]*(?:-[\\p{Lu}][\\p{L}\\p{M}'\\u2019&.]*)*";
+  const re = new RegExp(WORD + '(?:\\s+(?:of\\s+|and\\s+|&\\s+)?' + WORD + ')*', 'gu'); let m;
   const push = (words, idx, title, m, after) => {
     const oi = words.findIndex((w, i) => i > 0 && i < words.length - 1 && ORG.has(w.replace(/[.,]$/, '')) && (() => { const r = words.slice(i + 1); return r.length >= 1 && r.length <= 3 && r.every(x => /^[A-Z][a-z'\u2019.-]+$/.test(x) && !ORG.has(x) && !PLACE.has(x) && !TITLES.has(x.replace(/\.$/, '')) && !/^(of|and)$/.test(x)); })());
     if (oi > 0) { let j2 = idx; for (let i = 0; i <= oi; i++) j2 = next(j2, words[i]); push(words.slice(0, oi + 1), idx, title, m, ' ' + words[oi + 1]); push(words.slice(oi + 1), j2, null, m, after); return; }
@@ -2939,10 +2971,16 @@ function analyze(corpus, htmlMap) {
       x.heads.sort((a, b) => a.o - b.o); x.blocks.sort((a, b) => a - b);
     }
     if (hdF(x.id)) { HD_TR.docs.push({ id: x.id, title: x.title, type: x.type, text: x.text }); hdT('text', 'walk', x.format === 'pdf' ? 'Took ' + x.text.length + ' characters from the PDF text layer' : 'Walked the page tree: ' + x.text.length + ' characters of text, ' + x.heads.length + ' headings, ' + x.blocks.length + ' blocks, ' + (x.links || []).length + ' links', { doc: x.id, chars: x.text.length }); }
+    // SULLIVAN: the naming convention is MEASURED from the material, never assumed.
+    // A document whose script carries letter case (or an English one that is simply
+    // all-lowercase) is case-marked; a script with no case at all — Chinese 孙中山,
+    // Arabic نجيب محفوظ — is not, and the case convention that opens a name does not
+    // hold there. Measured once, carried on the doc, disclosed below.
+    x.hasCase = /[\p{Lu}\p{Ll}]/u.test(x.text);
     return x; });
   const sts = []; const found = []; const alias = {}; const info = {}; const HY = hdHygiene(docs);
-  docs.forEach(d => { const on = hdF(d.id); const ss = splitSentences(d.text, on ? (a, b, c, x) => hdT(a, b, c, { doc: d.id, ...x }) : null); if (on) hdT('sentences', 'split', 'Split into ' + ss.length + ' statements', { doc: d.id, n: ss.length }); const hy = HY ? HY.forDoc(d, on ? (k, what, why) => hdT('names', 'hygiene', why + ' (' + qW(what) + ')', { doc: d.id }) : null) : null; ss.forEach((se, i) => {
-    const ns = hdEngineMerge(se.t, findNames(se.t, hy), d.eng, hy);
+  docs.forEach(d => { const on = hdF(d.id); const ss = splitSentences(d.text, on ? (a, b, c, x) => hdT(a, b, c, { doc: d.id, ...x }) : null); if (on) hdT('sentences', 'split', 'Split into ' + ss.length + ' statements', { doc: d.id, n: ss.length }); const hy = HY ? HY.forDoc(d, on ? (k, what, why) => hdT('names', 'hygiene', why + ' (' + qW(what) + ')', { doc: d.id }) : null) : null; if (on && !d.hasCase) hdT('names', 'gap', 'This source carries no letter case — its script has none (or it is code): the case convention that opens a name does not apply, so no names are read here. A gap of the reader, never a claim the material names no one', { doc: d.id }); ss.forEach((se, i) => {
+    const ns = d.hasCase ? hdEngineMerge(se.t, findNames(se.t, hy), d.eng, hy) : [];
     ns.forEach(n => { if (n.alias) alias[n.alias] = n.name; });
     const st0 = { id: d.id + ':' + i, doc: d.id, s: se.s, e: se.e, text: se.t, rawNames: ns, figs: findFigures(se.t), dates: findDates(se.t), frame: frameOf(se.t) }; sts.push(st0);
     if (on) { const D = { doc: d.id, id: st0.id }; hdT('sentences', 'statement', 'Statement ' + (i + 1) + ': \u201c' + hdCut(se.t, 90) + '\u201d', { ...D, s: se.s, e: se.e });
@@ -2955,16 +2993,88 @@ function analyze(corpus, htmlMap) {
   sts.forEach(st => st.rawNames.forEach(n => { const w = n.name.split(' '); const l = w[w.length - 1]; if (w.length > 1 && !ORG.has(l) && !PLACE.has(l)) (lastMap[l] = lastMap[l] || new Set()).add(n.name); }));
   const allRaw = [...new Set(sts.flatMap(st => st.rawNames.map(n => n.name)))];
   const nest = (short, long) => { const a = short.split(' '), b = long.split(' '); if (b.length <= a.length) return false; return a.every((w, i) => b[i] === w) || a.every((w, i) => b[b.length - a.length + i] === w); };
-  const canonMemo = new Map(); const canonOf = nm => { let v = canonMemo.get(nm); if (v === undefined) { v = canonOf0(nm); canonMemo.set(nm, v); } return v; };
   const byFirst = new Map(), byLast = new Map(); allRaw.forEach(o => { if (!o.includes(' ')) return; const w = o.split(' '); const f0 = w[0], l0 = w[w.length - 1]; (byFirst.get(f0) || byFirst.set(f0, []).get(f0)).push(o); (byLast.get(l0) || byLast.set(l0, []).get(l0)).push(o); });
   // a longer name may absorb a shorter one only if the longer one recurs itself (2+ statements, the bar holoName uses):
   // otherwise one stray capitalised run (measured: word salad's “Office The Brookmeade Park”) renames a real place everywhere
   const rawN = new Map(); sts.forEach(st => new Set(st.rawNames.map(n => n.name)).forEach(n => rawN.set(n, (rawN.get(n) || 0) + 1)));
-  const canonOf0 = nm => {
-    if (alias[nm]) return alias[nm];
-    if (nm.includes(' ')) { const w = nm.split(' '); const pool = [...new Set([...(byFirst.get(w[0]) || []), ...(byLast.get(w[w.length - 1]) || [])])]; const c = pool.filter(o => nest(nm, o)).sort((x, y) => y.length - x.length); if (c.length && c.every(o => o === c[0] || nest(o, c[0])) && (rawN.get(c[0]) || 0) >= 2) return c[0]; return nm; }
-    return lastMap[nm] && lastMap[nm].size === 1 && (rawN.get([...lastMap[nm]][0]) || 0) >= 2 ? [...lastMap[nm]][0] : nm;
-  };
+  // ── REFERENT IDENTITY ──────────────────────────────────────────────────────
+  // A surface is a spelling; a referent is what the SOURCE means by it. Surfaces
+  // the source itself gives as one being fold together; identity is never
+  // guessed from a shared token. Four evidence sources:
+  //   1. a parenthetical alias ("… (SAG)") — stated identity;
+  //   2. the source's own hyperlink target — the same <a href> means the same
+  //      referent, the link being the source's own disambiguation (nameLinks);
+  //   3. an appositive alias ("born X", "née X", "known as X", "aka X",
+  //      "formerly X") marrying the named form to the name it follows;
+  //   4. a bare surname a document's own title gives to one full name — but only
+  //      when EVERY document using that surname agrees on the same full form, so
+  //      the surname is SINGULAR. Two full names sharing it stay apart.
+  //   5. containment: a name folds into the ONE most descriptive name that carries
+  //      it as a leading or trailing token-run, and a bare surname only when
+  //      exactly one full name ends in it — the same SINGULAR guard. This is
+  //      sharper than the workspace's older fold, which demanded every container be
+  //      mutually nested (so it refused "García Márquez" → "Gabriel García
+  //      Márquez"). The loose form, closed transitively on a large article, chained
+  //      distinct people through a shared surname (measured: "Gabriel García
+  //      Márquez" absorbed Fidel Castro, Colombia, Macondo — 83→285 statements).
+  // The evidence is transitive because it genuinely makes A and B one referent; the
+  // single most-descriptive container is the whole reach of containment.
+  // SCOPE (Chomsky/Sullivan): the arrangement is universal, but the convention that
+  // opens a name is the LANGUAGE'S, declared — \p{Lu} any cased script — and a
+  // document's own case-markedness is measured (Sullivan) and disclosed. The
+  // appositive cues are English/French, and a script without case (Chinese 孙中山,
+  // Arabic نجيب محفوظ) is not read; that gap is named, never guessed.
+  const parent = new Map(); allRaw.forEach(n => { if (!parent.has(n)) parent.set(n, n); });
+  const find = x => { let r = x; while (parent.get(r) !== r) r = parent.get(r); return r; };
+  const union = (a, b) => { if (!parent.has(a) || !parent.has(b)) return; const ra = find(a), rb = find(b); if (ra !== rb) parent.set(ra, rb); };
+  allRaw.forEach(nm => { if (alias[nm] && parent.has(alias[nm])) union(nm, alias[nm]); });  // a parenthetical alias is stated identity
+  const containTarget = nm => {
+    if (nm.includes(' ')) { const w = nm.split(' '); const pool = [...new Set([...(byFirst.get(w[0]) || []), ...(byLast.get(w[w.length - 1]) || [])])];
+      const c = pool.filter(o => nest(nm, o)).sort((x, y) => y.split(' ').length - x.split(' ').length || y.length - x.length);
+      return c[0] || null; }
+    return lastMap[nm] && lastMap[nm].size === 1 ? [...lastMap[nm]][0] : null; };
+  allRaw.forEach(nm => { const t = containTarget(nm); if (t && (rawN.get(t) || 0) >= 2) union(nm, t); });
+  { const linkOf = {}; docs.forEach(d => { linkOf[d.id] = d.links || []; });
+    const byHref = new Map();
+    sts.forEach(st => { const L = linkOf[st.doc]; if (!L || !L.length) return;
+      st.rawNames.forEach(n => { const a0 = st.s + n.s, b0 = st.s + n.e;
+        // the name must BE the link's text, not merely sit inside a long anchor:
+        // a navbox/quote link spanning 130+ chars would otherwise sweep every name
+        // it covers onto one href and merge them (measured on the es article).
+        const hit = L.find(lk => lk.s <= a0 + 1 && lk.e >= b0 - 1 && (lk.e - lk.s) <= (b0 - a0) + 4); if (!hit) return;
+        let g = byHref.get(hit.href); if (!g) byHref.set(hit.href, g = new Set()); g.add(n.name); }); });
+    byHref.forEach(set => { const a = [...set]; for (let i = 1; i < a.length; i++) union(a[0], a[i]); }); }
+  // ALIAS_GAP: a name and its appositive sit in one clause — the marker ("born",
+  // "known professionally as", …) follows the name across punctuation and a short
+  // aside, never a sentence. Named, not buried, so the reach is auditable.
+  const ALIAS_GAP = 40;
+  { const AKA = /\b(?:born|née|nee|known(?: professionally)? as|aka|formerly)\s+((?:[A-Z][A-Za-z'’.-]+)(?:\s+[A-Z][A-Za-z'’.-]+){0,3})/g;
+    sts.forEach(st => { let m; AKA.lastIndex = 0;
+      while ((m = AKA.exec(st.text))) { const nm = m[1].replace(/[.,;:]+$/, '').trim(); if (!parent.has(nm)) continue;
+        // the alias marries the name it FOLLOWS — the nearest raw name ending just before
+        // the marker — never the sentence's lead, which may belong to someone else.
+        let anchor = null, gap = Infinity;
+        st.rawNames.forEach(x => { if (x.e > m.index) return; const d = m.index - x.e; if (d < gap) { gap = d; anchor = x.name; } });
+        if (anchor && anchor !== nm && gap <= ALIAS_GAP && parent.has(anchor)) union(nm, anchor); } }); }
+  { const low = t => String(t || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    const byLow = new Map(); allRaw.forEach(n => { const k = low(n); if (!byLow.has(k)) byLow.set(k, n); });
+    // a PERSONAL name is 2–3 capitalised tokens (a surname needs a token before it; beyond three it is a title, not a name)
+    const titleFull = new Map(); docs.forEach(d => { const t = byLow.get(low(d.title)); if (t && t.split(' ').length >= 2 && t.split(' ').length <= 3) titleFull.set(d.id, t); });
+    const cand = new Map();
+    sts.forEach(st => { const t = titleFull.get(st.doc); if (!t) return; const parts = t.split(' ');
+      st.rawNames.forEach(n => { if (n.name.includes(' ')) return; const full = byLow.get(low(n.name)); if (!full) return;
+        if (full !== parts[parts.length - 1]) return;                 // a surname is the title's last token
+        if (PLACE.has(full) || ORG.has(full)) return;                 // a place or org head is not a person's surname
+        let s = cand.get(full); if (!s) cand.set(full, s = new Set()); s.add(t); }); });
+    cand.forEach((fulls, bare) => { if (fulls.size === 1) union(bare, [...fulls][0]); }); }
+  // THE CANONICAL SURFACE of a referent is its most descriptive and singular
+  // spelling: most tokens, then most mentions, then longest. Every other surface
+  // is carried as its alias.
+  const members = new Map(); allRaw.forEach(n => { const r = find(n); let a = members.get(r); if (!a) members.set(r, a = []); a.push(n); });
+  const rank = nm => [nm.split(/\s+/).length, rawN.get(nm) || 0, nm.length];
+  const canonicalOf = new Map();
+  members.forEach((ms, r) => { canonicalOf.set(r, ms.slice().sort((x, y) => { const a = rank(x), b = rank(y); return (b[0] - a[0]) || (b[1] - a[1]) || (b[2] - a[2]); })[0]); });
+  const canonOf = nm => canonicalOf.get(find(nm)) || nm;
   const names = {}; const aliasOf = {}; Object.keys(alias).forEach(a => { (aliasOf[alias[a]] = aliasOf[alias[a]] || []).push(a); });
   sts.forEach(st => {
     st.spans = []; const set = new Set();
@@ -3565,7 +3675,33 @@ let _hdProf = null;
 // morphology, Russian declension) are injected as data, loaded once.
 let _hdLang = null;
 let _hdMed = null; const hdMedia = () => _hdMed || (_hdMed = import(new URL('holodeck-media.js', location.href).href));
+// holodeck-read.js: the OHS reading, generalised — page attribution, the article's own text,
+// timed transcripts, email headers, tables as statements, and OCR for scans and images.
+let _hdRead = null; const hdRead = () => _hdRead || (_hdRead = import(new URL('holodeck-read.js', location.href).href));
+const hdOcrOn = () => { try { return localStorage.getItem('hd:ocr') !== 'off'; } catch (e) { return true; } };
 const hdTr = (a, b, c, x) => hdT(a, b, c, x);
+// A dropped folder is a corpus, not a file: walk it (and any nested folders) to its files, dropping only
+// OS bookkeeping (.DS_Store, Thumbs.db, __MACOSX, Office lock files), so a machine's own directory can be
+// pointed at the surface the way a single file can. An empty directory yields nothing and says so.
+const HD_JUNK_FILE = /(^|\/)(\.DS_Store|Thumbs\.db|desktop\.ini)|(^|\/)__MACOSX\/|(^|\/)\._|(^|\/)~\$|\.(swp|tmp)$/i;
+function hdWalkEntry(entry, out) {
+  return new Promise(resolve => {
+    if (!entry) return resolve();
+    if (entry.isFile) { entry.file(f => { if (f && !HD_JUNK_FILE.test(f.name || '')) out.push(f); resolve(); }, () => resolve()); return; }
+    if (entry.isDirectory) {
+      const reader = entry.createReader(), all = [];
+      const batch = () => reader.readEntries(entries => { if (!entries.length) { Promise.all(all.map(e => hdWalkEntry(e, out))).then(resolve).catch(() => resolve()); return; } all.push(...entries); batch(); }, () => resolve());
+      batch(); return;
+    }
+    resolve();
+  });
+}
+async function hdFilesFromDataTransfer(dt) {
+  const items = dt && dt.items ? Array.from(dt.items) : [];
+  const entries = items.map(it => { try { return it.webkitGetAsEntry && it.webkitGetAsEntry(); } catch (e) { return null; } }).filter(Boolean);
+  if (!entries.length) return Array.from((dt && dt.files) || []).filter(f => f && !HD_JUNK_FILE.test(f.name || ''));
+  const out = []; await Promise.all(entries.map(e => hdWalkEntry(e, out))); return out;
+}
 // Every file comes through here. Sound, images, scores, math, sheets and unknown bytes go to holodeck-media.js; everything
 // else to the text readers below. Either way the trace records the bytes, the signature, and what was read.
 async function readAny(file) {
@@ -3583,7 +3719,10 @@ async function readAny(file) {
     else if (ext === 'mml' || (ext === 'xml' && /<math[\s>]/.test(new TextDecoder().decode(head)))) r = M.readMathMl(file, await txt(), hdTr);
     else if ((/^image\//.test(file.type) && file.type !== 'image/svg+xml') || ['png', 'jpeg', 'gif', 'webp', 'bmp'].includes(kind)) r = await M.readImage(file, head, hdTr);
     else if (/^(audio|video)\//.test(file.type) || ['wav', 'mp3', 'flac', 'ogg', 'mp4'].includes(kind)) r = await M.readSound(file, await all(), hdTr, /^video\//.test(file.type) || (kind === 'mp4' && !/^audio/.test(file.type)) ? 'Video' : 'Audio');
-    if (r) { hdT('decode', 'done', 'Read as ' + r.type + (r.note ? ' — ' + r.note : ''), { type: r.type }); return { title, year, ...r }; }
+    if (r) { hdT('decode', 'done', 'Read as ' + r.type + (r.note ? ' — ' + r.note : ''), { type: r.type });
+      // An image is only pixels: measure it (above), then read any text in it by OCR, marked as machine-read.
+      if (r.type === 'Image' && hdOcrOn()) { try { const R = await hdRead(); const t = await R.ocrImage(file, p => hdT('decode', 'ocr', 'OCR ' + (p.status || '') + (p.progress != null ? ' ' + Math.round(p.progress * 100) + '%' : ''))); if (t && t.trim().length > 12) { const n = (t.trim().match(/\S+/g) || []).length; r = { ...r, html: r.html + t.split(/\n\s*\n/).map(x => '<p style="' + TAG_STYLE.P + '">' + esc(x.replace(/\s+/g, ' ').trim()) + '</p>').join(''), note: (r.note ? r.note + ' ' : '') + 'OCR read ' + n + ' words from it (a machine reading, not the image’s own text).' }; hdT('decode', 'ocr', 'OCR read the image: ' + n + ' words'); } } catch (e) { hdT('decode', 'ocr-fail', 'OCR could not run (' + e.message + ')'); } }
+      return { title, year, ...r }; }
   } catch (e) { hdT('decode', 'fail', 'Media reader failed (' + e.message + '); falling back to the text readers'); }
   const r = await readText(file, M);
   hdT('decode', 'done', 'Read as ' + r.type + (r.note ? ' — ' + r.note : ''), { type: r.type }); return r;
@@ -3597,7 +3736,9 @@ async function readText(file, M) {
       const buf = await file.arrayBuffer(); const pdfjs = await pdfLib(); const pdf = await pdfjs.getDocument({ data: new Uint8Array(buf).slice() }).promise; let text = '';
       const pages = []; for (let i = 1; i <= Math.min(pdf.numPages, PDF_MAX_PAGES); i++) { pages.push(text.length); const c = await (await pdf.getPage(i)).getTextContent(); for (const it of c.items) text += (it.str || '') + (it.hasEOL ? '\n' : ' '); text += '\n'; }
       hdT('decode', 'pdf', 'Read the text layer of ' + pages.length + ' of ' + pdf.numPages + ' pages', { pages: pages.length });
-      return { title, year, type: 'PDF', format: 'pdf', text, pages, pdf: buf, note: text.trim() ? null : title + ' has no text layer (it may be scanned) — its pages are shown, but nothing in it can be linked.' };
+      let ocrPages = 0;
+      if (!text.trim() && hdOcrOn()) { try { const R = await hdRead(); const o = await R.ocrPdf(pdf, { maxPages: 20, onProgress: p => hdT('decode', 'ocr', 'OCR is reading page ' + p.page + ' of ' + p.of) }); if (o && o.text.trim()) { text = o.text; ocrPages = o.pages; hdT('decode', 'ocr', 'No text layer; OCR read ' + o.pages + ' of ' + pdf.numPages + ' pages'); } } catch (e) { hdT('decode', 'ocr-fail', 'OCR could not run (' + e.message + ')'); } }
+      return { title, year, type: 'PDF', format: 'pdf', text, pages, pdf: buf, note: text.trim() ? (ocrPages ? 'No text layer — read by OCR (' + ocrPages + ' pages). A machine reading, not the document’s own text.' : null) : title + ' has no text layer (it may be scanned) — its pages are shown, but nothing in it can be linked.' };
     }
     let html = '';
     if (['docx', 'pptx', 'xlsx', 'odt', 'odp', 'ods', 'epub'].includes(ext)) {
@@ -3622,12 +3763,20 @@ async function readText(file, M) {
       return { title, year, type: kind, buf, extra, note: title + ' is a ' + k + ' file' + (meta ? ' (' + meta + ')' : '') + ' — play it here, or transcribe it in this browser. Nothing in it has been read until it is transcribed, and a transcript is a machine interpretation, not the recording.' };
     } else {
       const raw = await file.text();
-      if (ext === 'json') { html = textToHtml(jsonText(raw)); type = 'Data'; }
-      else if (ext === 'csv' || ext === 'tsv') { html = csvToHtml(raw); type = 'Data'; }
-      else if (ext === 'md' || ext === 'markdown') { html = mdToHtml(raw); type = 'Notes'; }
-      else if (/^(html?|xhtml|xml|svg|mhtml)$/.test(ext) || /<\/?(html|body|p|div|h1|article)[\s>]/i.test(raw.slice(0, 3000))) { html = raw; type = 'Web page'; }
-      else if (ext === 'eml') { html = textToHtml(raw.replace(/=\r?\n/g, '')); type = 'Email'; }
+      let R = null; try { R = await hdRead(); } catch (e) {}
+      const isHtml = /^(html?|xhtml|xml|svg|mhtml)$/.test(ext) || /<\/?(html|body|p|div|h1|article)[\s>]/i.test(raw.slice(0, 3000));
+      // Captions and segment JSON: time-addressed paragraphs, the way meeting transcripts were read.
+      if (R && /^(srt|vtt|sbv)$/.test(ext)) { const segs = R.timedSegments(ext, raw); if (segs.length) { hdT('decode', 'transcript', 'Read ' + segs.length + ' timed segments from the caption file'); return { title, year, type: 'Transcript', format: 'html', html: R.segmentsHtml(segs, title), extra: { kind: 'Meeting recording', medium: 'Captions', transcribed: true }, note: 'Read from the captions’ own timecodes.' }; } }
+      if (R && /^(json|jsonl|ndjson)$/.test(ext)) { const segs = R.timedSegments('json', raw); if (segs.length) { hdT('decode', 'transcript', 'Read ' + segs.length + ' timed segments from JSON'); return { title, year, type: 'Transcript', format: 'html', html: R.segmentsHtml(segs, title), extra: { kind: 'Meeting recording', medium: 'Captions', transcribed: true }, note: 'Read from the segments’ own timecodes.' }; } }
+      // Email: the headers are received facts (who, when), the body is the message.
+      if (R && (ext === 'eml' || ext === 'msg')) { const e = R.emailDoc(raw); hdT('decode', 'email', 'Read an email — ' + ((e.meta.authors || [])[0] || 'an unnamed sender') + (e.meta.pubLabel ? ', ' + e.meta.pubLabel : '')); return { title: e.meta.title || title, year: (e.meta.iso ? +e.meta.iso.slice(0, 4) : year), type: 'Email', format: 'html', html: e.html, authors: e.meta.authors, published: e.meta.published, pubLabel: e.meta.pubLabel, publisher: e.meta.publisher, note: null }; }
+      // Tables: every row is also a sentence, so cells reach the fold as statements.
+      if (R && (ext === 'csv' || ext === 'tsv')) { const c = R.csvReading(raw, title); hdT('decode', 'table', 'Read a table; each row also stated as a sentence so its cells reach the fold'); return { title, year, type: 'Data', format: 'html', html: c.html, note: null }; }
+      // A page: the article's own text and the page's own attribution, never the chrome.
+      if (R && isHtml) { let rd = null; try { rd = R.htmlReading(raw); } catch (e) {} if (rd && rd.html) { hdT('decode', 'page', 'Read the article’s own text' + (rd.authors.length ? ', by ' + rd.authors.join(', ') : '') + (rd.pubLabel ? ', published ' + rd.pubLabel : '') + (rd.publisher ? ' in ' + rd.publisher : '')); return { title: rd.title || title, year: (rd.iso ? +rd.iso.slice(0, 4) : year), type: 'Web page', format: 'html', html: rd.html, authors: rd.authors, published: rd.published, pubLabel: rd.pubLabel, publisher: rd.publisher, note: null }; } html = raw; type = 'Web page'; }
+      if (ext === 'md' || ext === 'markdown') { html = mdToHtml(raw); type = 'Notes'; }
       else if (ext === 'rtf') html = textToHtml(raw.replace(/\\[a-z]+-?\d* ?|[{}]/g, ''));
+      else if (ext === 'json') { html = textToHtml(jsonText(raw)); type = 'Data'; }
       else { const bad = (raw.slice(0, 4000).match(/[\x00-\x08\x0E-\x1F\uFFFD]/g) || []).length; if (bad > 40) { if (M) return { title, year, ...M.readStrings(file, new Uint8Array(await file.arrayBuffer()), hdTr) }; return { title, year, type, text: '', note: 'No readable text in ' + name + '.' }; } html = textToHtml(raw); type = { txt: 'Text', log: 'Log' }[ext] || type; }
     }
     const clean = sanitizeHtml(html);
@@ -3764,6 +3913,8 @@ class Component extends DCLogic {
   _html = {};
 
   componentDidMount() {
+    HD_POS_P.then(ok => { if (ok) { this._key = null; this.setState(st => ({ htmlVer: st.htmlVer + 1 })); } });
+    hdLoadReference().then(ok => { if (ok) { this._key = null; this.setState(st => ({ htmlVer: st.htmlVer + 1 })); } }).catch(() => {}); // re-read names once the received normal (General English) is in — results never depend on load timing
     setTimeout(() => { try { this.netInit(); } catch (e) {} }, 800);
     setTimeout(() => this.measureHdr(), 400);
     setTimeout(() => { try { this.akAutoLoad(); } catch (e) {} }, 2500);
@@ -3788,7 +3939,7 @@ class Component extends DCLogic {
     window.addEventListener('dragenter', this._h.enter); window.addEventListener('dragleave', this._h.leave); window.addEventListener('dragover', this._h.over); window.addEventListener('drop', this._h.drop); window.addEventListener('paste', this._h.paste);
   }
   componentWillUnmount() { window.removeEventListener('resize', this._onRz); if (this._pdfRo) { try { this._pdfRo.disconnect(); } catch (e) {} } window.removeEventListener('message', this._onYt); document.removeEventListener('selectionchange', this._onSelCh); window.removeEventListener('scroll', this._onSelCh, true); window.removeEventListener('message', this._onMsg); const h = this._h; window.removeEventListener('dragenter', h.enter); window.removeEventListener('dragleave', h.leave); window.removeEventListener('dragover', h.over); window.removeEventListener('drop', h.drop); window.removeEventListener('paste', h.paste); }
-  componentDidUpdate() { this.applyTheme(); this.measureHdr(); if (this._prevCorpus !== this.state.corpus || this._prevAdded !== this.state.added) { this._prevCorpus = this.state.corpus; this._prevAdded = this.state.added; this.loadHtml(); this.akAutoLoad(); } const rd0 = this.state.readDoc && this.analysis().docById[this.state.readDoc]; if (rd0 && rd0.media && rd0.media.kind === 'local') { this.ensureMediaUrl(rd0); } this.hookLocal(); this.syncReader(); this.ytHook(); this.syncOmni();
+  componentDidUpdate() { this.applyTheme(); this.measureHdr(); try { const ff = document.getElementById('fold-folder-input'); if (ff && !ff.multiple) { ff.webkitdirectory = true; ff.setAttribute('webkitdirectory', ''); ff.multiple = true; ff.setAttribute('multiple', ''); } } catch (e) {} if (this._prevCorpus !== this.state.corpus || this._prevAdded !== this.state.added) { this._prevCorpus = this.state.corpus; this._prevAdded = this.state.added; this.loadHtml(); this.akAutoLoad(); } const rd0 = this.state.readDoc && this.analysis().docById[this.state.readDoc]; if (rd0 && rd0.media && rd0.media.kind === 'local') { this.ensureMediaUrl(rd0); } this.hookLocal(); this.syncReader(); this.ytHook(); this.syncOmni();
     const S = this.state;
     const askEl = document.getElementById('ak-composer');
     if (S.view === 'ask' && askEl) {
@@ -3817,7 +3968,7 @@ class Component extends DCLogic {
   applyTheme() { document.documentElement.dataset.theme = this.state.theme; }
   async ingest(dt) {
     if (!dt) return;
-    const files = [...(dt.files || [])];
+    const files = await hdFilesFromDataTransfer(dt);
     if (files.length) { hdTraceStart(files.length === 1 ? files[0].name : plural(files.length, 'file')); this.setState({ busy: 'Reading ' + plural(files.length, 'file') + '…' }); const list = []; for (const fl of files) list.push(await readAny(fl)); this.addDocs(list); return; }
     let text = (dt.getData('text/plain') || '').trim(); const html = dt.getData('text/html') || '';
     if (!text) text = ((dt.getData('text/uri-list') || '').split('\n').find(l => l && l[0] !== '#') || '').trim();
@@ -4274,7 +4425,62 @@ class Component extends DCLogic {
       if (r.verdict === 'source' || r.verdict === 'contested' || r.verdict === 'superseded') { src++; if (r.verdict === 'contested') cont++; c.pins = [...new Set([...keep, ...r.sts.map(st => this.ensurePin(D, A, st))])]; }
       else { auth++; c.pins = keep; }
       c.g = { verdict: keep.length && r.verdict === 'author' ? 'source' : r.verdict, why: r.why, shape: r.shape, closest: r.closest, con: conIds, conWhy, nSrc: r.nSrc || 0, at: Date.now(), ack: false, text: c.text }; }); return D; });
-    if (n) this.toast(n === 1 ? (src ? (cont ? 'Grounded, but contested' : 'Grounded') : 'Attributed to you') : src + ' of ' + n + ' grounded' + (cont ? ', ' + cont + ' contested' : '') + (auth ? ', ' + auth + ' attributed to you' : '')); }
+    if (n) this.toast(n === 1 ? (src ? (cont ? 'Grounded, but contested' : 'Grounded') : 'Attributed to you') : src + ' of ' + n + ' grounded' + (cont ? ', ' + cont + ' contested' : '') + (auth ? ', ' + auth + ' attributed to you' : ''));
+    // The check above is mechanical and closed: names, figures, and a short verb
+    // list. A position ("is pro Y") has neither a figure nor a verb on that list,
+    // so it came back "attributed to you" even when a source states it. The same
+    // relation reader the Ask surface uses and the holograph's own passages are
+    // run over the kept sources here, and the claim is judged as one of its own
+    // claims (see engineGroundClaims).
+    this.engineGroundClaims(only).catch(() => {}); }
+  // ── reading the claim through the holograph and the hyperlexicon ───────────
+  // The reader hears a copula position ("is pro", "is against") and equates a
+  // stance with its own paraphrases, so "is pro palestine" meets a source's
+  // "tweeted in support of the Palestinian people". The verdict decides the
+  // status: bound -> Grounded (Contested when the material states both ways),
+  // contradicted -> Held otherwise, unbound -> the closest the material does
+  // state (offered as "Use closest"), and a claim the reader cannot hear is
+  // disclosed as its own, never as proof the sources are silent.
+  engReader() { if (!this._engR) this._engR = import(new URL('holodeck-reader.js', location.href).href).then(M => M.makeEngineRelationReader()); return this._engR; }
+  engEdge(e) { return (e.end1 || '') + ' —' + (e.label || '') + '→ ' + (e.end2 || ''); }
+  engSts(A, IX, spans) { const out = [];
+    (spans || []).forEach(sp => { const name = String(sp.ref || '').split('#')[0]; const docId = IX.docOf && IX.docOf[name]; if (!docId) return;
+      const src = A.docById[docId]; const hit = A.sts.find(st => st.doc === docId && (st.text === sp.text || (sp.text && sp.text.length > 12 && st.text.indexOf(sp.text) >= 0)));
+      if (hit) { out.push(hit); return; }
+      const ch = (IX.chunks || []).find(c => c.ref === sp.ref); const base = ch ? ch.start : 0; const s = base + (sp.start || 0);
+      out.push({ id: 'eng:' + sp.ref + ':' + (sp.start || 0), doc: docId, s, e: base + (sp.end != null ? sp.end : (sp.start || 0)), text: sp.text || (src ? src.text.slice(s, s + 200) : '') }); });
+    const seen = new Set(); return out.filter(st => !seen.has(st.id) && seen.add(st.id)); }
+  async engineGroundClaims(only) {
+    let A; try { A = this.analysis(); } catch (e) { return; }
+    const docs = (A.docs || []).filter(d => String(d.text || '').length >= 40); if (!docs.length) return;
+    let M, R; try { M = await this.askMod(); R = await this.engReader(); } catch (e) { return; }
+    const key = docs.map(d => d.id + ':' + (d.text || '').length).join(',');
+    let cache = this._engCache;
+    if (!cache || cache.key !== key) { try { cache = this._engCache = { key, IX: M.index(docs) }; } catch (e) { return; } }
+    const IX = cache.IX;
+    const ids = this.pinData().claims.filter(c => c.kind !== 'heading' && (c.text || '').trim() && (!only || only.includes(c.id))).map(c => c.id); if (!ids.length) return;
+    this.setPinData(D => { D.claims.forEach(c => {
+      if (!ids.includes(c.id)) return;
+      // The engine only fills the gap the mechanical check left. A claim it
+      // already grounded or held otherwise (names, figures, its verb list)
+      // stands as it is; a claim it marked its own — or never checked — is the
+      // one this reader was added to judge.
+      const prev = c.g; if (prev && prev.text === c.text && prev.verdict && prev.verdict !== 'author' && prev.verdict !== 'untried') return;
+      // The claim is read against the passages its own words retrieve, the same
+      // door the Ask surface uses — never the whole corpus at once.
+      let jc = null; try { const ranked = M.retrieve(IX.chunks, c.text, 12); jc = (R(ranked.length ? ranked : IX.chunks.slice(0, 12)).read(c.text).claims || [])[0]; } catch (e) { return; }
+      const keep = (c.pins || []).filter(pid => { const p = D.pins.find(q => q.id === pid); return p && (!p.auto || (c.fixed || []).includes(pid)); });
+      let r;
+      if (!jc) r = { verdict: 'author', why: 'The relation reader heard no claim here — a limit of the reading, not proof the sources are silent.', shape: '', sts: [], closest: null };
+      else if (jc.verdict === 'bound') r = { verdict: (jc.contested && jc.contested.length) ? 'contested' : 'source', why: 'The sources state it: ' + this.engEdge(jc) + '.', shape: this.engEdge(jc), sts: this.engSts(A, IX, jc.spans), closest: null };
+      else if (jc.verdict === 'contradicted') r = { verdict: 'refuted', why: 'The sources hold it otherwise: ' + (jc.bound || []).map(e => this.engEdge(e)).join('; ') + '.', shape: this.engEdge(jc), sts: this.engSts(A, IX, (jc.bound || []).reduce((a, e) => a.concat(e.spans || []), [])), closest: null };
+      else if (jc.verdict === 'unbound') { const near = (jc.nearest || [])[0]; const nearSpans = near ? this.engSts(A, IX, near.spans) : [];
+        const closest = nearSpans[0] || null; r = { verdict: 'author', why: near ? 'No source states it as written. What they do state: ' + (jc.nearest || []).slice(0, 3).map(e => this.engEdge(e)).join('; ') + '.' : 'No source states this relation.', shape: this.engEdge(jc), sts: [], closest: closest ? closest.id : null }; }
+      else r = { verdict: 'author', why: (jc.reason || 'A limit of the relation reader, not proof the sources are silent.'), shape: this.engEdge(jc), sts: [], closest: null };
+      if (r.verdict === 'source' || r.verdict === 'contested') c.pins = [...new Set([...keep, ...r.sts.map(st => this.ensurePin(D, A, st))])];
+      else c.pins = keep;
+      c.g = { verdict: keep.length && r.verdict === 'author' ? 'source' : r.verdict, why: r.why, shape: r.shape, closest: r.closest, con: [], conWhy: {}, nSrc: r.sts.length, at: Date.now(), ack: false, text: c.text };
+    }); return D; }); }
   groundWriting() { const A = this.analysis(); const t = (this._wText || '').trim(); if (!t) return;
     const sents = (t.replace(/\s+/g, ' ').match(/[^.!?]+(?:[.!?]+["”’)]*|$)/g) || []).map(s => s.trim()).filter(s => s.split(' ').length >= 3);
     const ids = []; this.setPinData(D => { sents.forEach(s => { const c = { id: 'claim-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text: s, pins: [], by: 'writer' }; ids.push(c.id); D.claims.push(c); }); return D; });
@@ -4500,7 +4706,7 @@ class Component extends DCLogic {
   // ---------- the constitutional reading (EO reader output, indexed in a worker, kept in OPFS) ----------
   async loadReading(rebuild) { if (this._rixP && !rebuild) return this._rixP; this._rixP = (async () => {
       if (!rebuild) { const v = await loadReadingIndex(false); if (v) { this._rix = v; this.forceUpdate(); return this._rix; } }
-      return new Promise(res => { const w = new Worker(new URL('reading-worker.js', location.href), { type: 'module' }); w.onmessage = async e => { const m = e.data; if (m.err) { this._rixErr = m.err; this._rixProg = null; this.forceUpdate(); w.terminate(); res(null); return; } if (!m.done) { this._rixProg = m; this.forceUpdate(); return; } w.terminate(); this._rixProg = null; this._rix = await loadReadingIndex(true); this.forceUpdate(); res(this._rix); }; w.postMessage({}); }); })(); return this._rixP; }
+      return new Promise(res => { const w = new Worker(new URL('reading-worker.js', location.href), { type: 'module' }); w.onmessage = async e => { const m = e.data; if (m.err) { this._rixErr = m.err; this._rixProg = null; this.forceUpdate(); w.terminate(); res(null); return; } if (!m.done) { this._rixProg = m; this.forceUpdate(); return; } w.terminate(); this._rixProg = null; this._rix = await loadReadingIndex(true); this.forceUpdate(); res(this._rix); }; w.postMessage({ url: hdReadingSrc() }); }); })(); return this._rixP; }
   // ---------- Records: the workspace as a relational database, its schema read off the data (bare-metal fold.js + DataChat) ----------
   recMod() { if (!this._recP) this._recP = import(new URL('holodeck-records.js', location.href).href); return this._recP; }
   dataChat() { if (window.DataChat) return Promise.resolve(window.DataChat); if (!this._dcP) this._dcP = new Promise((res, rej) => { const el = document.createElement('script'); el.src = new URL('vendor/bare-metal/public/data-chat.js', location.href).href; el.onload = () => res(window.DataChat); el.onerror = () => rej(new Error('DataChat did not load')); document.head.appendChild(el); }); return this._dcP; }
@@ -4990,6 +5196,9 @@ class Component extends DCLogic {
       ytdl: (() => { try { return localStorage.getItem('hd:ytdl') || ''; } catch (e) { return ''; } })(),
       onYtdl: e => { try { const v = (e.target.value || '').trim(); if (v) localStorage.setItem('hd:ytdl', v); else localStorage.removeItem('hd:ytdl'); } catch (x) {} },
       ytdlTest: () => this.testYtdl(), ytdlNote: this._ytNote || '',
+      engine: (() => { try { return localStorage.getItem('hd:engine') || ''; } catch (e) { return ''; } })(),
+      onEngine: e => { try { const v = (e.target.value || '').trim(); if (v) localStorage.setItem('hd:engine', v); else localStorage.removeItem('hd:engine'); HD_ENG.url = null; HD_ENG.downAt = 0; } catch (x) {} },
+      engineReadExisting: () => this.engineReadExisting({}), engineBusy: !!S.engBusy, engineBtn: S.engBusy ? 'Re-reading…' : 'Re-read existing sources', engineNote: this._engNote || '',
       txNeeded: txNeeded.map(d => ({ title: d.title, onPick: e => { const f = e.target.files && e.target.files[0]; if (f) this.transcribeFile(f, d); e.target.value = ''; } })), hasTx: txNeeded.length > 0,
       chain: (n.chain || []).slice().reverse().slice(0, 40).map(b => ({ title: (b.meta && (b.meta.title || b.meta.filename)) || 'block', kind: (b.meta && b.meta.kind) || '', hash: b.block ? b.block.slice(0, 16) : '', prev: b.prev ? b.prev.slice(0, 10) : 'genesis', by: b.sender || '', ok: b.linked && b.self ? 'linked' : 'broken', okCol: b.linked && b.self ? 'var(--ok)' : 'var(--bad)' })), hasChain: !!(n.chain && n.chain.length), chainLine: n.chain ? plural(n.chain.length, 'block') + ' · ' + (n.chainOk === false ? 'the chain is broken somewhere' : 'every block links to the one before') : '', onLoadRoom: () => this.loadFromRoom(), onRefresh: () => this.netDo('Refresh', () => this.refreshRoom()),
       onPubAll: () => this.publishAll(), pubAllLabel: this._pubAll ? 'Stop publishing' : 'Publish every source', pubAllLine: this._pubAll ? 'Publishing ' + (this._pubAll.done + this._pubAll.skipped + this._pubAll.failed) + ' of ' + this._pubAll.total + ' · ' + this._pubAll.done + ' new, ' + this._pubAll.skipped + ' already in the chain' : 'Adds each source’s original bytes (capture, PDF, transcript) as a block, and sends web sources to archive.org. Sources already in the chain are skipped, so it can be stopped and resumed.', canPubAll: !!(s && !s.guest && R.pub),
@@ -5718,12 +5927,34 @@ class Component extends DCLogic {
     (window.__hdTraces = window.__hdTraces || []).push(T); if (window.__hdTraces.length > 8) window.__hdTraces.shift();
     import(new URL('holodeck-ingest-player.js', location.href).href).then(M => M.chipFor(T)).catch(e => console.warn('ingest player', e));
   }
+  // Sources already in the workspace were read with the surface's own finder only; the engine reads each
+  // added source at add-time. This re-runs the engine over what is already here, once it is reachable, and
+  // re-folds — the engine's beings still merely witness the local finder (hdEngineMerge), never replace it.
+  async engineReadExisting(opts) {
+    opts = opts || {}; const id = this.corpusId();
+    const all = (this.state.added[id] || []);
+    const docs = all.filter(d => d.text && !d.measured && !d.eng && !d.engTried);
+    if (!docs.length) { this._engNote = all.some(d => d.eng) ? 'Every readable source already carries an engine reading.' : 'There is nothing here to re-read.'; this.setState({ engBusy: false }); if (!opts.quiet) this.toast(this._engNote); return; }
+    this.setState({ engBusy: true, busy: 'Re-reading ' + plural(docs.length, 'existing source') + ' with the eoreader7 engine…' });
+    let ok = 0, miss = 0;
+    for (const d of docs) { const got = await hdEngineRead(d.title, d.text); d.engTried = true; if (!got) { miss++; continue; } ok++; d.eng = hdEngineCompact(got.host, got.read); }
+    this.saveAdded(this.state.added); this._key = null;
+    this._engNote = miss ? (ok ? ok + ' re-read by the engine; ' + miss + ' could not be reached (is the proxy up?).' : 'The engine was not reachable — start the eoreader7 proxy, or set its address above.') : 'Re-read ' + plural(ok, 'source') + ' through the engine.';
+    this.setState({ engBusy: false, busy: '', htmlVer: this.state.htmlVer + 1 });
+    if (!opts.quiet) this.toast(this._engNote);
+  }
   async addDocs(list, aopt) {
     if (!list.length) { HD_TR = null; this.setState({ busy: '' }); return; }
     const T = hdTraceStart(list.length === 1 ? (list[0].title || 'Untitled') : plural(list.length, 'item'));
     const id = this.corpusId(); const prev = this.analysis();
+    let _HDR = null; try { _HDR = await hdRead(); } catch (e) {}
     { const nu = u => (u || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '').toLowerCase(); const have = {}; prev.docs.forEach(d => { if (d.url) have[nu(d.url)] = d; }); const dup = list.filter(x => x.url && have[nu(x.url)]); if (dup.length) { list = list.filter(x => !(x.url && have[nu(x.url)])); if (!list.length) { HD_TR = null; this.setState({ busy: '', view: 'reader', readDoc: have[nu(dup[0].url)].id, note: 'Already in this workspace — opened it.' }); return; } } }
-    const nd = list.map(x => ({ id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: x.title || 'Untitled', year: x.year || null, type: x.type || 'Text', format: x.format || 'text', hasHtml: !!x.html, url: x.url || null, pages: x.pages || null, ...(x.extra || {}), measured: !!x.measured, text: x.format === 'pdf' ? (x.text || '') : x.html ? pageText(x.html, x.format).slice(0, 60000) : (x.text || ''), ...(x.challenge ? { challenge: x.challenge } : {}), ...(x.anchor ? { anchor: x.anchor } : {}), ...(x.rateLimited ? { rateLimited: x.rateLimited } : {}) }));
+    const nd = list.map(x => {
+      // Attribution is received from the page's own metadata, never inferred; a live page fetched by URL
+      // carries it too (the faithful capture keeps <meta>), so whoSays can name the author or publisher.
+      let aut = x.authors || null, pub = x.published || null, pl = x.pubLabel || null, pu = x.publisher || null;
+      if (!aut && !pub && _HDR && x.html && /^(html|page)$/i.test(x.format || '')) { try { const m = _HDR.metaOf(new DOMParser().parseFromString(x.html, 'text/html')); aut = m.authors; pub = m.published; pl = m.pubLabel; pu = m.publisher; } catch (e) {} }
+      return { id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: x.title || 'Untitled', year: x.year || null, type: x.type || 'Text', format: x.format || 'text', hasHtml: !!x.html, url: x.url || null, pages: x.pages || null, ...(x.extra || {}), measured: !!x.measured, text: x.format === 'pdf' ? (x.text || '') : x.html ? pageText(x.html, x.format).slice(0, 60000) : (x.text || ''), ...(aut && aut.length ? { authors: aut } : {}), ...(pub ? { published: pub } : {}), ...(pl ? { pubLabel: pl } : {}), ...(pu ? { publisher: pu } : {}), ...(x.challenge ? { challenge: x.challenge } : {}), ...(x.anchor ? { anchor: x.anchor } : {}), ...(x.rateLimited ? { rateLimited: x.rateLimited } : {}) }; });
     // The hang (holodeck-hang.js): which lens reveals the most meaning here, measured per doc, never assumed.
     // Directions in localStorage hd:hang-directions can prefer one hang over another; every flip is logged.
     try {
@@ -6888,6 +7119,7 @@ class Component extends DCLogic {
         const ym = t.match(/\b(1[5-9]\d{2}|20\d{2})\b/);
         this.addDocs([{ title, year: ym ? +ym[1] : null, text: t }]); },
       onFiles: e => this.ingest({ files: e.target.files, getData: () => '' }),
+      onFolder: e => this.ingest({ files: e.target.files, getData: () => '' }),
       customNote: S.note || (() => { const A = this.addState(); const total = addN(cid); const base = A.baseAdded != null ? A.baseAdded : total; const now = Math.max(0, total - base); const name = this.corpusName(); return now ? plural(now, 'source') + ' added just now · ' + plural(total, 'source') + ' in “' + name + '”' : total ? plural(total, 'source') + ' in “' + name + '” · nothing added from this search' : (S.results ? 'Nothing added from this search yet.' : ''); })(),
       hasCustom: addN(cid) > 0,
       clearCustom: () => { const added = { ...S.added, [cid]: [] }; this.saveAdded(added); this.setState({ added, just: null, view: 'summary', sel: null, f: {}, showAdd: false }); }

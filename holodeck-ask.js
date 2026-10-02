@@ -13,7 +13,7 @@ import { makeEngineRelationReader } from './holodeck-reader.js';
 let _reader = null; const reader = () => _reader || (_reader = makeEngineRelationReader());
 import { coverage, stripSelfCitations } from './vendor/eoreader7/native/organs/cite.js';
 import { checkGrounding, unsupportedClaims } from './vendor/eoreader7/native/organs/grounding.js';
-export { FOLD };
+export { FOLD, retrieve };
 
 export const WEBLLM_MODELS = [
   { id: 'gemma-2-2b-it-q4f16_1-MLC', label: 'Gemma 2 2B · in this tab', size: '1.4 GB' },
