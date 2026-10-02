@@ -108,8 +108,26 @@ async function main() {
       for (const f of fails) console.log("      - " + f);
       failed += fails.length ? 1 : 0;
     }
+    // ── TYPING: a referent's kind is read from the statement's own words — a
+    // human role before/after a name marks a person, a structural org head beats a
+    // place that ends the name, and a merged identity carries one stable type. ──
+    const TYPE_DOCS = [
+      ...SARANDON,
+      doc("d9", "Louis Malle", `<p>Louis Malle was a French filmmaker. Louis Malle directed Au Revoir les Enfants.</p>
+<p>The Catholic University of America is in Washington. New York City hosted the premiere.</p>`),
+    ];
+    const typeNames = await surf.page.evaluate((docs) => Object.values(window.__holodeck.analyze({ docs }).names).map((n) => ({ name: n.name, type: n.type, aliases: n.aliases || [] })), TYPE_DOCS);
+    const typeOf = (label) => { const e = typeNames.find((n) => n.name === label || (n.aliases || []).includes(label)); return e ? e.type : null; };
+    const WANT = [["Susan Abigail Tomalin", "person"], ["Chris Sarandon", "person"], ["Louis Malle", "person"], ["New York City", "place"], ["Catholic University of America", "organisation"]];
+    for (const [nm, want] of WANT) {
+      const got = typeOf(nm);
+      const ok = got === want;
+      if (!ok) failed += 1;
+      console.log((ok ? "PASS " : "FAIL ") + "type".padEnd(28) + nm + " → " + (got || "?").padEnd(14) + " (want " + want + ")");
+    }
+
     console.log("");
-    console.log(failed ? "VERDICT: FAIL (" + failed + "/" + CASES.length + " cases)" : "VERDICT: PASS (" + CASES.length + "/" + CASES.length + " cases)");
+    console.log(failed ? "VERDICT: FAIL (" + failed + " failures)" : "VERDICT: PASS (identity " + CASES.length + "/" + CASES.length + ", typing 5/5)");
     if (surf.consoleErrors.length) console.log("console errors:", JSON.stringify(surf.consoleErrors.slice(0, 6)));
     if (failed) process.exitCode = 1;
   } finally {

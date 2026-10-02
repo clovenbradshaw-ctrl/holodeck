@@ -2658,6 +2658,11 @@ const ORG_LOWER = new Set([...ORG].map(w => w.toLowerCase()).concat(['inc.', 'lt
 const PLACE = W('Bridge Avenue Street Road River Park Square City County District Station Corridor Lane Way Valley Hill Harbor Harbour Island Bay Lake Coast Airport Market Centre Plaza Quarter North South East West Point Terminal Channel Tunnel Ocean Sea States Kingdom Chile Maryland Virginia Baltimore Singapore Asia America Europe Africa Dundalk');
 const TYPE_C = { person: 'var(--pink)', organisation: 'var(--blue)', place: 'var(--green)', other: 'var(--mut)' };
 const TYPE_L = { person: 'People', organisation: 'Organisations', place: 'Places', other: 'Other names' };
+// A person's profession, used two ways: a role word right BEFORE a name ("actress
+// Susan Sarandon") or after a copula ("Louis Malle was a French filmmaker") marks
+// the name a person. A closed set of human roles — a machine or an institution
+// never carries one, so it is a safe, declared convention (Chomsky), not a guess.
+const PERSON_ROLE = new Set(('actress actor singer songwriter musician composer pianist violinist conductor dancer choreographer performer entertainer comedian filmmaker director producer screenwriter playwright writer author novelist poet essayist journalist reporter columnist editor publisher illustrator painter artist sculptor photographer architect designer inventor engineer scientist physicist chemist biologist astronomer mathematician geologist historian archaeologist anthropologist sociologist psychologist economist linguist philosopher theologian lawyer judge attorney jurist prosecutor physician doctor surgeon nurse clinician psychologist psychiatrist politician statesman senator congressman governor mayor diplomat ambassador minister premier chancellor president king queen prince princess emperor empress duke duchess count earl baron baroness knight general admiral colonel major captain sergeant lieutenant cardinal archbishop bishop priest pastor reverend nun monk friar missionary philanthropist humanitarian activist feminist revolutionary entrepreneur industrialist businessman businesswoman executive tycoon mogul trader broker banker lawyer').split(' '));
 const FRAMES = [
   { id: 'fact', label: 'Stated as fact', color: 'var(--ink)', desc: 'Said plainly, with no one quoted and no hedge.' },
   { id: 'attributed', label: 'Attributed', color: 'var(--blue)', desc: 'Someone is reported as saying, estimating or wanting it.' },
@@ -2888,8 +2893,13 @@ function findNames(t, hy) {
 }
 function nameType(n, info) {
   if (info.person) return 'person';
-  const last = n.split(' ').pop();
-  const first = n.split(' ')[0];
+  const words = n.split(/\s+/).filter(Boolean);
+  const last = words[words.length - 1] || '';
+  const first = words[0] || '';
+  // a structural organisation head anywhere in the name beats a place that happens
+  // to be its last token: "Catholic University of America" is an organisation even
+  // though it ends in "America", and "New York City" stays a place (no org head).
+  if (words.some(w => ORG.has(w.replace(/[.,]+$/, '')))) return 'organisation';
   if (/(Bank|Line)$/.test(last) && /^(East|West|North|South|Metro)/.test(first)) return 'place';
   if (PLACE_FIRST.has(first)) return 'place';
   if (ORG.has(last)) return 'organisation';
@@ -2989,7 +2999,15 @@ function analyze(corpus, htmlMap) {
   const sts = []; const found = []; const alias = {}; const info = {}; const HY = hdHygiene(docs);
   docs.forEach(d => { const on = hdF(d.id); const ss = splitSentences(d.text, on ? (a, b, c, x) => hdT(a, b, c, { doc: d.id, ...x }) : null); if (on) hdT('sentences', 'split', 'Split into ' + ss.length + ' statements', { doc: d.id, n: ss.length }); const hy = HY ? HY.forDoc(d, on ? (k, what, why) => hdT('names', 'hygiene', why + ' (' + qW(what) + ')', { doc: d.id }) : null) : null; if (on && !d.hasCase) hdT('names', 'gap', 'This source carries no letter case — its script has none (or it is code): the case convention that opens a name does not apply, so names are read from the source\u2019s own links, which is the material marking its own names. Where none are linked, none are claimed', { doc: d.id, linked: (d._linkNames || []).length }); ss.forEach((se, i) => {
     const ns = d.hasCase ? hdEngineMerge(se.t, findNames(se.t, hy), d.eng, hy) : (d._linkNames || []).filter(l => l.s < se.e && l.e > se.s).map(l => ({ name: l.name, s: Math.max(0, l.s - se.s), e: Math.min(l.e, se.e) - se.s, via: 'link' }));
-    ns.forEach(n => { if (n.alias) alias[n.alias] = n.name; });
+    ns.forEach(n => { if (n.alias) alias[n.alias] = n.name;
+      // TYPE CUES read from the statement's own words: a human role right before the
+      // name ("actress Susan Sarandon") or after a copula ("was a French filmmaker")
+      // makes the name a person. The role set is closed and human-only, so a place
+      // or institution can never trip it.
+      const before = se.t.slice(Math.max(0, n.s - 24), n.s).trim().toLowerCase();
+      const after = se.t.slice(n.e, Math.min(se.t.length, n.e + 80)).toLowerCase();
+      if (PERSON_ROLE.has((before.match(/[a-z'-]+$/g) || [])[0] || '')) n.role = true;
+      else if (/\b(is|was|were|became)\b/.test(after.slice(0, 12)) && after.split(/\s+/).some(w => PERSON_ROLE.has(w.replace(/[.,;:]+$/, '')))) n.role = true; });
     const st0 = { id: d.id + ':' + i, doc: d.id, s: se.s, e: se.e, text: se.t, rawNames: ns, figs: findFigures(se.t), dates: findDates(se.t), frame: frameOf(se.t) }; sts.push(st0);
     if (on) { const D = { doc: d.id, id: st0.id }; hdT('sentences', 'statement', 'Statement ' + (i + 1) + ': \u201c' + hdCut(se.t, 90) + '\u201d', { ...D, s: se.s, e: se.e });
       ns.forEach(n => hdT('names', 'name', 'Name \u201c' + n.name + '\u201d' + (n.title ? ' after the title ' + n.title : '') + (n.alias ? ', short form (' + n.alias + ')' : '') + (n.saidAfter ? ', followed by a reporting verb' : '') + (n.acr ? ', an acronym' : '') + (n.engineAdded ? ', found by the engine (' + n.engine + ')' : n.engine ? ', the engine read it too' : ''), { ...D, name: n.name, s: se.s + n.s, e: se.s + n.e }));
@@ -3121,7 +3139,7 @@ function analyze(corpus, htmlMap) {
       if (canon !== n.name && hdF(st.doc)) hdT('canon', 'merge', '\u201c' + n.name + '\u201d is read as \u201c' + canon + '\u201d (' + (alias[n.name] ? 'declared in parentheses' : n.name.includes(' ') ? 'it sits inside that longer name' : 'the only full name ending in it') + ')', { doc: st.doc, id: st.id, from: n.name, to: canon });
       if (n.alias && n.alias === canon) return;
       const I = info[canon] || (info[canon] = { aliases: new Set() });
-      if (n.title) I.person = true; if (n.saidAfter) I.said = true; if (n.acr && !alias[n.name]) I.acr = true;
+      if (n.title || n.role) I.person = true; if (n.saidAfter) I.said = true; if (n.acr && !alias[n.name]) I.acr = true;
       if (canon !== n.name) I.aliases.add(n.name);
       (aliasOf[canon] || []).forEach(a => I.aliases.add(a));
       st.spans.push({ s: n.s, e: n.e, name: canon }); set.add(canon);
