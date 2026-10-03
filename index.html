@@ -2175,6 +2175,7 @@ button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visi
               <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden">
                 <button onClick="{{ modeOriginal }}" style="border:0;padding:6px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';background:{{ modeO.bg }};color:{{ modeO.color }}">Original</button>
                 <sc-if value="{{ hasFaithful }}" hint-placeholder-val="{{ false }}"><button onClick="{{ modeReading }}" style="border:0;padding:6px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';background:{{ modeR.bg }};color:{{ modeR.color }}">Reading</button></sc-if>
+                <sc-if value="{{ hasScreen }}" hint-placeholder-val="{{ false }}"><button onClick="{{ modeScreen }}" title="The measured 2D model drawn on the image: every region, coloured by role" style="border:0;padding:6px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';background:{{ modeSc.bg }};color:{{ modeSc.color }}">Regions</button></sc-if>
                 <button onClick="{{ modePlain }}" style="border:0;padding:6px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';background:{{ modeP.bg }};color:{{ modeP.color }}">Text only</button>
                 <button onClick="{{ modeRestated }}" title="The document restated from its own structure: no model, every clause from the text" style="border:0;padding:6px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';background:{{ modeS.bg }};color:{{ modeS.color }}">Restated</button>
                 <button onClick="{{ modeSummary }}" title="The document curated from its own sentences — one line, five, three paragraphs. No model; every line is a verbatim span of this source" style="border:0;padding:6px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';background:{{ modeSum.bg }};color:{{ modeSum.color }}">Summary</button>
@@ -3660,7 +3661,12 @@ function walkText(root, fn) {
       if (tg === 'IMG' || tg === 'SCRIPT' || tg === 'STYLE' || tg === 'NOSCRIPT' || tg === 'TEMPLATE' || tg === 'SVG' || tg === 'svg' || tg === 'HEAD' || tg === 'TITLE') continue;
       rec(c);
       if (tg === 'TD' || tg === 'TH') out += '; ';
-      else if (BLOCK_RE.test(tg) && !out.endsWith('\n')) out += '\n';
+      // A block element ends a paragraph, so separate it from the next with a BLANK line — the
+      // engine's own chunker (chunkProse) cuts passages only at blank lines. A single newline
+      // here would silently fuse a whole document into one passage: retrieval would then have a
+      // single candidate and any question not sharing a word with the entire source would find
+      // nothing. Keep the distinction walkText is the only place to keep: <br> is a single \n.
+      else if (BLOCK_RE.test(tg) && !out.endsWith('\n\n')) out += out.endsWith('\n') ? '\n' : '\n\n';
     } } };
   rec(root); return out;
 }
@@ -4048,7 +4054,27 @@ async function readAny(file) {
     else if (/^(audio|video)\//.test(file.type) || ['wav', 'mp3', 'flac', 'ogg', 'mp4'].includes(kind)) r = await M.readSound(file, await all(), hdTr, /^video\//.test(file.type) || (kind === 'mp4' && !/^audio/.test(file.type)) ? 'Video' : 'Audio');
     if (r) { hdT('decode', 'done', 'Read as ' + r.type + (r.note ? ' — ' + r.note : ''), { type: r.type });
       // An image is only pixels: measure it (above), then read any text in it by OCR, marked as machine-read.
-      if (r.type === 'Image' && hdOcrOn()) { try { const R = await hdRead(); const t = await R.ocrImage(file, p => hdT('decode', 'ocr', 'OCR ' + (p.status || '') + (p.progress != null ? ' ' + Math.round(p.progress * 100) + '%' : ''))); if (t && t.trim().length > 12) { const n = (t.trim().match(/\S+/g) || []).length; r = { ...r, html: r.html + t.split(/\n\s*\n/).map(x => '<p style="' + TAG_STYLE.P + '">' + esc(x.replace(/\s+/g, ' ').trim()) + '</p>').join(''), note: (r.note ? r.note + ' ' : '') + 'OCR read ' + n + ' words from it (a machine reading, not the image’s own text).' }; hdT('decode', 'ocr', 'OCR read the image: ' + n + ' words'); } } catch (e) { hdT('decode', 'ocr-fail', 'OCR could not run (' + e.message + ')'); } }
+      if (r.type === 'Image') {
+        // The image's middle layer: read its 2D model in this tab (flat-region geometry + tesseract
+        // word boxes → elements with region [x,y,w,h], roles, design tokens, typed gaps). This is
+        // what makes an image answer "what is where"; flat OCR alone gives only a string. Falls back
+        // to plain OCR text if the model cannot run.
+        try {
+          const S = await import(new URL('holodeck-screen.js', location.href).href);
+          const bmp = await createImageBitmap(file);
+          const sc = await S.readScreenImage(bmp, { name: title, tr: hdT, tessSrc: (() => { try { return localStorage.getItem('hd:tess') || null; } catch (e) { return null; } })() });
+          if (sc && sc.elements && sc.elements.length) {
+            const words = (sc.text.match(/\S+/g) || []).length;
+            const imgUrl = await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(file); });
+            this._pendingImg = this._pendingImg || {}; this._pendingImg['img:' + (title || name)] = imgUrl;
+            const struct = '<p style="' + TAG_STYLE.P + '">' + esc(sc.text.replace(/\s+/g, ' ').trim()) + '</p>';
+            r = { ...r, html: r.html + struct, screen: sc, hasImg: true, note: (r.note ? r.note + ' ' : '') + 'Read for structure: ' + sc.elements.length + ' elements with a region, ' + words + ' words of text (a machine reading from the pixels and OCR boxes, no vision model).' };
+            hdT('screen', 'done', 'The 2D model: ' + sc.elements.length + ' elements, ' + Object.keys(sc.tokens || {}).length + ' token groups');
+            r.text = [r.text, sc.text].filter(Boolean).join('\n\n');
+          }
+        } catch (e) { hdT('screen', 'fail', 'The 2D model did not run (' + e.message + '); falling back to flat OCR'); }
+        if (!r.screen && hdOcrOn()) { try { const R = await hdRead(); const t = await R.ocrImage(file, p => hdT('decode', 'ocr', 'OCR ' + (p.status || '') + (p.progress != null ? ' ' + Math.round(p.progress * 100) + '%' : ''))); if (t && t.trim().length > 12) { const n = (t.trim().match(/\S+/g) || []).length; r = { ...r, html: r.html + t.split(/\n\s*\n/).map(x => '<p style="' + TAG_STYLE.P + '">' + esc(x.replace(/\s+/g, ' ').trim()) + '</p>').join(''), text: [r.text, t].filter(Boolean).join('\n\n'), note: (r.note ? r.note + ' ' : '') + 'OCR read ' + n + ' words from it (a machine reading, not the image’s own text).' }; hdT('decode', 'ocr', 'OCR read the image: ' + n + ' words'); } } catch (e) { hdT('decode', 'ocr-fail', 'OCR could not run (' + e.message + ')'); } }
+      }
       return { title, year, ...r }; }
   } catch (e) { hdT('decode', 'fail', 'Media reader failed (' + e.message + '); falling back to the text readers'); }
   const r = await readText(file, M);
@@ -5076,6 +5102,44 @@ class Component extends DCLogic {
   async loadReading(rebuild) { if (this._rixP && !rebuild) return this._rixP; this._rixP = (async () => {
       if (!rebuild) { const v = await loadReadingIndex(false); if (v) { this._rix = v; this.forceUpdate(); return this._rix; } }
       return new Promise(res => { const w = new Worker(new URL('reading-worker.js', location.href), { type: 'module' }); w.onmessage = async e => { const m = e.data; if (m.err) { this._rixErr = m.err; this._rixProg = null; this.forceUpdate(); w.terminate(); res(null); return; } if (!m.done) { this._rixProg = m; this.forceUpdate(); return; } w.terminate(); this._rixProg = null; this._rix = await loadReadingIndex(true); this.forceUpdate(); res(this._rix); }; w.postMessage({ url: hdReadingSrc() }); }); })(); return this._rixP; }
+  // ---------- the local reading: the same cast, bonds and encounters the OHS ground reading has,
+  // folded in this tab from the workspace's own documents through the vendored eoreader7 relation
+  // reader. No prebuilt index and no server: a source is read here, so uploads yield Referents and
+  // Bonds beside the corpus instead of names alone. Keyed by the docs, so it recomputes only when
+  // they change; the reader is the same organ the engine's /v1/read drives.
+  async loadLocalReading() {
+    const A = this.analysis();
+    const docs = A.docs.filter(d => !d.ohsId && ((d.text && d.text.trim()) || (d.screen && d.screen.elements && d.screen.elements.length)));
+    const sig = docs.map(d => d.id).join(',') + ':' + docs.reduce((n, d) => n + String(d.text || '').length + ((d.screen && d.screen.elements || []).length), 0);
+    if (this._lrixDone === sig) return this._localRix || null;
+    if (this._lrixP && this._lrixSig === sig) return this._lrixP;
+    this._lrixSig = sig;
+    if (!docs.length) { this._lrixDone = sig; this._localRix = null; this._lrixP = null; return null; }
+    this._lrixP = (async () => {
+      try {
+        const M = await import(new URL('holodeck-reading.js', location.href).href);
+        const R = await (await import(new URL('holodeck-reader.js', location.href).href)).makeEngineRelationReader();
+        const readings = [];
+        for (const d of docs) {
+          // An image is read from its measured 2D model (the middle layer): names legible in a box
+          // become referents standing "sighted", each carrying its region. Text sources are read by
+          // the relation reader as before.
+          if (d.screen && d.screen.elements && d.screen.elements.length) {
+            readings.push(M.readSighted(d.id, d.screen.elements, { readingText: d.screen.text }));
+          } else {
+            const text = String(d.text || '').slice(0, 60000); const passages = M.splitPassages(text);
+            let report = { edges: [] };
+            try { report = R(passages.map(t => ({ ref: d.id, text: t }))) || report; } catch (e) { report = { edges: [] }; }
+            readings.push({ name: d.id, ...M.readDoc(d.id, text, report, { passages: passages.length }) });
+          }
+          await new Promise(r => setTimeout(r, 0));
+        }
+        return M.mergeReadings(readings, { from: 'workspace (read in this tab)' });
+      } catch (e) { return null; }
+    })();
+    const rix = await this._lrixP; if (this._lrixSig === sig) { this._lrixP = null; this._localRix = rix; this._lrixDone = sig; this.forceUpdate(); }
+    return rix;
+  }
   // ---------- Records: the workspace as a relational database, its schema read off the data (bare-metal fold.js + DataChat) ----------
   recMod() { if (!this._recP) this._recP = import(new URL('holodeck-records.js', location.href).href); return this._recP; }
   dataChat() { if (window.DataChat) return Promise.resolve(window.DataChat); if (!this._dcP) this._dcP = new Promise((res, rej) => { const el = document.createElement('script'); el.src = new URL('vendor/bare-metal/public/data-chat.js', location.href).href; el.onload = () => res(window.DataChat); el.onerror = () => rej(new Error('DataChat did not load')); document.head.appendChild(el); }); return this._dcP; }
@@ -5116,12 +5180,13 @@ class Component extends DCLogic {
     return out;
   }
   ensureDb(A) {
-    const key = this._key + ':' + (this._rix ? 'r' : '');
+    const key = this._key + ':' + (this._rix ? 'r' : '') + (this._localRix ? 'l' : '');
     if (this._db && this._db.key === key) return this._db;
     if (!this._rix && !this._rixTried) { this._rixTried = true; loadReadingIndex(false).then(v => { if (v && !this._rix) { this._rix = v; this.forceUpdate(); } }).catch(() => {}); }
+    this.loadLocalReading().catch(() => {});
     if (this._dbBuilding !== key) { this._dbBuilding = key;
       Promise.all([this.recMod(), this.dataChat().catch(() => null)]).then(([M]) => setTimeout(() => { if (this._dbBuilding !== key) return;
-        try { const db = M.buildDatabase(A, this._rix, { counted: d => this.counted(d), filterFrames: this.filterFramesFor(A), savedFolds: this.myFolds() }); db.key = key; const out = new Map(), inn = new Map();
+        try { const db = M.buildDatabase(A, this._rix, { localIx: this._localRix, counted: d => this.counted(d), filterFrames: this.filterFramesFor(A), savedFolds: this.myFolds() }); db.key = key; const out = new Map(), inn = new Map();
           for (const c of db.state.connections) { (out.get(c.source) || out.set(c.source, []).get(c.source)).push({ rel: c.type, a: c.target }); (inn.get(c.target) || inn.set(c.target, []).get(c.target)).push({ rel: c.type, a: c.source }); }
           const byType = new Map();
           if (db.state.entitiesByType) { for (const [t, anchors] of Object.entries(db.state.entitiesByType)) { const rows = []; for (const a of anchors) { const e = db.state.entities[a]; if (e) rows.push(e); } if (rows.length) byType.set(t, rows); } }
@@ -5550,8 +5615,8 @@ class Component extends DCLogic {
       ph: isGen ? (art.targeting ? 'Describe a change…' : 'Describe what to build…') : 'Ask about the sources…', sendLabel: isGen ? 'Send ↵' : 'Ask ↵' } };
   }
   readingVals(A, view) {
-    const S = this.state; const X = this._rix; const docOf = src => { const id = String(src).replace(/\.(txt|json)$/, ''); return A.docs.find(d => d.ohsId === id) || null; };
-    const rdOn = view === 'reader' && S.readDoc && X; if (view === 'reader' && !X && !this._rixP) loadReadingIndex(false).then(v => { if (v && !this._rix) { this._rix = v; this.forceUpdate(); } }); const rdDoc = rdOn ? A.docById[S.readDoc] : null; const srcOf = X ? (X.source ? n => X.source(n) : n => X.sources[n]) : null; const rdSrc = rdDoc && rdDoc.ohsId && srcOf ? srcOf(rdDoc.ohsId + '.txt') || srcOf(rdDoc.ohsId + '.json') : null;
+    const S = this.state; const X = this._rix || this._localRix; const docOf = src => { const id = String(src).replace(/\.(txt|json)$/, ''); return A.docs.find(d => d.ohsId === id) || A.docById[id] || null; };
+    const rdOn = view === 'reader' && S.readDoc && X; if (view === 'reader' && !X && !this._rixP) loadReadingIndex(false).then(v => { if (v && !this._rix) { this._rix = v; this.forceUpdate(); } }).catch(() => {}); if ((view === 'reader' || view === 'reading') && !this._localRix && !this._lrixP) this.loadLocalReading(); const rdDoc = rdOn ? A.docById[S.readDoc] : null; const srcOf = X ? (X.source ? n => X.source(n) : n => X.sources[n]) : null; const rdSrc = rdDoc ? (rdDoc.ohsId && srcOf ? (srcOf(rdDoc.ohsId + '.txt') || srcOf(rdDoc.ohsId + '.json')) : (this._localRix && this._localRix.sources[rdDoc.id])) : null;
     const rdPanel = rdSrc ? { has: true, line: plural(rdSrc.chunks, 'encounter') + ' \u00b7 ' + Object.entries(rdSrc.ops).sort((a, b) => b[1] - a[1]).map(([k, v]) => k + ' ' + v).join(' \u00b7 '), cast: Object.entries(rdSrc.cast).slice(0, 12).map(([k, v]) => k + ' \u00d7' + v).join(', '), bonds: Object.entries(rdSrc.bonds).slice(0, 8).map(([k, v]) => k + ' \u00d7' + v), churn: Object.entries(rdSrc.idChurn).slice(0, 5).map(([k, v]) => k + ' \u00d7' + v), hasChurn: Object.keys(rdSrc.idChurn).length > 0 } : { has: false, bonds: [], churn: [] };
     if (view !== 'reading') return { rdReading: rdPanel, rx: { on: false } };
     if (!X) { this.loadReading(); const p = this._rixProg; return { rdReading: rdPanel, rx: { on: true, ready: false, notReady: true, wait: this._rixErr ? 'Could not build the reading index: ' + this._rixErr : p ? (p.stage + (p.pct != null ? ' ' + p.pct + '%' : '') + (p.mb ? ' \u00b7 ' + p.mb + ' MB' : '')) : 'Opening the reading\u2026', note: 'The reading is 1.67 GB once decompressed. It is decoded once in the background, kept in this browser\u2019s file store, and indexed; later visits open the index directly.' } }; }
@@ -5563,7 +5628,7 @@ class Component extends DCLogic {
     const srcRows = (X.order || (srcMeta ? Object.keys(srcMeta) : Object.keys(X.sources))).map(s => { const x = srcMeta ? srcMeta[s] : X.sources[s]; const d = docOf(s); return { name: d ? d.title : s, file: s, line: plural(x.chunks, 'encounter') + ' \u00b7 ' + (x.ops.CON || 0) + ' CON \u00b7 ' + (x.ops.INS || 0) + ' INS \u00b7 ' + (x.ops.REC || 0) + ' REC', onOpen: d ? () => this.read(d.id) : () => {} , canOpen: !!d }; });
     return { rdReading: rdPanel, rx: { on: true, ready: true, stats: [[X.encounters, 'encounters'], [nSrc, 'sources'], [X.castTotal, 'referents admitted'], [X.bondsTotal, 'bonds witnessed'], [X.canonTotal, 'canonical relations'], [X.identitiesTotal, 'identity hypotheses']].map(([n, l]) => ({ n: Number(n).toLocaleString(), l })),
       kinds: Object.entries(X.kinds).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ k, v: v.toLocaleString() })),
-      cast: castRows, load: load.slice(0, 40), back: back.slice(0, 20), backN: String(back.length), loadN: String(load.length), churn, srcRows, built: 'Built ' + new Date(X.builtAt).toLocaleString() + ' in ' + (X.ms / 1000).toFixed(1) + ' s from ' + String(X.from).split('/').pop(), onRebuild: () => { this._rix = null; this.loadReading(true); this.forceUpdate(); } } };
+      cast: castRows, load: load.slice(0, 40), back: back.slice(0, 20), backN: String(back.length), loadN: String(load.length), churn, srcRows, built: 'Built ' + new Date(X.builtAt).toLocaleString() + ' in ' + (X.ms / 1000).toFixed(1) + ' s from ' + String(X.from).split('/').pop(), onRebuild: () => { this._rix = null; this._localRix = null; this._lrixSig = null; this._lrixDone = null; this.loadReading(true); this.loadLocalReading(); this.forceUpdate(); } } };
   }
   async sourceBytes(d) {
     await this.net();
@@ -5821,6 +5886,42 @@ class Component extends DCLogic {
     target.addEventListener('submit', e => e.preventDefault(), true);
     target.addEventListener('mouseover', e => { const st = e.target.closest && e.target.closest('[data-st]'); this.hoverSt(st ? st.getAttribute('data-st') : null); });
   }
+  // A source that was read for structure: the image with the measured 2D model drawn on it —
+  // every element's region [x,y,w,h] as a labelled box, coloured by role, so the middle layer is
+  // visible, not only addressable. Clicking a region selects the referent(s) it carries.
+  renderScreen(el, d, A, key) {
+    const sc = d.screen;
+    el.innerHTML = '';
+    const wrap = document.createElement('div'); wrap.style.cssText = 'position:relative;width:100%;max-width:900px;margin:0 auto';
+    const img = document.createElement('img'); img.src = (this._html && this._html['img:' + d.id]) || d.imgSrc || ''; img.alt = d.title || ''; img.style.cssText = 'display:block;width:100%;height:auto;border-radius:8px;box-shadow:0 0 0 1px var(--line),0 8px 24px rgba(0,0,0,.18)';
+    if (!img.src) idbGet('img:' + d.id).catch(() => null).then(u => { if (u && this._rKey === key) { this._html = this._html || {}; this._html['img:' + d.id] = u; img.src = u; } });
+    wrap.appendChild(img); el.appendChild(wrap);
+    const bar = document.createElement('div'); bar.style.cssText = "display:flex;gap:6px 14px;align-items:baseline;flex-wrap:wrap;font:400 13px/1.5 'Hanken Grotesk';color:var(--mut);margin:10px 0 4px";
+    bar.append('The 2D model: ' + (sc.elements || []).length + ' elements with a region, read from the pixels and OCR boxes — no vision model. ' + (Object.entries((sc.tokens && sc.tokens) || {}).filter(([, v]) => v).length) + ' measured token groups. A box’s colour is its role.');
+    const legend = document.createElement('div'); legend.style.cssText = "display:flex;gap:6px 12px;flex-wrap:wrap;font:500 12px/1.7 'JetBrains Mono',monospace";
+    const RC = { h1: 'var(--acc)', h2: 'var(--acc)', h3: 'var(--acc)', p: 'var(--blue)', box: 'var(--amber)', button: 'var(--green)', header: 'var(--pink)', section: 'var(--amber)', image: 'var(--mut)', rule: 'var(--date)' };
+    Object.keys(RC).forEach(role => { const s = document.createElement('span'); s.textContent = role; s.style.color = RC[role]; legend.appendChild(s); });
+    const col = document.createElement('div'); col.style.cssText = 'display:flex;flex-direction:column;gap:2px'; col.appendChild(bar); col.appendChild(legend); el.insertBefore(col, wrap);
+    const draw = () => {
+      if (this._rKey !== key) return;
+      wrap.querySelectorAll('.hd-region').forEach(x => x.remove());
+      if (this._screenRegions === false) { this._rRoot = wrap; this.applySel(wrap); return; }
+      const W = img.clientWidth || wrap.clientWidth; if (!W || !sc.width) return; const k = W / sc.width;
+      (sc.elements || []).forEach(e => {
+        if (!e.region || e.region.length !== 4) return; const [x, y, w, h] = e.region;
+        const box = document.createElement('div'); box.className = 'hd-region';
+        const rgb = RC[e.role] || 'var(--mut)';
+        box.style.cssText = 'position:absolute;box-sizing:border-box;border:1.5px solid ' + rgb + ';border-radius:3px;cursor:' + (e.text ? 'pointer' : 'default') + ';background:color-mix(in srgb, ' + rgb + ' 12%, transparent)';
+        box.style.left = (x * k) + 'px'; box.style.top = (y * k) + 'px'; box.style.width = (w * k) + 'px'; box.style.height = (h * k) + 'px';
+        if (e.text) box.title = (e.role || '') + ' — ' + e.text;
+        box.onclick = ev => { ev.stopPropagation(); const nm = (e.text || '').match(/\b[\p{Lu}][\p{L}'\u2019-]+(?:\s+[\p{Lu}][\p{L}'\u2019-]+)*/u); if (nm && A.names && A.names[nm[0]]) this.openProfile(nm[0]); };
+        wrap.appendChild(box);
+      });
+      this._rRoot = wrap; this._selKey = null; this.applySel(wrap);
+    };
+    img.onload = () => { draw(); setTimeout(draw, 300); };
+    this._screenDraw = draw; draw();
+  }
   renderPage(el, d, R, A, key) {
     el.innerHTML = ''; const f = document.createElement('iframe');
     f.setAttribute('sandbox', 'allow-same-origin allow-popups allow-popups-to-escape-sandbox');
@@ -6029,6 +6130,7 @@ class Component extends DCLogic {
     if (this._rKey !== key) {
       this._rKey = key; this._selKey = null; this._hov = null;
       const F = new Set(A.sts.filter(st => this.match(st, A)).map(s => s.id)); const R = this.ranges(A, d, F, q);
+      if (d.screen && d.screen.elements && d.screen.elements.length) { this.renderScreen(el, d, A, key); return; }
       if (d.format === 'pdf') { this._rRoot = el; this.renderPdf(el, d, R, A, key); return; }
       if (d.format === 'page') { this.renderPage(el, d, R, A, key); return; }
       if ((d.faithful || d.binPath) && !d.pdfSrc && S.readMode === 'original') { this.renderFaithful(el, d, R, A, key, q); return; }
@@ -6272,7 +6374,12 @@ class Component extends DCLogic {
   sel(type, id) { const S0 = this.state; if (type === 'name' && S0.view === 'reader' && !(S0.sel && S0.sel.type === 'name' && S0.sel.id === id)) this.pushHist(); if (type === 'doc') this.markRead(id); this.setState(s => (s.sel && s.sel.type === type && s.sel.id === id) ? { sel: null, selAll: false, pfIdx: 0, pfAll: false } : { sel: { type, id }, selAll: false, pfIdx: 0, pfAll: false }); }
   go(view) { this.setState({ view, readDoc: null }); }
   read(docId, stId) { const S0 = this.state; if (S0.view !== 'reader' || docId !== S0.readDoc || (S0.sel && S0.sel.type === 'name')) this.pushHist(); this.markRead(docId); const live = this.isLiveDoc(this.analysis().docById[docId]); if (docId !== this.state.readDoc) { this.state.seekT = 0; this._faithFound = null; } this.setState({ view: 'reader', readDoc: docId, sel: stId ? { type: 'statement', id: stId } : { type: 'doc', id: docId }, ...(live ? { readMode: 'original' } : {}) }); }
-  saveAdded(added) { try { localStorage.setItem('fold-explorer-added', JSON.stringify(added)); } catch (e) {} }
+  saveAdded(added) {
+    // The image's own bytes go to IndexedDB (as a blob), not localStorage: the sidecar kept on the
+    // doc is only the addressable model (elements/tokens/gaps/text), never the pixels or the raw
+    // tree, so a page of images cannot blow the workspace quota.
+    try { const slim = {}; for (const cid in added) slim[cid] = (added[cid] || []).map(d => { if (!d.screen) return d; const { model, ...sc } = d.screen; return { ...d, screen: sc }; }); localStorage.setItem('fold-explorer-added', JSON.stringify(slim)); } catch (e) {}
+  }
   // The Notebook is kept two ways from the same conversation: a real .ipynb you can download, and a plain
   // log kept as a source in this workspace, so what happened in the notebook can be read and asked about.
   notebookLogDoc() { const cid = this.corpusId(); return (this.state.added[cid] || []).find(d => d.id === 'nb-log') || null; }
@@ -6391,7 +6498,7 @@ class Component extends DCLogic {
     // with no readable text still stays uncounted — isLiveDoc, below — so a blocked link is not counted either.)
     nd.forEach(d => { d.status = 'source'; });
     if (!(T.focus instanceof Set)) T.focus = new Set(T.focus || []); nd.forEach(d => T.focus.add(d.id)); nd.forEach(d => hdT('store', 'mint', 'Stored \u201c' + hdCut(d.title, 60) + '\u201d as ' + d.id + (list[nd.indexOf(d)].html ? ' \u00b7 full page kept; ' + d.text.length.toLocaleString() + ' characters indexed for search' + (d.text.length >= 60000 ? ' (the cap; the reading below uses the whole page)' : '') : ' \u00b7 ' + d.text.length.toLocaleString() + ' characters kept'), { doc: d.id }));
-    nd.forEach((d, i) => { const x = list[i]; if (x.html) { this._html[d.id] = x.html; idbPut('html:' + d.id, x.html).catch(() => {}); } if (x.pdf) idbPut('pdf:' + d.id, x.pdf).catch(() => {}); if (x.buf) idbPut('media:' + d.id, x.buf).catch(() => {}); });
+    nd.forEach((d, i) => { const x = list[i]; if (x.html) { this._html[d.id] = x.html; idbPut('html:' + d.id, x.html).catch(() => {}); } if (x.pdf) idbPut('pdf:' + d.id, x.pdf).catch(() => {}); if (x.buf) idbPut('media:' + d.id, x.buf).catch(() => {}); if (d.hasImg && this._pendingImg) { const u = this._pendingImg['img:' + d.title]; if (u) { this._html['img:' + d.id] = u; idbPut('img:' + d.id, u).catch(() => {}); delete this._pendingImg['img:' + d.title]; } } });
     // Store first, then paint: each source lands in the workspace (and its bytes in IndexedDB) before the read and
     // the fold, so Sources fills in as the files arrive instead of freezing until the whole batch is done.
     const added = { ...this.state.added, [id]: [...(this.state.added[id] || []), ...nd] };
@@ -7529,7 +7636,10 @@ class Component extends DCLogic {
         return { hasFaithful: hf, modeR: pill(onR), modeReading: () => this.setState({ readMode: 'reading' }), faithOn: hf && S.readMode === 'original',
           rdFaith: hf && S.readMode === 'original' ? { has: true, note: (d0.pdfSrc ? 'The PDF exactly as captured' + (d0.custody ? ' (' + d0.custody + ')' : '') + '.' : 'The page as captured' + (d0.custody ? ' (' + d0.custody + ')' : '') + '. Layout and styles load from ' + ohsPublisher(d0.url) + ' today and may have changed since; the words are the captured bytes.') + (this._faithFound ? ' ' + this._faithFound.found + ' of ' + plural(this._faithFound.total, 'statement') + ' located and marked; the rest differ in wording or layout — see Reading.' : '') } : { has: false }, _o: onO }; })(),
       modeO: (() => { const d0 = S.readDoc && A.docById[S.readDoc]; const hf = !!(d0 && (d0.faithful || d0.binPath || d0.pdfSrc)); const on = S.readMode === 'original' || (!hf && S.readMode === 'reading'); return { bg: on ? 'var(--sel)' : 'transparent', color: on ? 'var(--ink)' : 'var(--mut)' }; })(), modeP: { bg: S.readMode === 'plain' ? 'var(--sel)' : 'transparent', color: S.readMode === 'plain' ? 'var(--ink)' : 'var(--mut)' }, modeS: { bg: S.readMode === 'restated' ? 'var(--sel)' : 'transparent', color: S.readMode === 'restated' ? 'var(--ink)' : 'var(--mut)' }, modeRestated: () => this.setState({ readMode: 'restated' }),
-        modeSum: { bg: S.readMode === 'summary' ? 'var(--sel)' : 'transparent', color: S.readMode === 'summary' ? 'var(--ink)' : 'var(--mut)' }, modeSummary: () => this.setState({ readMode: 'summary' }),
+modeSum: { bg: S.readMode === 'summary' ? 'var(--sel)' : 'transparent', color: S.readMode === 'summary' ? 'var(--ink)' : 'var(--mut)' }, modeSummary: () => this.setState({ readMode: 'summary' }),
+      hasScreen: !!(S.readDoc && A.docById[S.readDoc] && A.docById[S.readDoc].screen && A.docById[S.readDoc].screen.elements && A.docById[S.readDoc].screen.elements.length),
+      modeSc: { bg: (S.screenRegions !== false) ? 'var(--sel)' : 'transparent', color: (S.screenRegions !== false) ? 'var(--ink)' : 'var(--mut)' },
+      modeScreen: () => this.setState(s => { const on = s.screenRegions !== false; this._screenRegions = !on; setTimeout(() => { if (this._screenDraw) this._screenDraw(); }, 0); return { screenRegions: !on }; }),
       modeOriginal: () => this.setState({ readMode: 'original' }), modePlain: () => this.setState({ readMode: 'plain' }),
       readerHasUrl: !!(S.readDoc && A.docById[S.readDoc] && A.docById[S.readDoc].url), readerUrl: (S.readDoc && A.docById[S.readDoc] && A.docById[S.readDoc].url) || '',
       readerSourceLabel: S.readDoc && A.docById[S.readDoc] && A.docById[S.readDoc].url ? (/wikipedia.org/.test(A.docById[S.readDoc].url) ? (A.docById[S.readDoc].live ? 'Live from Wikipedia' : 'Excerpt from Wikipedia') + ' · CC BY-SA 4.0 ↗' : 'Open original ↗') : '',

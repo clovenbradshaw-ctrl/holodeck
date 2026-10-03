@@ -40,19 +40,27 @@ export function buildLog(A, rix, opts = {}) {
       ins(da, 'Dates', { label: cut(g.raw || '', 80), year: g.year || undefined, month: g.month || undefined });
       con(da, a, 'stated in'); });
   }
-  if (rix && Array.isArray(rix.cast)) {
-    const bySrc = {}; A.docs.forEach(d => { if (d.ohsId) bySrc[d.ohsId] = d; });
-    const docOf = s => bySrc[String(s).replace(/\.(txt|json)$/, '')] || null;
+  // The reader's cast and bonds: the OHS ground reading (`rix`, keyed by ohsId) and the local
+  // reading the tab folded itself (`opts.localIx`, keyed by the doc's own id) land as the same
+  // Referents and Bonds — so an uploaded source is read, not merely named. An anchor already
+  // emitted by one reading is never re-inserted by the other; the pair just links to it.
+  const seenRef = new Set(), seenBond = new Set();
+  const emitReading = (R, docOf) => {
+    if (!R || !Array.isArray(R.cast)) return;
     const bySurf = new Map();
-    for (const c of rix.cast) { const a = 'ref:' + c.id; const surf = (c.surfaces || [c.id])[0]; bySurf.set(surf, a);
+    for (const c of R.cast) { const a = 'ref:' + c.id; const surf = (c.surfaces || [c.id])[0]; bySurf.set(surf, a);
+      if (seenRef.has(a)) continue; seenRef.add(a);
       ins(a, 'Referents', { name: cut(surf, 120), standing: c.standing || undefined, mentions: c.mentions || undefined, surfaces: (c.surfaces || []).slice(0, 6), sources: c.srcN || Object.keys(c.src || {}).length });
       const fd = docOf(c.first); if (fd) con(a, docA(fd), 'first read in');
       if (A.names[surf]) con(a, nameA(surf), 'is'); }
-    for (const b of rix.bonds || []) { const ra = bySurf.get(b.a), rb = bySurf.get(b.b); const a = 'bond:' + b.a + '|' + b.b;
+    for (const b of R.bonds || []) { const a = 'bond:' + b.a + '|' + b.b; if (seenBond.has(a)) continue; seenBond.add(a);
+      const ra = bySurf.get(b.a), rb = bySurf.get(b.b);
       const rel = Object.entries(b.rel || {}).sort((x, y) => y[1] - x[1])[0];
       ins(a, 'Bonds', { label: cut(b.a + ' — ' + b.b, 160), relation: rel ? rel[0] : undefined, witnessed: b.n, sources: b.srcN || Object.keys(b.src || {}).length, negative: b.neg || 0 });
       if (ra) con(a, ra, 'between'); if (rb) con(a, rb, 'between'); }
-  }
+  };
+  if (rix && Array.isArray(rix.cast)) { const bySrc = {}; A.docs.forEach(d => { if (d.ohsId) bySrc[d.ohsId] = d; }); emitReading(rix, s => bySrc[String(s).replace(/\.(txt|json)$/, '')] || A.docById[String(s)] || null); }
+  if (opts.localIx && Array.isArray(opts.localIx.cast)) emitReading(opts.localIx, s => A.docById[String(s)] || null);
   const found = tablesInSources(A);
   const nameKey = new Map(names.map(n => [n.name.toLowerCase(), n.name]));
   for (const t of found) {
