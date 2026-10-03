@@ -97,3 +97,12 @@ fast: 2 files (plus the merge) · none affected (phone-fit is a person-run tool;
 | Feynman | a numeric constant in a comparison | tools/phone-fit.mjs:9 | noted | the W<700 is the CDP mobile-emulation profile, not a pass threshold; the fit check itself is scrollWidth <= visualViewport.width |
 | Simon/Chekhov | new source no test imports | tools/phone-fit.mjs | noted | a person-run CDP driver (like tools/notebook-falsify.mjs); run live at 320/390/600 with no overflow and no console errors |
 clean: no other lens routed (every conflicted file resolves to main)
+
+## 2026-10-03 — topics are the holograph's paradigms, wired to filter; the read-as 3×3 retires and perspective names hold to 1–4 words; the shared module-cache that made heroBarBase read GENRES off the reader is fixed (_readerM) (main, the-fold)
+fast: 2 files · 14 affected tests pass · law: WARN pre-existing S17/S96 in ../eoreader7/native/READING-SPEC.md
+| lens | citation | file:line | verdict | one line |
+| Feynman | a numeric constant in a comparison | index.html:6872 | false-positive-on-review | slice(0,4)/> 4 decide how many source titles one topic row previews; display truncation, unchanged from before the diff, not a threshold any test was tuned to |
+| Dijkstra | allowlist / locale logic | holodeck-reader.js:316 | false-positive-on-review | the new 4-word cap splits on whitespace (language-agnostic); it gates the pre-existing English-register labeller, not a locale decision |
+| Frankfurt | placeholder | index.html:223 | false-positive-on-review | hint-placeholder-* are the standing dc-template compile metadata, not a value standing in for missing data |
+| Greenberg | capitalisation gate with no declared scope | holodeck-reader.js:316 | noted | isNameWord (/^[A-Z]/) and gerund order are English, and perspectivesOf's own comment declares it ("the prior and the register are English — a script it cannot tag yields no act, shown as no chip") |
+clean: no other lens routed

@@ -220,7 +220,10 @@ button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visi
               <div style="display:flex;gap:8px;align-items:center"><button onClick="{{ stripEOApply }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:7px;padding:5px 12px;cursor:pointer;font:600 12px 'Hanken Grotesk'">Apply EOQL</button><button onClick="{{ stripEOClear }}" style="background:none;border:1px solid var(--line2);color:var(--ink2);border-radius:7px;padding:4px 10px;cursor:pointer;font:500 12px 'Hanken Grotesk'">clear</button></div>
               <sc-for list="{{ stripGaps }}" as="g" hint-placeholder-count="0"><div style="font:400 11px 'JetBrains Mono';color:var(--amber)">⚠ {{ g.text }}</div></sc-for>
             </sc-if>
-            <sc-for list="{{ stripSegRows }}" as="row" hint-placeholder-count="3"><div style="border-top:1px solid var(--line);padding-top:6px;display:flex;flex-direction:column;gap:2px"><span style="font:600 12px 'Hanken Grotesk';color:var(--ink)">{{ row.label }} <span style="font:400 11px 'JetBrains Mono';color:var(--mut)">{{ row.n }}</span></span><span style="font:400 12px 'Hanken Grotesk';color:var(--mut)">{{ row.line }}</span></div></sc-for>
+            <sc-for list="{{ stripSegRows }}" as="row" hint-placeholder-count="3">
+              <sc-if value="{{ row.hasOnClick }}" hint-placeholder-val="{{ false }}"><button onClick="{{ row.onClick }}" style="all:unset;box-sizing:border-box;display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--line);padding:6px 8px;border-radius:8px;background:{{ row.on ? 'var(--sel)' : 'transparent' }}" style-hover="background:var(--s2)"><span style="font:600 12px 'Hanken Grotesk';color:var(--ink)">{{ row.label }} <span style="font:400 11px 'JetBrains Mono';color:var(--mut)">{{ row.n }}</span><span style="font:400 10px 'JetBrains Mono';color:{{ row.on ? 'var(--acc)' : 'var(--dim)' }};margin-left:6px">{{ row.hint }}</span></span><span style="font:400 12px 'Hanken Grotesk';color:var(--mut)">{{ row.line }}</span></button></sc-if>
+              <sc-if value="{{ row.noOnClick }}" hint-placeholder-val="{{ true }}"><div style="border-top:1px solid var(--line);padding-top:6px;display:flex;flex-direction:column;gap:2px"><span style="font:600 12px 'Hanken Grotesk';color:var(--ink)">{{ row.label }} <span style="font:400 11px 'JetBrains Mono';color:var(--mut)">{{ row.n }}</span></span><span style="font:400 12px 'Hanken Grotesk';color:var(--mut)">{{ row.line }}</span></div></sc-if>
+            </sc-for>
           </div>
         </div>
       </sc-if>
@@ -229,7 +232,7 @@ button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visi
           <div style="padding:10px 14px;border-bottom:1px solid var(--line);font:600 13px 'Hanken Grotesk'">Read as <span style="font:400 12px 'Hanken Grotesk';color:var(--mut)">what × where × scale → one perspective</span></div>
           <div style="padding:10px 12px;display:flex;flex-direction:column;gap:7px">
             <div style="display:flex;align-items:center;gap:9px;padding-bottom:2px">
-              <button onClick="{{ stripAutoToggle }}" title="Auto reads the scope and picks the cell with the most signal; picking any field takes over" style="cursor:pointer;display:flex;align-items:center;gap:7px;border:1px solid {{ stripAutoBorder }};border-radius:8px;padding:4px 11px;background:{{ stripAutoBg }};font:600 12px 'Hanken Grotesk';color:var(--ink)"><span style="width:9px;height:9px;border-radius:50%;border:1px solid {{ readingTint }};background:{{ stripAutoDotBg }}"></span>Auto <span style="font:400 10px 'JetBrains Mono';color:{{ stripAutoStateColor }}">{{ stripAutoState }}</span></button>
+              <button onClick="{{ stripAutoToggle }}" title="Auto reads the scope and picks the cell with the most signal; picking a perspective takes over" style="cursor:pointer;display:flex;align-items:center;gap:7px;border:1px solid {{ stripAutoBorder }};border-radius:8px;padding:4px 11px;background:{{ stripAutoBg }};font:600 12px 'Hanken Grotesk';color:var(--ink)"><span style="width:9px;height:9px;border-radius:50%;border:1px solid {{ readingTint }};background:{{ stripAutoDotBg }}"></span>Auto <span style="font:400 10px 'JetBrains Mono';color:{{ stripAutoStateColor }}">{{ stripAutoState }}</span></button>
               <span style="font:400 11px 'Hanken Grotesk';color:var(--mut)">{{ stripAutoHint }}</span>
             </div>
             <div style="display:flex;flex-direction:column;gap:5px;padding:8px 10px;border:1px solid var(--line);border-left:3px solid var(--amber);border-radius:9px;background:rgba(251,191,36,.05)">
@@ -237,12 +240,6 @@ button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visi
               <div style="display:flex;flex-wrap:wrap;gap:5px"><sc-for list="{{ stripPerspRows }}" as="p" hint-placeholder-count="3"><button onClick="{{ p.onClick }}" title="{{ p.tier }} — picked by the stance machinery, count of statements that state it" style="cursor:pointer;display:flex;align-items:center;gap:6px;border:1px solid {{ p.on ? 'var(--amber)' : 'var(--line2)' }};border-radius:8px;padding:4px 10px;background:{{ p.bg }};color:{{ p.color }};font:500 12px 'Hanken Grotesk';white-space:nowrap"><span style="font:400 10px 'JetBrains Mono';color:var(--dim)">{{ p.n }}×</span>{{ p.label }}</button></sc-for></div>
               <sc-if value="{{ stripPerspOn }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--line);padding-top:5px;font:400 11px 'Hanken Grotesk';color:var(--mut)"><span>the reading sees these statements:</span><sc-for list="{{ stripPerspHits }}" as="h" hint-placeholder-count="1"><span style="color:var(--ink2)">“{{ h.text }}”</span></sc-for></div></sc-if>
             </div>
-            <sc-for list="{{ stripReadRows }}" as="r" hint-placeholder-count="3">
-              <div style="display:grid;grid-template-columns:92px minmax(0,1fr);gap:9px;align-items:center">
-                <span style="font:600 10px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--dim);text-align:right">{{ r.lab }}</span>
-                <span style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line2);border-radius:8px;overflow:hidden;background:var(--s2)"><sc-for list="{{ r.opts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.onClick }}" style="cursor:pointer;border:0;border-right:1px solid var(--line2);padding:6px 4px;font:500 13px 'Hanken Grotesk';background:{{ o.bg }};color:{{ o.color }}">{{ o.label }}</button></sc-for></span>
-              </div>
-            </sc-for>
             <div style="border:1px solid var(--line);border-radius:9px;padding:9px 11px;background:var(--s2)"><div style="font:500 17px 'Newsreader',serif;color:var(--ink)">{{ stripReadLabel }}</div><div style="font:400 11px 'JetBrains Mono';color:var(--dim);padding-top:2px">{{ stripReadFine }}</div></div>
           </div>
         </div>
@@ -4296,6 +4293,7 @@ const COND_FIELDS = [
   { k: 'year', label: 'Year', type: 'number' },
   { k: 'publisher', label: 'Publisher', type: 'select' },
   { k: 'status', label: 'Status', type: 'select' },
+  { k: 'topic', label: 'Topic', type: 'select' },
   { k: 'stmts', label: 'Statements', type: 'number' },
 ];
 const COND_OPS = {
@@ -6797,7 +6795,20 @@ class Component extends DCLogic {
   stripRmCond(id) { this.setState(s => ({ stripConds: (s.stripConds || []).filter(c => c.id !== id) })); }
   stripClearConds() { this.setState({ stripConds: [] }); }
   stripSetCond(id, key, val) { this.setState(s => ({ stripConds: (s.stripConds || []).map(c => { if (c.id !== id) return c; const n = { ...c, [key]: val }; if (key === 'field') { const f = COND_FIELDS.find(x => x.k === val) || COND_FIELDS[0]; n.op = (COND_OPS[f.type] || COND_OPS.text)[0][0]; n.value = ''; } return n; }) })); }
-  stripDocView(d, D) { return { title: d.title || '', name: d.title || '', kind: d.kind || d.type || '', type: d.type || '', year: d.year || 0, publisher: d.publisher || '', status: this.mOf(d).status || '', stmts: (D.perDoc || {})[d.id] || 0 }; }
+  // A topic is a PARADIGM: the connected component the holograph's own
+  // connectors (restated claim, shared measure-anchor, shared bond) hold
+  // together — what is really at stake across the sources, named by the
+  // paradigm's own label (its spanning name, else its most-repeated content
+  // word). Never a single statement's keyword.
+  paradigmGroups(A) {
+    if (this._pgA !== A) { this._pgA = A; this._pg = paradigms(A); }
+    return this._pg;
+  }
+  topicOfDoc(A, id) {
+    const g = (this.paradigmGroups(A).groups || []).find(x => (x.docs || []).some(d => (d && d.id) === id));
+    return g ? g.label : '';
+  }
+  stripDocView(d, D) { return { title: d.title || '', name: d.title || '', kind: d.kind || d.type || '', type: d.type || '', year: d.year || 0, publisher: d.publisher || '', status: this.mOf(d).status || '', stmts: (D.perDoc || {})[d.id] || 0, topic: this.topicOfDoc(this.analysis(), d.id) || '' }; }
   stripCondMatch(d, D) {
     const conds = this.state.stripConds || []; if (!conds.length) return true;
     const v = this.stripDocView(d, D); const all = (this.state.stripConn || 'all') === 'all';
@@ -6849,16 +6860,26 @@ class Component extends DCLogic {
     const whyText = 'names ' + namesN + ' · pairs ' + pairsN + ' · cuts ' + cutsN + ' · echoes ' + echoN + ' · folds ' + foldsN;
     const r = S.stripReadAuto ? autoRead : (S.stripRead || { mode: 'Relate', domain: 'Interpretation', grain: 'Pattern' });
     const op = STRIP_OP[r.mode][r.domain];
-    const view = d => ({ title: d.title || '(untitled)', kind: d.kind || d.type || 'Source', year: d.year || 0, publisher: d.publisher || '', status: this.mOf(d).status || 'source', stmts: (D.perDoc || {})[d.id] || 0 });
+    const view = d => ({ title: d.title || '(untitled)', kind: d.kind || d.type || 'Source', year: d.year || 0, publisher: d.publisher || '', status: this.mOf(d).status || 'source', stmts: (D.perDoc || {})[d.id] || 0, topic: this.topicOfDoc(A, d.id) || '' });
     const srcRows = counted.map(d => { const v = view(d), on = !scopeIds || scopeIds.has(d.id);
       return { label: v.title, meta: v.kind + ' · ' + (v.year || '—') + ' · ' + v.stmts + ' stmts', bg: on ? 'var(--sel)' : 'transparent', bd: on ? '#8b5cf6' : 'var(--line)', onClick: () => this.stripToggleDoc(d.id) }; });
     const gsel = S.stripGroup || 'fold';
     const P = this._P || { groups: [] };
-    const groupOf = d => { if (gsel === 'whole') return 'All matched'; if (gsel === 'fold') { const g = (P.groups || []).find(x => (x.docs || []).includes(d.id)); return g ? g.label : 'no fold'; } return String(view(d)[gsel] || '—'); };
-    const groupsOut = {}; inScope.forEach(d => { const k = groupOf(d); (groupsOut[k] = groupsOut[k] || []).push(view(d)); });
-    const segRows = Object.entries(groupsOut).slice(0, 6).map(([label, items]) => ({ label, n: plural(items.length, 'source'), line: items.slice(0, 4).map(x => x.title).join(' · ') + (items.length > 4 ? ' …' : '') }));
-    const readRow = (key, lab, vals, words) => ({ lab, opts: vals.map(v => { const on = r[key] === v;
-      return { label: words[v], bg: on ? '#8b5cf6' : 'var(--s2)', color: on ? '#fff' : 'var(--ink2)', onClick: () => this.stripSetRead(key, v) }; }) });
+    const groupOf = d => { if (gsel === 'whole') return 'All matched'; if (gsel === 'fold') { const g = (P.groups || []).find(x => (x.docs || []).includes(d.id)); return g ? g.label : 'no fold'; } if (gsel === 'topic') return view(d).topic || 'no topic'; return String(view(d)[gsel] || '—'); };
+    const groupsOut = {}, groupsOutIds = {}; inScope.forEach(d => { const k = groupOf(d); (groupsOut[k] = groupsOut[k] || []).push(view(d)); (groupsOutIds[k] = groupsOutIds[k] || []).push(d.id); });
+    const tg = S.f && S.f.topicGroup;
+    const segRows = Object.entries(groupsOut).slice(0, 6).map(([label, items]) => {
+      const row = { label, n: plural(items.length, 'source'), line: items.slice(0, 4).map(x => x.title).join(' · ') + (items.length > 4 ? ' …' : '') };
+      if (gsel === 'topic') {
+        row.hasOnClick = true;
+        row.on = !!(tg && tg.label === label && !tg.invert);
+        row.hint = row.on ? 'filtering · click to clear' : 'click to filter';
+        row.onClick = () => this.toggleTopicGroup({ label, docs: groupsOutIds[label] || [] });
+      }
+      row.noOnClick = !row.hasOnClick;
+      return row;
+    });
+    const topicWords = [...new Set(this.paradigmGroups(A).groups.map(g => g.label))].sort().slice(0, 80);
     // PERSPECTIVES — the text's own words, filterable beside the structural
     // pick (holodeck-reader.perspectivesOf: stance class → verb head → lens
     // word; label = gerund + the statement's own object, the strip's register).
@@ -6868,7 +6889,10 @@ class Component extends DCLogic {
     if (this._perspSig !== perspSig) { this._perspSig = perspSig; this._perspRows = null; }
     if (!this._perspRows && scopedSts.length) {
       this._perspRows = [];
-      (this._perspM ? Promise.resolve(this._perspM) : import(new URL('holodeck-reader.js', location.href).href).then(M => { this._perspM = M; return M; }))
+      // the text's-own-words reader is its OWN module cache — never this._perspM,
+      // which holds holodeck-perspectives (the genre readers, with GENRES);
+      // sharing one slot made heroBarBase read GENRES off the wrong module.
+      (this._readerM ? Promise.resolve(this._readerM) : import(new URL('holodeck-reader.js', location.href).href).then(M => { this._readerM = M; return M; }))
         .then(M => M.perspectivesOf(scopedSts, { top: 6 })).then(rows => { this._perspRows = rows || []; this.forceUpdate(); }).catch(() => {});
     }
     const perspSel = S.stripPersp ? (this._perspRows || []).find(p => p.act === S.stripPersp) : null;
@@ -6879,7 +6903,7 @@ class Component extends DCLogic {
     const kinds = [...new Set(counted.map(d => d.kind || d.type).filter(Boolean))];
     const pubs = [...new Set(counted.map(d => d.publisher).filter(Boolean))];
     const condRows = (S.stripConds || []).map(c => { const f = COND_FIELDS.find(x => x.k === c.field) || COND_FIELDS[0];
-      const opts = f.k === 'kind' ? kinds : f.k === 'publisher' ? pubs : f.k === 'status' ? ['source', 'seen'] : [];
+      const opts = f.k === 'kind' ? kinds : f.k === 'publisher' ? pubs : f.k === 'status' ? ['source', 'seen'] : f.k === 'topic' ? topicWords : [];
       return { id: c.id, field: c.field, op: c.op, value: c.value == null ? '' : String(c.value), isSelect: f.type === 'select', notSelect: f.type !== 'select',
         fields: COND_FIELDS.map(x => ({ k: x.k, label: x.label })),
         ops: (COND_OPS[f.type] || COND_OPS.text).map(o => ({ k: o[0], label: o[1] })),
@@ -6902,7 +6926,7 @@ class Component extends DCLogic {
       stripOnEOQL: (S.stripSegTab || 'conditions') !== 'conditions',
       stripTabConditions: () => this.setState({ stripSegTab: 'conditions' }),
       stripTabEOQL: () => this.setState({ stripSegTab: 'eoql' }),
-      stripGroupRow: ['whole', 'fold', 'kind', 'year', 'publisher', 'status'].map(g => ({ label: g === 'whole' ? 'whole' : 'by ' + g, bg: gsel === g ? '#8b5cf6' : 'var(--s2)', color: gsel === g ? '#fff' : 'var(--ink2)', onClick: () => this.stripSetGroup(g) })),
+      stripGroupRow: ['whole', 'fold', 'topic', 'kind', 'year', 'publisher', 'status'].map(g => ({ label: g === 'whole' ? 'whole' : 'by ' + g, bg: gsel === g ? '#8b5cf6' : 'var(--s2)', color: gsel === g ? '#fff' : 'var(--ink2)', onClick: () => this.stripSetGroup(g) })),
       stripEOVal: S.stripEO || '', stripEOGlyphs: eoqlGlyphText(S.stripEO || ''),
       stripGaps: (S.stripGaps || []).map(g => ({ text: g })),
       stripSegRows: segRows,
@@ -6917,14 +6941,13 @@ class Component extends DCLogic {
       stripAutoBg: S.stripReadAuto ? 'var(--sel)' : 'var(--s1)',
       stripAutoDotBg: S.stripReadAuto ? (MODE_TINT[r.mode] || 'var(--acc)') : 'transparent',
       stripAutoStateColor: S.stripReadAuto ? (MODE_TINT[r.mode] || 'var(--acc)') : 'var(--dim)',
-      stripAutoHint: S.stripReadAuto ? whyText : 'manual — pick any field, or switch Auto back on',
+      stripAutoHint: S.stripReadAuto ? whyText : 'manual — pick a perspective, or switch Auto back on',
       stripAutoToggle: () => this.setState({ stripReadAuto: !S.stripReadAuto }),
       hasReading: inScope.length > 0,
       readingName: perspOn ? perspSel.label : STRIP_VOCAB[op + '|' + r.grain],
       readingFine: perspOn ? (perspSel.tier + ' “' + perspSel.act + '” · ' + perspSel.n + ' of ' + scopedSts.length + ' statements') : (op + '·' + r.grain + ' · terrain ' + STRIP_TERRAIN[r.domain][r.grain] + ' · stance ' + STRIP_STANCE[r.mode][r.grain]),
       readingTint: MODE_TINT[r.mode] || 'var(--acc)',
       readingNote: perspOn ? ('reading by the material’s own words — ' + perspSel.n + ' of ' + scopedSts.length + ' statements state “' + perspSel.act + '”') : (S.stripReadAuto ? ('auto — most signal here: ' + whyText) : ('leading with ' + (r.domain === 'Existence' ? 'things' : r.domain === 'Structure' ? 'links' : 'meanings') + ' · ' + (r.mode === 'Differentiate' ? 'cuts' : r.mode === 'Relate' ? 'bonds' : 'makes'))),
-      stripReadRows: [readRow('mode', 'WHAT YOU DO', STRIP_MODES, STRIP_PLAIN_MODE), readRow('domain', 'WHAT YOU SEE', STRIP_DOMAINS, STRIP_PLAIN_DOMAIN), readRow('grain', 'SCALE', STRIP_GRAINS, STRIP_PLAIN_GRAIN)],
       stripPerspRows: perspRows, stripPerspOn: perspOn, stripPerspHits: perspHits,
       stripPerspClear: () => this.setState({ stripPersp: null }),
       stripOpenSources: S.stripOpen === 'sources', stripOpenSegment: S.stripOpen === 'segment', stripOpenRead: S.stripOpen === 'read', stripAnyOpen: !!S.stripOpen,
@@ -7305,7 +7328,7 @@ class Component extends DCLogic {
     // section, the global scope strip, and the Overview page's cards. A topic segment is source-based
     // (f.topicGroup keeps only the member documents' statements), not a keyword fold, so it holds even
     // when the workspace holds truly disparate content and none of the topics share a sentence.
-    const P = A.docs.length ? paradigms(A) : { groups: [], strayN: 0 }; this._P = P;
+    const P = this.paradigmGroups(A); this._P = P;
     const isEmpty = A.docs.length === 0;
     const sameF = (a, b) => JSON.stringify(a || {}) === JSON.stringify(b || {});
     const realDocIds = new Set(P.groups.flatMap(g => g.docs.map(d => d.id)));
@@ -7945,7 +7968,7 @@ modeSum: { bg: S.readMode === 'summary' ? 'var(--sel)' : 'transparent', color: S
         case 'source': f = st => st.doc === c.value; break;
         case 'author': f = st => (dd(st).authors || []).includes(c.value); break;
         case 'mentions': f = st => st.names.includes(c.value); break;
-        case 'topic': f = st => st.topics.includes(c.value); break;
+        case 'topic': f = st => this.topicOfDoc(A, st.doc) === c.value; break;
         case 'theme': { const lf = this.lensFn({ k: c.value }, A); f = st => lf(st); break; }
         case 'figure': f = st => st.figs.some(g => g.unit === c.value); break;
         case 'year': { const y = +c.value; return st => { const yy = st.year || dd(st).year; if (!yy) return false; return c.cmp === 'lte' ? yy <= y : c.cmp === 'gte' ? yy >= y : yy === y; }; }
@@ -7979,7 +8002,7 @@ modeSum: { bg: S.readMode === 'summary' ? 'var(--sel)' : 'transparent', color: S
       { key: 'source', label: 'Source', ops: ENUM, opts: opts(docs.map(d => [d.id, 0]), id => (A.docById[id] || {}).title || id).map(o => ({ ...o, label: o.name })) },
       { key: 'author', label: 'Author', ops: HAS, opts: opts(tally(docs, d => d.authors || [])) },
       { key: 'mentions', label: 'Mentions', ops: HAS, opts: opts(Object.values(A.names).sort((a, b) => b.sts.length - a.sts.length).slice(0, 60).map(n => [n.name, n.sts.length])) },
-      { key: 'topic', label: 'Topic', ops: HAS, opts: opts(tally(sts, st => st.topics || []).slice(0, 40)) },
+      { key: 'topic', label: 'Topic', ops: HAS, opts: this.paradigmGroups(A).groups.map(g => ({ v: g.label, name: g.label, label: g.label + ' (' + g.n + ')' })) },
       { key: 'theme', label: 'Theme', ops: ENUM, opts: [{ v: 'fin', name: 'Financials', label: 'Financials' }, { v: 'audit', name: 'Audit findings', label: 'Audit findings' }] },
       { key: 'figure', label: 'Figures in', ops: HAS, opts: opts(tally(sts, st => [...new Set((st.figs || []).map(g => g.unit).filter(Boolean))]).slice(0, 20)) },
       { key: 'year', label: 'Year', ops: [{ v: 'lte', label: 'up to' }, { v: 'is', label: 'is' }, { v: 'gte', label: 'from' }], opts: yrs.map(([v]) => ({ v, name: v, label: v })) },
@@ -8060,7 +8083,7 @@ modeSum: { bg: S.readMode === 'summary' ? 'var(--sel)' : 'transparent', color: S
     const pubMs = d => { const t = Date.parse(d.published || ''); return !isNaN(t) ? t : d.year ? Date.UTC(d.year, 0, 1) : Infinity; };
     const docs = A.docs.filter(d => (!this._cnt || this._cnt.has(d.id)) && !offDocs[d.id]).sort((x, y) => pubMs(x) - pubMs(y) || di[x.id] - di[y.id]);
     const byDoc = {}; A.sts.forEach(st => { if (!st.ref) (byDoc[st.doc] = byDoc[st.doc] || []).push(st); });
-    const GEN = M ? M.GENRES : [{ id: 'lit', label: 'Literature' }, { id: 'ency', label: 'Encyclopedic' }, { id: 'gov', label: 'Government & legal' }];
+    const GEN = (M && M.GENRES) ? M.GENRES : [{ id: 'lit', label: 'Literature' }, { id: 'ency', label: 'Encyclopedic' }, { id: 'gov', label: 'Government & legal' }];
     const COLOR = { lit: 'var(--amber)', ency: 'var(--blue)', gov: 'var(--green)' };
     const label = id => (GEN.find(g => g.id === id) || {}).label || id;
     const active = GEN.filter(g => !off[g.id]).map(g => g.id);

@@ -309,8 +309,11 @@ export async function perspectivesOf(sts, { top = 6 } = {}) {
     // the strip's register is gerund + complement for ACTS and STANCES; an
     // evaluative LENS word is evidence, named as the text states it, never
     // forced into a verb it is not ("Achievement", not "Achievementing").
-    const label = e.tier === 'lens' ? cap
-      : gerundOf(e.act)[0].toUpperCase() + gerundOf(e.act).slice(1) + (e.obj ? ' ' + (isNameWord(e.obj) ? e.obj : 'the ' + e.obj) : '');
+    // A perspective name is 1–4 words: one gerund plus at most a short object,
+    // so a chip never runs long ("Supporting the national security council"
+    // reads as "Supporting national security council").
+    const label = (e.tier === 'lens' ? cap
+      : gerundOf(e.act)[0].toUpperCase() + gerundOf(e.act).slice(1) + (e.obj ? ' ' + (isNameWord(e.obj) ? e.obj : 'the ' + e.obj) : '')).split(/\s+/).slice(0, 4).join(' ');
     out.push({ ...e, label });
   }
   return out.sort((a, b) => b.n - a.n).slice(0, top);
