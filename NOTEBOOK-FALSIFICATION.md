@@ -60,3 +60,16 @@ Each earlier run failed, and each failure was traced before anything was changed
 - F1 was run on this machine (same python/numpy as the recorded runs), in a clean directory with only `PATH` set; a different numpy was not tried.
 - The switched-off-method re-find guard (upstream) is in place but was not exercised by a colony that actually re-found a switched-off pipeline.
 - There is no static (Pyodide) mode: every result above needs the local notebook server.
+
+---
+
+## Addendum — 2026-10-03: the static (Pyodide) mode exists now
+
+The limit above is true of run 7 and stays as written. The pane has since grown a fallback runtime: when nothing answers on the notebook
+port, it starts Pyodide (CPython in WebAssembly) in the tab and runs the notebook there (`holodeck-pyodide.js`), with the same vendored
+ledger code sealing every run and the chains re-verified in the page. `tests/pyodide-notebook.browser.mjs` drives it in a real browser
+with no server: cells run, numpy loads, a matplotlib figure is captured inline, the chains verify, cells, files and outputs survive a
+reload, and the export is nbformat 4.
+
+None of the F1–F9 results above are widened by this: they were measured against the local Jupyter server for the run above, and no
+criterion has been re-run against Pyodide mode. F1's bundle route is server-only and is refused, honestly, in the tab.

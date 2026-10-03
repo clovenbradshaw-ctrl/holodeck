@@ -77,3 +77,9 @@ fast: 5 files · 21 tests pass (incl. the real-browser pyodide-notebook.browser.
 | Alexander | composition seam | holodeck-notebook.js:239 | noted | the starting/connect empty states are mutually exclusive alternatives; retry only exists off the starting path, engine.fetch composes with the pane's F() |
 | Simon/Chekhov | real mechanism shipped unwired | holodeck-notebook.js:135 | fixed | the pyodide fallback was already wired here; what was UNWIRED was the hang organ — holodeck-hang.js:275's ESM export broke the classic script parse on every page load since f7a3690, so hang decisions never ran in the browser; index.html now loads it type=module, verified live (HDHang on page, zero pageerrors) |
 clean: Holmes, Pearl, Diaconis, Greenberg, Kondo, Marshall
+
+## 2026-10-03 — the falsification record gains the dated Pyodide addendum (main, doc)
+fast: 1 file · none affected (doc only) · law: WARN pre-existing S17/S96 in ../eoreader7/native/READING-SPEC.md
+| lens | citation | file:line | verdict | one line |
+| Alexander | composition seam | NOTEBOOK-FALSIFICATION.md:66 | noted | the addendum says the mode exists AND that run 7's F1–F9 results are not widened by it — the two claims compose without overclaiming |
+clean: no other lens routed (doc change, no source touched)
