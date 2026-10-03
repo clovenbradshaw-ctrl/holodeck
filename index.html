@@ -22,11 +22,34 @@ button,input,select,textarea{font:inherit;color:inherit}
 button{white-space:nowrap}
 select option{background:var(--s1);color:var(--ink)}
 ::selection{background:#4c3a8f}
+.hd-focus{position:fixed;inset:0;z-index:50;overflow:auto;overscroll-behavior:contain;min-height:0!important}
+.hd-focus .hd-rail,.hd-focus .hd-header{display:none!important}
+.hd-focus .hd-column{padding:0!important}
+.hd-focus .hd-body{max-width:none!important;padding:0 24px 24px!important}
+.hd-focus .hd-main{gap:12px!important}
+.hd-workbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg);padding:10px 0;border-bottom:1px solid var(--line)}
+.hd-focus .hd-workbar{position:sticky;top:0;z-index:25}
+.hd-workbar button{border:1px solid var(--line2);border-radius:8px;padding:6px 12px;font:500 14px 'Hanken Grotesk';cursor:pointer;color:var(--ink);background:var(--s1)}
+.hd-workbar button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.hd-workbar .hd-modes{display:flex;gap:4px}
+.hd-focus .hd-chat-side{display:none!important}
+.hd-focus .hd-chat-wrap{max-width:960px;width:100%;margin:auto}
+.hd-focus .hd-generate-wrap{width:100%}
+@media(max-width:700px){.hd-focus .hd-body{padding:0 12px 12px!important}.hd-workbar{gap:6px}.hd-workbar .hd-scope{width:100%;order:3}}
+
+.hd-disclosure{border-top:1px solid var(--line);padding:12px 0;color:var(--mut)}
+.hd-disclosure>summary{cursor:pointer;font:500 13px 'Hanken Grotesk',sans-serif;min-height:24px;line-height:24px}
+.hd-disclosure[open]>summary{margin-bottom:12px;color:var(--ink)}
+.hd-disclosure button{max-width:100%}
+button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+.hd-source-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:14px}
+.hd-source-card{background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:10px}
+@media(max-width:720px){.hd-shell{flex-direction:column}.hd-rail{position:relative!important;flex:none!important;width:100%;height:auto!important;border-right:0!important;border-bottom:1px solid var(--line);padding:12px!important;gap:10px!important}.hd-column{width:100%}.hd-primary{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px!important}.hd-primary button{padding:8px 4px!important;justify-content:center!important}.hd-primary .hd-count{display:none}.hd-content{padding:18px 14px!important}.hd-workspace{display:grid!important;grid-template-columns:minmax(0,1fr) auto;padding:4px 0!important;border:0!important}.hd-workspace>span{display:none}.hd-scope{font-size:12px!important}.hd-rail .hd-disclosure{padding:8px 0}.hd-source-card{padding:16px}}
 </style>
 </helmet>
-<div style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Hanken Grotesk',sans-serif;font-size:14px;line-height:1.5">
-<div style="display:flex;align-items:flex-start;min-height:100vh">
-  <div style="{{ railStyle }}">
+<div class="{{ workspaceClass }}" style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Hanken Grotesk',sans-serif;font-size:14px;line-height:1.5">
+<div class="hd-shell" style="display:flex;align-items:flex-start;min-height:100vh">
+  <div class="hd-rail" style="{{ railStyle }}">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding:2px 2px 2px 10px">
       <sc-if value="{{ railOpen }}" hint-placeholder-val="{{ true }}"><div style="display:flex;align-items:center;gap:10px;min-width:0"><span style="width:12px;height:12px;border-radius:3px;background:#8b5cf6;flex:none"></span><span style="font:600 13px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);white-space:nowrap">Holodeck</span></div></sc-if>
       <div style="display:flex;align-items:center;gap:4px;flex:none">
@@ -35,7 +58,7 @@ select option{background:var(--s1);color:var(--ink)}
       </div>
     </div>
     <sc-if value="{{ railOpen }}" hint-placeholder-val="{{ true }}">
-    <div style="display:flex;flex-direction:column;gap:8px;padding:10px 2px 4px;border-top:1px solid var(--line)">
+    <div class="hd-workspace" style="display:flex;flex-direction:column;gap:8px;padding:10px 2px 4px;border-top:1px solid var(--line)">
       <span style="font:600 12px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--acc);padding:0 10px">Workspace</span>
       <select value="{{ corpusId }}" onChange="{{ onCorpus }}" style="width:100%;box-sizing:border-box;background:var(--s2);border:1px solid var(--line2);border-radius:8px;color:var(--ink);font:500 14px 'Hanken Grotesk';padding:7px 10px;cursor:pointer;outline:none">
         <sc-for list="{{ corpusOptions }}" as="o" hint-placeholder-count="4">
@@ -47,18 +70,19 @@ select option{background:var(--s1);color:var(--ink)}
       </sc-if>
 
     </div>
-    <nav style="display:flex;flex-direction:column;gap:2px">
-      <div style="display:flex;flex-direction:column;gap:1px;padding:10px 0 12px;border-top:1px solid var(--line)">
+    <nav aria-label="Workspace navigation" style="display:flex;flex-direction:column;gap:2px">
+      <div class="hd-primary" style="display:flex;flex-direction:column;gap:4px;padding:10px 0 12px">
         <sc-for list="{{ navTop }}" as="g" hint-placeholder-count="2">
           <button onClick="{{ g.onClick }}" style="white-space:normal;text-align:left;cursor:pointer;padding:5px 12px 5px 20px;border-radius:8px;background:{{ g.bg }};border:1px solid {{ g.bd }};display:flex;justify-content:space-between;align-items:baseline;gap:10px" style-hover="background:var(--s2)">
             <span style="font:{{ g.weight }} 14px 'Hanken Grotesk';color:var(--ink2)">{{ g.label }}</span>
-            <span style="font:500 12px 'JetBrains Mono';color:var(--mut);white-space:nowrap">{{ g.count }}</span>
+            <span class="hd-count" style="font:500 12px 'JetBrains Mono';color:var(--mut);white-space:nowrap">{{ g.count }}</span>
           </button>
         </sc-for>
       </div>
       <sc-if value="{{ hasContent }}" hint-placeholder-val="{{ false }}">
       <div style="display:flex;flex-direction:column;gap:1px;padding:10px 0 12px;border-top:1px solid var(--line)">
         <span style="font:600 12px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--acc);padding:2px 12px 6px">Topics</span>
+        <sc-if value="{{ !hasTopics && !hasTopicsNote }}"><span style="padding:0 12px;font-size:12px;color:var(--mut)">Topics appear as sources connect.</span></sc-if>
         <sc-if value="{{ hasTopics }}" hint-placeholder-val="{{ false }}">
           <span style="font:400 11px 'Hanken Grotesk';color:var(--mut);padding:0 12px 4px;text-wrap:pretty">{{ topicsNote }}</span>
           <sc-if value="{{ topicsHasSearch }}" hint-placeholder-val="{{ false }}">
@@ -88,6 +112,8 @@ select option{background:var(--s1);color:var(--ink)}
           </button>
         </sc-if>
       </div>
+      <details class="hd-disclosure" open="{{ toolsOpen }}">
+        <summary>Explore &amp; manage</summary>
       <div style="display:flex;flex-direction:column;gap:1px;padding:10px 0 12px;border-top:1px solid var(--line)">
         <span style="font:600 12px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--acc);padding:2px 12px 6px">{{ navRead.label }}</span>
         <sc-for list="{{ navRead.items }}" as="g" hint-placeholder-count="3">
@@ -135,13 +161,14 @@ select option{background:var(--s1);color:var(--ink)}
           </sc-for>
         </div>
       </sc-for>
+      </details>
       </sc-if>
     </nav>
     </sc-if>
   </div>
-  <div style="flex:1 1 0;min-width:0;box-sizing:border-box;{{ colPad }}">
+  <div class="hd-column" style="flex:1 1 0;min-width:0;box-sizing:border-box;{{ colPad }}">
 
-  <header ref="{{ hdrRef }}" style="position:sticky;top:0;z-index:20;background:var(--hdr);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)">
+  <header class="hd-header" ref="{{ hdrRef }}" style="position:sticky;top:0;z-index:20;background:var(--hdr);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)">
     <div style="max-width:1230px;padding:8px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
       <div style="flex:1 1 320px;min-width:220px;display:flex;align-items:center;border:1px solid var(--line2);border-radius:8px;background:var(--s1)">
         <input defaultValue="{{ omniVal }}" ref="{{ omniRef }}" onChange="{{ onOmni }}" onKeyDown="{{ onOmniKey }}" placeholder="Search, ask a question, or paste a link — then Enter" style="flex:1;min-width:0;background:transparent;border:0;color:var(--ink);font:400 14px 'Hanken Grotesk';padding:8px 12px;outline:none">
@@ -221,16 +248,37 @@ select option{background:var(--s1);color:var(--ink)}
         </div>
       </sc-if>
     </div>
+    <sc-if value="{{ scope.show }}" hint-placeholder-val="{{ false }}">
+      <div class="hd-scope" style="padding:0 20px 10px;display:flex;gap:6px 14px;align-items:baseline;flex-wrap:wrap;font:400 12px 'Hanken Grotesk';color:var(--mut)">
+        <button onClick="{{ scope.onAll }}" style="all:unset;cursor:pointer;color:var(--ink2)">{{ scope.sourcesLine }}</button>
+        <span>View: {{ scope.viewLabel }}</span>
+        <sc-if value="{{ scope.hasLens }}"><span>Lens: {{ scope.lens }}</span></sc-if>
+        <sc-if value="{{ scope.hasSegment }}"><button onClick="{{ scope.onClearSegment }}" style="all:unset;cursor:pointer;color:var(--acc)">{{ scope.segmentLabel }} · clear ×</button></sc-if>
+        <sc-for list="{{ scope.filters }}" as="ch"><button onClick="{{ ch.onClear }}" style="all:unset;cursor:pointer;color:var(--acc)">{{ ch.k }}: {{ ch.v }} ×</button></sc-for>
+        <details style="margin-left:auto;max-width:100%">
+          <summary style="cursor:pointer">Scope details</summary>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;padding:10px 0">
+            <sc-for list="{{ scope.sourceItems }}" as="s"><button onClick="{{ s.onClick }}" style="background:var(--s1);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;cursor:pointer">{{ s.label }}</button></sc-for>
+            <sc-if value="{{ scope.hasMoreSources }}"><button onClick="{{ scope.onMoreSources }}" style="background:none;border:0;color:var(--acc);cursor:pointer">+{{ scope.moreSources }} more</button></sc-if>
+          </div>
+          <sc-if value="{{ hasTopics }}"><div style="display:flex;flex-wrap:wrap;gap:8px;padding-bottom:8px">
+            <span>Topics:</span><sc-for list="{{ scope.segments }}" as="t"><button onClick="{{ t.onJump }}" style="background:none;border:0;color:var(--acc);cursor:pointer">{{ t.label }} ({{ t.n }})</button></sc-for>
+            <sc-if value="{{ scope.hasStray }}"><button onClick="{{ scope.onStray }}" style="background:none;border:0;color:var(--acc);cursor:pointer">Outside these topics ({{ scope.strayN }})</button></sc-if>
+          </div></sc-if>
+        </details>
+      </div>
+    </sc-if>
+    <div aria-label="Current viewpoint" style="padding:0 20px 8px;font:400 12px/1.5 'Hanken Grotesk';color:var(--mut)">{{ viewpoint }}</div>
   </header>
 
-  <div style="max-width:1230px;padding:20px;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+  <div class="hd-body hd-content" style="max-width:1230px;padding:20px;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
 
 
-    <main style="flex:1 1 520px;min-width:0;display:flex;flex-direction:column;gap:16px">
+    <main class="hd-main" style="flex:1 1 520px;min-width:0;display:flex;flex-direction:column;gap:16px">
 
 
 
-      <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+      <sc-if value="{{ showWelcome }}" hint-placeholder-val="{{ false }}">
         <div style="padding:56px 16px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px">
           <h1 style="margin:0;font:500 32px 'Newsreader',serif">What do you want to understand?</h1>
           <p style="margin:0;max-width:480px;color:var(--mut);text-wrap:pretty">Ask a question — it is answered from the sources you keep here, or told plainly what is missing. Paste a link or a file, and every sentence is traced back to where it appears.</p>
@@ -278,7 +326,9 @@ select option{background:var(--s1);color:var(--ink)}
             </sc-if>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)">
+        <details class="hd-disclosure" open="{{ timeFilterActive }}">
+          <summary>{{ timeControlLabel }}</summary>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)">
           <div style="display:flex;align-items:center;gap:6px 14px;flex-wrap:wrap">
             <span style="font:600 11px 'JetBrains Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--dim)">Time</span>
             <div style="display:inline-flex;gap:2px">
@@ -305,6 +355,7 @@ select option{background:var(--s1);color:var(--ink)}
           </sc-if>
           <sc-if value="{{ ts.empty }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px 'Hanken Grotesk';color:var(--dim)">{{ ts.empty }}</span></sc-if>
         </div>
+        </details>
         <sc-if value="{{ hasFilters }}" hint-placeholder-val="{{ false }}">
           <div style="display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap;margin-top:6px;padding:8px 10px;background:var(--sel);border:1px solid #8b5cf6;border-radius:10px">
             <span style="font:600 14px 'Hanken Grotesk';color:var(--ink);white-space:nowrap">{{ filterCount }}</span>
@@ -318,7 +369,9 @@ select option{background:var(--s1);color:var(--ink)}
         </sc-if>
       </sc-if>
 
+      <sc-if value="{{ v.overview }}" hint-placeholder-val="{{ false }}"><div id="overview-surface"></div></sc-if>
       <sc-if value="{{ v.summary }}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{ goOverview }}" style="align-self:flex-start;padding:10px 16px;border:1px solid var(--line2);border-radius:8px;background:var(--s1);color:var(--ink);font:inherit;cursor:pointer">Build evidence overview · sources and negative spaces</button>
         <section style="display:flex;flex-direction:column;gap:8px">
           <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Topic · what this workspace folds around</span>
           <input value="{{ topic }}" onChange="{{ onTopic }}" placeholder="{{ topicPlaceholder }}" style="background:var(--s1);border:1px solid var(--line2);border-radius:10px;color:var(--ink);font:400 22px 'Newsreader',serif;padding:10px 14px;outline:none">
@@ -345,9 +398,13 @@ select option{background:var(--s1);color:var(--ink)}
         <sc-if value="{{ hasSeen }}" hint-placeholder-val="{{ false }}">
           <button onClick="{{ goSources }}" style="white-space:normal;text-align:left;cursor:pointer;background:var(--s1);border:1px solid var(--line2);border-radius:10px;padding:10px 14px;font:500 15px 'Hanken Grotesk';color:var(--ink);display:flex;justify-content:space-between;gap:10px" style-hover="border-color:var(--acc)"><span>{{ seenLine }}</span><span style="color:var(--acc)">Review →</span></button>
         </sc-if>
+        <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 18px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc);white-space:nowrap">About This</span><span style="font:400 13px 'Hanken Grotesk';color:var(--mut)">A summary of what these sources, taken together, are about — a paraphrase in the fold's own words, not a quote.</span></div>
+          <textarea value="{{ about }}" onChange="{{ onAbout }}" rows="3" placeholder="{{ aboutPlaceholder }}" style="background:var(--bg);border:1px solid var(--line2);border-radius:10px;resize:vertical;font:400 17px/1.5 'Newsreader',serif;color:var(--ink);outline:none;padding:10px 12px;width:100%;box-sizing:border-box"></textarea>
+        </section>
         <sc-if value="{{ hasHeadlines }}" hint-placeholder-val="{{ false }}">
           <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 18px 6px;display:flex;flex-direction:column;gap:4px">
-            <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc);white-space:nowrap">What this is about</span><span style="font:400 13px 'Hanken Grotesk';color:var(--mut)">Statements that name someone, report an action or a figure, and use the words these sources share most. One per source, newest first.</span></div>
+            <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc);white-space:nowrap">Lead statements</span><span style="font:400 13px 'Hanken Grotesk';color:var(--mut)">Quoted statements that name someone, report an action or a figure, and use the words these sources share most. One per source, newest first.</span></div>
             <div style="display:flex;flex-direction:column">
               <sc-for list="{{ headlines }}" as="x" hint-placeholder-count="5">
                 <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 14px;align-items:baseline;border-top:1px solid var(--line);padding:11px 0">
@@ -588,7 +645,18 @@ select option{background:var(--s1);color:var(--ink)}
       </sc-if>
 
       <sc-if value="{{ ak.on }}" hint-placeholder-val="{{ false }}">
-        <div ref="{{ ak.wrapRef }}" style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
+        <div class="hd-workbar" data-workbar>
+          <div class="hd-modes"><sc-for list="{{ ak.modes }}" as="m" hint-placeholder-count="3"><button onClick="{{ m.onClick }}" aria-pressed="{{ m.active }}" style="background:{{ m.bg }};color:{{ m.col }}">{{ m.label }}</button></sc-for></div>
+          <span class="hd-scope" style="flex:1;font:400 12px 'JetBrains Mono';color:var(--mut)">{{ ak.scopeLine }}</span>
+          <button onClick="{{ ak.addSources }}">Add sources</button>
+          <button onClick="{{ ak.toggleFocus }}" aria-label="{{ ak.focusLabel }}">{{ ak.focusLabel }}</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ ak.onData }}" hint-placeholder-val="{{ false }}">
+        <div ref="{{ ak.nbRef }}" data-hd-notebook style="min-height:50vh"></div>
+      </sc-if>
+      <sc-if value="{{ ak.onSrc }}" hint-placeholder-val="{{ false }}">
+        <div class="{{ ak.wrapClass }}" ref="{{ ak.wrapRef }}" style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
           <div style="flex:{{ ak.mainFlex }};min-width:0;display:flex;flex-direction:column;gap:14px">
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font:500 13px 'Hanken Grotesk';color:var(--mut)">
               <span style="width:8px;height:8px;border-radius:50%;background:{{ ak.dot }};flex:none"></span>
@@ -638,11 +706,6 @@ select option{background:var(--s1);color:var(--ink)}
                 </div>
               </div>
             </sc-if>
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-              <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden">
-                <sc-for list="{{ ak.modes }}" as="m" hint-placeholder-count="3"><button onClick="{{ m.onClick }}" style="border:0;background:{{ m.bg }};color:{{ m.col }};padding:5px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';white-space:nowrap">{{ m.label }}</button></sc-for>
-              </div>
-            </div>
             <sc-if value="{{ ak.mNb }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
                 <button onClick="{{ ak.nbExport }}" title="Download this notebook as a real .ipynb — every cell and its output, with the fold record in each cell's metadata" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Download .ipynb</button>
@@ -854,7 +917,7 @@ select option{background:var(--s1);color:var(--ink)}
             </div>
             </sc-if>
           </div>
-          <aside style="flex:{{ ak.asideFlex }};min-width:{{ ak.asideMin }};z-index:{{ ak.asideZ }};position:sticky;top:calc(var(--hdr-h, 84px) + 12px);display:flex;flex-direction:column;gap:12px">
+          <aside class="{{ ak.asideClass }}" style="flex:{{ ak.asideFlex }};min-width:{{ ak.asideMin }};z-index:{{ ak.asideZ }};position:sticky;top:calc(var(--hdr-h, 84px) + 12px);display:flex;flex-direction:column;gap:12px">
             <sc-if value="{{ ak.notGen }}" hint-placeholder-val="{{ true }}">
               <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
                 <span style="font:600 12px ‘JetBrains Mono’;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">What the model carries</span>
@@ -1060,7 +1123,12 @@ select option{background:var(--s1);color:var(--ink)}
                   <sc-if value="{{ c.canGround }}" hint-placeholder-val="{{ false }}"><button onClick="{{ c.onGround }}" style="all:unset;cursor:pointer;font:600 13px 'Hanken Grotesk';color:var(--acc);white-space:nowrap" style-hover="text-decoration:underline">{{ c.groundLabel }}</button></sc-if>
                   <button onClick="{{ c.onDelete }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--dim)" style-hover="color:var(--bad)">Remove</button>
                 </div>
-                <textarea key="{{ c.id }}" defaultValue="{{ c.text }}" onChange="{{ c.onText }}" onFocus="{{ c.onFocus }}" placeholder="State one claim…" rows="{{ c.rows }}" style="background:transparent;border:0;resize:vertical;font:400 19px/1.5 'Newsreader',serif;color:var(--ink);outline:none;padding:0;width:100%;box-sizing:border-box"></textarea>
+                <textarea key="{{ c.id }}" defaultValue="{{ c.text }}" onChange="{{ c.onText }}" onFocus="{{ c.onFocus }}" placeholder="Write a thought or claim…" rows="{{ c.rows }}" style="background:transparent;border:0;resize:vertical;font:400 19px/1.5 'Newsreader',serif;color:var(--ink);outline:none;padding:0;width:100%;box-sizing:border-box"></textarea>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                  <select aria-label="Ground or exploratory state" value="{{ c.mode }}" onChange="{{ c.onMode }}" style="background:var(--s2);color:var(--ink);border:1px solid var(--line2);padding:5px;border-radius:6px"><sc-for list="{{ c.modes }}" as="m"><option value="{{ m.v }}">{{ m.label }}</option></sc-for></select>
+                  <sc-if value="{{ c.owned }}"><input aria-label="Who owns this statement" key="{{ c.id + c.mode }}" defaultValue="{{ c.giver }}" onBlur="{{ c.onGiver }}" placeholder="Who is speaking?" style="background:var(--s2);color:var(--ink);border:1px solid var(--line2);padding:5px"><textarea aria-label="Ground and search scope" key="{{ c.id + c.mode }}" defaultValue="{{ c.note }}" onBlur="{{ c.onNote }}" placeholder="Your basis; for absence, what you searched and over what period" style="flex:1;min-width:220px;background:var(--s2);color:var(--ink);border:1px solid var(--line2);padding:5px"></textarea></sc-if>
+                </div>
+                <span style="font:400 12px 'Hanken Grotesk';color:var(--mut)">{{ c.counterNote }}</span>
                 <sc-if value="{{ c.hasEv }}" hint-placeholder-val="{{ false }}">
                   <div style="display:flex;flex-direction:column;gap:8px">
                     <sc-for list="{{ c.ev }}" as="e" hint-placeholder-count="1">
@@ -1106,6 +1174,7 @@ select option{background:var(--s1);color:var(--ink)}
               </sc-if>
             </sc-for>
             <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px">
+              <button onClick="{{ dr.addThought }}" style="border:1px dashed var(--line2);background:none;border-radius:12px;padding:12px;cursor:pointer;color:var(--mut)">+ Add thought</button>
               <button onClick="{{ dr.addClaim }}" style="border:1px dashed var(--line2);background:none;border-radius:12px;padding:12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink);border-color:var(--acc)">+ Add claim</button>
               <button onClick="{{ dr.addHeading }}" style="border:1px dashed var(--line2);background:none;border-radius:12px;padding:12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink);border-color:var(--acc)">+ Add heading</button>
             </div>
@@ -1196,14 +1265,17 @@ select option{background:var(--s1);color:var(--ink)}
             </sc-for>
           </div>
         </sc-if>
+        <details class="hd-disclosure" open="{{ sourceOptionsActive }}">
+          <summary>{{ sourceOptionsLabel }}</summary>
         <sc-if value="{{ svTabsOn }}" hint-placeholder-val="{{ true }}">
           <div style="display:flex;gap:2px 18px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--line2)">
-            <sc-for list="{{ svTabs }}" as="t" hint-placeholder-count="5"><button onClick="{{ t.onClick }}" style="all:unset;cursor:pointer;display:flex;gap:6px;align-items:baseline;padding:8px 0;border-bottom:2px solid {{ t.bd }};margin-bottom:-1px;font:500 14px 'Hanken Grotesk';color:{{ t.col }};white-space:nowrap">{{ t.label }}<span style="font:500 12px 'JetBrains Mono';color:var(--dim)">{{ t.n }}</span></button></sc-for>
+            <sc-if value="{{ sourceKindsUseful }}"><sc-for list="{{ svTabs }}" as="t" hint-placeholder-count="5"><button onClick="{{ t.onClick }}" style="all:unset;cursor:pointer;display:flex;gap:6px;align-items:baseline;padding:8px 0;border-bottom:2px solid {{ t.bd }};margin-bottom:-1px;font:500 14px 'Hanken Grotesk';color:{{ t.col }};white-space:nowrap">{{ t.label }}<span style="font:500 12px 'JetBrains Mono';color:var(--dim)">{{ t.n }}</span></button></sc-for></sc-if>
             <span style="flex:1"></span>
             <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;margin:4px 0"><sc-for list="{{ svModes }}" as="k" hint-placeholder-count="2"><button onClick="{{ k.onClick }}" style="border:0;background:{{ k.bg }};color:{{ k.col }};padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';white-space:nowrap">{{ k.label }}</button></sc-for></div>
           </div>
           <sc-if value="{{ srcHiddenNote }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px 'Hanken Grotesk';color:var(--dim);margin-top:6px">{{ srcHiddenNote }}</span></sc-if>
         </sc-if>
+        </details>
         <sc-if value="{{ svTable }}" hint-placeholder-val="{{ false }}">
           <sc-for list="{{ svTables }}" as="tb" hint-placeholder-count="1">
             <section style="display:flex;flex-direction:column;gap:6px">
@@ -1235,26 +1307,36 @@ select option{background:var(--s1);color:var(--ink)}
         <sc-if value="{{ svCards }}" hint-placeholder-val="{{ true }}">
         <sc-for list="{{ srcGroups }}" as="g" hint-placeholder-count="2">
           <section style="display:flex;flex-direction:column;gap:8px">
-            <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+            <sc-if value="{{ showSourceGroupLabels }}"><div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
               <span style="font:600 16px 'Hanken Grotesk';color:var(--ink)">{{ g.label }}</span>
               <span style="font:500 13px 'JetBrains Mono';color:var(--mut)">{{ g.n }}</span>
               <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">{{ g.desc }}</span>
               
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px">
+            </div></sc-if>
+            <div class="hd-source-grid">
               <sc-for list="{{ g.items }}" as="d" hint-placeholder-count="2">
-                <div style="background:var(--s1);border:1px solid {{ d.bd }};border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+                <div class="hd-source-card" style="border-color:{{ d.bd }}">
                   <sc-if value="{{ d.isVid }}" hint-placeholder-val="{{ false }}"><button onClick="{{ d.onRead }}" title="Watch with the transcript beside it" style="all:unset;cursor:pointer;position:relative;display:block;margin:-14px -16px 2px;border-radius:12px 12px 0 0;overflow:hidden;aspect-ratio:16/9;background:#000"><span style="position:absolute;inset:0;background-image:{{ d.thumbBg }};background-size:cover;background-position:center;opacity:.9"></span><span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:56px;height:40px;border-radius:10px;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;color:#fff;font:600 18px 'Hanken Grotesk'">▶</span></button></sc-if>
-                  <button onClick="{{ d.onSelect }}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;gap:2px">
+                  <button onClick="{{ d.onRead }}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;gap:2px">
                     <span style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><span style="font:500 19px/1.25 'Newsreader',serif;color:var(--ink)">{{ d.title }}</span><sc-if value="{{ d.isNew }}" hint-placeholder-val="{{ false }}"><span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;color:var(--ok);border:1px solid var(--ok);border-radius:4px;padding:0 5px">NEW</span></sc-if></span>
                     <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">{{ d.meta }}</span>
                   </button>
+                  <span style="font:400 14px 'Hanken Grotesk';color:var(--ink2)">{{ d.stats }}</span>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px">
+                    <sc-if value="{{ d.isSeen }}" hint-placeholder-val="{{ false }}">
+                      <button onClick="{{ d.onKeep }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:5px 12px;cursor:pointer;font:600 14px 'Hanken Grotesk'">Keep as a source</button>
+                      <button onClick="{{ d.onDiscard }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--bad)">Discard</button>
+                    </sc-if>
+                    <button onClick="{{ d.onRead }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">{{ d.readLabel }}</button>
+                  </div>
+                  <details class="hd-disclosure" style="padding:8px 0 0;margin-top:auto">
+                    <summary>Source details &amp; actions</summary>
+                    <div style="display:flex;flex-direction:column;gap:8px">
                   <sc-if value="{{ d.hasBadges }}" hint-placeholder-val="{{ false }}">
                     <div style="display:flex;gap:5px;flex-wrap:wrap">
                       <sc-for list="{{ d.badges }}" as="b" hint-placeholder-count="2"><span style="display:flex;align-items:center;gap:5px;font:500 12px 'Hanken Grotesk';color:var(--ink2);border:1px solid var(--line2);border-radius:5px;padding:0 7px"><span style="width:7px;height:7px;border-radius:50%;background:{{ b.color }}"></span>{{ b.label }}</span></sc-for>
                     </div>
                   </sc-if>
-                  <span style="font:400 14px 'Hanken Grotesk';color:var(--ink2)">{{ d.stats }}</span>
                   <sc-if value="{{ d.hasDistinct }}" hint-placeholder-val="{{ false }}"><span style="font:500 14px 'Hanken Grotesk';color:var(--acc)">{{ d.distinct }}</span></sc-if>
                   <sc-if value="{{ d.hasFold }}" hint-placeholder-val="{{ false }}"><span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">{{ d.fold }}</span></sc-if>
                   <div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 10px;align-items:center;font:400 13px 'Hanken Grotesk';color:var(--mut)">
@@ -1264,16 +1346,14 @@ select option{background:var(--s1);color:var(--ink)}
                       
                     </sc-if>
                   </div>
-                  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px">
-                    <sc-if value="{{ d.isSeen }}" hint-placeholder-val="{{ false }}">
-                      <button onClick="{{ d.onKeep }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:5px 12px;cursor:pointer;font:600 14px 'Hanken Grotesk'">Keep as a source</button>
-                      <button onClick="{{ d.onDiscard }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--bad)">Discard</button>
-                    </sc-if>
-                    <button onClick="{{ d.onRead }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">{{ d.readLabel }}</button>
+                      <button onClick="{{ d.onSelect }}" style="all:unset;cursor:pointer;color:var(--acc)">Inspect source</button>
+                      <div style="display:flex;gap:8px;flex-wrap:wrap">
                     <sc-if value="{{ d.isKept }}" hint-placeholder-val="{{ true }}"><button onClick="{{ d.onFocus }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">Only this source</button></sc-if>
                     <sc-if value="{{ d.hasReplay }}" hint-placeholder-val="{{ false }}"><button onClick="{{ d.onReplay }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">Watch it being read</button></sc-if>
                     <sc-if value="{{ d.canUnkeep }}" hint-placeholder-val="{{ false }}"><button onClick="{{ d.onUnkeep }}" style="background:none;border:0;padding:5px 4px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink)">Set aside</button></sc-if>
-                  </div>
+                      </div>
+                    </div>
+                  </details>
                 </div>
               </sc-for>
             </div>
@@ -1281,13 +1361,10 @@ select option{background:var(--s1);color:var(--ink)}
           </section>
         </sc-for>
         </sc-if>
-        <h2 style="margin:12px 0 0;font:600 16px 'Hanken Grotesk'">What's missing</h2>
+        <sc-if value="{{ hasGaps }}"><h2 style="margin:12px 0 0;font:600 16px 'Hanken Grotesk'">What to check</h2><p style="margin:0;color:var(--mut);font-size:13px">Gaps in these sources, not proof that something is absent.</p></sc-if>
         <sc-for list="{{ gaps }}" as="g" hint-placeholder-count="3">
-          <div style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:12px 16px;display:flex;flex-direction:column;gap:6px">
-            <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline">
-              <span style="font:600 14px 'Hanken Grotesk'">{{ g.label }}</span>
-              <span style="font:500 13px 'JetBrains Mono';color:var(--amber)">{{ g.n }}</span>
-            </div>
+          <details class="hd-disclosure" style="padding:10px 0">
+            <summary>{{ g.label }} · {{ g.n }}</summary>
             <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">{{ g.desc }}</span>
             <div style="display:flex;gap:6px;flex-wrap:wrap">
               <sc-for list="{{ g.items }}" as="x" hint-placeholder-count="2">
@@ -1295,7 +1372,7 @@ select option{background:var(--s1);color:var(--ink)}
               </sc-for>
             </div>
             <sc-if value="{{ g.hasMore }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button onClick="{{ g.onMore }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">{{ g.moreLabel }}</button><span style="font:400 13px 'Hanken Grotesk';color:var(--dim)">{{ g.shown }}</span></div></sc-if><sc-if value="{{ g.canLess }}" hint-placeholder-val="{{ false }}"><button onClick="{{ g.onLess }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink)">Show fewer</button></sc-if>
-          </div>
+          </details>
         </sc-for>
       </sc-if>
 
@@ -2474,12 +2551,19 @@ select option{background:var(--s1);color:var(--ink)}
           <button onClick="{{ closeAdd }}" style="background:none;border:0;color:var(--mut);cursor:pointer;font-size:16px">✕</button>
         </div>
         <p style="margin:0;color:var(--mut);font-size:13px;text-wrap:pretty">Search, paste a link, or drop files. Whatever you add is read and linked to everything already in “{{ corpusName }}”.</p>
-        <div style="display:flex;gap:8px;align-items:center;background:var(--bg);border:1px solid var(--line2);border-radius:12px;padding:6px 6px 6px 8px">
-          <select value="{{ add.scope }}" onChange="{{ add.onScope }}" style="flex:none;background:var(--s2);border:1px solid var(--line2);border-radius:8px;color:var(--ink);font:500 13px 'Hanken Grotesk';padding:7px 8px;cursor:pointer;outline:none">
-            <sc-for list="{{ add.scopes }}" as="o" hint-placeholder-count="6"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
-          </select>
-          <input defaultValue="{{ add.q }}" onChange="{{ add.onQ }}" onKeyDown="{{ add.onKey }}" placeholder="{{ add.placeholder }}" style="flex:1;min-width:0;background:none;border:0;outline:none;color:var(--ink);font:400 15px 'Hanken Grotesk';padding:6px 4px">
-          <button onClick="{{ add.onSearch }}" title="Search" style="flex:none;background:#8b5cf6;border:0;color:#fff;border-radius:8px;width:36px;height:34px;cursor:pointer;font:600 16px 'Hanken Grotesk'" style-hover="background:#7c3aed">→</button>
+        <div style="display:flex;flex-direction:column;gap:10px;background:var(--s2);border:1px solid var(--line);border-radius:16px;padding:12px 12px 10px">
+          <input defaultValue="{{ add.q }}" onChange="{{ add.onQ }}" onKeyDown="{{ add.onKey }}" placeholder="{{ add.placeholder }}" style="width:100%;box-sizing:border-box;background:none;border:0;outline:none;color:var(--ink);font:400 16px 'Hanken Grotesk';padding:2px 4px 6px">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <label title="Where to search" style="position:relative;display:inline-flex;align-items:center;gap:6px;background:var(--s1);border:1px solid var(--line);border-radius:999px;padding:6px 28px 6px 12px;cursor:pointer;color:var(--ink2)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c2.6 3 2.6 15 0 18M12 3c-2.6 3-2.6 15 0 18"></path></svg>
+              <select value="{{ add.scope }}" onChange="{{ add.onScope }}" style="appearance:none;-webkit-appearance:none;background:none;border:0;outline:none;color:inherit;font:500 13px 'Hanken Grotesk';cursor:pointer;padding:0;max-width:170px">
+                <sc-for list="{{ add.scopes }}" as="o" hint-placeholder-count="6"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
+              </select>
+              <span style="position:absolute;right:11px;pointer-events:none;color:var(--mut);font-size:11px">⌄</span>
+            </label>
+            <span style="flex:1"></span>
+            <button onClick="{{ add.onSearch }}" title="Search — or paste a link and it is added" style="flex:none;background:none;border:0;color:var(--ink2);cursor:pointer;width:34px;height:34px;border-radius:999px;display:flex;align-items:center;justify-content:center" style-hover="background:var(--s1);color:var(--ink)">→</button>
+          </div>
         </div>
         <sc-if value="{{ add.hasPanel }}" hint-placeholder-val="{{ false }}">
           <div style="display:flex;flex-direction:column;gap:8px">
@@ -2520,12 +2604,11 @@ select option{background:var(--s1);color:var(--ink)}
             </sc-if>
             <sc-if value="{{ add.paneText }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;flex-direction:column;gap:8px">
-                <div style="display:flex;gap:10px;flex-wrap:wrap">
-                  <input value="{{ draftTitle }}" onChange="{{ onDraftTitle }}" placeholder="Title" style="flex:1 1 260px;background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:9px 12px;outline:none">
-                  <input value="{{ draftYear }}" onChange="{{ onDraftYear }}" placeholder="Year (optional)" style="flex:0 1 140px;background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:9px 12px;outline:none">
+                <textarea value="{{ draftText }}" onChange="{{ onDraftText }}" placeholder="Paste text here — the title and date are read from it…" rows="8" style="background:var(--s2);border:1px solid transparent;border-radius:12px;color:var(--ink);padding:12px 14px;outline:none;font:400 15px/1.5 'Newsreader',serif;resize:vertical"></textarea>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                  <button onClick="{{ addDraft }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:9px 18px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Add text</button>
+                  <span style="font:400 12px/1.4 'Hanken Grotesk';color:var(--mut)">No forms — nothing to fill in.</span>
                 </div>
-                <textarea value="{{ draftText }}" onChange="{{ onDraftText }}" placeholder="Paste text here…" rows="8" style="background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);padding:10px 12px;outline:none;font:400 15px/1.5 'Newsreader',serif;resize:vertical"></textarea>
-                <button onClick="{{ addDraft }}" style="align-self:flex-start;background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:9px 18px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Add text</button>
               </div>
             </sc-if>
             <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;border:1.5px dashed var(--line2);border-radius:12px;padding:26px 18px;cursor:pointer" style-hover="border-color:var(--acc)">
@@ -2556,11 +2639,12 @@ select option{background:var(--s1);color:var(--ink)}
   </sc-if>
 </div>
 </x-dc>
+<script src="holodeck-ground.js"></script>
 <script type="text/x-dc" data-dc-script data-props="{&quot;showTerrainNames&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Display&quot;}}">
 function digammaH(x) { let r = 0; while (x < 6) { r -= 1 / x; x += 1; } const f = 1 / (x * x); return r + Math.log(x) - 0.5 / x - f * (1 / 12 - f * (1 / 120 - f * (1 / 252 - f * (1 / 240 - f / 132)))); }
 const klAdmitH = (bv, B) => Math.max(0, Math.log(B) - Math.log(bv) + digammaH(bv + 1) - digammaH(B + 1));
 const holoTokens = t => [...new Set((clean(t).toLowerCase().replace(/[\u2019']/g, '').match(/[a-z][a-z-]{2,}/g) || []).filter(w => !STOP.has(w) && !/^-|-$/.test(w)))];
-const VIEW_LABEL = { summary: 'Overview', search: 'Search', sources: 'Sources', names: 'Names', types: 'Types', figures: 'Figures', statements: 'Statements', connections: 'Connections', framing: 'Framing', views: 'Views', patterns: 'Patterns', surprise: 'Surprise', reader: 'Sources', profile: 'Names', draft: 'Draft', records: 'Records', ask: 'Ask the Fold', ingest: 'Add & publish' };
+const VIEW_LABEL = { overview: 'Evidence overview', summary: 'Overview', search: 'Search', sources: 'Sources', names: 'Names', types: 'Types', figures: 'Figures', statements: 'Statements', connections: 'Connections', framing: 'Framing', views: 'Views', patterns: 'Patterns', surprise: 'Surprise', reader: 'Sources', profile: 'Names', draft: 'Draft', records: 'Records', ask: 'Ask the Fold', ingest: 'Add & publish' };
 const SU_CURSORS = [
   { id: 'loo', label: 'Everything else', desc: 'Each statement against normal text plus everything the other sources in this view say, regardless of date: what this source says that nothing else in view, and nothing normal, prepares you for.' },
   { id: 'pub', label: 'When published', desc: 'Sources in the order they were published: what a reader following the story would have learned, and when.' },
@@ -3513,7 +3597,8 @@ function purgeLegacyHistory() {
   } catch (e) {}
   try { if (navigator.storage && navigator.storage.getDirectory) navigator.storage.getDirectory().then(async root => { try { await root.removeEntry('ohs-custody', { recursive: true }); } catch (e) {} }).catch(() => {}); } catch (e) {}
   try {
-    const r = indexedDB.open('fold-explorer', 1);
+    const r = indexedDB.open('fold-explorer', 2);
+    r.onupgradeneeded = () => { const db = r.result; if (!db.objectStoreNames.contains('blobs')) db.createObjectStore('blobs'); };
     r.onsuccess = () => { try { const db = r.result; const tx = db.transaction('blobs', 'readwrite'); const st = tx.objectStore('blobs'); const keys = st.getAllKeys(); keys.onsuccess = () => { (keys.result || []).forEach(k => { const s = String(k); if (s === 'meet:ohs' || s.startsWith('html:ohs-') || s.startsWith('pdf:ohs-') || s.startsWith('wiki5:kb')) { try { st.delete(k); } catch (e) {} } }); }; } catch (e) {} };
   } catch (e) {}
 }
@@ -3661,7 +3746,7 @@ function docxToHtml(xml) {
 let _pdfjs = null;
 async function pdfLib() { if (_pdfjs) return _pdfjs; const m = await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.mjs'); m.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs'; _pdfjs = m; return m; }
 const PDF_MAX_PAGES = 300;
-function idbOpen() { return new Promise((res, rej) => { const r = indexedDB.open('fold-explorer', 1); r.onupgradeneeded = () => r.result.createObjectStore('blobs'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+function idbOpen() { return new Promise((res, rej) => { const r = indexedDB.open('fold-explorer', 2); r.onupgradeneeded = () => { const db = r.result; if (!db.objectStoreNames.contains('blobs')) db.createObjectStore('blobs'); }; r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
 async function idbPut(k, v) { const db = await idbOpen(); return new Promise((res, rej) => { const tx = db.transaction('blobs', 'readwrite'); tx.objectStore('blobs').put(v, k); tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); }); }
 async function idbGet(k) { const db = await idbOpen(); return new Promise((res, rej) => { const q = db.transaction('blobs', 'readonly').objectStore('blobs').get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); }
 function wikiTitleOf(url) { const m = String(url).match(/^https?:\/\/en\.(?:m\.)?wikipedia\.org\/wiki\/([^#?]+)/); return m ? decodeURIComponent(m[1]) : null; }
@@ -4012,7 +4097,7 @@ async function readText(file, M) {
 function MapView(p) {
   const R = React, host = R.useRef(null), ctl = R.useRef(null), cur = R.useRef(p); cur.current = p;
   R.useEffect(() => { let dead = false;
-    import(new URL('holodeck-map.js', location.href).href).then(M => { if (dead || !host.current) return; ctl.current = M.mountMap(host.current, { legend: true, padBottom: 44, onProfile: n => cur.current.onProfile(n) }); ctl.current.set(cur.current.data); }).catch(e => console.warn('holodeck map', e));
+    import(new URL('holodeck-map.js', location.href).href).then(M => { if (dead || !host.current) return; ctl.current = M.mountMap(host.current, { legend: true, padBottom: 44, onProfile: n => cur.current.onProfile(n), onWitness: o => cur.current.onWitness && cur.current.onWitness(o) }); ctl.current.set(cur.current.data); }).catch(e => console.warn('holodeck map', e));
     return () => { dead = true; if (ctl.current) ctl.current.destroy(); ctl.current = null; }; }, []);
   R.useEffect(() => { if (ctl.current) ctl.current.set(p.data); });
   return R.createElement('div', { ref: host, style: { position: 'relative', height: '560px' } });
@@ -4133,7 +4218,19 @@ const MODE_TINT = { Differentiate: '#fbbf24', Relate: '#6fb0dc', Generate: '#a78
 const STRIP_VOCAB = { 'NUL|Ground': 'Clearing the ground', 'NUL|Figure': 'Inspecting a thing', 'NUL|Pattern': 'Breaking down a category', 'SIG|Ground': "Tracking what's present", 'SIG|Figure': 'Naming a thing', 'SIG|Pattern': 'Grouping the categories', 'INS|Ground': 'Setting new ground', 'INS|Figure': 'Creating a thing', 'INS|Pattern': 'Applying a procedure', 'SEG|Ground': 'Splitting the field', 'SEG|Figure': 'Cutting a link', 'SEG|Pattern': 'Breaking the network', 'CON|Ground': 'Maintaining the field', 'CON|Figure': 'Connecting two things', 'CON|Pattern': 'Following the network', 'SYN|Ground': 'Consolidating the field', 'SYN|Figure': 'Merging links', 'SYN|Pattern': 'Building a network', 'DEF|Ground': 'Clearing the context', 'DEF|Figure': 'Checking a lens', 'DEF|Pattern': 'Breaking the paradigm', 'EVA|Ground': 'Reading the context', 'EVA|Figure': 'Testing through a lens', 'EVA|Pattern': 'Comparing paradigms', 'REC|Ground': 'Resetting the context', 'REC|Figure': 'Revising a reading', 'REC|Pattern': 'Rewriting the paradigm' };
 
 class Component extends DCLogic {
-  state = { corpus: null, added: loadAdded(), view: 'summary', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, showSettings: false, draftTitle: '', draftYear: '', draftText: '', fw: {}, note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), topicsQ: '', topicsPage: 0, dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true }, wsRenaming: false, wsNameDraft: '', stripOpen: null, stripDocs: null, stripGroup: 'fold', stripEO: '', stripGaps: [], stripRead: { mode: 'Relate', domain: 'Interpretation', grain: 'Pattern' }, stripReadAuto: true, stripConds: [], stripConn: 'all', stripSegTab: 'conditions' };
+  syncOverview() {
+    const root = document.getElementById('overview-surface');
+    if (!root) return;
+    const options = { docs: this.analysis().docs, workspace: this.state.corpus || 'content', onRead: id => this.read(id) };
+    if (this._overviewRoot === root && this._overviewMount) { this._overviewMount.update(options); return; }
+    if (this._overviewLoading === root) return;
+    this._overviewLoading = root;
+    import(new URL('holodeck-overview.js', location.href).href).then(M => {
+      this._overviewLoading = null; if (!root.isConnected) return;
+      this._overviewRoot = root; this._overviewMount = M.mountOverview(root, { ...options, docs: this.analysis().docs });
+    }).catch(e => { this._overviewLoading = null; root.textContent = 'Overview unavailable: ' + e.message; });
+  }
+  state = { corpus: null, added: loadAdded(), view: new URLSearchParams(location.search).has('work') ? 'ask' : 'summary', akMode: new URLSearchParams(location.search).get('work') === 'notebook' ? 'notebook' : new URLSearchParams(location.search).get('work') === 'fold' ? 'generate' : 'chat', akFocus: new URLSearchParams(location.search).get('fullscreen') === '1', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, showSettings: false, draftText: '', fw: {}, note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), topicsQ: '', topicsPage: 0, dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true }, wsRenaming: false, wsNameDraft: '', stripOpen: null, stripDocs: null, stripGroup: 'fold', stripEO: '', stripGaps: [], stripRead: { mode: 'Relate', domain: 'Interpretation', grain: 'Pattern' }, stripReadAuto: true, stripConds: [], stripConn: 'all', stripSegTab: 'conditions' };
   _html = {};
 
   componentDidMount() {
@@ -4145,6 +4242,7 @@ class Component extends DCLogic {
     this.applyTheme(); this._c = 0; import(new URL('holodeck-match.js', location.href).href).then(M => { this._mt = M; this._qc = null; this.forceUpdate(); }).catch(() => {}); import(new URL('holodeck-profile.js', location.href).href).then(M => { _hdProf = M; this._pbA = null; this.forceUpdate(); }).catch(() => {}); import(new URL('holodeck-lang.js', location.href).href).then(M => { _hdLang = M; this._pfLang = null; this.loadLangPriors(); this.forceUpdate(); }).catch(() => {}); hdSum().then(() => this.forceUpdate()).catch(() => {}); this.loadHtml(); if (typeof location !== 'undefined' && /fx-share=/.test(location.hash)) { this.netInit(); this.setState({ view: 'draft' }); }
     this._onRz = () => { this.measureHdr(); if ((window.innerWidth < SIDE_PANEL_MIN_VW) !== this._narrow) this.forceUpdate(); }; window.addEventListener('resize', this._onRz);
 
+    this._onFocusKey = e => { if (e.key === 'Escape' && this.state.akFocus) this.setState({ akFocus: false }); }; window.addEventListener('keydown', this._onFocusKey);
     this._onSelCh = () => { cancelAnimationFrame(this._selRaf); this._selRaf = requestAnimationFrame(() => this.updatePinPop()); };
     document.addEventListener('selectionchange', this._onSelCh); window.addEventListener('scroll', this._onSelCh, true);
     this._seenIn = {};
@@ -4162,8 +4260,8 @@ class Component extends DCLogic {
     };
     window.addEventListener('dragenter', this._h.enter); window.addEventListener('dragleave', this._h.leave); window.addEventListener('dragover', this._h.over); window.addEventListener('drop', this._h.drop); window.addEventListener('paste', this._h.paste);
   }
-  componentWillUnmount() { window.removeEventListener('resize', this._onRz); if (this._pdfRo) { try { this._pdfRo.disconnect(); } catch (e) {} } window.removeEventListener('message', this._onYt); document.removeEventListener('selectionchange', this._onSelCh); window.removeEventListener('scroll', this._onSelCh, true); window.removeEventListener('message', this._onMsg); const h = this._h; window.removeEventListener('dragenter', h.enter); window.removeEventListener('dragleave', h.leave); window.removeEventListener('dragover', h.over); window.removeEventListener('drop', h.drop); window.removeEventListener('paste', h.paste); }
-  componentDidUpdate() { this.applyTheme(); this.measureHdr(); try { const ff = document.getElementById('fold-folder-input'); if (ff && !ff.multiple) { ff.webkitdirectory = true; ff.setAttribute('webkitdirectory', ''); ff.multiple = true; ff.setAttribute('multiple', ''); } } catch (e) {} if (this._prevCorpus !== this.state.corpus || this._prevAdded !== this.state.added) { this._prevCorpus = this.state.corpus; this._prevAdded = this.state.added; this.loadHtml(); this.akAutoLoad(); } const rd0 = this.state.readDoc && this.analysis().docById[this.state.readDoc]; if (rd0 && rd0.media && rd0.media.kind === 'local') { this.ensureMediaUrl(rd0); } this.hookLocal(); this.syncReader(); this.ytHook(); this.syncOmni();
+  componentWillUnmount() { window.removeEventListener('keydown', this._onFocusKey); window.removeEventListener('resize', this._onRz); if (this._pdfRo) { try { this._pdfRo.disconnect(); } catch (e) {} } window.removeEventListener('message', this._onYt); document.removeEventListener('selectionchange', this._onSelCh); window.removeEventListener('scroll', this._onSelCh, true); window.removeEventListener('message', this._onMsg); const h = this._h; window.removeEventListener('dragenter', h.enter); window.removeEventListener('dragleave', h.leave); window.removeEventListener('dragover', h.over); window.removeEventListener('drop', h.drop); window.removeEventListener('paste', h.paste); }
+  componentDidUpdate() { this.syncOverview(); this.applyTheme(); this.measureHdr(); try { const ff = document.getElementById('fold-folder-input'); if (ff && !ff.multiple) { ff.webkitdirectory = true; ff.setAttribute('webkitdirectory', ''); ff.multiple = true; ff.setAttribute('multiple', ''); } } catch (e) {} if (this._prevCorpus !== this.state.corpus || this._prevAdded !== this.state.added) { this._prevCorpus = this.state.corpus; this._prevAdded = this.state.added; this.loadHtml(); this.akAutoLoad(); } const rd0 = this.state.readDoc && this.analysis().docById[this.state.readDoc]; if (rd0 && rd0.media && rd0.media.kind === 'local') { this.ensureMediaUrl(rd0); } this.hookLocal(); this.syncReader(); this.ytHook(); this.syncOmni();
     const S = this.state;
     const askEl = document.getElementById('ak-composer');
     if (S.view === 'ask' && askEl) {
@@ -4367,6 +4465,17 @@ class Component extends DCLogic {
     } catch (e) { if (A.ticket !== ticket) return; A.error = e.message || String(e); if (!more) A.results = null; }
     A.loading = false; this.forceUpdate();
   }
+  async addGo() {
+    const A = this.addState(), q = (A.q || '').trim();
+    if (!q || A.loading) return;
+    // A link pasted into the one field is a source, not a query — add it and ask for nothing more.
+    if (/^(https?:\/\/|www\.)\S+$|^[\w-]+(\.[\w-]+)*\.[a-z]{2,}(\/\S*)?$/i.test(q)) {
+      A.q = ''; A.error = ''; this.forceUpdate();
+      try { await this.ingestUrl(/^https?:\/\//.test(q) ? q : 'https://' + q, { keepOpen: true }); } catch (e) { A.error = e.message || String(e); }
+      this.forceUpdate(); return;
+    }
+    return this.addSearch();
+  }
   isAdded(r, known) {
     const u = (r.url || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
     if ((r.id && known.has(r.id)) || known.has(u)) return true;
@@ -4422,7 +4531,7 @@ class Component extends DCLogic {
     return {
       scopes: SEARCH_SCOPES.map(x => ({ id: x.id, label: x.label })), scope: S.scope,
       onScope: e => { S.scope = e.target.value; reset(); try { localStorage.setItem('hd:add-scope', S.scope); } catch (er) {} if ((S.q || '').trim()) this.addSearch(); else this.forceUpdate(); },
-      q: S.q, placeholder: sc.ask + '…', onQ: e => { S.q = e.target.value; }, onKey: e => { if (e.key === 'Enter') { S.q = e.target.value; this.addSearch(); } }, onSearch: () => this.addSearch(),
+      q: S.q, placeholder: sc.ask + '…', onQ: e => { S.q = e.target.value; }, onKey: e => { if (e.key === 'Enter') { S.q = e.target.value; this.addGo(); } }, onSearch: () => this.addGo(),
       loading: S.loading, rows, hasPanel: !!(S.loading || S.results), showIntake: !(S.loading || S.results),
       resultsLine: S.loading && !S.results ? 'Searching ' + sc.label + '…' : plural(rows.length, sc.label.toLowerCase() + ' result') + (S.engine ? ' · ' + S.engine : ''),
       hasMore: !!S.more, onMore: () => this.addSearch(true), moreLabel: S.loading ? 'Loading…' : 'More results',
@@ -4631,14 +4740,19 @@ class Component extends DCLogic {
     const bo = one(bondOnly).sort(byT);
     return { verdict: 'author', why: 'The picture holds ' + c.es.join(' — ') + ' in ' + plural(bo.length, 'statement') + ', but none of them ' + (P0.length ? 'as ' + P0.join('/') : '') + (c.nums.length ? (P0.length ? ' with ' : 'with ') + c.nums.map(x => x.raw).join(', ') : '') + '.', closest: bo[0] ? bo[0].st.id : null, sts: [], con: [], shape };
   }
+  positionSnapshot() { const A = this.analysis(), S = this.state, t = this.filterTuple();
+    return { workspace: this.corpusName(), giver: 'the reader', question: (S.q || '').trim() || (this._fold || []).join(' ') || 'Explore this workspace',
+      frame: VIEW_LABEL[S.view] || S.view || 'Overview', sources: A.docs.filter(d => this._cnt && this._cnt.has(d.id) && !(S.offDocs || {})[d.id]).map(d => ({ id: d.id, title: d.title })),
+      filters: t.filters, timeThrough: S.tMax || null, lens: S.suLens || null, cursor: S.cursor || null, centeredOn: S.sel && (S.sel.name || S.sel.id) || null, capturedAt: new Date().toISOString() }; }
+  positionLine(p) { return p.workspace + ' · ' + p.sources.length + ' selected sources · Question: ' + p.question + ' · Reading as: ' + p.frame + (p.filters.length ? ' · Filters: ' + p.filters.map(f => f.key + '=' + String(f.value) + ' for ' + (f.forWhom?.giver || 'the reader')).join('; ') : '') + (p.timeThrough ? ' · Through ' + p.timeThrough : '') + (p.lens ? ' · Lens: ' + (p.lens.v || p.lens.k) : '') + (p.cursor ? ' · Sequence: ' + (SU_CURSORS.find(c => c.id === p.cursor)?.label || p.cursor) : '') + ' · As of ' + p.capturedAt.slice(0, 10) + ' · Your current reading'; }
   groundClaims(only) { this.flush(); const A = this.analysis(); let n = 0, src = 0, cont = 0, auth = 0;
-    this.setPinData(D => { D.claims.forEach(c => { if (c.kind === 'heading' || !(c.text || '').trim()) return; if (only && !only.includes(c.id)) return;
-      const r = this.groundText(A, c.q || c.text); n++; const keep = (c.pins || []).filter(pid => { const p = D.pins.find(q => q.id === pid); return p && (!p.auto || (c.fixed || []).includes(pid)); });
+    this.setPinData(D => { D.claims.forEach(c => { if (c.kind === 'heading' || c.mode === 'thought' || c.mode === 'hypothesis' || !(c.text || '').trim()) return; if (only && !only.includes(c.id)) return;
+      const r = this.groundText(A, c.text); n++; const keep = (c.pins || []).filter(pid => { const p = D.pins.find(q => q.id === pid); return p && (!p.auto || (c.fixed || []).includes(pid)); });
       const conIds = (r.con || []).map(x => x.st.id); const conWhy = Object.fromEntries((r.con || []).map(x => [x.st.id, x.why]));
       if (r.verdict === 'source' || r.verdict === 'contested' || r.verdict === 'superseded') { src++; if (r.verdict === 'contested') cont++; c.pins = [...new Set([...keep, ...r.sts.map(st => this.ensurePin(D, A, st))])]; }
       else { auth++; c.pins = keep; }
-      c.g = { verdict: keep.length && r.verdict === 'author' ? 'source' : r.verdict, why: r.why, shape: r.shape, closest: r.closest, con: conIds, conWhy, nSrc: r.nSrc || 0, at: Date.now(), ack: false, text: c.text }; }); return D; });
-    if (n) this.toast(n === 1 ? (src ? (cont ? 'Grounded, but contested' : 'Grounded') : 'Attributed to you') : src + ' of ' + n + ' grounded' + (cont ? ', ' + cont + ' contested' : '') + (auth ? ', ' + auth + ' attributed to you' : ''));
+      c.g = { verdict: keep.length && r.verdict === 'author' ? 'source' : r.verdict, why: r.why, shape: r.shape, closest: r.closest, con: conIds, conWhy, nSrc: r.nSrc || 0, at: Date.now(), position: { ...this.positionSnapshot(), sources: A.docs.map(d => ({id:d.id,title:d.title})), method: 'name, predicate and figure matching across the loaded workspace (not an exhaustive search)' }, ack: false, text: c.text }; }); return D; });
+    if (n) this.toast(n === 1 ? (src ? (cont ? 'Grounded, but contested' : 'Grounded') : 'No supporting match found; choose a ground or keep exploring') : src + ' of ' + n + ' grounded' + (cont ? ', ' + cont + ' contested' : '') + (auth ? ', ' + auth + ' without a supporting match' : ''));
     // The check above is mechanical and closed: names, figures, and a short verb
     // list. A position ("is pro Y") has neither a figure nor a verb on that list,
     // so it came back "attributed to you" even when a source states it. The same
@@ -4671,7 +4785,7 @@ class Component extends DCLogic {
     let cache = this._engCache;
     if (!cache || cache.key !== key) { try { cache = this._engCache = { key, IX: M.index(docs) }; } catch (e) { return; } }
     const IX = cache.IX;
-    const ids = this.pinData().claims.filter(c => c.kind !== 'heading' && (c.text || '').trim() && (!only || only.includes(c.id))).map(c => c.id); if (!ids.length) return;
+    const ids = this.pinData().claims.filter(c => c.kind !== 'heading' && c.mode !== 'thought' && c.mode !== 'hypothesis' && (c.text || '').trim() && (!only || only.includes(c.id))).map(c => c.id); if (!ids.length) return;
     this.setPinData(D => { D.claims.forEach(c => {
       if (!ids.includes(c.id)) return;
       // The engine only fills the gap the mechanical check left. A claim it
@@ -4692,7 +4806,7 @@ class Component extends DCLogic {
       else r = { verdict: 'author', why: (jc.reason || 'A limit of the relation reader, not proof the sources are silent.'), shape: this.engEdge(jc), sts: [], closest: null };
       if (r.verdict === 'source' || r.verdict === 'contested') c.pins = [...new Set([...keep, ...r.sts.map(st => this.ensurePin(D, A, st))])];
       else c.pins = keep;
-      c.g = { verdict: keep.length && r.verdict === 'author' ? 'source' : r.verdict, why: r.why, shape: r.shape, closest: r.closest, con: [], conWhy: {}, nSrc: r.sts.length, at: Date.now(), ack: false, text: c.text };
+      c.g = { verdict: keep.length && r.verdict === 'author' ? 'source' : r.verdict, why: r.why, shape: r.shape, closest: r.closest, con: [], conWhy: {}, nSrc: r.sts.length, at: Date.now(), position: { ...this.positionSnapshot(), sources: A.docs.map(d => ({id:d.id,title:d.title})), method: 'relation reader over retrieved passages from the loaded workspace (not an exhaustive search)' }, ack: false, text: c.text };
     }); return D; }); }
   groundWriting() { const A = this.analysis(); const t = (this._wText || '').trim(); if (!t) return;
     const sents = (t.replace(/\s+/g, ' ').match(/[^.!?]+(?:[.!?]+["”’)]*|$)/g) || []).map(s => s.trim()).filter(s => s.split(' ').length >= 3);
@@ -5070,7 +5184,7 @@ class Component extends DCLogic {
   // The in-tab model is fetched automatically, in the background, once the workspace holds anything to ask about —
   // so by the time a question is typed the weights are already in this browser. A stalled or failed download is
   // retried a few times; the Ask view still offers Load for a manual start.
-  async akAutoLoad() {
+  async akAutoLoad() { if (this.state.akMode === 'notebook') return;
     if (this._akAutoBusy) return;
     this._akAutoBusy = true;
     try {
@@ -5231,6 +5345,16 @@ class Component extends DCLogic {
     const trChars = conv.history.reduce((n, m) => n + (m.content || '').length, 0);
     const stageL = { indexing: 'Indexing the passages…', retrieving: 'Finding passages by the question’s own words…', reading: 'Reading the passages into notes…', answering: 'Answering…', checking: 'Checking every sentence against the passages…', folding: 'Folding the turn…' };
     const recs = (sm.records || []).slice().reverse().map(r => ({ line: 'Turn ' + r.turn + ' · ' + r.gist, sub: plural((r.refs || []).length, 'address', 'addresses') + ((r.unsupported || []).length ? ' · ' + (r.unsupported || []).length + ' unsupported' : '') + ((r.open || []).length ? ' · open' : '') }));
+    const akPane = S.akMode === 'notebook' ? 'data' : 'sources';
+    const workspace = this.corpusId();
+    if (!this._nbRef) this._nbRef = el => {
+      if (!el) { this._nbEl = null; return; }
+      if (el === this._nbEl && this._nbWorkspace === this.corpusId()) return;
+      this._nbEl = el; const workspace = this.corpusId(); this._nbWorkspace = workspace;
+      import(new URL('holodeck-notebook.js', location.href).href).then(M => {
+        if (this._nbEl === el && this.corpusId() === workspace) this._nbPane = M.mount(el, { workspace, base: new URLSearchParams(location.search).get('notebook') || window.__holodeckNotebookBase || undefined });
+      }).catch(e => { el.textContent = 'The notebook did not load: ' + e.message; });
+    };
     const isGen = S.akMode === 'generate';
     const art = (() => {
       const AS = this.artState(); const { vers, groups, sel } = AS; const docId = AS.pd.cur; const D = this._doors;
@@ -5307,7 +5431,8 @@ class Component extends DCLogic {
         onDismiss: () => this.setState({ akRefuse: null }),
         links: live.slice(0, 5).map(d => ({ title: short(d.title || d.url, 60), onOpen: () => window.open(d.url, '_blank', 'noopener') })), hasLinks: live.length > 0 };
     })();
-    return { ak: { on: true, ready: this.llmOk(), pending: false, refuse, gap: isWL ? !gpu && !!MM : !(O && O.ok), why: isWL ? 'navigator.gpu is not available in this browser' : (O.why || ''), isWL, noGpu: isWL && MM && !gpu, needLoad: isWL && gpu && !loaded && !LD, loading: !!LD, loadText: LD ? LD.text : '', loadPct: LD ? Math.round((LD.p || 0) * 100) + '%' : '0%', load: () => this.akLoad(), mName: mInfo.name, mSize: mInfo.size || '',
+    return { ak: { on: true, onSrc: akPane !== 'data', onData: akPane === 'data', nbRef: this._nbRef,
+ ready: this.llmOk(), pending: false, refuse, gap: isWL ? !gpu && !!MM : !(O && O.ok), why: isWL ? 'navigator.gpu is not available in this browser' : (O.why || ''), isWL, noGpu: isWL && MM && !gpu, needLoad: isWL && gpu && !loaded && !LD, loading: !!LD, loadText: LD ? LD.text : '', loadPct: LD ? Math.round((LD.p || 0) * 100) + '%' : '0%', load: () => this.akLoad(), mName: mInfo.name, mSize: mInfo.size || '',
       dot: isWL ? (loaded ? 'var(--ok)' : gpu ? 'var(--amber)' : 'var(--bad)') : O.ok ? 'var(--ok)' : 'var(--bad)',
       status: isWL ? (loaded ? mInfo.name + ' running in this tab · nothing leaves it' : !MM ? 'Starting…' : gpu ? mInfo.name + ' runs in this tab once loaded' : 'This browser can’t run a model in the tab') : O.ok ? model + ' via Ollama on this machine' : 'Ollama isn’t reachable',
       models: ms.map(m => ({ v: m.v, label: m.label })), hasModels: ms.length > 1, model, onModel: e => { const v = e.target.value; try { localStorage.setItem('fold-explorer-ak-model', v); } catch (er) {} this.setState({ akModel: v }); setTimeout(() => { try { this.akAutoLoad(); } catch (er) {} }, 0); }, retry: () => this.akProbe(),
@@ -5315,7 +5440,11 @@ class Component extends DCLogic {
       turns, hasTurns: turns.length > 0, noTurns: turns.length === 0 && !S.akPending,
       nextN: String(conv.turns.length ? parseInt(conv.turns[conv.turns.length - 1].n) + 1 : 1),
       modes: (() => { const akMode = S.akMode || 'chat'; const seg = on => ({ bg: on ? 'var(--sel)' : 'transparent', col: on ? 'var(--ink)' : 'var(--mut)' });
-        return [['chat', 'Chat'], ['generate', 'Generate'], ['notebook', 'Notebook']].map(([k, l]) => ({ label: l, ...seg(akMode === k), onClick: () => this.setState({ akMode: k }) })); })(),
+        return [['chat', 'Chat'], ['generate', 'Fold'], ['notebook', 'Notebook']].map(([k, l]) => ({ label: l, active: akMode === k, ...seg(akMode === k), onClick: () => this.setState({ akMode: k, akPane: k === 'notebook' ? 'data' : 'sources' }) })); })(),
+      scopeLine: this.corpusName() + ' · ' + plural(A.docs.filter(d => this.counted(d)).length, 'source'),
+      addSources: () => this.setState({ showAdd: true }),
+      focusLabel: S.akFocus ? 'Exit full screen' : 'Full screen', toggleFocus: () => this.setState({ akFocus: !S.akFocus }),
+      wrapClass: isGen ? 'hd-generate-wrap' : 'hd-chat-wrap', asideClass: isGen ? 'hd-artifact-side' : 'hd-chat-side',
       mChat: (S.akMode || 'chat') !== 'notebook', mGen: S.akMode === 'generate', mNb: S.akMode === 'notebook', showCells: true,
       modeNote: S.akMode === 'generate' ? 'Build a sourced document — the answers you ask for, laid out by kind.' : S.akMode === 'notebook' ? 'Every cell can be edited and re-run; the output of each run stays below its cell.' : 'A conversation over the sources — every sentence traced back to its material.',
       nbExport: () => this.nbExport(), nbOpenLog: () => this.nbOpenLog(),
@@ -5517,7 +5646,7 @@ class Component extends DCLogic {
       delMsg: 'Delete “' + (curDoc.title || 'Untitled document') + '” and its ' + plural(curDoc.claims ? curDoc.claims.length : 0, 'claim') + '? Pins stay.',
       onDelYes: () => { this.setDocs(X => { const docs = X.docs.filter(d => d.id !== X.cur); return { docs, cur: docs.length ? docs[docs.length - 1].id : null }; }); this.setState({ dDel: null, dFocus: null }); },
       count: plural(P.docs.length, 'document') };
-    const newClaim = () => ({ id: 'claim-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), text: '', pins: [] });
+    const newClaim = (mode = 'claim') => ({ mode, id: 'claim-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), text: '', pins: [] });
     const attach = (cid, pid) => { if (!pid) return; let target = cid; this.setPinData(D => { let c = D.claims.find(x => x.id === target); if (!c) { c = newClaim(); D.claims.push(c); target = c.id; } if (!c.pins.includes(pid)) c.pins.push(pid); return D; }); this.setState({ dFocus: target }); };
     const src = p => p.docTitle + (p.year && !p.docTitle.includes(String(p.year)) ? ' · ' + p.year : '');
     const frag = p => { if (!p.url || /\.pdf($|\?)/i.test(p.url)) return ''; const w = p.excerpt.split(' '); const enc = x => encodeURIComponent(x).replace(/-/g, '%2D'); return p.url.split('#')[0] + '#:~:text=' + (w.length > 10 ? enc(w.slice(0, 5).join(' ')) + ',' + enc(w.slice(-5).join(' ')) : enc(p.excerpt)); };
@@ -5531,23 +5660,28 @@ class Component extends DCLogic {
     const active = P.pins.filter(p => !p.discardedAt), gone = P.pins.filter(p => p.discardedAt);
     const kind = (P.doc && P.doc.kind) || 'brief'; const isTL = kind === 'timeline';
     const statusOf = c => { if (c.kind === 'heading' || !(c.text || '').trim()) return null; const k = this.checkClaimM(c, byId); const g = c.g && (!c.g.text || c.g.text === c.text) ? c.g : null;
+      if (c.mode === 'thought' || c.mode === 'hypothesis') return { v: 'thought', k, g };
+      const owned = HDGround.declaration(c); if (owned) return { v: 'author', k, g, owned };
       if (k.ev.length && k.hard.length) return { v: 'fail', k, g };
-      if (g && (g.verdict === 'contested' || g.verdict === 'refuted')) return { v: g.ack ? (g.verdict === 'refuted' ? 'author' : 'noted') : g.verdict, k, g };
+      if (g && (g.verdict === 'contested' || g.verdict === 'refuted')) return { v: g.ack ? (g.verdict === 'refuted' ? 'untried' : 'noted') : g.verdict, k, g };
       if (g && g.verdict === 'superseded') return { v: 'asof', k, g };
-      if (k.ev.length) return { v: 'source', k, g }; if (g && g.verdict === 'author') return { v: 'author', k, g }; return { v: 'untried', k, g }; };
-    const ST = { source: ['Grounded', 'var(--ok)'], asof: ['Grounded as of its date', 'var(--ok)'], noted: ['Grounded, disagreement noted', 'var(--amber)'], contested: ['Contested', 'var(--amber)'], refuted: ['Held otherwise by the sources', 'var(--bad)'], fail: ['Doesn’t match its excerpts', 'var(--amber)'], author: ['Attributed to you', 'var(--mut)'], untried: ['Not checked yet', 'var(--dim)'] };
+      if (k.ev.length) return { v: 'source', k, g };  return { v: 'untried', k, g }; };
+    const ST = { thought: ['Exploring · excluded from report', 'var(--mut)'], source: ['Source match', 'var(--ok)'], asof: ['Source match as of its date', 'var(--ok)'], noted: ['Source match, disagreement noted', 'var(--amber)'], contested: ['Contested', 'var(--amber)'], refuted: ['Held otherwise by the sources', 'var(--bad)'], fail: ['Doesn’t match its excerpts', 'var(--amber)'], author: ['Attributed to you', 'var(--mut)'], untried: ['Not checked yet', 'var(--dim)'] };
     const dLabel = iso => { if (!iso) return ''; const m = String(iso).match(/^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?/); if (!m) return iso; return (m[3] ? +m[3] + ' ' : '') + (m[2] ? MON_N[+m[2]] + ' ' : '') + m[1]; };
     const claimDate = c => c.date || (() => { const p = (c.pins || []).map(pid => byId[pid]).find(Boolean); const d = p && A.docById[p.docId]; return d ? (d.published || (d.year ? String(d.year) : '')) : ''; })();
     let ci = 0;
     const claims = P.claims.filter(inFold).map(c => { const isHead = c.kind === 'heading'; if (!isHead) ci++; const st = statusOf(c); const ev = (c.pins || []).map(pid => byId[pid]).filter(Boolean);
       const cl = st && st.v === 'author' && st.g && st.g.closest ? A.byId[st.g.closest] : null;
-      const why = !st ? '' : st.v === 'fail' ? st.k.hard.join(' · ') : st.v === 'untried' ? 'Press Ground: it is checked against the picture for every source that holds it and every source that holds it otherwise.' : st.v === 'author' ? ((st.g ? st.g.why : '') + ' It will be marked as your own claim.') : (st.g ? st.g.why : 'Backed by the excerpts you attached. Press Ground to test it against every source.');
+      const why = !st ? '' : st.owned ? HDGround.summary(st.owned) : st.v === 'thought' ? 'Yours to explore. Promote when you are ready to declare its ground.' : st.v === 'fail' ? st.k.hard.join(' · ') : st.v === 'untried' ? 'Ground can look for matching names, relations and figures in the loaded workspace. No match declares no ownership: pin evidence, own your statement, or keep it as a thought.' : st.v === 'author' ? ((st.g ? st.g.why : '') + ' It will be marked as your own claim.') : ((st.g ? st.g.why : 'Attached excerpts; a citation alone does not establish entailment.') + (st.g?.position ? ' Checked ' + st.g.position.sources.length + ' loaded sources by name, predicate and figure matching; this is not an exhaustive search.' : ''));
       const conL = st && st.g && st.g.con ? st.g.con.map(id => A.byId[id]).filter(Boolean).map(o => ({ text: short(o.text, 280), src: this.srcShort(A, o) + (this.dateOf(A, o).label ? ', ' + this.dateOf(A, o).label : ''), why: (st.g.conWhy || {})[o.id] || '', onOpen: () => this.read(o.doc, o.id) })) : [];
       const ackable = st && (st.v === 'contested' || st.v === 'refuted');
+      const setDeclaration = patch => this.setPinData(D => { const x = D.claims.find(y => y.id === c.id); if (!x) return D; x.mode = patch.mode || x.mode || 'claim'; if (['analysis', 'account', 'position', 'absence'].includes(x.mode)) { const old = x.declaration || {}; if (x.declaration) x.declarations = [...(x.declarations || []), x.declaration]; x.declaration = HDGround.declare(x, x.mode, patch.giver !== undefined ? patch.giver : old.giver || 'Me (workspace author)', patch.note !== undefined ? patch.note : old.note || '', this.positionSnapshot()); } else { if (x.declaration) x.declarations = [...(x.declarations || []), x.declaration]; delete x.declaration; } return D; });
       const setAck = on => this.setPinData(D => { const x = D.claims.find(y => y.id === c.id); if (x && x.g) x.g.ack = on; return D; });
-      return { isHead, isClaim: !isHead, id: c.id, n: 'Claim ' + ci, text: c.text, rows: String(Math.max(2, Math.ceil((c.text || '').length / 58))), bd: c.id === focus ? '#8b5cf6' : 'var(--line)', evCount: ev.length ? plural(ev.length, 'excerpt') : '', hasEv: ev.length > 0,
+      return { isHead, isClaim: !isHead, id: c.id, n: (HDGround.modes[c.mode] || 'Claim') + ' ' + ci,
+        mode: c.mode || 'claim', modes: Object.entries(HDGround.modes).map(([v,label]) => ({v,label})), onMode: e => { this.flush(); setDeclaration({mode: e.target.value}); }, owned: ['analysis','account','position','absence'].includes(c.mode), giver: c.declaration?.giver || '', note: c.declaration?.note || '', onGiver: e => setDeclaration({giver:e.target.value}), onNote: e => setDeclaration({note:e.target.value}),
+        counterNote: conL.length ? '' : 'No counter-ground has been admitted' + (c.g?.position ? ' in this check of ' + c.g.position.sources.length + ' loaded sources.' : ' yet.'), text: c.text, rows: String(Math.max(2, Math.ceil((c.text || '').length / 58))), bd: c.id === focus ? '#8b5cf6' : 'var(--line)', evCount: ev.length ? plural(ev.length, 'excerpt') : '', hasEv: ev.length > 0,
         stLabel: st ? ST[st.v][0] : '', stColor: st ? ST[st.v][1] : 'var(--dim)', why, hasStatus: !!st, byLabel: c.by === 'model' ? 'Model' : c.by === 'template' ? 'Quoted' : '', hasBy: c.by === 'model' || c.by === 'template',
-        canGround: !isHead && !!(c.text || '').trim(), groundLabel: c.g ? 'Re-test' : 'Ground', hasCon: conL.length > 0, con: conL, conTitle: st && st.v === 'refuted' ? 'Held otherwise' : 'Held otherwise · ' + conL.length, ackable, ackLabel: st && st.v === 'refuted' ? 'Keep it as my claim' : 'Keep it, and footnote the disagreement', onAck: () => setAck(true), hasUnack: !!(st && st.g && st.g.ack), onUnack: () => setAck(false), shape: st && st.g && st.g.shape ? st.g.shape : '', hasShape: !!(st && st.g && st.g.shape), onGround: e => { if (e && e.stopPropagation) e.stopPropagation(); this.groundClaims([c.id]); },
+        canGround: !isHead && c.mode !== 'thought' && c.mode !== 'hypothesis' && !!(c.text || '').trim(), groundLabel: c.g ? 'Re-test' : 'Ground', hasCon: conL.length > 0, con: conL, conTitle: st && st.v === 'refuted' ? 'Held otherwise' : 'Held otherwise · ' + conL.length, ackable, ackLabel: st && st.v === 'refuted' ? 'Keep as hypothesis' : 'Keep it, and footnote the disagreement', onAck: () => { if (st && st.v === 'refuted') setDeclaration({mode:'hypothesis'}); else setAck(true); }, hasUnack: !!(st && st.g && st.g.ack), onUnack: () => setAck(false), shape: st && st.g && st.g.shape ? st.g.shape : '', hasShape: !!(st && st.g && st.g.shape), onGround: e => { if (e && e.stopPropagation) e.stopPropagation(); this.groundClaims([c.id]); },
         hasClosest: !!cl, closest: cl ? short(cl.text, 260) : '', closestSrc: cl ? this.srcShort(A, cl) + (this.dateOf(A, cl).label ? ', ' + this.dateOf(A, cl).label : '') : '',
         onUseClosest: () => { if (!cl) return; this.setPinData(D => { const x = D.claims.find(y => y.id === c.id); if (x) { x.pins = [this.ensurePin(D, A, cl)]; delete x.g; } return D; }); },
         isTL: isTL && !isHead, date: c.date || '', dateHint: isTL && !c.date ? dLabel(claimDate(c)) : '', onDate: e => { const v = e.target.value; this.later('date:' + c.id, () => this.setPinData(D => { const x = D.claims.find(y => y.id === c.id); if (x) x.date = v; return D; })); },
@@ -5559,20 +5693,21 @@ class Component extends DCLogic {
           onDetach: () => this.setPinData(D => { const x = D.claims.find(y => y.id === c.id); if (x) x.pins = x.pins.filter(q => q !== p.id); return D; }) })) }; });
     // ---- output
     const docTitle = (P.doc && P.doc.title) || 'Untitled document';
-    let blocks = P.claims.filter(c => (c.text || '').trim() && inFold(c)); if (isTL) blocks = blocks.filter(c => c.kind !== 'heading').map((c, i) => ({ c, i, d: claimDate(c) })).sort((a, b) => (a.d || '9999').localeCompare(b.d || '9999') || a.i - b.i).map(x => x.c);
+    let blocks = P.claims.filter(c => c.mode !== 'thought' && c.mode !== 'hypothesis' && (c.text || '').trim() && inFold(c)); if (isTL) blocks = blocks.filter(c => c.kind !== 'heading').map((c, i) => ({ c, i, d: claimDate(c) })).sort((a, b) => (a.d || '9999').localeCompare(b.d || '9999') || a.i - b.i).map(x => x.c);
     const notes = []; const noteKey = {}; const noteN = (key, text, url) => { if (!noteKey[key]) { notes.push({ text, url }); noteKey[key] = notes.length; } return noteKey[key]; };
     const AUTH = 'The writer’s own claim. The sources were searched and hold nothing that supports it.';
     let nFail = 0, nUntried = 0, nAuthor = 0, nSrc = 0, nCont = 0;
     const items = blocks.map(c => { if (c.kind === 'heading') return { isH: true, isP: false, isT: false, text: c.text.trim() };
       const st = statusOf(c); if (st.v === 'fail') nFail++; if (st.v === 'untried') nUntried++; if (st.v === 'author') nAuthor++; if (st.v === 'source' || st.v === 'asof' || st.v === 'noted') nSrc++; if (st.v === 'contested' || st.v === 'refuted') nCont++;
-      const dis = (st.v === 'noted' || st.v === 'asof') && st.g && st.g.con ? st.g.con.map(id => A.byId[id]).filter(Boolean).slice(0, 3) : []; const disN = dis.map(o => noteN('dis:' + o.id, (st.v === 'asof' ? 'Later, ' : 'Disputed: ') + this.srcShort(A, o) + (this.dateOf(A, o).label ? ' (' + this.dateOf(A, o).label + ')' : '') + ' ' + ((st.g.conWhy || {})[o.id] || 'holds it otherwise') + ': “' + short(o.text, 200) + '”', (A.docById[o.doc] || {}).url || ''));
-      const refs = [...(st.v === 'source' || st.v === 'fail' || st.v === 'asof' || st.v === 'noted' ? st.k.ev.map(p => noteN(p.id, '“' + short(p.excerpt, 240) + '” ' + p.docTitle + (p.pub && !p.docTitle.includes(p.pub) ? ', ' + p.pub : !p.pub && p.year && !p.docTitle.includes(String(p.year)) ? ', ' + p.year : '') + '.', p.url)) : st.v === 'author' ? [noteN('author', AUTH, '')] : []), ...disN];
+      const dis = (st.v === 'author' || st.v === 'noted' || st.v === 'asof') && st.g && st.g.con ? st.g.con.map(id => A.byId[id]).filter(Boolean).slice(0, 3) : []; const disN = dis.map(o => noteN('dis:' + o.id, (st.v === 'asof' ? 'Later, ' : 'Disputed: ') + this.srcShort(A, o) + (this.dateOf(A, o).label ? ' (' + this.dateOf(A, o).label + ')' : '') + ' ' + ((st.g.conWhy || {})[o.id] || 'holds it otherwise') + ': “' + short(o.text, 200) + '”', (A.docById[o.doc] || {}).url || ''));
+      const refs = [...(st.v === 'source' || st.v === 'fail' || st.v === 'asof' || st.v === 'noted' ? st.k.ev.map(p => noteN(p.id, '“' + short(p.excerpt, 240) + '” ' + p.docTitle + (p.pub && !p.docTitle.includes(p.pub) ? ', ' + p.pub : !p.pub && p.year && !p.docTitle.includes(String(p.year)) ? ', ' + p.year : '') + '.', p.url)) : st.v === 'author' ? [noteN('author:' + c.id, st.owned ? HDGround.summary(st.owned) : AUTH, ''), ...st.k.ev.map(p => noteN(p.id, 'Context for the declared statement (not a claim of entailment): “' + short(p.excerpt, 240) + '” ' + p.docTitle, p.url))] : []), ...(st.g?.position ? [noteN('check:' + c.id, 'Ground check: ' + this.positionLine(st.g.position) + ' · Method: ' + st.g.position.method, '')] : []), ...disN];
       return { isH: false, isP: !isTL, isT: isTL, text: c.text.trim(), refs, sup: refs.join(','), date: dLabel(claimDate(c)), deco: st.v === 'fail' ? 'underline wavy var(--amber)' : st.v === 'untried' ? 'underline dotted var(--dim)' : 'none', v: st.v }; });
     const blocked = nFail + nUntried + nCont > 0; const hasOut = items.some(x => !x.isH);
     const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const asMd = () => ['# ' + docTitle, '', ...items.map(x => x.isH ? '## ' + x.text + '\n' : (x.isT ? '- **' + (x.date || 'Undated') + '** ' : '') + x.text + x.refs.map(n => '[^' + n + ']').join('') + (x.isT ? '' : '\n')), '', ...notes.map((n, i) => '[^' + (i + 1) + ']: ' + n.text + (n.url ? ' ' + n.url : ''))].join('\n');
-    const asTxt = () => [docTitle, '', ...items.map(x => x.isH ? x.text.toUpperCase() + '\n' : (x.isT ? (x.date || 'Undated') + ' - ' : '') + x.text + x.refs.map(n => ' [' + n + ']').join('') + (x.isT ? '' : '\n')), '', 'Notes', ...notes.map((n, i) => '[' + (i + 1) + '] ' + n.text + (n.url ? ' ' + n.url : ''))].join('\n');
-    const asHtml = () => '<h1>' + esc(docTitle) + '</h1>' + (isTL ? '<table style="border-collapse:collapse">' : '') + items.map(x => { const sup = x.refs.length ? '<sup>' + x.refs.join(',') + '</sup>' : ''; return x.isH ? '<h2>' + esc(x.text) + '</h2>' : x.isT ? '<tr><td style="vertical-align:top;padding:4px 16px 4px 0;white-space:nowrap"><b>' + esc(x.date || 'Undated') + '</b></td><td style="padding:4px 0">' + esc(x.text) + sup + '</td></tr>' : '<p>' + esc(x.text) + sup + '</p>'; }).join('') + (isTL ? '</table>' : '') +
+    const reportPosition = this.positionLine(this.positionSnapshot());
+    const asMd = () => ['# ' + docTitle, '', reportPosition, '', ...items.map(x => x.isH ? '## ' + x.text + '\n' : (x.isT ? '- **' + (x.date || 'Undated') + '** ' : '') + x.text + x.refs.map(n => '[^' + n + ']').join('') + (x.isT ? '' : '\n')), '', ...notes.map((n, i) => '[^' + (i + 1) + ']: ' + n.text + (n.url ? ' ' + n.url : ''))].join('\n');
+    const asTxt = () => [docTitle, '', reportPosition, '', ...items.map(x => x.isH ? x.text.toUpperCase() + '\n' : (x.isT ? (x.date || 'Undated') + ' - ' : '') + x.text + x.refs.map(n => ' [' + n + ']').join('') + (x.isT ? '' : '\n')), '', 'Notes', ...notes.map((n, i) => '[' + (i + 1) + '] ' + n.text + (n.url ? ' ' + n.url : ''))].join('\n');
+    const asHtml = () => '<h1>' + esc(docTitle) + '</h1><p>' + esc(reportPosition) + '</p>' + (isTL ? '<table style="border-collapse:collapse">' : '') + items.map(x => { const sup = x.refs.length ? '<sup>' + x.refs.join(',') + '</sup>' : ''; return x.isH ? '<h2>' + esc(x.text) + '</h2>' : x.isT ? '<tr><td style="vertical-align:top;padding:4px 16px 4px 0;white-space:nowrap"><b>' + esc(x.date || 'Undated') + '</b></td><td style="padding:4px 0">' + esc(x.text) + sup + '</td></tr>' : '<p>' + esc(x.text) + sup + '</p>'; }).join('') + (isTL ? '</table>' : '') +
       '<hr><ol style="font-size:0.85em">' + notes.map(n => '<li>' + esc(n.text) + (n.url ? ' <a href="' + esc(n.url) + '">' + esc(n.url) + '</a>' : '') + '</li>').join('') + '</ol>';
     const fname = ext => (docTitle.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-').toLowerCase() || 'document') + ext;
     const dl = (txt, type, ext) => { const b = new Blob([txt], { type }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = fname(ext); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); };
@@ -5595,7 +5730,7 @@ class Component extends DCLogic {
       thread: genThread, hasThread: genThread.length > 0, ...genFoldNav,
       hint: (gk === 'timeline' ? 'Finds dated statements that name the subject, one per source, in date order.' : 'Runs four searches (who leads it, budget, what audits found, how it responded) and adds each section with its excerpts.') + (gm === 'model' ? ' Your local model writes each sentence from those excerpts only; the same mechanical check runs on everything it writes.' : ' Each claim is a quote, so every word comes from the source.') };
     const wr = { wKey: String(S.wKey || 0), onText: e => { const had = !!(this._wText || '').trim(); this._wText = e.target.value; if (had !== !!this._wText.trim()) this.forceUpdate(); }, onGround: () => this.groundWriting(), op: (this._wText || '').trim() ? 1 : 0.5 };
-    return { gen, wr, out, docBar, dr: { claims, noClaims: !claims.length, isTL, addClaim: () => { const c = newClaim(); this.setPinData(D => { D.claims.push(c); return D; }); this.setState({ dFocus: c.id }); },
+    return { gen, wr, out, docBar, dr: { addThought: () => { const c = newClaim('thought'); this.setPinData(D => { D.claims.push(c); return D; }); this.setState({dFocus: c.id}); }, claims, noClaims: !claims.length, isTL, addClaim: () => { const c = newClaim(); this.setPinData(D => { D.claims.push(c); return D; }); this.setState({ dFocus: c.id }); },
       addHeading: () => this.setPinData(D => { D.claims.push({ id: 'claim-' + Date.now().toString(36), kind: 'heading', text: '', pins: [] }); return D; }),
       pins: active.map(card), noPins: !active.length, pinCount: String(active.length), hasGone: gone.length > 0, showGone: !!S.dShowGone, gone: gone.map(card),
       goneLabel: (S.dShowGone ? '− ' : '+ ') + plural(gone.length, 'unpinned excerpt') + ' · kept, can be restored', toggleGone: () => this.setState({ dShowGone: !S.dShowGone }) } };
@@ -6169,7 +6304,7 @@ class Component extends DCLogic {
       // carries it too (the faithful capture keeps <meta>), so whoSays can name the author or publisher.
       let aut = x.authors || null, pub = x.published || null, pl = x.pubLabel || null, pu = x.publisher || null;
       if (!aut && !pub && _HDR && x.html && /^(html|page)$/i.test(x.format || '')) { try { const m = _HDR.metaOf(new DOMParser().parseFromString(x.html, 'text/html')); aut = m.authors; pub = m.published; pl = m.pubLabel; pu = m.publisher; } catch (e) {} }
-      return { id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: x.title || 'Untitled', year: x.year || null, type: x.type || 'Text', format: x.format || 'text', hasHtml: !!x.html, url: x.url || null, pages: x.pages || null, ...(x.extra || {}), measured: !!x.measured, text: x.format === 'pdf' ? (x.text || '') : x.html ? pageText(x.html, x.format).slice(0, 60000) : (x.text || ''), ...(aut && aut.length ? { authors: aut } : {}), ...(pub ? { published: pub } : {}), ...(pl ? { pubLabel: pl } : {}), ...(pu ? { publisher: pu } : {}), ...(x.challenge ? { challenge: x.challenge } : {}), ...(x.anchor ? { anchor: x.anchor } : {}), ...(x.rateLimited ? { rateLimited: x.rateLimited } : {}) }; });
+      return { ...(typeof x.text === 'string' && (!x.format || x.format === 'text') && !x.html && !x.extra?.media ? { overviewReceivedText: x.text } : {}), id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: x.title || 'Untitled', year: x.year || null, type: x.type || 'Text', format: x.format || 'text', hasHtml: !!x.html, url: x.url || null, pages: x.pages || null, ...(x.extra || {}), measured: !!x.measured, text: x.format === 'pdf' ? (x.text || '') : x.html ? pageText(x.html, x.format).slice(0, 60000) : (x.text || ''), ...(aut && aut.length ? { authors: aut } : {}), ...(pub ? { published: pub } : {}), ...(pl ? { pubLabel: pl } : {}), ...(pu ? { publisher: pu } : {}), ...(x.challenge ? { challenge: x.challenge } : {}), ...(x.anchor ? { anchor: x.anchor } : {}), ...(x.rateLimited ? { rateLimited: x.rateLimited } : {}) }; });
     // The hang (holodeck-hang.js): which lens reveals the most meaning here, measured per doc, never assumed.
     // Directions in localStorage hd:hang-directions can prefer one hang over another; every flip is logged.
     try {
@@ -6229,7 +6364,7 @@ class Component extends DCLogic {
     const nm = [...new Set(sts.flatMap(s => s.names))];
     const echoN = sts.filter(s => (A.echoes[s.id] || []).some(e => !ids.includes(A.byId[e.id].doc))).length;
     const byId = {}; (added[id] || []).forEach(d => { byId[d.id] = d; }); const firstD = byId[ids[0]] || (added[id] || [])[0] || {};
-    this.setState({ added, just: { ids, title: ids.length === 1 ? (firstD.title || 'Untitled') : plural(ids.length, 'item'), n: sts.length, linked: nm.filter(n => prev.names[n]), fresh: nm.filter(n => !prev.names[n]), echoN, odd, notes, first: ids[0] }, view: aopt && aopt.open ? 'reader' : 'summary', sel: aopt && aopt.open ? { type: 'doc', id: ids[0] } : null, f: {}, q: '', readDoc: aopt && aopt.open ? ids[0] : null, readMode: 'original', draftTitle: '', draftYear: '', draftText: '', showAdd: !!(aopt && aopt.keepOpen), busy: '', note: '' });
+    this.setState({ added, just: { ids, title: ids.length === 1 ? (firstD.title || 'Untitled') : plural(ids.length, 'item'), n: sts.length, linked: nm.filter(n => prev.names[n]), fresh: nm.filter(n => !prev.names[n]), echoN, odd, notes, first: ids[0] }, view: aopt && aopt.open ? 'reader' : 'summary', sel: aopt && aopt.open ? { type: 'doc', id: ids[0] } : null, f: {}, q: '', readDoc: aopt && aopt.open ? ids[0] : null, readMode: 'original', draftText: '', showAdd: !!(aopt && aopt.keepOpen), busy: '', note: '' });
   }
 
   // The time strip: how the statements every OTHER filter leaves are spread over time, on the chosen clock.
@@ -6704,7 +6839,7 @@ class Component extends DCLogic {
       const badges = [...(d.medium ? [{ label: d.medium === 'Video' || d.medium === 'Audio' ? d.medium + (d.transcribed ? ' · machine transcript' : ' · not transcribed') : d.medium, color: MEDIUM_C[d.medium] || 'var(--mut)' }] : []), ...(d.standing ? [{ label: d.standing, color: STANDING_C[d.standing] || 'var(--mut)' }] : []), ...((d.recordings || []).map(r => ({ label: 'Video linked · not transcribed', color: 'var(--date)' }))), ...(d.sameAs ? [{ label: 'Same bytes as ' + short(d.sameAsTitle || '', 36), color: 'var(--amber)' }] : []), ...(d.custodyStatus && d.custodyStatus !== 'captured' ? [{ label: d.custody, color: /missing|failed|not-located|no-text/.test(d.custodyStatus) ? 'var(--bad)' : 'var(--amber)' }] : [])];
       const vid = !!(d.media && d.media.kind === 'youtube');
       const tr = this.traceFor(d.id);
-      return { ...c, op: 1, isVid: vid, noVid: !vid, thumbBg: vid ? 'url(https://i.ytimg.com/vi/' + d.media.id + '/hqdefault.jpg)' : 'none', readLabel: 'View', ...(vid ? { onSelect: () => this.read(d.id) } : {}), badges, hasBadges: badges.length > 0, hasDistinct: !!dd, distinct: dd ? dd.label + ' · ' + pct(dd.a) + ' of its statements vs ' + pct(dd.b) + ' elsewhere' : '', hasFold: this._fold.length > 0, fold: inF + ' of ' + all.length + ' statements touch the topic', stats: (narrowed ? ((FbyDoc[d.id] || []).length).toLocaleString() + ' of ' + plural(all.length, 'statement') + ' in this selection' : plural(all.length, 'statement')) + ' · ' + plural(nm.size, 'name'), isSeen: m.status === 'seen', isKept: m.status !== 'seen', hasReplay: !!tr, onReplay: () => tr && import(new URL('holodeck-ingest-player.js', location.href).href).then(M => M.open(tr)), canUnkeep: m.status !== 'seen' && !this.baseDocs(this.corpusId()).some(x => x.id === d.id),
+      return { ...c, op: 1, isVid: vid, noVid: !vid, thumbBg: vid ? 'url(https://i.ytimg.com/vi/' + d.media.id + '/hqdefault.jpg)' : 'none', readLabel: 'Open source', ...(vid ? { onSelect: () => this.read(d.id) } : {}), badges, hasBadges: badges.length > 0, hasDistinct: !!dd, distinct: dd ? dd.label + ' · ' + pct(dd.a) + ' of its statements vs ' + pct(dd.b) + ' elsewhere' : '', hasFold: this._fold.length > 0, fold: inF + ' of ' + all.length + ' statements touch the topic', stats: (narrowed ? ((FbyDoc[d.id] || []).length).toLocaleString() + ' of ' + plural(all.length, 'statement') + ' in this selection' : plural(all.length, 'statement')) + ' · ' + plural(nm.size, 'name'), isSeen: m.status === 'seen', isKept: m.status !== 'seen', hasReplay: !!tr, onReplay: () => tr && import(new URL('holodeck-ingest-player.js', location.href).href).then(M => M.open(tr)), canUnkeep: m.status !== 'seen' && !this.baseDocs(this.corpusId()).some(x => x.id === d.id),
         ...(() => { const on = this._inf[d.id] || null;
           return { originText: on ? on.why + ' ' + short(A.docById[on.of].title, 40) : 'Independent · shares no claims or outlet with another source', originDep: !!on, originCol: on ? 'var(--amber)' : 'var(--mut)' }; })(),
         drawsX: 0, drawOptions: drawOpts,
@@ -6781,9 +6916,9 @@ class Component extends DCLogic {
     const undatedDocs = A.docs.filter(d => !d.year);
     const noDateSt = F.filter(st => !st.ownDate);
     const gaps = [
-      { label: 'No one named', desc: 'Statements that name no person or organisation and quote no one — who is responsible is left unsaid.', list: unattributed.map(st => ({ label: short(st.text, 70), onClick: selSt(st) })) },
+      { label: 'No one named', desc: 'Statements with no detected named person or organisation and no quotation. Open the passage to check its context.', list: unattributed.map(st => ({ label: short(st.text, 70), onClick: selSt(st) })) },
       { label: 'No date of its own', desc: 'Statements dated only by the document they appear in.', list: noDateSt.map(st => ({ label: short(st.text, 70), onClick: selSt(st) })) },
-      { label: 'Mentioned by only one source', desc: 'Names nothing else in the collection confirms.', list: single.map(n => ({ label: n.name, onClick: selN(n.name) })) },
+      { label: 'Mentioned by only one source', desc: 'Names detected in only one source in this collection. This does not establish whether the source is correct.', list: single.map(n => ({ label: n.name, onClick: selN(n.name) })) },
       { label: 'Undated documents', desc: 'Sources with no year, so they can’t be placed in time.', list: undatedDocs.map(d => ({ label: d.title, onClick: () => this.sel('doc', d.id) })) }
     ].filter(g => g.list.length).map(g => ({ ...g, n: String(g.list.length), ...this.capL('gap:' + g.label, g.list, 6) }));
 
@@ -6919,6 +7054,7 @@ class Component extends DCLogic {
       : view === 'reader' && S.readDoc ? { eyebrow: 'Reading · ' + docMeta(A.docById[S.readDoc]), title: A.docById[S.readDoc].title, sub: plural((A.stsByDoc[S.readDoc] || []).length, 'statement') + ' · names, figures and dates are marked', color: 'var(--acc)' }
       : view === 'reading' ? { eyebrow: 'The constitutional reading', title: 'Every name, found automatically', sub: 'A mechanical pass over every source (no AI) — every name it found, which spellings it merged into the same person or org as evidence came in, and who keeps turning up together.' }
       : view === 'ingest' ? { eyebrow: 'Ingest and publish', title: 'Bring in more, and make it public', sub: 'Find new material, transcribe it here, and publish what you keep.' }
+      : view === 'overview' ? { eyebrow: 'Situated reading', title: 'Evidence and negative spaces', sub: 'Compose a view, reopen its ground, and pursue what remains unknown.', color: 'var(--acc)' }
       : view === 'records' ? { eyebrow: 'Assertions', title: 'The workspace as tables', sub: 'Every source, statement, name, figure and date, linked back to where it came from.', color: 'var(--acc)' }
       : view === 'ask' ? { eyebrow: 'Ask the Fold', title: 'Ask the sources', sub: 'Answered by a small model running in this tab, from material found by the question\'s own words. Afterwards every sentence is checked: a numbered address where it matches something in the sources, a dotted line where it is the model\'s own, a wavy line where a figure or name is not in the material.', color: 'var(--acc)' }
       : view === 'draft' ? { eyebrow: 'Draft', title: 'Claims and the excerpts behind them', sub: 'Private to this browser — pinned passages keep their source.', color: 'var(--acc)' }
@@ -7031,7 +7167,7 @@ class Component extends DCLogic {
     const scopeSourceItems = inScopeDocs.slice(0, 6).map(d => ({ label: short(d.title, 26), onClick: () => this.read(d.id) }));
     const scope = {
       show: !isEmpty,
-      sourcesLine: plural(this._cnt ? this._cnt.size : 0, 'source') + ' of ' + plural(A.docs.length, 'source'),
+      sourcesLine: (this._cnt && this._cnt.size !== A.docs.length) ? this._cnt.size + ' of ' + plural(A.docs.length, 'source') + ' in scope' : plural(A.docs.length, 'source') + ' in scope',
       sourceItems: scopeSourceItems, hasMoreSources: inScopeDocs.length > scopeSourceItems.length, moreSources: String(inScopeDocs.length - scopeSourceItems.length),
       onMoreSources: () => this.go('sources'), onAll: () => this.go('sources'),
       hasSegment: !!scopeSeg, segmentLabel: scopeSeg ? scopeSeg.label : '', onClearSegment: scopeSeg ? scopeSeg.onClear : null,
@@ -7066,7 +7202,7 @@ class Component extends DCLogic {
         hasReplay: !!tr, onReplay: () => tr && import(new URL('holodeck-ingest-player.js', location.href).href).then(M => M.open(tr)),
         readLabel: (A.docById[J.first] && this.isLiveDoc(A.docById[J.first])) ? 'View the page →' : 'Read it →', onRead: () => this.read(J.first), onConnections: () => this.go('connections'), onPatterns: () => this.go('patterns') }; })() : { names: [] };
     const allYears = [...new Set(A.docs.map(d => d.year).filter(Boolean))].sort();
-    const V = {}; ['draft', 'summary', 'search', 'sources', 'surprise', 'names', 'types', 'figures', 'statements', 'connections', 'framing', 'views', 'patterns', 'reader', 'profile', 'ingest', 'reading'].forEach(k => { V[k] = !isEmpty && view === k; });
+    const V = {}; ['overview', 'draft', 'summary', 'search', 'sources', 'surprise', 'names', 'types', 'figures', 'statements', 'connections', 'framing', 'views', 'patterns', 'reader', 'profile', 'ingest', 'reading'].forEach(k => { V[k] = !isEmpty && view === k; });
 
     const SU = isEmpty ? null : this.surprise(A); const Fid = new Set(F.map(st => st.id));
     const suF = SU ? SU.list.filter(x => Fid.has(x.st.id)) : [];
@@ -7086,8 +7222,8 @@ class Component extends DCLogic {
       ['connections', 'See who is connected', 'Names that appear in the same statements.'],
     ];
     const gHi = on => ({ bg: on ? 'var(--sel)' : 'transparent', bd: on ? '#8b5cf6' : 'transparent', weight: on ? 600 : 500 });
-    const goalNav = [{ id: 'summary', label: 'Start here', count: '' }, { id: 'draft', label: 'Draft', count: this.activePins().length ? String(this.activePins().length) : '' }, { id: 'ask', label: 'Ask the Fold', count: this._conv && this._conv.turns && this._conv.turns.length ? String(this._conv.turns.length) : '' }, { id: 'records', label: 'Records', count: this._db ? String(this._db.schema.tables.length) : '' }, { id: 'ingest', label: 'Ingest & publish', count: (this._net && this._net.chain && this._net.chain.length) ? String(this._net.chain.length) : '' }, ...GOALS.map(g => ({ id: g[0], label: g[1], count: counts[g[0]] }))].map(g => ({ ...g, ...gHi(view === g.id), onClick: () => this.go(g.id) }));
-    const NAVG = [['', [['summary', 'Start here'], ['ask', 'Ask the Fold']]], ['Read', [['sources', 'Sources'], ['names', 'Names'], ['records', 'Assertions']]], ['Explore', [['connections', 'Connections']]], ['Your work', [['draft', 'Draft'], ['ingest', 'Add & publish']]]];
+    const goalNav = [{ id: 'overview', label: 'Evidence overview', count: '' }, { id: 'summary', label: 'Start here', count: '' }, { id: 'draft', label: 'Draft', count: this.activePins().length ? String(this.activePins().length) : '' }, { id: 'ask', label: 'Ask the Fold', count: this._conv && this._conv.turns && this._conv.turns.length ? String(this._conv.turns.length) : '' }, { id: 'records', label: 'Records', count: this._db ? String(this._db.schema.tables.length) : '' }, { id: 'ingest', label: 'Ingest & publish', count: (this._net && this._net.chain && this._net.chain.length) ? String(this._net.chain.length) : '' }, ...GOALS.map(g => ({ id: g[0], label: g[1], count: counts[g[0]] }))].map(g => ({ ...g, ...gHi(view === g.id), onClick: () => this.go(g.id) }));
+    const NAVG = [['', [['summary', 'Overview'], ['sources', 'Sources'], ['ask', 'Ask'], ['draft', 'Draft']]], ['Read closely', [['names', 'Names'], ['records', 'Assertions']]], ['Explore', [['connections', 'Connections'], ['overview', 'Evidence overview']]], ['Manage', [['ingest', 'Add & publish']]]];
     const countFor = id => ({
       sources: String(A.docs.filter(d => this.counted(d)).length), names: String(D.nameList.length), records: String(F.length),
       connections: String(D.edgeList.length),
@@ -7095,7 +7231,7 @@ class Component extends DCLogic {
       ingest: (this._net && this._net.chain && this._net.chain.length) ? String(this._net.chain.length) : '',
       ask: (this._conv && this._conv.turns && this._conv.turns.length) ? String(this._conv.turns.length) : '',
     }[id] || '');
-    const navGroups = NAVG.map(([label, items]) => ({ label, hasLabel: !!label, items: items.map(([id, lab]) => ({ label: lab, count: countFor(id), ...gHi(view === id), onClick: () => this.go(id) })) }));
+    const navGroups = NAVG.map(([label, items]) => ({ label, hasLabel: !!label, items: items.map(([id, lab]) => ({ label: lab, count: countFor(id), ...gHi(view === id), onClick: () => this.setState({ view: id, readDoc: null, sel: null }) })) }));
     // split so Folds can sit right under The reading / Connections, inside Explore
     const navTop = navGroups[0].items; const navRead = navGroups[1]; const navExplore = navGroups[2]; const navRest = navGroups.slice(3);
     const readSel = S.stripRead || { mode: 'Relate', domain: 'Interpretation', grain: 'Pattern' };
@@ -7213,9 +7349,13 @@ class Component extends DCLogic {
     _m('header+chips+extra');
     return {
       ...this._extra,
+      viewpoint: this.positionLine(this.positionSnapshot()),
       ...this.stripVals(S, A, D),
-...svVals, hasFacets: false, srcGroups: svVals.svCardGroups.map(g => ({ ...g, ...this.capL('sg:' + g.label, g.items, 60) })), srcFacets,
+      ...svVals,
+      sourceKindsUseful: tabs.length > 2, sourceOptionsActive: svTab !== '__all' || svMode !== 'cards', sourceOptionsLabel: 'Source options' + (svTab !== '__all' ? ' · ' + svTab : '') + (svMode !== 'cards' ? ' · Table' : ''), showSourceGroupLabels: svVals.svCardGroups.length > 1, hasGaps: gaps.length > 0, toolsOpen: ['names', 'records', 'connections', 'ingest'].includes(view), timeFilterActive: !!f.range, timeControlLabel: f.range ? 'Time filter · active' : 'Filter by time',
+      hasFacets: false, srcGroups: svVals.svCardGroups.map(g => ({ ...g, ...this.capL('sg:' + g.label, g.items, 60) })), srcFacets,
       topic: topicStr, hasTopic: this._fold.length > 0, onTopic: e => this.setMeta('__topic', e.target.value),
+      about: (this.metaAll()[this.corpusId()] || {}).__about || '', onAbout: e => this.setMeta('__about', e.target.value), aboutPlaceholder: 'A summary of what these sources, taken together, are about.',
       inferredTopic: inferred ? inferred.name : '', topicPlaceholder: inferred ? 'e.g. ' + inferred.name : 'e.g. the bridge collapse',
       canAdopt: !this._fold.length && !!inferred, adoptTopic: () => inferred && this.setMeta('__topic', inferred.name),
       foldLine: this._fold.length ? (() => { const all = A.sts.filter(s => this._cnt.has(s.doc)); const k = all.filter(s => this.inFold(s)).length; return k + ' of ' + all.length + ' statements fall inside the fold.'; })() : 'No topic yet, so everything counts.',
@@ -7233,9 +7373,10 @@ class Component extends DCLogic {
       onAddrKey: e => { if (e.key === 'Enter') { const u = (S.addr || '').trim(); if (u) { this.setState({ addr: '' }); this.ingestUrl(/^https?:\/\//.test(u) ? u : 'https://' + u, { open: true }); } } },
       openAddr: () => { const u = (S.addr || '').trim(); if (u) { this.setState({ addr: '' }); this.ingestUrl(/^https?:\/\//.test(u) ? u : 'https://' + u, { open: true }); } },
       toggleTheme: () => { const th = S.theme === 'dark' ? 'light' : 'dark'; try { localStorage.setItem('fold-explorer-theme', th); } catch (e) {} this.setState({ theme: th }); },
+      workspaceClass: S.akFocus && view === 'ask' ? 'hd-workspace-surface hd-focus' : 'hd-workspace-surface',
       railOpen: S.railOpen, railIcon: S.railOpen ? '‹' : '›', railTitle: S.railOpen ? 'Collapse' : 'Expand',
       railStyle: S.railOpen
-        ? 'flex:0 0 250px;position:sticky;top:0;height:100vh;overflow:auto;box-sizing:border-box;border-right:1px solid var(--line);background:var(--s1);padding:16px 12px 20px;display:flex;flex-direction:column;gap:18px'
+        ? 'flex:0 0 220px;position:sticky;top:0;height:100vh;overflow:auto;box-sizing:border-box;border-right:1px solid var(--line);background:var(--s1);padding:16px 12px 20px;display:flex;flex-direction:column;gap:18px'
         : 'flex:0 0 40px;position:sticky;top:0;height:100vh;overflow:hidden;box-sizing:border-box;border-right:1px solid var(--line);background:var(--s1);padding:16px 8px 20px;display:flex;flex-direction:column;gap:18px',
       toggleRail: () => { const open = !S.railOpen; try { localStorage.setItem('fold-explorer-rail', open ? '1' : '0'); } catch (e) {} this.setState({ railOpen: open }); },
       themeIcon: S.theme === 'dark' ? '☀' : '☾', themeTitle: S.theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode',
@@ -7259,8 +7400,8 @@ class Component extends DCLogic {
       openAdd: () => { this._add = null; this.addState().baseAdded = (S.added[cid] || []).length; this.setState({ showAdd: true }); }, closeAdd: () => this.setState({ showAdd: false }),
       openNewWs: () => this.createWorkspace(), openTask: () => this.go('ingest'),
       closeAddBg: e => { if (e.target === e.currentTarget) this.setState({ showAdd: false }); },
-      goSummary: () => this.go('summary'), summaryBtn: hi(view === 'summary'),
-      isEmpty, hasContent: !isEmpty, v: V, hdr, summaryRows,
+      goOverview: () => this.go('overview'), goSummary: () => this.go('summary'), summaryBtn: hi(view === 'summary'),
+      isEmpty, showWelcome: isEmpty && view !== 'ask', hasContent: !isEmpty, v: V, hdr, summaryRows,
       docCards, gaps, nameGroups, nameTable, corr: this.corrVals(), typeBlocks, measures, noMeasures: !measures.length, ...(() => { const c = this.capL('stg', stGroups, 8); return { stGroups: c.items.map(g => ({ ...g, ...this.capL('stg:' + g.title, g.items, 4) })), stgMore: c }; })(),
       graphEl, timeInfo, ...orbX, ...(() => { const c = this.capL('pairs', pairs, 12); return { pairs: c.items, pairsMore: c }; })(), noPairs: !pairs.length, frameCols: frameCols.map(c => ({ ...c, ...this.capL('fr:' + c.label, c.items, 5) })), timeBars, ...(() => { const c = this.capL('topics', topicChips, 24); return { topicChips: c.items, topicMore: c }; })(), ...(() => { const c = this.capL('srcbars', [...sourceBars].sort((a, b) => +b.n - +a.n), 12); return { sourceBars: c.items, srcBarMore: c }; })(), shapes, noShapes: !shapes.length, hasRoutine: (this._routineN || 0) > 0, routineLine: plural(this._routineN || 0, 'routine agreement') + ' hidden: repeated by several sources, but about names and words that appear together in most sources anyway.', holds, breaks, noBreaks: !breaks.length,
       hdrShow: !isEmpty && view !== 'reader' && view !== 'profile' && view !== 'ask' && view !== 'draft',
@@ -7325,10 +7466,14 @@ class Component extends DCLogic {
       onHeroGo: () => { const v = ((this._hero && this._hero.value) || '').trim(); if (v) { if (isOmniUrl(v)) omniOpen(v); else omniGo(v); } },
       showSettings: S.showSettings, openSettings: () => this.setState({ showSettings: true }), closeSettings: () => this.setState({ showSettings: false }), closeSettingsBg: e => { if (e.target === e.currentTarget) this.setState({ showSettings: false }); },
       acctLabel: (this._net && this._net.s && !this._net.s.guest) ? (this._net.s.ephemeral ? 'Temporary' : this._net.s.user) : 'Local', acctOn: !!(this._net && this._net.s && !this._net.s.guest),
-      showAdd: S.showAdd, draftTitle: S.draftTitle, draftYear: S.draftYear, draftText: S.draftText,
-      onDraftTitle: e => this.setState({ draftTitle: e.target.value }), onDraftYear: e => this.setState({ draftYear: e.target.value }), onDraftText: e => this.setState({ draftText: e.target.value }),
+      showAdd: S.showAdd, draftText: S.draftText,
+      onDraftText: e => this.setState({ draftText: e.target.value }),
       add: S.showAdd ? this.addVals() : undefined,
-      addDraft: () => { const t = S.draftText.trim(); if (!t) { this.setState({ note: 'Paste some text first.' }); return; } this.addDocs([{ title: S.draftTitle.trim(), year: parseInt(S.draftYear) || null, text: t }]); },
+      addDraft: () => { const t = S.draftText.trim(); if (!t) { this.setState({ note: 'Paste a link or some text first.' }); return; }
+        const firstLine = t.split('\n').map(x => x.trim()).find(Boolean) || t;
+        const title = firstLine.length > 90 ? firstLine.slice(0, 90).replace(/\s+\S*$/, '') + '…' : firstLine;
+        const ym = t.match(/\b(1[5-9]\d{2}|20\d{2})\b/);
+        this.addDocs([{ title, year: ym ? +ym[1] : null, text: t }]); },
       onFiles: e => this.ingest({ files: e.target.files, getData: () => '' }),
       onFolder: e => this.ingest({ files: e.target.files, getData: () => '' }),
       customNote: S.note || (() => { const A = this.addState(); const total = addN(cid); const base = A.baseAdded != null ? A.baseAdded : total; const now = Math.max(0, total - base); const name = this.corpusName(); return now ? plural(now, 'source') + ' added just now · ' + plural(total, 'source') + ' in “' + name + '”' : total ? plural(total, 'source') + ' in “' + name + '” · nothing added from this search' : (S.results ? 'Nothing added from this search yet.' : ''); })(),
@@ -7353,7 +7498,7 @@ class Component extends DCLogic {
       for (let i = 0; i < pool.length; i++) for (let j = i + 1; j < pool.length; j++) { const a = S[i], b = S[j]; let k = 0; const [sm, lg] = a.size < b.size ? [a, b] : [b, a]; sm.forEach(v => { if (lg.has(v)) k++; }); if (k && dmdCo(k, a.size, b.size, F.length)) edges.push({ a: pool[i].name, b: pool[j].name, c: k }); }
       M = this._mapMemo = { key, nodes: pool.map(n => ({ n: n.name, c: n.sts.length, color: TYPE_C[n.type] })), edges, occ: new Map(pool.map(n => [n.name, n.sts.map(x => ({ doc: x.doc, id: x.id, t: short(x.text, 240) }))])) };
     }
-    return h(MapView, { data: { sig: M.key, nodes: M.nodes, edges: M.edges, docs, occ: M.occ, sel: selName || null }, onProfile: id => this.setState({ sel: { type: 'name', id }, selAll: false, pfIdx: 0, pfAll: false, view: 'profile', readDoc: null }) });
+    return h(MapView, { onWitness: o => this.read(o.doc, o.id), data: { sig: M.key, nodes: M.nodes, edges: M.edges, docs, occ: M.occ, sel: selName || null }, onProfile: id => this.setState({ sel: { type: 'name', id }, selAll: false, pfIdx: 0, pfAll: false, view: 'profile', readDoc: null }) });
   }
 
   orbitUi(A, selName) {
