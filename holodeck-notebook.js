@@ -99,6 +99,8 @@ const CSS = `
  *  (the host view re-rendered) keeps the current conversation. */
 const LAST = { base: null, S: null }; // the last state drawn, so a remount (the host view re-rendered) draws at once instead of flashing "Connecting…"
 const store = { get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
+let PY_MOD = null; // the in-tab Pyodide runtime module, imported once; the pane falls back to it when no local server answers
+const browserEngine = (workspace) => { if (!PY_MOD) PY_MOD = import(new URL('holodeck-pyodide.js', import.meta.url).href); return PY_MOD.then((M) => M.pyodideEngine({ workspace })); };
 const LIVE = new Map(); // base -> { root, api }: ONE pane per server. The host (React) may hand us a new element on any re-render;
                        // the pane's root is MOVED into it, so work in flight, focus and the open drawer survive (a second instance would race the first).
 export function mount(el, opts = {}) {
@@ -108,8 +110,9 @@ export function mount(el, opts = {}) {
   const key = base + ':' + workspace;
   const live = !opts.fetch && LIVE.get(key);
   if (live) { if (live.root.parentNode !== el) { el.innerHTML = ''; el.appendChild(live.root); } return live.api; }
+  let engine = null, engineStarting = false; // engine: the Pyodide runtime, chosen only if the local server does not answer
   const rawFetch = opts.fetch || ((u, o) => fetch(u, o));
-  const F = (u, o = {}) => rawFetch(u, { ...o, headers: { ...o.headers, 'X-Holodeck-Workspace': workspace, 'X-Holodeck-Notebook': '1' } });
+  const F = (u, o = {}) => engine ? engine.fetch(u, o) : rawFetch(u, { ...o, headers: { ...o.headers, 'X-Holodeck-Workspace': workspace, 'X-Holodeck-Notebook': '1' } });
   if (!document.getElementById('hnb-css')) { const s = document.createElement('style'); s.id = 'hnb-css'; s.textContent = CSS; document.head.appendChild(s); }
   const ui = { c: store.get('hd:nb:c:' + key) || '', S: !opts.fetch && LAST.base === key ? LAST.S : null /* a pane with its own fetch never starts from another pane's state */, err: null, notice: null, noticeErr: false, drawer: null, sel: null, menu: false, why: {}, dsq: '', dsHits: null, busy: '' };
   let storedDrafts = []; try { storedDrafts = JSON.parse(store.get('hd:nb:drafts:' + key) || '[]'); } catch {}
