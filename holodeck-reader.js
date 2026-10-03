@@ -16,25 +16,16 @@ import * as P from './vendor/eoreader7/native/adapters/text/priors.js';
 const DETERMINERS = new Set([...P.DEFINITE_DETERMINERS, ...P.INDEFINITE_DETERMINERS]);
 const here = p => new URL(p, import.meta.url).href;
 let _priors = null;
-// the composed reader's own inputs, populated when the priors load (below)
-let _composed = null, _posPrior = null, _roleConfig = null, _verbForms = null;
-try {
-  const mod = await import('./vendor/eoreader7/native/adapters/text/gfp-relations-composed.js');
-  _composed = mod.composedRelations ?? mod.default ?? null;
-} catch (e) { _composed = null; }
 export function loadPriors() {
   if (_priors) return _priors;
   _priors = (async () => {
     const get = async p => { try { const r = await fetch(here(p)); return r.ok ? await r.json() : null; } catch (e) { return null; } };
     const [posPrior, morphRaw] = await Promise.all([get('./vendor/eoreader7/native/priors/pos-eng.json'), get('./vendor/eoreader7/native/priors/morphology-eng.json')]);
-    // the MEASURED RoleConfig@1 (the language's own order) — vendored so the
-    // composed reader can bring the positional clause leg online in the tab.
-    const roleConfig = await get('./vendor/eoreader7/native/priors/role-config-eng.json');
     const morph = morphRaw ? morphologyFromPrior(morphRaw) : null;
     const forms = new Set();
     for (const k of Object.keys((morph && morph.forms) || {})) { forms.add(String(k).toLowerCase()); const v = morph.forms[k]; for (const x of Array.isArray(v) ? v : [v]) if (typeof x === 'string') forms.add(x.toLowerCase()); }
     const lemmatizer = morph ? createLemmatizer(morph.forms, { language: morph.language }) : null;
-    return { posPrior, roleConfig, verbForms: forms.size ? forms : null, lemmatizer };
+    return { posPrior, verbForms: forms.size ? forms : null, lemmatizer };
   })();
   return _priors;
 }
@@ -92,19 +83,15 @@ function verbStanceTriples(sentence) {
 const PLACE_OF = { palestinian: 'Palestine', israeli: 'Israel', iranian: 'Iran', iraqi: 'Iraq', syrian: 'Syria', lebanese: 'Lebanon', yemeni: 'Yemen', egyptian: 'Egypt', jordanian: 'Jordan', saudi: 'Saudi Arabia', american: 'America', russian: 'Russia', ukrainian: 'Ukraine', chinese: 'China', indian: 'India', pakistani: 'Pakistan', afghan: 'Afghanistan', turkish: 'Turkey', kurdish: 'Kurdistan', european: 'Europe', african: 'Africa', asian: 'Asia', british: 'Britain', french: 'France', german: 'Germany', japanese: 'Japan', korean: 'Korea', mexican: 'Mexico', canadian: 'Canada', australian: 'Australia' };
 const foldStanceObject = t => { if (!stanceClass(t.label)) return t; const w = String(t.end2 || '').trim(); const p = /^[A-Za-z]+$/.test(w) && PLACE_OF[w.toLowerCase()]; return p ? { ...t, end2: p } : t; };
 let _dispatch = null;
-const dispatch = () => _dispatch || (_dispatch = relationExtractorsFor({ language: 'eng', roleConfig: _roleConfig, posPrior: _posPrior, classifyWord, dominantClass }));
-// THE COMPOSED READER, WHEN THE PRIORS ARE IN (2026-10-02): the positional
-// clause connector where the measured RoleConfig lets it settle, recurrence
-// arrangement elsewhere — the same composed reader penelope's box settles with,
-// here on the browser's own source. Falls back to the dispatch reader's own GFP
-// when the priors are not loaded yet or the composed reader is unavailable.
-const baseExtract = (text, opts) => {
-  if (_composed && _posPrior) {
-    const r = _composed(text, { posPrior: _posPrior, roleConfig: _roleConfig, classifyWord, dominantClass, verbForms: _verbForms });
-    if (r && r.relations) return r.relations;
-  }
-  const d = dispatch(); return d.extractRelations(text, d.mode === 'gfp' ? { ...opts, clauseAware: true } : opts);
-};
+const dispatch = () => _dispatch || (_dispatch = relationExtractorsFor({ language: 'eng', roleConfig: null, posPrior: null, classifyWord, dominantClass }));
+// THE COMPOSED READER WAS TRIED HERE AND FALSIFIED (2026-10-02,
+// falsify-holodeck-reader.mjs): swapping in the composed reader read +3 distinct
+// relations over the dispatch reader on the holodeck's own source, but the
+// SHUFFLE-NULL also read +3 — the gain was the positional rule firing
+// regardless of word order, not reading. A swap that does not beat its own
+// shuffle is reverted, and the negative result is kept. The dispatch reader
+// (GFP, clause-aware) stands.
+const baseExtract = (text, opts) => { const d = dispatch(); return d.extractRelations(text, d.mode === 'gfp' ? { ...opts, clauseAware: true } : opts); };
 // the base reader's triples, plus the copula positions it cannot hear.
 const extractRelations = (text, opts = {}) => { let base = []; try { base = baseExtract(text, opts) || []; } catch (e) { base = []; }
   const extra = copulaStanceTriples(text).concat(base.length ? [] : verbStanceTriples(text));
@@ -237,10 +224,9 @@ export async function readCorpus(docs, { reader = null, chunkChars = 60000 } = {
 const cleanText = (s) => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
 
 export async function makeEngineRelationReader(extra = {}) {
-  const { posPrior, roleConfig, verbForms, lemmatizer } = await loadPriors();
+  const { posPrior, verbForms, lemmatizer } = await loadPriors();
   // hand the composed reader its priors, once — the same received closed class
   // the dispatch reader already uses, plus the measured role config.
-  _posPrior = posPrior; _roleConfig = roleConfig; _verbForms = verbForms;
   // sameAct is widened by stance class, so "is pro" binds a source's "in
   // support of" without either label being rewritten.
   const sameAct = lemmatizer
