@@ -1,0 +1,122 @@
+{
+  "source": {
+    "title": "By the Numbers: No Turn on Red, Nashville Safety, and Big Boss Babies Downtown",
+    "kind": "advocacy essay / data brief",
+    "year": 2026,
+    "url": null,
+    "note": "Authored, first-person opinion essay with a data section. The argument is a surprise chain, not a fact list: it must dissolve the reader's prior that NTOR is unnecessary overreach. Goldens are verbatim spans of THIS source; a mechanical summarizer may only select and order these, never paraphrase."
+  },
+  "grounding_law": {
+    "statement": "Every line of every size below is a contiguous verbatim substring of the source text (offsets relative to the extracted plain text). No generated tokens. A summary is a curation of the source's own sentences, so grounding is structural, not claimed.",
+    "extractor": "pdftotext -layout",
+    "control": "A paraphrased line that is not a substring of the source FAILS the golden, even if semantically equivalent."
+  },
+  "surprise_model": {
+    "kind": "holographical, not occurrence",
+    "baseline": "the workspace prior over the source's own claims (rare-topic IDF + name weights), and the shuffle-null floor (the statement's excess in bits over the null)",
+    "turn": "a statement whose excess against the baseline is high — it reorganizes the picture relative to what the baseline already predicts",
+    "resolver": "the pair (b -> a) where S(a | B ∪ {b}) < S(a | B): b, once the baseline holds it, drops a's holographic excess. This is baseline augmentation, NOT occurrence counterfactual.",
+    "edge_test": "excess(a|B) - excess(a|B∪{b}) > 0 AND the drop vanishes under the shuffled baseline, else b merely co-occurs with a."
+  },
+  "sizes": {
+    "one_sentence": {
+      "budget_sentences": 1,
+      "target": "The essay's thesis turn: the data shows pedestrian/cyclist injury clustered at the very intersections and crosswalks the bill targets, so NTOR is warranted.",
+      "golden": "So, yes, even with this limited data, these 59 NTOR signage seems to be good, targeted policy despite the whining from downtown business interests who would like to get to work in their automatic Porsche Cayenne just a fraction of their time faster.",
+      "must_contain_spans": [
+        "even with this limited data, these 59 NTOR signage seems to be good, targeted policy"
+      ],
+      "why_this_and_not_a_figure": "The single most surprising-and-resolving claim. A bare figure (2,560 incidents) does not resolve a prior; the verdict that the targeted 59 are warranted does. The figure is the evidence; this is the turn.",
+      "excess": "high — it inverts the framed prior that the bill is unnecessary",
+      "resolved_by": "the figure span (2,679 / 1,286 / 146) elsewhere in the source; but at 1 sentence the turn alone carries it"
+    },
+    "five_sentences": {
+      "budget_sentences": 5,
+      "target": "The turn, its mechanism (why it wasn't already done), the scale of harm, the targeting, and the remedy — five independent residuals, not five restatements.",
+      "golden": [
+        "Using Metro Nashville's Open Data Portal and the Council's Legistar portal, a few key, though imperfect, data points can be collected:",
+        "Within the two broad parameters of 1) accidents including pedestrians, cyclists, and non-motor vehicles within 2) 1000 feet of a crosswalk, there are a total of 1,286 reported accidents in the last five years. That's out of an initial set of 2,679, mind you, so 48%.",
+        "There are 146 MNPD-reported incidents that took place at least 50 feet from the proposed 59 intersections for NTOR signage (that's about 30 on average a year for those doing mental math right now).",
+        "The answer to that question lies with the presence of the DZL logo in a CM's presentation.",
+        "BL2026-1497 should pass and NTOR will help keep pedestrians, cyclists, and others on the streets safer, without injury, and likely alive."
+      ],
+      "coverage_rule": "each pick must add a new residual (scale / targeting / causation / remedy); MMR penalizes overlap so no two lines share the same topic vector above the threshold",
+      "resolver_edges": [
+        { "turn": "146 incidents at the 59 proposed NTOR sites", "resolver": "1,286 within 1000 ft of a crosswalk (48% of 2,679)", "delta": "scale" },
+        { "turn": "why hasn't NTOR been implemented", "resolver": "the DZL logo in the CM's presentation", "delta": "causation" }
+      ]
+    },
+    "abstract": {
+      "budget_sentences": "~8-12, sectioned by the source's own headings",
+      "target": "The source's latent argument, in the source's own order: the meeting framing -> the data method -> the findings -> the remedy.",
+      "sections_from_headings": [
+        "But What Does the Data Say, Really?",
+        "Data Collection",
+        "Data Cleaning",
+        "Findings Highlight – Within 50 Feet of NTOR Signage and Crosswalks",
+        "Conclusion"
+      ],
+      "golden_leads": [
+        { "section": "(opening)", "span": "I attended a community meeting downtown at Cannery Hall to review the substitute text for BL2026-1497" },
+        { "section": "Data Collection", "span": "Using Metro Nashville's Open Data Portal and the Council's Legistar portal, a few key, though imperfect, data points can be collected:" },
+        { "section": "Findings Highlight", "span": "there are 594 incidents that took place within 50 feet of a crosswalk or proposed NTOR signage (118 on average per year)" },
+        { "section": "Conclusion", "span": "I'm estimating between a 17-21% reduction in accidents at crosswalks involving pedestrians, cyclists and people on other alternative forms of transportation such as e-scooters at the proposed NTOR crosswalks based on MNPD's accident data alone." }
+      ],
+      "note": "Abstract = one lead per heading (zero-model: headings carry offsets in the DOM walk) + the top global turns. Structure is the source's own; selection is ranked; ordering is document order."
+    },
+    "paper": {
+      "budget": "full",
+      "target": "The document restated from its own structure: every non-furniture claim statement, sectioned by the source's headings, each verbatim with its offset.",
+      "golden": "ALL claim-bearing statements of the source, in document order, with headings intact, reference matter and figure captions excluded. This is the 'Restated' view the surface already renders (index.html isRestated): 'the document restated from its own structure: no model, every clause from the text.'",
+      "exclusions": [
+        "Figure captions ('Figure 1: ...')",
+        "Credit lines ('Credit: @benvaught.bsky.social')",
+        "Track-changes artifact ('nd')"
+      ]
+    }
+  },
+  "mechanical_prerequisites": {
+    "one_sentence": [
+      "statement segmentation with offsets (exists: analyze() splitSentences + st.s/st.e)",
+      "claim filter (exists: st.ref = isJunk, st.claimy = 8+ words and a verb)",
+      "holographic excess per statement (exists in spirit: _su shift/excess; needs to be a per-statement field S(a|B))",
+      "argmax over excess with a 'resolves a prior' gate (new: prefer a claim whose excess drops when paired with its resolver — for 1 sentence, the turn itself must be the top)"
+    ],
+    "five_sentences": [
+      "topic/name vectors per statement (exists: analyze() tf-idf topics + names)",
+      "MMR coverage selection (new: score - lambda * max cosine to already-picked)",
+      "resolver edges (new: holodeck-surprise — for each top-excess statement, the b minimizing S(a|B∪{b}))",
+      "document-order re-sort of the picks (exists: st.s)"
+    ],
+    "abstract": [
+      "headings with offsets (exists: x.heads from the DOM walk)",
+      "section membership by offset range (new, trivial)",
+      "one lead per section: the top-excess claim whose offset falls in the section (reuses 1-sentence argmax per section)",
+      "global turns appended (reuses 5-sentence picks)"
+    ],
+    "paper": [
+      "furniture stripping (exists: isJunk + furn[] + recordD/measuredD exclusion)",
+      "section assignment (same as abstract)",
+      "verbatim concatenation with offsets (exists: the Restated renderer)"
+    ]
+  },
+  "where_generation_may_be_needed": {
+    "rule": "last resort only — a phrasing call is permitted ONLY when a selection of source spans cannot be stitched into grammatical prose without dropping a required span.",
+    "places_generation_is_NOT_needed": [
+      "1 sentence — the turn is already a sentence of the source",
+      "5 sentences — five source sentences, ordered; connectives may be omitted in favor of a list",
+      "paper — verbatim restatement"
+    ],
+    "places_generation_MIGHT_be_needed": [
+      "abstract, when a section's lead sentence is not self-contained (e.g. begins 'But I digress...'), a single phrase-level call to name the section's subject — bounded, disclosed, and each output token still checked against a source span",
+      "1 sentence, ONLY to choose among two near-tied turns (a tie-break, not prose)"
+    ],
+    "disclosure": "any generated token must be marked, as the surface already marks model sentences with [M]; a summary that is 100% selected spans carries no mark."
+  },
+  "falsifiers": {
+    "grounding": "every emitted line is a verbatim substring of the source at the claimed offset",
+    "no_repeat": "no two lines in a size overlap, and no two carry the same topic vector above the MMR threshold",
+    "monotone": "bigger budgets refine smaller ones: the 1-sentence turn is contained (as a span) in the 5-sentence set, the 5 in the abstract, the abstract in the paper",
+    "shuffle_null": "a control that picks random claim sentences scores worse on (excess + coverage) than the real picks; and the resolver's delta vanishes under the shuffled baseline"
+  }
+}

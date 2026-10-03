@@ -40,19 +40,27 @@ export function buildLog(A, rix, opts = {}) {
       ins(da, 'Dates', { label: cut(g.raw || '', 80), year: g.year || undefined, month: g.month || undefined });
       con(da, a, 'stated in'); });
   }
-  if (rix && Array.isArray(rix.cast)) {
-    const bySrc = {}; A.docs.forEach(d => { if (d.ohsId) bySrc[d.ohsId] = d; });
-    const docOf = s => bySrc[String(s).replace(/\.(txt|json)$/, '')] || null;
+  // The reader's cast and bonds: the OHS ground reading (`rix`, keyed by ohsId) and the local
+  // reading the tab folded itself (`opts.localIx`, keyed by the doc's own id) land as the same
+  // Referents and Bonds — so an uploaded source is read, not merely named. An anchor already
+  // emitted by one reading is never re-inserted by the other; the pair just links to it.
+  const seenRef = new Set(), seenBond = new Set();
+  const emitReading = (R, docOf) => {
+    if (!R || !Array.isArray(R.cast)) return;
     const bySurf = new Map();
-    for (const c of rix.cast) { const a = 'ref:' + c.id; const surf = (c.surfaces || [c.id])[0]; bySurf.set(surf, a);
+    for (const c of R.cast) { const a = 'ref:' + c.id; const surf = (c.surfaces || [c.id])[0]; bySurf.set(surf, a);
+      if (seenRef.has(a)) continue; seenRef.add(a);
       ins(a, 'Referents', { name: cut(surf, 120), standing: c.standing || undefined, mentions: c.mentions || undefined, surfaces: (c.surfaces || []).slice(0, 6), sources: c.srcN || Object.keys(c.src || {}).length });
       const fd = docOf(c.first); if (fd) con(a, docA(fd), 'first read in');
       if (A.names[surf]) con(a, nameA(surf), 'is'); }
-    for (const b of rix.bonds || []) { const ra = bySurf.get(b.a), rb = bySurf.get(b.b); const a = 'bond:' + b.a + '|' + b.b;
+    for (const b of R.bonds || []) { const a = 'bond:' + b.a + '|' + b.b; if (seenBond.has(a)) continue; seenBond.add(a);
+      const ra = bySurf.get(b.a), rb = bySurf.get(b.b);
       const rel = Object.entries(b.rel || {}).sort((x, y) => y[1] - x[1])[0];
       ins(a, 'Bonds', { label: cut(b.a + ' — ' + b.b, 160), relation: rel ? rel[0] : undefined, witnessed: b.n, sources: b.srcN || Object.keys(b.src || {}).length, negative: b.neg || 0 });
       if (ra) con(a, ra, 'between'); if (rb) con(a, rb, 'between'); }
-  }
+  };
+  if (rix && Array.isArray(rix.cast)) { const bySrc = {}; A.docs.forEach(d => { if (d.ohsId) bySrc[d.ohsId] = d; }); emitReading(rix, s => bySrc[String(s).replace(/\.(txt|json)$/, '')] || A.docById[String(s)] || null); }
+  if (opts.localIx && Array.isArray(opts.localIx.cast)) emitReading(opts.localIx, s => A.docById[String(s)] || null);
   const found = tablesInSources(A);
   const nameKey = new Map(names.map(n => [n.name.toLowerCase(), n.name]));
   for (const t of found) {
@@ -61,7 +69,33 @@ export function buildLog(A, rix, opts = {}) {
       ins(a, type, vals); con(a, docA(r.doc), 'found in');
       r.cells.forEach(c => { const n = nameKey.get(clean(c).toLowerCase()); if (n) con(a, nameA(n), 'mentions'); }); });
   }
+  filterTupleEvents(ev, opts.filterFrames, opts.savedFolds);
   return { events, found, counts: { figures: nf, dates: nd } };
+}
+
+// Filter tuple as operator log: every active filter is INS its frame entity,
+// DEF its read frame (value + for-whom giver/question), EVA its coverage result
+// (criterion = the for-whom's question, result = matched/total + relevance).
+// Order is hard: INS → DEF → EVA, or the fold records missing_ins /
+// criterionless_judgment violations. One REC per saved fold: saving a filter as
+// a fold is the re-zero — a new frame. No REC per bare filter.
+function filterTupleEvents(ev, frames = [], folds = []) {
+  for (const fr of frames) {
+    const a = 'filter:' + fr.key;
+    ev('ins', { anchor: a, entity_type: 'FilterFrames', payload: {} });
+    ev('def', { anchor: a, path: 'label', value: cut(fr.label, 160) });
+    ev('def', { anchor: a, path: 'filter', value: cut(fr.key, 60) });
+    ev('def', { anchor: a, path: 'value', value: cut(fr.value, 300) });
+    ev('def', { anchor: a, path: 'giver', value: cut(fr.giver, 120) });
+    ev('def', { anchor: a, path: 'question', value: cut(fr.question, 300) });
+    ev('def', { anchor: a, path: 'matched', value: fr.matched });
+    ev('def', { anchor: a, path: 'total', value: fr.total });
+    ev('def', { anchor: a, path: 'relevance', value: fr.relevance });
+    ev('eva', { anchor: a, criterion: cut(fr.question, 300), result: fr.matched + '/' + fr.total + ' match, relevance ' + fr.relevance, note: 'for ' + fr.giver } );
+  }
+  for (const fo of folds) {
+    ev('rec', { kind: 'fold', label: cut(fo.label, 160), filters: fo.f || {}, question: cut(fo.q || '', 300), sources: fo.n || 0 });
+  }
 }
 
 // Tables that already exist inside the material: <table> elements in captured pages, and whole delimited
@@ -105,7 +139,17 @@ export function tablesInSources(A) {
 // Read the schema off the folded state. Every conclusion carries the count it was drawn from.
 const LABELS = ['title', 'name', 'label', 'body'];
 export function inferSchema(state) {
-  const byType = new Map(); for (const e of Object.values(state.entities)) { const t = e._type; if (!t) continue; (byType.get(t) || byType.set(t, []).get(t)).push(e); }
+  const byType = new Map();
+  if (state.entitiesByType) {
+    for (const [t, anchors] of Object.entries(state.entitiesByType)) {
+      if (!t) continue;
+      const rows = [];
+      for (const a of anchors) { const e = state.entities[a]; if (e) rows.push(e); }
+      if (rows.length) byType.set(t, rows);
+    }
+  } else {
+    for (const e of Object.values(state.entities)) { const t = e._type; if (!t) continue; (byType.get(t) || byType.set(t, []).get(t)).push(e); }
+  }
   const tables = [...byType.entries()].sort((a, b) => b[1].length - a[1].length);
   const fields = {}, label = {}, tableInfo = [];
   for (const [t, rows] of tables) {

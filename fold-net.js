@@ -82,18 +82,22 @@ export async function merge(temp, server, user, password, rooms, carry) {
 // ---------- rooms ----------
 export async function resolve(s, idOrAlias) { if (/^!/.test(idOrAlias)) return idOrAlias; const j = await api(s, 'GET', '/_matrix/client/v3/directory/room/' + encodeURIComponent(idOrAlias)); return j.room_id; }
 export async function join(s, idOrAlias) { const j = await api(s, 'POST', '/_matrix/client/v3/join/' + encodeURIComponent(idOrAlias), {}); return j.room_id; }
-export async function createWorkspace(s, { name, alias, isPublic, config }) {
+export async function createWorkspace(s, { name, alias, isPublic, config, visibility, preset, topic }) {
   const initial_state = [{ type: CONFIG, state_key: '', content: config || {} }];
   if (isPublic) initial_state.push({ type: 'm.room.history_visibility', state_key: '', content: { history_visibility: 'world_readable' } }, { type: 'm.room.guest_access', state_key: '', content: { guest_access: 'can_join' } });
-  const body = { name, preset: isPublic ? 'public_chat' : 'private_chat', visibility: isPublic ? 'public' : 'private', initial_state, topic: isPublic ? 'Fold workspace: public source custody, hash-chained blocks' : 'Fold workspace: private work' };
+  const body = { name, preset: preset || (isPublic ? 'public_chat' : 'private_chat'), visibility: visibility || (isPublic ? 'public' : 'private'), initial_state, topic: topic || (isPublic ? 'Fold workspace: public source custody, hash-chained blocks' : 'Fold workspace: private work') };
   if (alias) body.room_alias_name = alias;
   const j = await api(s, 'POST', '/_matrix/client/v3/createRoom', body); return j.room_id;
 }
+export async function setRoomAlias(s, roomId, alias) { return api(s, 'PUT', '/_matrix/client/v3/directory/room/' + encodeURIComponent(alias), { room_id: roomId }); }
 export async function invite(s, room, userId) { return api(s, 'POST', '/_matrix/client/v3/rooms/' + encodeURIComponent(room) + '/invite', { user_id: userId }); }
 export async function getState(s, room, type, key) { try { return await api(s, 'GET', '/_matrix/client/v3/rooms/' + encodeURIComponent(room) + '/state/' + encodeURIComponent(type) + '/' + encodeURIComponent(key || '')); } catch (e) { if (e.status === 404) return null; throw e; } }
 export async function setState(s, room, type, key, content) { return api(s, 'PUT', '/_matrix/client/v3/rooms/' + encodeURIComponent(room) + '/state/' + encodeURIComponent(type) + '/' + encodeURIComponent(key || ''), content); }
 export const getConfig = (s, room) => getState(s, room, CONFIG, '');
 export const setConfig = (s, room, c) => setState(s, room, CONFIG, '', c);
+// ---------- account data (private, synced to the account's own devices) ----------
+export async function getAccountData(s, type) { try { return await api(s, 'GET', '/_matrix/client/v3/user/' + encodeURIComponent(s.user) + '/account_data/' + encodeURIComponent(type)); } catch (e) { if (e.status === 404) return null; throw e; } }
+export async function setAccountData(s, type, content) { return api(s, 'PUT', '/_matrix/client/v3/user/' + encodeURIComponent(s.user) + '/account_data/' + encodeURIComponent(type), content); }
 async function send(s, room, type, content) { const txn = 'fx' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); return api(s, 'PUT', '/_matrix/client/v3/rooms/' + encodeURIComponent(room) + '/send/' + encodeURIComponent(type) + '/' + txn, content); }
 export async function events(s, room, type, max) {
   const out = []; let from = ''; for (let k = 0; k < 40; k++) {
@@ -146,19 +150,39 @@ export async function ytMeta(url) { try { const r = await fetch('https://www.you
 export async function fetchVia(proxyTpl, url) { const u = proxyTpl ? proxyTpl.replace('{url}', encodeURIComponent(url)) : url; const r = await fetch(u); if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); }
 
 // ---------- in-browser Whisper ----------
-let _asr = null;
-export async function transcribe(fileOrBuf, onProgress, model) {
+let _asr = null, _asrModel = null;
+// opts = { prompt, language }: the priors the transcriber listens with.
+// `prompt` becomes Whisper's initial-prompt tokens (the decoder prefix after the
+// start/language/task tokens — transformers.js doesn't wire this up itself, so the
+// prefix is built from the model's own _retrieve_init_tokens and the tokenizer).
+// `language` picks the decoder's language token; English-only (.en) models ignore it.
+export async function transcribe(fileOrBuf, onProgress, model, opts) {
+  opts = opts || {}; model = model || 'onnx-community/whisper-base';
   onProgress && onProgress({ stage: 'loading model' });
-  if (!_asr) { const T = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.1.2'); const device = navigator.gpu ? 'webgpu' : 'wasm';
-    _asr = await T.pipeline('automatic-speech-recognition', model || 'onnx-community/whisper-base', { device, dtype: device === 'webgpu' ? 'fp32' : 'q8', progress_callback: p => onProgress && p.progress != null && onProgress({ stage: 'downloading model', pct: Math.round(p.progress) }) }); }
+  if (!_asr || _asrModel !== model) { _asr = null; _asrModel = model; const T = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.1.2'); const device = navigator.gpu ? 'webgpu' : 'wasm';
+    _asr = await T.pipeline('automatic-speech-recognition', model, { device, dtype: device === 'webgpu' ? 'fp32' : 'q8', progress_callback: p => onProgress && p.progress != null && onProgress({ stage: 'downloading model', pct: Math.round(p.progress) }) }); }
   onProgress && onProgress({ stage: 'decoding audio' });
   const buf = fileOrBuf instanceof ArrayBuffer ? fileOrBuf : await fileOrBuf.arrayBuffer();
   const ctx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, 16000, 16000); const decoded = await ctx.decodeAudioData(buf.slice(0));
   const off = new OfflineAudioContext(1, Math.ceil(decoded.duration * 16000), 16000); const src = off.createBufferSource(); src.buffer = decoded; src.connect(off.destination); src.start(); const pcm = (await off.startRendering()).getChannelData(0);
   const CH = 30 * 16000, segs = [];
+  const lang = opts.language && opts.language !== 'auto' ? opts.language : null;
+  const englishOnly = /\.en$/.test(model);
+  let decPrefix = null;
+  if (opts.prompt || lang) {
+    try {
+      const g = await _asr.model._prepare_generation_config(null, { return_timestamps: true, ...(englishOnly ? {} : lang ? { language: lang } : {}) });
+      let init = _asr.model._retrieve_init_tokens ? _asr.model._retrieve_init_tokens(g) : null;
+      if (opts.prompt && _asr.tokenizer) { const tok = await _asr.tokenizer(opts.prompt, { add_special_tokens: false }); if (tok && tok.input_ids) init = [...init, ...tok.input_ids]; }
+      decPrefix = init;
+    } catch (e) { onProgress && onProgress({ stage: 'prior unavailable (' + (e && e.message || e) + ') — transcribing without it' }); }
+  }
+  const extra = { return_timestamps: true, chunk_length_s: 30 };
+  if (decPrefix) extra.decoder_input_ids = decPrefix;
+  if (lang && !englishOnly) extra.language = lang;
   for (let o = 0; o < pcm.length; o += CH) { onProgress && onProgress({ stage: 'transcribing', pct: Math.round(o / pcm.length * 100) });
-    const r = await _asr(pcm.subarray(o, Math.min(pcm.length, o + CH)), { return_timestamps: true, chunk_length_s: 30 });
+    const r = await _asr(pcm.subarray(o, Math.min(pcm.length, o + CH)), extra);
     const base = o / 16000; (r.chunks || [{ timestamp: [0, CH / 16000], text: r.text }]).forEach(c => { const t = (c.text || '').trim(); if (t) segs.push({ start: +(base + (c.timestamp[0] || 0)).toFixed(2), end: +(base + (c.timestamp[1] || c.timestamp[0] || 0)).toFixed(2), text: t }); }); }
   onProgress && onProgress({ stage: 'done', pct: 100 });
-  return { source: 'in-browser-whisper', model: model || 'onnx-community/whisper-base', segments: segs, duration: decoded.duration };
+  return { source: 'in-browser-whisper', model, segments: segs, duration: decoded.duration, priors: { prompt: opts.prompt || null, language: englishOnly ? 'en' : (lang || 'auto') } };
 }
