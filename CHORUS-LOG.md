@@ -1,4 +1,3 @@
-
 ## 2026-10-02 — the mechanical summary's real job is the VOID; wired as an additive fact (main, summary-ladder)
 fast: 4 files · law: ok
 | lens | citation | file:line | verdict | one line |
@@ -83,3 +82,11 @@ fast: 1 file · none affected (doc only) · law: WARN pre-existing S17/S96 in ..
 | lens | citation | file:line | verdict | one line |
 | Alexander | composition seam | NOTEBOOK-FALSIFICATION.md:66 | noted | the addendum says the mode exists AND that run 7's F1–F9 results are not widened by it — the two claims compose without overclaiming |
 clean: no other lens routed (doc change, no source touched)
+
+## 2026-10-03 — the Overview page is the when + the cards/table of sources; the separate Sources view retires (main, kondo-simplify)
+fast: 2 files · 1 browser test pass (unit hang/overview failures pre-existing on the base) · law: ok
+| lens | citation | file:line | verdict | one line |
+| Ostrom | absence assigned at the right scope | index.html:497 | clean | the sources gaps ("What to check") still say "Gaps in these sources, not proof that something is absent" on the merged page |
+| Frankfurt | a number standing in for a missing prior | index.html:374 | noted | hasFacets stays hardcoded false on the merged page (pre-existing on gh), so the facets block renders nothing — noted, not re-wired, in this diff |
+| Kondo | dead or cluttering | index.html:373 | fixed | the summary page's editorial stack (topic input, paradigms + forkParadigm, About This, Lead statements + headlines(), Worth checking, noGround, goal cards + the dead GOALS/goalNav/counts/heads/ex/readScore tree, goOverview button, seenLine/Review) is removed and stashed (STASH.md 2026-10-03); the Sources view body moved into v.summary, its nav item and view id retired, go('sources') call sites re-aimed at summary |
+clean: LeviStrauss (nothing in the stash solves an open problem this diff names; nothing reclaimed)

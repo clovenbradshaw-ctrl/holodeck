@@ -362,96 +362,129 @@ button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visi
 
       <sc-if value="{{ v.overview }}" hint-placeholder-val="{{ false }}"><div id="overview-surface"></div></sc-if>
       <sc-if value="{{ v.summary }}" hint-placeholder-val="{{ true }}">
-        <button onClick="{{ goOverview }}" style="align-self:flex-start;padding:10px 16px;border:1px solid var(--line2);border-radius:8px;background:var(--s1);color:var(--ink);font:inherit;cursor:pointer">Build evidence overview · sources and negative spaces</button>
-        <section style="display:flex;flex-direction:column;gap:8px">
-          <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Topic · what this workspace folds around</span>
-          <input value="{{ topic }}" onChange="{{ onTopic }}" placeholder="{{ topicPlaceholder }}" style="background:var(--s1);border:1px solid var(--line2);border-radius:10px;color:var(--ink);font:400 22px 'Newsreader',serif;padding:10px 14px;outline:none">
-          <div style="display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;font:400 14px 'Hanken Grotesk';color:var(--mut)">
-            <span>{{ foldLine }}</span>
-            <sc-if value="{{ hasTopic }}" hint-placeholder-val="{{ false }}"><label style="display:flex;align-items:center;gap:6px;color:var(--ink);cursor:pointer"><input type="checkbox" checked="{{ showOutside }}" onChange="{{ toggleOutside }}">Include what's outside the fold</label></sc-if>
-            <sc-if value="{{ canAdopt }}" hint-placeholder-val="{{ false }}"><button onClick="{{ adoptTopic }}" style="background:none;border:1px solid var(--line2);border-radius:6px;padding:2px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Use “{{ inferredTopic }}”</button></sc-if>
-          </div>
-        </section>
-        <sc-if value="{{ hasParadigms }}" hint-placeholder-val="{{ false }}">
-          <section style="background:var(--sel);border:1px solid #8b5cf6;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px">
-            <span style="font:400 14px 'Hanken Grotesk';color:var(--ink)">{{ paradigmsNote }}</span>
-            <div style="display:flex;flex-wrap:wrap;gap:10px">
-              <sc-for list="{{ paradigmList }}" as="p" hint-placeholder-count="2">
-                <div style="display:flex;align-items:center;gap:10px;background:var(--s1);border:1px solid var(--line2);border-radius:10px;padding:8px 8px 8px 14px">
-                  <button onClick="{{ p.onOpen }}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;gap:1px" style-hover="color:var(--acc)"><span style="font:600 15px 'Hanken Grotesk';color:var(--ink)">{{ p.label }}</span><span style="font:400 12px 'Hanken Grotesk';color:var(--mut)">{{ p.n }}</span></button>
-                  <sc-if value="{{ p.canFork }}" hint-placeholder-val="{{ false }}"><button onClick="{{ p.onFork }}" title="Copy this into its own workspace" style="background:none;border:1px solid var(--line2);border-radius:6px;padding:5px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">Fork →</button></sc-if>
-                </div>
-              </sc-for>
-            </div>
-            <sc-if value="{{ hasMoreParadigms }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px 'Hanken Grotesk';color:var(--mut)">{{ moreParadigmsLine }}</span></sc-if>
-          </section>
-        </sc-if>
-        <sc-if value="{{ hasSeen }}" hint-placeholder-val="{{ false }}">
-          <button onClick="{{ goSources }}" style="white-space:normal;text-align:left;cursor:pointer;background:var(--s1);border:1px solid var(--line2);border-radius:10px;padding:10px 14px;font:500 15px 'Hanken Grotesk';color:var(--ink);display:flex;justify-content:space-between;gap:10px" style-hover="border-color:var(--acc)"><span>{{ seenLine }}</span><span style="color:var(--acc)">Review →</span></button>
-        </sc-if>
-        <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 18px;display:flex;flex-direction:column;gap:8px">
-          <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc);white-space:nowrap">About This</span><span style="font:400 13px 'Hanken Grotesk';color:var(--mut)">A summary of what these sources, taken together, are about — a paraphrase in the fold's own words, not a quote.</span></div>
-          <textarea value="{{ about }}" onChange="{{ onAbout }}" rows="3" placeholder="{{ aboutPlaceholder }}" style="background:var(--bg);border:1px solid var(--line2);border-radius:10px;resize:vertical;font:400 17px/1.5 'Newsreader',serif;color:var(--ink);outline:none;padding:10px 12px;width:100%;box-sizing:border-box"></textarea>
-        </section>
-        <sc-if value="{{ hasHeadlines }}" hint-placeholder-val="{{ false }}">
-          <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 18px 6px;display:flex;flex-direction:column;gap:4px">
-            <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--acc);white-space:nowrap">Lead statements</span><span style="font:400 13px 'Hanken Grotesk';color:var(--mut)">Quoted statements that name someone, report an action or a figure, and use the words these sources share most. One per source, newest first.</span></div>
-            <div style="display:flex;flex-direction:column">
-              <sc-for list="{{ headlines }}" as="x" hint-placeholder-count="5">
-                <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 14px;align-items:baseline;border-top:1px solid var(--line);padding:11px 0">
-                  <button onClick="{{ x.onClick }}" style="all:unset;cursor:pointer;font:400 18px/1.45 'Newsreader',serif;color:var(--ink);text-wrap:pretty" style-hover="color:var(--acc)">{{ x.text }}</button>
-                  <button onClick="{{ x.onPin }}" style="all:unset;cursor:pointer;font:600 13px 'Hanken Grotesk';color:{{ x.pinColor }};white-space:nowrap">{{ x.pinLabel }}</button>
-                  <span style="grid-column:1 / -1;display:flex;gap:4px 12px;flex-wrap:wrap;font:400 13px 'Hanken Grotesk';color:var(--mut)"><span style="color:var(--ink2);font-weight:500;white-space:nowrap">{{ x.src }}</span><span style="font:500 12px 'JetBrains Mono';white-space:nowrap">{{ x.date }}</span><span style="white-space:nowrap">{{ x.echo }}</span></span>
-                </div>
-              </sc-for>
-            </div>
-          </section>
-        </sc-if>
-        <sc-if value="{{ hasChecks }}" hint-placeholder-val="{{ false }}">
-          <section style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:12px 16px;display:flex;flex-direction:column;gap:8px">
-            <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--amber)">Worth checking</span>
-            <div style="display:flex;flex-direction:column">
-              <sc-for list="{{ checks }}" as="x" hint-placeholder-count="2">
-                <button onClick="{{ x.onClick }}" style="white-space:normal;text-align:left;cursor:pointer;display:flex;justify-content:space-between;gap:12px;align-items:baseline;background:none;border:0;border-top:1px solid var(--line);padding:9px 0;font:500 15px/1.4 'Hanken Grotesk';color:var(--ink)" style-hover="color:var(--amber)"><span>{{ x.label }}</span><span style="color:var(--mut)">→</span></button>
-              </sc-for>
-            </div>
-          </section>
-        </sc-if>
-        <sc-if value="{{ noGround.on }}" hint-placeholder-val="{{ false }}">
-          <div style="border:1px dashed var(--line2);border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:8px">
-            <span style="font:500 19px 'Newsreader',serif;color:var(--ink)">Nothing here can be read yet.</span>
-            <span style="font:400 14px/1.5 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">{{ noGround.line }}</span>
-            <sc-if value="{{ noGround.hasLinks }}" hint-placeholder-val="{{ false }}">
-              <div style="display:flex;gap:4px 14px;flex-wrap:wrap"><sc-for list="{{ noGround.links }}" as="l" hint-placeholder-count="3"><button onClick="{{ l.onOpen }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--acc)" style-hover="text-decoration:underline">{{ l.title }} ↗</button></sc-for></div>
-            </sc-if>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;padding-top:2px">
-              <button onClick="{{ noGround.onAdd }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:7px 16px;cursor:pointer;font:600 14px 'Hanken Grotesk'" style-hover="background:#7c3aed">Add the text itself</button>
-              <sc-if value="{{ noGround.canKeep }}" hint-placeholder-val="{{ false }}"><button onClick="{{ noGround.onKeep }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 14px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)">{{ noGround.keepLabel }}</button></sc-if>
-            </div>
-          </div>
-        </sc-if>
-        <sc-if value="{{ hasGoalCards }}" hint-placeholder-val="{{ true }}">
-        <span style="font:600 15px 'Hanken Grotesk';margin-top:4px">What do you want to do?</span>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px">
-          <sc-for list="{{ goalCards }}" as="c" hint-placeholder-count="6">
-            <div style="background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0">
-              <button onClick="{{ c.onClick }}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;gap:4px" style-hover="opacity:.85">
-                <span style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
-                  <span style="font:600 16px 'Hanken Grotesk';color:var(--ink)">{{ c.label }} <span style="color:var(--acc)">→</span></span>
-                  <span style="font:500 13px 'JetBrains Mono';color:var(--mut);white-space:nowrap;flex:none">{{ c.count }}</span>
-                </span>
-                <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">{{ c.question }}</span>
-                <span style="font:400 16px/1.4 'Newsreader',serif;color:var(--ink);text-wrap:pretty;margin-top:4px">{{ c.headline }}</span>
-              </button>
-              <div style="display:flex;gap:6px;flex-wrap:wrap">
-                <sc-for list="{{ c.examples }}" as="x" hint-placeholder-count="2">
-                  <button onClick="{{ x.onClick }}" style="flex:none;background:var(--s2);border:1px solid var(--line2);border-radius:999px;padding:2px 10px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" style-hover="border-color:var(--acc)">{{ x.label }}</button>
+        <sc-if value="{{ hasFacets }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:8px;background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:12px 14px">
+            <sc-for list="{{ srcFacets }}" as="fa" hint-placeholder-count="3">
+              <div style="display:grid;grid-template-columns:84px minmax(0,1fr);gap:10px;align-items:start">
+                <span style="padding-top:4px;font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">{{ fa.label }}</span>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;min-width:0">
+                <sc-for list="{{ fa.opts }}" as="o" hint-placeholder-count="4">
+                  <button onClick="{{ o.onClick }}" style="display:flex;align-items:center;gap:6px;background:{{ o.bg }};border:1px solid {{ o.bd }};border-radius:999px;padding:2px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)"><span style="width:8px;height:8px;border-radius:50%;background:{{ o.color }}"></span>{{ o.label }}<span style="font:400 12px 'JetBrains Mono';color:var(--mut)">{{ o.n }}</span></button>
                 </sc-for>
+                </div>
               </div>
-            </div>
-          </sc-for>
-        </div>
+            </sc-for>
+          </div>
         </sc-if>
+        <details class="hd-disclosure" open="{{ sourceOptionsActive }}">
+          <summary>{{ sourceOptionsLabel }}</summary>
+        <sc-if value="{{ svTabsOn }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;gap:2px 18px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--line2)">
+            <sc-if value="{{ sourceKindsUseful }}"><sc-for list="{{ svTabs }}" as="t" hint-placeholder-count="5"><button onClick="{{ t.onClick }}" style="all:unset;cursor:pointer;display:flex;gap:6px;align-items:baseline;padding:8px 0;border-bottom:2px solid {{ t.bd }};margin-bottom:-1px;font:500 14px 'Hanken Grotesk';color:{{ t.col }};white-space:nowrap">{{ t.label }}<span style="font:500 12px 'JetBrains Mono';color:var(--dim)">{{ t.n }}</span></button></sc-for></sc-if>
+            <span style="flex:1"></span>
+            <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;margin:4px 0"><sc-for list="{{ svModes }}" as="k" hint-placeholder-count="2"><button onClick="{{ k.onClick }}" style="border:0;background:{{ k.bg }};color:{{ k.col }};padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';white-space:nowrap">{{ k.label }}</button></sc-for></div>
+          </div>
+          <sc-if value="{{ srcHiddenNote }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px 'Hanken Grotesk';color:var(--dim);margin-top:6px">{{ srcHiddenNote }}</span></sc-if>
+        </sc-if>
+        </details>
+        <sc-if value="{{ svTable }}" hint-placeholder-val="{{ false }}">
+          <sc-for list="{{ svTables }}" as="tb" hint-placeholder-count="1">
+            <section style="display:flex;flex-direction:column;gap:6px">
+              <sc-if value="{{ tb.hasLabel }}" hint-placeholder-val="{{ false }}"><span style="font:600 16px 'Hanken Grotesk';color:var(--ink);padding-top:6px">{{ tb.label }}</span></sc-if>
+              <div style="overflow:auto;border:1px solid var(--line);border-radius:10px;max-height:72vh">
+                <table style="border-collapse:collapse;width:100%;min-width:980px">
+                  <thead><tr><sc-for list="{{ svCols }}" as="c" hint-placeholder-count="9"><th onClick="{{ c.onClick }}" style="font:600 12px 'JetBrains Mono';letter-spacing:.06em;text-transform:uppercase;color:var(--mut);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line2);white-space:nowrap;cursor:pointer;background:var(--s1);position:sticky;top:0">{{ c.label }}</th></sc-for><th style="font:600 12px 'JetBrains Mono';letter-spacing:.06em;text-transform:uppercase;color:var(--mut);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line2);white-space:nowrap;cursor:pointer;background:var(--s1);position:sticky;top:0;cursor:default"></th></tr></thead>
+                  <tbody>
+                    <sc-for list="{{ tb.rows }}" as="r" hint-placeholder-count="8">
+                      <tr style="background:var(--bg)" style-hover="background:var(--s1)">
+                        <td style="padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;font:400 14px/1.4 'Hanken Grotesk';color:var(--ink2);min-width:260px"><button onClick="{{ r.onRead }}" style="all:unset;cursor:pointer;font:500 15px/1.35 'Newsreader',serif;color:var(--ink)" style-hover="color:var(--acc)">{{ r.title }}</button></td>
+                        <td style="padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;font:400 14px/1.4 'Hanken Grotesk';color:var(--ink2);white-space:nowrap">{{ r.kind }}</td>
+                        <td style="padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;font:400 14px/1.4 'Hanken Grotesk';color:var(--ink2);white-space:nowrap"><span style="display:inline-flex;gap:6px;align-items:center"><span style="width:8px;height:8px;border-radius:50%;background:{{ r.mcol }}"></span>{{ r.medium }}</span></td>
+                        <td style="padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;font:400 14px/1.4 'Hanken Grotesk';color:var(--ink2);white-space:nowrap;font-family:'JetBrains Mono';font-size:13px">{{ r.date }}</td>
+                        <td style="padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;font:400 14px/1.4 'Hanken Grotesk';color:var(--ink2)">{{ r.publisher }}</td>
+                        <td style="padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;font:400 14px/1.4 'Hanken Grotesk';color:var(--ink2)">{{ r.standing }}</td>
+                        <td style="padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;font:400 14px/1.4 'Hanken Grotesk';color:var(--ink2);text-align:right;font-family:'JetBrains Mono';font-size:13px">{{ r.stsS }}</td>
+                        <td style="padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;font:400 14px/1.4 'Hanken Grotesk';color:var(--ink2);text-align:right;font-family:'JetBrains Mono';font-size:13px">{{ r.namesS }}</td>
+                        <td style="padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;font:400 14px/1.4 'Hanken Grotesk';color:var(--ink2);color:{{ r.ccol }};font-size:13px">{{ r.custody }}</td>
+                        <td style="padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;font:400 14px/1.4 'Hanken Grotesk';color:var(--ink2);white-space:nowrap"><span style="display:flex;gap:10px;font:500 13px 'Hanken Grotesk'"><sc-if value="{{ r.hasVideo }}" hint-placeholder-val="{{ false }}"><a href="{{ r.videoUrl }}" target="_blank" rel="noopener" style="color:var(--acc);text-decoration:none">Video ↗</a></sc-if><button onClick="{{ r.onFocus }}" style="all:unset;cursor:pointer;color:var(--mut)" style-hover="color:var(--ink)">Only this</button></span></td>
+                      </tr>
+                    </sc-for>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </sc-for>
+        </sc-if>
+        <sc-if value="{{ svCards }}" hint-placeholder-val="{{ true }}">
+        <sc-for list="{{ srcGroups }}" as="g" hint-placeholder-count="2">
+          <section style="display:flex;flex-direction:column;gap:8px">
+            <sc-if value="{{ showSourceGroupLabels }}"><div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+              <span style="font:600 16px 'Hanken Grotesk';color:var(--ink)">{{ g.label }}</span>
+              <span style="font:500 13px 'JetBrains Mono';color:var(--mut)">{{ g.n }}</span>
+              <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">{{ g.desc }}</span>
+              
+            </div></sc-if>
+            <div class="hd-source-grid">
+              <sc-for list="{{ g.items }}" as="d" hint-placeholder-count="2">
+                <div class="hd-source-card" style="border-color:{{ d.bd }}">
+                  <sc-if value="{{ d.isVid }}" hint-placeholder-val="{{ false }}"><button onClick="{{ d.onRead }}" title="Watch with the transcript beside it" style="all:unset;cursor:pointer;position:relative;display:block;margin:-14px -16px 2px;border-radius:12px 12px 0 0;overflow:hidden;aspect-ratio:16/9;background:#000"><span style="position:absolute;inset:0;background-image:{{ d.thumbBg }};background-size:cover;background-position:center;opacity:.9"></span><span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:56px;height:40px;border-radius:10px;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;color:#fff;font:600 18px 'Hanken Grotesk'">▶</span></button></sc-if>
+                  <button onClick="{{ d.onRead }}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;gap:2px">
+                    <span style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><span style="font:500 19px/1.25 'Newsreader',serif;color:var(--ink)">{{ d.title }}</span><sc-if value="{{ d.isNew }}" hint-placeholder-val="{{ false }}"><span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;color:var(--ok);border:1px solid var(--ok);border-radius:4px;padding:0 5px">NEW</span></sc-if></span>
+                    <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">{{ d.meta }}</span>
+                  </button>
+                  <span style="font:400 14px 'Hanken Grotesk';color:var(--ink2)">{{ d.stats }}</span>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px">
+                    <sc-if value="{{ d.isSeen }}" hint-placeholder-val="{{ false }}">
+                      <button onClick="{{ d.onKeep }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:5px 12px;cursor:pointer;font:600 14px 'Hanken Grotesk'">Keep as a source</button>
+                      <button onClick="{{ d.onDiscard }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--bad)">Discard</button>
+                    </sc-if>
+                    <button onClick="{{ d.onRead }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">{{ d.readLabel }}</button>
+                  </div>
+                  <details class="hd-disclosure" style="padding:8px 0 0;margin-top:auto">
+                    <summary>Source details &amp; actions</summary>
+                    <div style="display:flex;flex-direction:column;gap:8px">
+                  <sc-if value="{{ d.hasBadges }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;gap:5px;flex-wrap:wrap">
+                      <sc-for list="{{ d.badges }}" as="b" hint-placeholder-count="2"><span style="display:flex;align-items:center;gap:5px;font:500 12px 'Hanken Grotesk';color:var(--ink2);border:1px solid var(--line2);border-radius:5px;padding:0 7px"><span style="width:7px;height:7px;border-radius:50%;background:{{ b.color }}"></span>{{ b.label }}</span></sc-for>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ d.hasDistinct }}" hint-placeholder-val="{{ false }}"><span style="font:500 14px 'Hanken Grotesk';color:var(--acc)">{{ d.distinct }}</span></sc-if>
+                  <sc-if value="{{ d.hasFold }}" hint-placeholder-val="{{ false }}"><span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">{{ d.fold }}</span></sc-if>
+                  <div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 10px;align-items:center;font:400 13px 'Hanken Grotesk';color:var(--mut)">
+                    
+                    <sc-if value="{{ d.isKept }}" hint-placeholder-val="{{ true }}">
+                      <span style="color:{{ d.originCol }}">{{ d.originText }}</span>
+                      
+                    </sc-if>
+                  </div>
+                      <button onClick="{{ d.onSelect }}" style="all:unset;cursor:pointer;color:var(--acc)">Inspect source</button>
+                      <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <sc-if value="{{ d.isKept }}" hint-placeholder-val="{{ true }}"><button onClick="{{ d.onFocus }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">Only this source</button></sc-if>
+                    <sc-if value="{{ d.hasReplay }}" hint-placeholder-val="{{ false }}"><button onClick="{{ d.onReplay }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">Watch it being read</button></sc-if>
+                    <sc-if value="{{ d.canUnkeep }}" hint-placeholder-val="{{ false }}"><button onClick="{{ d.onUnkeep }}" style="background:none;border:0;padding:5px 4px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink)">Set aside</button></sc-if>
+                      </div>
+                    </div>
+                  </details>
+                </div>
+              </sc-for>
+            </div>
+            <sc-if value="{{ g.hasMore }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button onClick="{{ g.onMore }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">{{ g.moreLabel }}</button><span style="font:400 13px 'Hanken Grotesk';color:var(--dim)">{{ g.shown }}</span></div></sc-if><sc-if value="{{ g.canLess }}" hint-placeholder-val="{{ false }}"><button onClick="{{ g.onLess }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink)">Show fewer</button></sc-if>
+          </section>
+        </sc-for>
+        </sc-if>
+        <sc-if value="{{ hasGaps }}"><h2 style="margin:12px 0 0;font:600 16px 'Hanken Grotesk'">What to check</h2><p style="margin:0;color:var(--mut);font-size:13px">Gaps in these sources, not proof that something is absent.</p></sc-if>
+        <sc-for list="{{ gaps }}" as="g" hint-placeholder-count="3">
+          <details class="hd-disclosure" style="padding:10px 0">
+            <summary>{{ g.label }} · {{ g.n }}</summary>
+            <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">{{ g.desc }}</span>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <sc-for list="{{ g.items }}" as="x" hint-placeholder-count="2">
+                <button onClick="{{ x.onClick }}" style="white-space:normal;background:var(--s2);border:1px solid var(--line2);border-radius:6px;padding:3px 10px;cursor:pointer;font:400 14px 'Hanken Grotesk';color:var(--ink2);text-align:left;max-width:100%" style-hover="border-color:var(--acc)">{{ x.label }}</button>
+              </sc-for>
+            </div>
+            <sc-if value="{{ g.hasMore }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button onClick="{{ g.onMore }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">{{ g.moreLabel }}</button><span style="font:400 13px 'Hanken Grotesk';color:var(--dim)">{{ g.shown }}</span></div></sc-if><sc-if value="{{ g.canLess }}" hint-placeholder-val="{{ false }}"><button onClick="{{ g.onLess }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink)">Show fewer</button></sc-if>
+          </details>
+        </sc-for>
       </sc-if>
 
       <sc-if value="{{ rx.on }}" hint-placeholder-val="{{ false }}">
@@ -1268,131 +1301,6 @@ button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visi
         </div>
       </sc-if>
 
-      <sc-if value="{{ v.sources }}" hint-placeholder-val="{{ false }}">
-        <sc-if value="{{ hasFacets }}" hint-placeholder-val="{{ false }}">
-          <div style="display:flex;flex-direction:column;gap:8px;background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:12px 14px">
-            <sc-for list="{{ srcFacets }}" as="fa" hint-placeholder-count="3">
-              <div style="display:grid;grid-template-columns:84px minmax(0,1fr);gap:10px;align-items:start">
-                <span style="padding-top:4px;font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">{{ fa.label }}</span>
-                <div style="display:flex;gap:6px;flex-wrap:wrap;min-width:0">
-                <sc-for list="{{ fa.opts }}" as="o" hint-placeholder-count="4">
-                  <button onClick="{{ o.onClick }}" style="display:flex;align-items:center;gap:6px;background:{{ o.bg }};border:1px solid {{ o.bd }};border-radius:999px;padding:2px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)"><span style="width:8px;height:8px;border-radius:50%;background:{{ o.color }}"></span>{{ o.label }}<span style="font:400 12px 'JetBrains Mono';color:var(--mut)">{{ o.n }}</span></button>
-                </sc-for>
-                </div>
-              </div>
-            </sc-for>
-          </div>
-        </sc-if>
-        <details class="hd-disclosure" open="{{ sourceOptionsActive }}">
-          <summary>{{ sourceOptionsLabel }}</summary>
-        <sc-if value="{{ svTabsOn }}" hint-placeholder-val="{{ true }}">
-          <div style="display:flex;gap:2px 18px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--line2)">
-            <sc-if value="{{ sourceKindsUseful }}"><sc-for list="{{ svTabs }}" as="t" hint-placeholder-count="5"><button onClick="{{ t.onClick }}" style="all:unset;cursor:pointer;display:flex;gap:6px;align-items:baseline;padding:8px 0;border-bottom:2px solid {{ t.bd }};margin-bottom:-1px;font:500 14px 'Hanken Grotesk';color:{{ t.col }};white-space:nowrap">{{ t.label }}<span style="font:500 12px 'JetBrains Mono';color:var(--dim)">{{ t.n }}</span></button></sc-for></sc-if>
-            <span style="flex:1"></span>
-            <div style="display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;margin:4px 0"><sc-for list="{{ svModes }}" as="k" hint-placeholder-count="2"><button onClick="{{ k.onClick }}" style="border:0;background:{{ k.bg }};color:{{ k.col }};padding:4px 12px;cursor:pointer;font:500 13px 'Hanken Grotesk';white-space:nowrap">{{ k.label }}</button></sc-for></div>
-          </div>
-          <sc-if value="{{ srcHiddenNote }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px 'Hanken Grotesk';color:var(--dim);margin-top:6px">{{ srcHiddenNote }}</span></sc-if>
-        </sc-if>
-        </details>
-        <sc-if value="{{ svTable }}" hint-placeholder-val="{{ false }}">
-          <sc-for list="{{ svTables }}" as="tb" hint-placeholder-count="1">
-            <section style="display:flex;flex-direction:column;gap:6px">
-              <sc-if value="{{ tb.hasLabel }}" hint-placeholder-val="{{ false }}"><span style="font:600 16px 'Hanken Grotesk';color:var(--ink);padding-top:6px">{{ tb.label }}</span></sc-if>
-              <div style="overflow:auto;border:1px solid var(--line);border-radius:10px;max-height:72vh">
-                <table style="border-collapse:collapse;width:100%;min-width:980px">
-                  <thead><tr><sc-for list="{{ svCols }}" as="c" hint-placeholder-count="9"><th onClick="{{ c.onClick }}" style="font:600 12px 'JetBrains Mono';letter-spacing:.06em;text-transform:uppercase;color:var(--mut);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line2);white-space:nowrap;cursor:pointer;background:var(--s1);position:sticky;top:0">{{ c.label }}</th></sc-for><th style="font:600 12px 'JetBrains Mono';letter-spacing:.06em;text-transform:uppercase;color:var(--mut);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line2);white-space:nowrap;cursor:pointer;background:var(--s1);position:sticky;top:0;cursor:default"></th></tr></thead>
-                  <tbody>
-                    <sc-for list="{{ tb.rows }}" as="r" hint-placeholder-count="8">
-                      <tr style="background:var(--bg)" style-hover="background:var(--s1)">
-                        <td style="padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;font:400 14px/1.4 'Hanken Grotesk';color:var(--ink2);min-width:260px"><button onClick="{{ r.onRead }}" style="all:unset;cursor:pointer;font:500 15px/1.35 'Newsreader',serif;color:var(--ink)" style-hover="color:var(--acc)">{{ r.title }}</button></td>
-                        <td style="padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;font:400 14px/1.4 'Hanken Grotesk';color:var(--ink2);white-space:nowrap">{{ r.kind }}</td>
-                        <td style="padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;font:400 14px/1.4 'Hanken Grotesk';color:var(--ink2);white-space:nowrap"><span style="display:inline-flex;gap:6px;align-items:center"><span style="width:8px;height:8px;border-radius:50%;background:{{ r.mcol }}"></span>{{ r.medium }}</span></td>
-                        <td style="padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;font:400 14px/1.4 'Hanken Grotesk';color:var(--ink2);white-space:nowrap;font-family:'JetBrains Mono';font-size:13px">{{ r.date }}</td>
-                        <td style="padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;font:400 14px/1.4 'Hanken Grotesk';color:var(--ink2)">{{ r.publisher }}</td>
-                        <td style="padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;font:400 14px/1.4 'Hanken Grotesk';color:var(--ink2)">{{ r.standing }}</td>
-                        <td style="padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;font:400 14px/1.4 'Hanken Grotesk';color:var(--ink2);text-align:right;font-family:'JetBrains Mono';font-size:13px">{{ r.stsS }}</td>
-                        <td style="padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;font:400 14px/1.4 'Hanken Grotesk';color:var(--ink2);text-align:right;font-family:'JetBrains Mono';font-size:13px">{{ r.namesS }}</td>
-                        <td style="padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;font:400 14px/1.4 'Hanken Grotesk';color:var(--ink2);color:{{ r.ccol }};font-size:13px">{{ r.custody }}</td>
-                        <td style="padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;font:400 14px/1.4 'Hanken Grotesk';color:var(--ink2);white-space:nowrap"><span style="display:flex;gap:10px;font:500 13px 'Hanken Grotesk'"><sc-if value="{{ r.hasVideo }}" hint-placeholder-val="{{ false }}"><a href="{{ r.videoUrl }}" target="_blank" rel="noopener" style="color:var(--acc);text-decoration:none">Video ↗</a></sc-if><button onClick="{{ r.onFocus }}" style="all:unset;cursor:pointer;color:var(--mut)" style-hover="color:var(--ink)">Only this</button></span></td>
-                      </tr>
-                    </sc-for>
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          </sc-for>
-        </sc-if>
-        <sc-if value="{{ svCards }}" hint-placeholder-val="{{ true }}">
-        <sc-for list="{{ srcGroups }}" as="g" hint-placeholder-count="2">
-          <section style="display:flex;flex-direction:column;gap:8px">
-            <sc-if value="{{ showSourceGroupLabels }}"><div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
-              <span style="font:600 16px 'Hanken Grotesk';color:var(--ink)">{{ g.label }}</span>
-              <span style="font:500 13px 'JetBrains Mono';color:var(--mut)">{{ g.n }}</span>
-              <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">{{ g.desc }}</span>
-              
-            </div></sc-if>
-            <div class="hd-source-grid">
-              <sc-for list="{{ g.items }}" as="d" hint-placeholder-count="2">
-                <div class="hd-source-card" style="border-color:{{ d.bd }}">
-                  <sc-if value="{{ d.isVid }}" hint-placeholder-val="{{ false }}"><button onClick="{{ d.onRead }}" title="Watch with the transcript beside it" style="all:unset;cursor:pointer;position:relative;display:block;margin:-14px -16px 2px;border-radius:12px 12px 0 0;overflow:hidden;aspect-ratio:16/9;background:#000"><span style="position:absolute;inset:0;background-image:{{ d.thumbBg }};background-size:cover;background-position:center;opacity:.9"></span><span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:56px;height:40px;border-radius:10px;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;color:#fff;font:600 18px 'Hanken Grotesk'">▶</span></button></sc-if>
-                  <button onClick="{{ d.onRead }}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;gap:2px">
-                    <span style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><span style="font:500 19px/1.25 'Newsreader',serif;color:var(--ink)">{{ d.title }}</span><sc-if value="{{ d.isNew }}" hint-placeholder-val="{{ false }}"><span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;color:var(--ok);border:1px solid var(--ok);border-radius:4px;padding:0 5px">NEW</span></sc-if></span>
-                    <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">{{ d.meta }}</span>
-                  </button>
-                  <span style="font:400 14px 'Hanken Grotesk';color:var(--ink2)">{{ d.stats }}</span>
-                  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px">
-                    <sc-if value="{{ d.isSeen }}" hint-placeholder-val="{{ false }}">
-                      <button onClick="{{ d.onKeep }}" style="background:#8b5cf6;border:0;color:#fff;border-radius:8px;padding:5px 12px;cursor:pointer;font:600 14px 'Hanken Grotesk'">Keep as a source</button>
-                      <button onClick="{{ d.onDiscard }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--bad)">Discard</button>
-                    </sc-if>
-                    <button onClick="{{ d.onRead }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">{{ d.readLabel }}</button>
-                  </div>
-                  <details class="hd-disclosure" style="padding:8px 0 0;margin-top:auto">
-                    <summary>Source details &amp; actions</summary>
-                    <div style="display:flex;flex-direction:column;gap:8px">
-                  <sc-if value="{{ d.hasBadges }}" hint-placeholder-val="{{ false }}">
-                    <div style="display:flex;gap:5px;flex-wrap:wrap">
-                      <sc-for list="{{ d.badges }}" as="b" hint-placeholder-count="2"><span style="display:flex;align-items:center;gap:5px;font:500 12px 'Hanken Grotesk';color:var(--ink2);border:1px solid var(--line2);border-radius:5px;padding:0 7px"><span style="width:7px;height:7px;border-radius:50%;background:{{ b.color }}"></span>{{ b.label }}</span></sc-for>
-                    </div>
-                  </sc-if>
-                  <sc-if value="{{ d.hasDistinct }}" hint-placeholder-val="{{ false }}"><span style="font:500 14px 'Hanken Grotesk';color:var(--acc)">{{ d.distinct }}</span></sc-if>
-                  <sc-if value="{{ d.hasFold }}" hint-placeholder-val="{{ false }}"><span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">{{ d.fold }}</span></sc-if>
-                  <div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 10px;align-items:center;font:400 13px 'Hanken Grotesk';color:var(--mut)">
-                    
-                    <sc-if value="{{ d.isKept }}" hint-placeholder-val="{{ true }}">
-                      <span style="color:{{ d.originCol }}">{{ d.originText }}</span>
-                      
-                    </sc-if>
-                  </div>
-                      <button onClick="{{ d.onSelect }}" style="all:unset;cursor:pointer;color:var(--acc)">Inspect source</button>
-                      <div style="display:flex;gap:8px;flex-wrap:wrap">
-                    <sc-if value="{{ d.isKept }}" hint-placeholder-val="{{ true }}"><button onClick="{{ d.onFocus }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">Only this source</button></sc-if>
-                    <sc-if value="{{ d.hasReplay }}" hint-placeholder-val="{{ false }}"><button onClick="{{ d.onReplay }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:5px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">Watch it being read</button></sc-if>
-                    <sc-if value="{{ d.canUnkeep }}" hint-placeholder-val="{{ false }}"><button onClick="{{ d.onUnkeep }}" style="background:none;border:0;padding:5px 4px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink)">Set aside</button></sc-if>
-                      </div>
-                    </div>
-                  </details>
-                </div>
-              </sc-for>
-            </div>
-            <sc-if value="{{ g.hasMore }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button onClick="{{ g.onMore }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">{{ g.moreLabel }}</button><span style="font:400 13px 'Hanken Grotesk';color:var(--dim)">{{ g.shown }}</span></div></sc-if><sc-if value="{{ g.canLess }}" hint-placeholder-val="{{ false }}"><button onClick="{{ g.onLess }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink)">Show fewer</button></sc-if>
-          </section>
-        </sc-for>
-        </sc-if>
-        <sc-if value="{{ hasGaps }}"><h2 style="margin:12px 0 0;font:600 16px 'Hanken Grotesk'">What to check</h2><p style="margin:0;color:var(--mut);font-size:13px">Gaps in these sources, not proof that something is absent.</p></sc-if>
-        <sc-for list="{{ gaps }}" as="g" hint-placeholder-count="3">
-          <details class="hd-disclosure" style="padding:10px 0">
-            <summary>{{ g.label }} · {{ g.n }}</summary>
-            <span style="font:400 14px 'Hanken Grotesk';color:var(--mut)">{{ g.desc }}</span>
-            <div style="display:flex;gap:6px;flex-wrap:wrap">
-              <sc-for list="{{ g.items }}" as="x" hint-placeholder-count="2">
-                <button onClick="{{ x.onClick }}" style="white-space:normal;background:var(--s2);border:1px solid var(--line2);border-radius:6px;padding:3px 10px;cursor:pointer;font:400 14px 'Hanken Grotesk';color:var(--ink2);text-align:left;max-width:100%" style-hover="border-color:var(--acc)">{{ x.label }}</button>
-              </sc-for>
-            </div>
-            <sc-if value="{{ g.hasMore }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button onClick="{{ g.onMore }}" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:6px 12px;cursor:pointer;font:500 14px 'Hanken Grotesk';color:var(--ink2)" style-hover="border-color:var(--acc)">{{ g.moreLabel }}</button><span style="font:400 13px 'Hanken Grotesk';color:var(--dim)">{{ g.shown }}</span></div></sc-if><sc-if value="{{ g.canLess }}" hint-placeholder-val="{{ false }}"><button onClick="{{ g.onLess }}" style="all:unset;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--mut)" style-hover="color:var(--ink)">Show fewer</button></sc-if>
-          </details>
-        </sc-for>
-      </sc-if>
 
       <sc-if value="{{ v.profile }}" hint-placeholder-val="{{ false }}">
         <sc-if value="{{ pf.has }}" hint-placeholder-val="{{ false }}">
@@ -2663,7 +2571,7 @@ button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visi
 function digammaH(x) { let r = 0; while (x < 6) { r -= 1 / x; x += 1; } const f = 1 / (x * x); return r + Math.log(x) - 0.5 / x - f * (1 / 12 - f * (1 / 120 - f * (1 / 252 - f * (1 / 240 - f / 132)))); }
 const klAdmitH = (bv, B) => Math.max(0, Math.log(B) - Math.log(bv) + digammaH(bv + 1) - digammaH(B + 1));
 const holoTokens = t => [...new Set((clean(t).toLowerCase().replace(/[\u2019']/g, '').match(/[a-z][a-z-]{2,}/g) || []).filter(w => !STOP.has(w) && !/^-|-$/.test(w)))];
-const VIEW_LABEL = { overview: 'Evidence overview', summary: 'Overview', search: 'Search', sources: 'Sources', names: 'Names', types: 'Types', figures: 'Figures', statements: 'Statements', connections: 'Connections', framing: 'Framing', views: 'Views', patterns: 'Patterns', surprise: 'Surprise', reader: 'Sources', profile: 'Names', draft: 'Draft', records: 'Records', ask: 'Ask the Fold', ingest: 'Add & publish' };
+const VIEW_LABEL = { overview: 'Evidence overview', summary: 'Overview', search: 'Search', names: 'Names', types: 'Types', figures: 'Figures', statements: 'Statements', connections: 'Connections', framing: 'Framing', views: 'Views', patterns: 'Patterns', surprise: 'Surprise', reader: 'Sources', profile: 'Names', draft: 'Draft', records: 'Records', ask: 'Ask the Fold', ingest: 'Add & publish' };
 const SU_CURSORS = [
   { id: 'loo', label: 'Everything else', desc: 'Each statement against normal text plus everything the other sources in this view say, regardless of date: what this source says that nothing else in view, and nothing normal, prepares you for.' },
   { id: 'pub', label: 'When published', desc: 'Sources in the order they were published: what a reader following the story would have learned, and when.' },
@@ -4926,31 +4834,6 @@ class Component extends DCLogic {
     this.setState({ gen: false }); if (false) this.toast(mode === 'model' && modelFail && !modelUsed ? 'The local model didn’t answer' + (this._llmErr ? ' (' + this._llmErr + ')' : '') + '; used quotes instead' : 'Added ' + plural(blocks.filter(b => b.kind !== 'heading').length, 'claim') + ' with their excerpts');
   }
   defaultSubject(A) { if (this._dsA === A) return this._ds; const L = Object.values(A.names || {}).sort((a, b) => b.sts.length - a.sts.length); const o = L.find(n => /\b(Office|Department|Division|Agency|Authority|Commission|Council)\b/.test(n.name)) || L[0]; this._dsA = A; this._ds = o ? o.name : ''; return this._ds; }
-  headlines(A) {
-    const key = A.sts.length + '|' + (this._cnt ? this._cnt.size : 0) + '|' + (this._topicStr || ''); if (this._hl && this._hl.A === A && this._hl.key === key) return this._hl.v;
-    const G = this.gIndex(A); const rows = G.rows.filter(r => (!this._cnt || this._cnt.has(r.st.doc)) && !r.bp && !r.frag && this.inFold(r.st));
-    const nDocs = new Set(rows.map(r => r.st.doc)).size || 1; const ddf = new Map(); const seen = new Map();
-    rows.forEach(r => r.T.forEach(w => { const k = w + '|' + r.st.doc; if (seen.has(k)) return; seen.set(k, 1); ddf.set(w, (ddf.get(w) || 0) + 1); }));
-    const NEWS = /\b(approv\w*|pass(ed|es)|vot(ed|es)|announc\w*|found|cut|increas\w*|doubl\w*|tripl\w*|creat\w*|establish\w*|clos(ed|es)|open(ed|s)|hir(ed|es)|resign\w*|fir(ed|es)|su(ed|es)|award\w*|request\w*|launch\w*|releas\w*|spent|fail\w*|withh\w*|lapse\w*|expir\w*|terminat\w*|reject\w*|delay\w*|audit\w*|investigat\w*|allocat\w*|fund(ed|s)|lost|lose|shortfall|deficit|violat\w*)\b/i;
-    const VAL = /\$\s?\d|\b\d[\d,.]*\s?(%|percent|million|billion|people|beds|units|positions|households|residents|individuals)\b/i;
-    const cand = [];
-    rows.forEach(r => { const t = clean(r.st.text); if (t.length < 60 || t.length > 320) return; if (!r.st.names || !r.st.names.length) return; if (/^\W*(however|additionally|also|this|these|it|they|that|he|she|we|i)\b/i.test(t)) return; if (/\?$/.test(t)) return;
-      const news = NEWS.test(t), val = VAL.test(t); if (!news && !val) return;
-      let topic = 0; r.T.forEach(w => { const d = ddf.get(w) || 0; if (d >= 2 && d <= nDocs * 0.6) topic += Math.log(1 + d); });
-      const d = A.docById[r.st.doc] || {}; const yr = d.year || 0; const rec = yr ? 1 + Math.max(0, Math.min(1, (yr - 2015) / 12)) * 0.4 : 1;
-      cand.push({ r, t, sc: topic / Math.sqrt(r.T.size + 4) * (news ? 1.5 : 1) * (val ? 1.4 : 1) * (r.st.names.length > 1 ? 1.15 : 1) * rec }); });
-    cand.sort((a, b) => b.sc - a.sc);
-    const picked = []; const usedDoc = new Set();
-    for (const c of cand) { if (picked.length >= 8) break; if (usedDoc.has(c.r.st.doc)) continue;
-      const over = picked.some(p => { let n = 0; c.r.T.forEach(w => { if (p.r.T.has(w)) n++; }); return n / Math.min(c.r.T.size, p.r.T.size) > 0.34; }); if (over) continue;
-      picked.push(c); usedDoc.add(c.r.st.doc); }
-    const cut = t => t.length <= 260 ? t : t.slice(0, 256).replace(/\s+\S*$/, '') + '…';
-    const v = picked.map(c => { const st = c.r.st; const d = A.docById[st.doc] || {}; const rare = [...c.r.T].filter(w => (ddf.get(w) || 0) >= 2 && (ddf.get(w) || 0) <= nDocs * 0.3);
-      const echo = new Set(); rows.forEach(r => { if (r.st.doc === st.doc) return; let n = 0; rare.forEach(w => { if (r.T.has(w)) n++; }); if (n >= Math.min(3, rare.length) && rare.length >= 2) echo.add(r.st.doc); });
-      return { text: cut(clean(st.text)), src: (d.title || '').split(',')[0].trim(), date: d.pubLabel || (d.year ? String(d.year) : ''), echo: echo.size ? 'Also in ' + plural(echo.size, 'source') : 'Only here', stId: st.id, doc: st.doc, iso: d.published || String(d.year || '') }; })
-      .sort((a, b) => (b.iso || '').localeCompare(a.iso || ''));
-    this._hl = { A, key, v }; return v;
-  }
   // ---------- ingest & publish (Matrix / archive.org / Whisper) ----------
   net() { if (!this._netP) this._netP = import(new URL('fold-net.js', location.href).href); return this._netP; }
   wsRooms() { try { return (JSON.parse(localStorage.getItem('fold-ws-rooms') || '{}'))[this.corpusId()] || {}; } catch (e) { return {}; } }
@@ -6048,11 +5931,11 @@ class Component extends DCLogic {
   backLabel(A) { const t = (this._hist || [])[(this._hist || []).length - 1]; if (!t) return null;
     if (t.sel && t.sel.type === 'name' && (t.view === 'profile' || t.view === 'reader')) return t.sel.id;
     if (t.view === 'reader' && t.readDoc && A.docById[t.readDoc]) return short(A.docById[t.readDoc].title, 60);
-    return { names: 'names', search: 'search results', sources: 'sources', summary: 'overview', surprise: 'junctions' }[t.view] || 'previous view'; }
+    return { names: 'names', search: 'search results', summary: 'overview', surprise: 'junctions' }[t.view] || 'previous view'; }
   goBack() { const H = this._hist || []; const A = this.analysis(); let t;
     while ((t = H.pop())) { if (t.view !== 'reader' || (t.readDoc && A.docById[t.readDoc])) break; }
     if (t) { if (t.view === 'reader' && t.readDoc !== this.state.readDoc) { this.state.seekT = 0; this._faithFound = null; } this.setState({ view: t.view, readDoc: t.readDoc, sel: t.sel, pfFrom: t.pfFrom, pfIdx: 0, pfAll: false, selAll: false }); if (typeof window !== 'undefined') window.scrollTo(0, 0); }
-    else this.go('sources'); }
+    else this.go('summary'); }
   hoverSt(id) {
     const el = this._rRoot || this._rEl; if (!el || id === this._hov) return;
     const q = x => el.querySelectorAll('[data-st="' + CSS.escape(x) + '"]');
@@ -6360,14 +6243,9 @@ class Component extends DCLogic {
   _saveFolds(folds) { const cid = this.corpusId(); const all = { ...this.metaAll() }; all[cid] = { ...(all[cid] || {}), __folds: folds }; this._meta = all; try { localStorage.setItem('fold-explorer-srcmeta', JSON.stringify(all)); } catch (e) {} this.setState({ metaVer: (this.state.metaVer || 0) + 1 }); }
   addFoldFromFilter(label, f, q, n) { label = (label || '').trim(); if (!label) return; const folds = this.myFolds(); if (folds.some(x => x.label === label)) return; this._saveFolds([...folds, { label, f, q, n }]); }
   removeFold(label) { this._saveFolds(this.myFolds().filter(x => x.label !== label)); }
-  discard(docId) { const cid = this.corpusId(); const added = { ...this.state.added, [cid]: (this.state.added[cid] || []).filter(d => d.id !== docId) }; this.saveAdded(added); this.setState({ added, view: 'sources', readDoc: null, sel: null, just: null }); }
+  discard(docId) { const cid = this.corpusId(); const added = { ...this.state.added, [cid]: (this.state.added[cid] || []).filter(d => d.id !== docId) }; this.saveAdded(added); this.setState({ added, view: 'summary', readDoc: null, sel: null, just: null }); }
   // copies a paradigm's own-added docs into a brand-new workspace (never removes them from where they are --
   // a fork branches, it doesn't cut); base/sample docs in the cluster stay in the original, since they aren't this browser's to move
-  forkParadigm(p) { const cid = this.corpusId(); const own = new Set((this.state.added[cid] || []).map(d => d.id)); const moving = p.docs.filter(d => own.has(d.id)).map(d => ({ ...d }));
-    if (!moving.length) return; const newId = 'fork-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-    const added = { ...this.state.added, [newId]: moving }; this.saveAdded(added);
-    saveWorkspaceNames({ ...loadWorkspaceNames(), [newId]: p.label });
-    this.setState({ added, corpus: newId, view: 'summary', sel: null, f: {}, q: '', readDoc: null, just: null }); }
   // a topic segment is a filter over the workspace's own detected groups, not a keyword fold: it keeps only
   // statements whose SOURCE belongs to the group's member documents (or, inverted, to no detected group).
   toggleTopicGroup(p) { const cur = this.state.f.topicGroup; const same = cur && cur.label === p.label && !!cur.invert === !!p.invert; const ids = (p.docs || []).map(d => (typeof d === 'string' ? d : d.id)); this.setF('topicGroup', same ? null : { label: p.label, docs: ids, invert: !!p.invert }); }
@@ -6950,7 +6828,6 @@ class Component extends DCLogic {
     const single = D.nameList.filter(n => n.docs.size === 1);
     const unattributed = F.filter(st => !st.names.some(n => ['person', 'organisation'].includes(A.names[n].type)) && st.frame !== 'attributed');
     const differ = D.unitList.filter(u => u.differs);
-    const yrs = A.docs.map(d => d.year).filter(Boolean).sort();
     const hostOf = id => { const d = A.docById[origin(id)]; try { const u = new URL(d.url || d.link || ''); const dom = u.hostname.split('.').slice(-2).join('.'); return (d.wiki || /(wikipedia|wiktionary|britannica|wikisource)\.org$|britannica\.com$/.test(u.hostname)) ? dom + u.pathname.replace(/\/$/, '').toLowerCase() : dom; } catch (e) { return d ? 't:' + (d.title || d.id).toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 40) : id; } };
     const kOf = docs => new Set([...docs].map(hostOf)).size;
     const wset = t => new Set((clean(t).toLowerCase().match(/[a-z]{4,}/g) || []).filter(w => !STOP.has(w))); const normT = t => clean(t).toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -6985,44 +6862,8 @@ class Component extends DCLogic {
     const echoConf = []; const seenPair = {};
     echoConf.length = 0; shapesRaw.filter(g => g.clash.length).forEach(g => echoConf.push(g));
     this._am = { differ, echoConf, unattributed, single };
-    const counts = {
-      sources: plural(A.docs.filter(d => this.counted(d)).length, 'source'), names: String(D.nameList.length), types: String(typesPresent.length),
-      figures: String(figCount), statements: String(F.length), connections: String(D.edgeList.length),
-      framing: String(F.length - D.frames.fact.length) + ' hedged', views: String(Object.keys(D.years).length) + ' yrs', reliability: differ.length + single.length ? String(differ.length + single.length) + ' to check' : 'ok'
-    };
-    counts.framing = (D.frames.uncertain.length + D.frames.plan.length) + ' soft';
-    counts.patterns = shapesRaw.length + (shapesRaw.length === 1 ? ' claim' : ' claims');
-    counts.views = this._tlN || '';
 
     _m('start+counts'); // summary
-    const top = D.nameList[0];
-    const SING = { person: ['person', 'people'], organisation: ['organisation', 'organisations'], place: ['place', 'places'], other: ['other name', 'other names'] };
-    const typeLine = typesPresent.map(t => plural(D.nameList.filter(n => n.type === t).length, SING[t][0], SING[t][1])).join(' · ');
-    const heads = {
-      sources: docsIn.length ? plural(docsIn.length, 'document') + (yrs.length ? ', ' + (yrs[0] === yrs[yrs.length - 1] ? yrs[0] : yrs[0] + '–' + yrs[yrs.length - 1]) : '') + '. ' + (unattributed.length ? plural(unattributed.length, 'statement') + ' name no one responsible.' : 'Every statement names someone.') : 'No documents match.',
-      names: top ? 'Most mentioned: ' + top.name + ' (' + top.sts.length + ').' : 'No names found.',
-      types: typeLine || 'No names to sort.',
-      figures: D.unitList.length ? plural(figCount, 'figure') + ' across ' + plural(D.unitList.length, 'measure') + (differ.length ? '. Counts of ' + differ[0].unit + ' differ between sources.' : '.') : 'No figures.',
-      statements: plural(F.length, 'statement') + ', ' + D.frames.attributed.length + ' attributed to someone.',
-      connections: D.edgeList.length ? 'Strongest: ' + D.edgeList[0].a + ' and ' + D.edgeList[0].b + '.' : 'No names share a statement.',
-      framing: FRAMES.map(x => D.frames[x.id].length + ' ' + x.label.toLowerCase().split(' ')[0]).join(' · '),
-      views: (D.topicList.length ? 'Top topics: ' + D.topicList.slice(0, 3).map(t => t[0]).join(', ') + '.' : 'No recurring topics.'),
-      patterns: (shapesRaw.length ? 'Most common: ' + phrase(shapesRaw[0]) + '.' : 'Nothing recurs across sources yet.') + (differ.length + (echoConf.length ? 1 : 0) ? ' ' + plural(differ.length + (echoConf.length ? 1 : 0), 'break') + ' in the pattern.' : ''),
-    };
-    const ex = {
-      sources: docsIn.slice(0, 3).map(d => ({ label: d.title, onClick: () => this.read(d.id) })),
-      names: D.nameList.slice(0, 3).map(n => ({ label: n.name, onClick: selN(n.name) })),
-      types: typesPresent.map(t => ({ label: TYPE_L[t], onClick: () => this.setF('type', t) })),
-      figures: D.unitList.slice(0, 3).map(u => ({ label: u.items[0].g.raw + ' ' + (u.unit === 'count' ? '' : ''), onClick: () => this.sel('unit', u.unit) })),
-      statements: F.slice(0, 2).map(st => ({ label: short(st.text, 40), onClick: selSt(st) })),
-      connections: D.edgeList.slice(0, 2).map(e => ({ label: e.a + ' + ' + e.b, onClick: () => this.sel('pair', e.a + '|' + e.b) })),
-      framing: FRAMES.filter(x => D.frames[x.id].length && x.id !== 'fact').map(x => ({ label: x.label, onClick: () => this.setF('frame', x.id) })),
-      views: D.topicList.slice(0, 3).map(t => ({ label: t[0], onClick: () => this.setF('topic', t[0]) })),
-      patterns: [...shapes.slice(0, 2).map(s => ({ label: short(s.title, 34), onClick: () => this.go('patterns') })), ...differ.slice(0, 1).map(u => ({ label: u.unit + ' disagree', onClick: () => this.sel('unit', u.unit) }))],
-    };
-    const summaryRows = ROWS.map(r => ({ label: r.label, desc: r.desc, color: r.color, cells: r.cells.map(c => ({ label: c[1], question: c[3], count: counts[c[0]], color: r.color, headline: heads[c[0]], examples: ex[c[0]], onClick: () => this.go(c[0]) })) }));
-
-    _m('summary'); // sources
     const FbyDoc = {}; F.forEach(s => { (FbyDoc[s.doc] = FbyDoc[s.doc] || []).push(s); }); const docIdx = new Map(A.docs.map((d, i) => [d, i])); const docByTitle = new Map(A.docs.map(d => [d.title, d]));
     const narrowed = F.length < A.sts.reduce((c, st) => c + (st.ref ? 0 : 1), 0); // the selection is smaller than everything
     const docCards = A.docs.map(d => { const n = D.perDoc[d.id] || 0; const inSel = (FbyDoc[d.id] || []).length; const nm = new Set((FbyDoc[d.id] || []).flatMap(s => s.names)); const h = hi(isSel('doc', d.id)); return { isNew: !!(S.just && S.just.ids.includes(d.id)), title: d.title, meta: docMeta(d), stats: (narrowed ? inSel.toLocaleString() + ' of ' + plural(n, 'statement') + ' in this selection' : plural(n, 'statement')) + ' · ' + plural(nm.size, 'name') + ' · ' + d.text.length.toLocaleString() + ' characters', bd: h.bd, op: n ? 1 : 0.4, onSelect: () => this.sel('doc', d.id), onRead: () => this.read(d.id), onFocus: () => this.setF('doc', d.id) }; });
@@ -7039,9 +6880,6 @@ class Component extends DCLogic {
         onDraws: e => this.setMeta(d.id, { drawsOn: e.target.value }),
         onKeep: () => this.setMeta(d.id, { status: 'source' }), onUnkeep: () => this.setMeta(d.id, { status: 'seen' }), onDiscard: () => this.discard(d.id) }; };
     const seenDocs = A.docs.filter(d => this.mOf(d).status === 'seen');
-    const titles = A.docs.filter(d => this._cnt.has(d.id)).map(d => d.title.toLowerCase());
-    const inferred = D.nameList.filter(n => n.name.length > 3 && titles.some(t => t.includes(n.name.toLowerCase()))).sort((a, b) => b.docs.size - a.docs.size || b.sts.length - a.sts.length)[0]
-      || D.nameList.slice().sort((a, b) => b.docs.size - a.docs.size || b.sts.length - a.sts.length)[0];
     const keptDocs = A.docs.filter(d => this.mOf(d).status !== 'seen');
     const stsOf = d => A.stsByDoc[d.id] || [];
     const hasT = t => st => st.names.some(n => A.names[n] && A.names[n].type === t);
@@ -7178,7 +7016,6 @@ class Component extends DCLogic {
       const mx = Math.max(1, ...span.map(k => cnt[k] || 0)); const every = Math.max(1, Math.ceil(span.length / 12));
       return { gran, undated, yearOnly, outside, n: Object.keys(cnt).length, bars: span.map((k, i) => { const n = cnt[k] || 0; const on = f.period && f.period.mode === tMode && f.period.key === k;
         return { key: k, n: n ? String(n) : '', h: (n ? Math.max(4, n / mx * 120) : 0) + 'px', color: on ? 'var(--acc)' : 'var(--blue)', lab: i % every === 0 || span.length <= 12 ? (gran === 'month' ? (k.endsWith('-01') || i === 0 ? periodLabel(k) : MON_N[+k.slice(5)]) : k) : '', title: periodLabel(k) + ': ' + plural(n, 'statement'), onClick: () => n && this.setF('period', on ? null : { mode: tMode, key: k }) }; }) }; })();
-    this._tlN = TL.n + (TL.gran === 'month' ? ' mo' : ' yrs'); counts.views = this._tlN;
     const timeBars = TL.bars;
     const timeInfo = { note: [TL.undated ? plural(TL.undated, 'statement') + ' with no date' : '', TL.yearOnly ? TL.yearOnly + ' dated to a year only' : '', TL.outside ? TL.outside + ' outside this range' : ''].filter(Boolean).join(' · '), none: !TL.bars.length,
       modes: [['happened', 'When it happened'], ['published', 'When published']].map(([id, label]) => ({ label, bg: tMode === id ? 'var(--sel)' : 'var(--s1)', fw: tMode === id ? 600 : 500, onClick: () => this.setState({ tMode: id }) })),
@@ -7392,30 +7229,15 @@ class Component extends DCLogic {
         hasReplay: !!tr, onReplay: () => tr && import(new URL('holodeck-ingest-player.js', location.href).href).then(M => M.open(tr)),
         readLabel: (A.docById[J.first] && this.isLiveDoc(A.docById[J.first])) ? 'View the page →' : 'Read it →', onRead: () => this.read(J.first), onConnections: () => this.go('connections'), onPatterns: () => this.go('patterns') }; })() : { names: [] };
     const allYears = [...new Set(A.docs.map(d => d.year).filter(Boolean))].sort();
-    const V = {}; ['overview', 'draft', 'summary', 'search', 'sources', 'surprise', 'names', 'types', 'figures', 'statements', 'connections', 'framing', 'views', 'patterns', 'reader', 'profile', 'ingest', 'reading'].forEach(k => { V[k] = !isEmpty && view === k; });
+    const V = {}; ['overview', 'draft', 'summary', 'search', 'surprise', 'names', 'types', 'figures', 'statements', 'connections', 'framing', 'views', 'patterns', 'reader', 'profile', 'ingest', 'reading'].forEach(k => { V[k] = !isEmpty && view === k; });
 
     const SU = isEmpty ? null : this.surprise(A); const Fid = new Set(F.map(st => st.id));
     const suF = SU ? SU.list.filter(x => Fid.has(x.st.id)) : [];
     const juncMode = S.suMode !== 'belief'; const JN = isEmpty ? [] : this.junctions(A, Fid);
-    counts.surprise = juncMode ? plural(JN.length, 'junction') : SU && SU.none ? '' : plural(suF.length, 'shift');
-    heads.surprise = SU && SU.none ? 'Pick a view — financials, audit, a person, a month — and a baseline for what is normal.' : suF.length ? 'Biggest: ' + short(clean(suF[0].st.text), 70) : 'Nothing moved the picture more than random order would.';
-    ex.surprise = suF.slice(0, 3).map(x => ({ label: short(clean(x.st.text), 60), onClick: () => this.read(x.st.doc, x.st.id) }));
-    if (juncMode) { heads.surprise = JN.length ? 'Strongest: ' + JN[0].label + ' joins ' + short(docT(JN[0].a.doc), 34) + ' and ' + short(docT(JN[0].b.doc), 34) : 'No two independent sources meet on a value nothing else links.';
-      ex.surprise = JN.slice(0, 3).map(j => ({ label: j.label + ' · ' + j.kind, onClick: () => this.go('surprise') })); }
-    const GOALS = [
-      ['surprise', 'What changed the picture', juncMode ? 'Independent sources that meet on a name, figure, date or address nothing else links.' : 'Statements that moved what the record believes more than chance.'],
-      ['sources', 'View a source', 'Open a document with its names, figures and dates marked.'],
-      ['names', 'Look up a name', 'Where a person, organisation or place appears, and with whom.'],
-      ['figures', 'Check the figures', 'Compare numbers across sources.'],
-      ['patterns', 'Find what disagrees', 'What recurs across sources, and what breaks the pattern.'],
-      ['views', 'Follow it over time', 'What was known by when, by topic and by source.'],
-      ['connections', 'See who is connected', 'Names that appear in the same statements.'],
-    ];
     const gHi = on => ({ bg: on ? 'var(--sel)' : 'transparent', bd: on ? '#8b5cf6' : 'transparent', weight: on ? 600 : 500 });
-    const goalNav = [{ id: 'overview', label: 'Evidence overview', count: '' }, { id: 'summary', label: 'Start here', count: '' }, { id: 'draft', label: 'Draft', count: this.activePins().length ? String(this.activePins().length) : '' }, { id: 'ask', label: 'Ask the Fold', count: this._conv && this._conv.turns && this._conv.turns.length ? String(this._conv.turns.length) : '' }, { id: 'records', label: 'Records', count: this._db ? String(this._db.schema.tables.length) : '' }, { id: 'ingest', label: 'Ingest & publish', count: (this._net && this._net.chain && this._net.chain.length) ? String(this._net.chain.length) : '' }, ...GOALS.map(g => ({ id: g[0], label: g[1], count: counts[g[0]] }))].map(g => ({ ...g, ...gHi(view === g.id), onClick: () => this.go(g.id) }));
-    const NAVG = [['', [['summary', 'Overview'], ['sources', 'Sources'], ['ask', 'Ask'], ['draft', 'Draft']]], ['Read closely', [['names', 'Names'], ['records', 'Assertions']]], ['Explore', [['connections', 'Connections'], ['overview', 'Evidence overview']]], ['Manage', [['ingest', 'Add & publish']]]];
+    const NAVG = [['', [['summary', 'Overview'], ['ask', 'Ask'], ['draft', 'Draft']]], ['Read closely', [['names', 'Names'], ['records', 'Assertions']]], ['Explore', [['connections', 'Connections'], ['overview', 'Evidence overview']]], ['Manage', [['ingest', 'Add & publish']]]];
     const countFor = id => ({
-      sources: String(A.docs.filter(d => this.counted(d)).length), names: String(D.nameList.length), records: String(F.length),
+      names: String(D.nameList.length), records: String(F.length),
       connections: String(D.edgeList.length),
       draft: this.activePins().length ? String(this.activePins().length) : '',
       ingest: (this._net && this._net.chain && this._net.chain.length) ? String(this._net.chain.length) : '',
@@ -7424,33 +7246,6 @@ class Component extends DCLogic {
     const navGroups = NAVG.map(([label, items]) => ({ label, hasLabel: !!label, items: items.map(([id, lab]) => ({ label: lab, count: countFor(id), ...gHi(view === id), onClick: () => this.setState({ view: id, readDoc: null, sel: null }) })) }));
     // split so Folds can sit right under The reading / Connections, inside Explore
     const navTop = navGroups[0].items; const navRead = navGroups[1]; const navExplore = navGroups[2]; const navRest = navGroups.slice(3);
-    const readSel = S.stripRead || { mode: 'Relate', domain: 'Interpretation', grain: 'Pattern' };
-    const readIndex = STRIP_MODES.indexOf(readSel.mode) * 9 + STRIP_DOMAINS.indexOf(readSel.domain) * 3 + STRIP_GRAINS.indexOf(readSel.grain);
-    const READ_AFF = { names: { Existence: 2, Figure: 2 }, connections: { Structure: 2, Figure: 1, Pattern: 1 }, figures: { Structure: 2, Figure: 1, Pattern: 1 }, patterns: { Pattern: 2 }, views: { Pattern: 1, Ground: 1 }, sources: { Ground: 2 }, surprise: { Pattern: 1, Figure: 1 } };
-    const readScore = id => { const a = READ_AFF[id] || {}; return (a[readSel.mode] || 0) * 4 + (a[readSel.domain] || 0) * 2 + (a[readSel.grain] || 0); };
-    const goalCards = GOALS.map((g, i) => ({ g, i, s: readScore(g[0]) + ((i + readIndex) % 7) / 10 })).sort((a, b) => b.s - a.s)
-      .map(x => ({ label: x.g[1], question: x.g[2], count: counts[x.g[0]], headline: heads[x.g[0]], examples: ex[x.g[0]], onClick: () => this.go(x.g[0]) }));
-    const liveDocs = A.docs.filter(d => this.isLiveDoc(d));
-    const seenReadable = A.docs.filter(d => !this.isLiveDoc(d) && this.mOf(d).status === 'seen' && (d.text || '').trim().length > 40);
-    const noGround = {
-      on: !isEmpty && A.docs.length > 0 && !A.docs.some(d => this.counted(d)),
-      line: liveDocs.length ? plural(liveDocs.length, 'link') + ' saved, and none could be read into the workspace — a page that blocks reading gives the fold no sentences to stand on.'
-        : seenReadable.length ? plural(seenReadable.length, 'document') + ' added but not kept as a source yet — keep ' + (seenReadable.length === 1 ? 'it' : 'them') + ' to read and ask.'
-        : plural(A.docs.length, 'source') + ' read, and none carried a statement the fold could stand on.',
-      hasLinks: liveDocs.length > 0, links: liveDocs.slice(0, 5).map(d => ({ title: short(d.title || d.url, 64), onOpen: () => window.open(d.url, '_blank', 'noopener') })),
-      canKeep: seenReadable.length > 0, keepLabel: 'Keep ' + plural(seenReadable.length, 'source'),
-      onKeep: () => { seenReadable.forEach(d => this.setMeta(d.id, { status: 'source' })); this.setState({ view: 'summary' }); },
-      onAdd: () => { this._add = null; this.setState({ showAdd: true }); },
-    };
-    const hasGoalCards = docsIn.length > 0;
-    const checks = [
-      ...(juncMode ? (JN.length ? [{ label: plural(JN.length, 'junction') + ' between independent sources that nothing in the record links', onClick: () => this.go('surprise') }] : [])
-        : suF.length ? [{ label: plural(suF.length, 'statement') + ' in ' + (SU.lensLabel || 'this view') + ' moved the picture more than chance', onClick: () => this.go('surprise') }] : []),
-      ...differ.slice(0, 3).map(u => ({ label: 'Counts of ' + u.unit + ' differ between sources', onClick: () => this.sel('unit', u.unit) })),
-      ...(echoConf.length ? [{ label: plural(echoConf.length, 'repeated claim') + ' with different numbers', onClick: () => this.go('patterns') }] : []),
-      ...(unattributed.length ? [{ label: plural(unattributed.length, 'statement') + ' with no one named as responsible', onClick: () => this.go('sources') }] : []),
-      ...(single.length ? [{ label: plural(single.length, 'name') + ' found in only one source', onClick: () => this.go('names') }] : []),
-    ];
     const qv = (S.q || '').trim();
     const dv = (S.qDraft !== undefined ? S.qDraft : S.q || '').trim();
     const isOmniUrl = v => /^(https?:\/\/|www\.)\S+$|^[\w-]+(\.[\w-]+)*\.[a-z]{2,}(\/\S*)?$/i.test(v);
@@ -7465,13 +7260,9 @@ class Component extends DCLogic {
       this.setState(s => ({ q: v, qDraft: undefined, view: 'search', readDoc: null, srN: 25, qaN: 0, prevView: s.view === 'search' || s.view === 'reader' ? (s.prevView || 'summary') : s.view })); };
     const omniOpen = live => { const v = typeof live === 'string' ? live : dv; if (!isOmniUrl(v)) return; clearTimeout(this._omniT); this.setState({ q: '', qDraft: undefined }); this.ingestUrl(/^https?:\/\//.test(v) ? v : 'https://' + v, { open: true }); };
     Object.assign(this._extra = {}, { ...this.qaVals(A, F, qv, view), ...this.draftVals(A), ...this.pfCoVals(A), ...this.dbVals(A, view), ...this.askVals(A, view), askFold: () => { const q = (this.state.q || '').trim(); this.setState({ view: 'ask', readDoc: null }); setTimeout(() => this.askSend(q), 0); }, ...this.netVals(A, view), ...this.readingVals(A, view),
-      ...(() => { const HL = A.docs.length ? this.headlines(A) : []; return { hasHeadlines: HL.length > 0, headlines: HL.map(x => ({ ...x, onClick: () => this.read(x.doc, x.stId), ...this.pinF(A.byId[x.stId]) })) }; })(),
-      ...(() => { const CAP = 6; const shown = P.groups.slice(0, CAP); const restN = P.groups.slice(CAP).reduce((s, p) => s + p.n, 0) + P.strayN;
-        return { hasParadigms: P.groups.length > 0, paradigmsNote: P.groups.length > 0 ? 'This workspace holds ' + plural(P.groups.length, 'separate topic') + ' -- discovered from what’s actually here, not declared.' : '', hasMoreParadigms: restN > 0, moreParadigmsLine: plural(restN, 'more source') + " that don't belong to any of these.",
-        paradigmList: shown.map(p => ({ label: p.label, n: plural(p.n, 'source'), onOpen: () => onTopicGroup(p), canFork: p.docs.some(d => (S.added[cid] || []).some(a => a.id === d.id)), onFork: () => this.forkParadigm(p) })) }; })(),
       pinPop: S.pinPop && view === 'reader' ? { has: true, x: S.pinPop.x + 'px', y: S.pinPop.y + 'px', onPin: e => { e.preventDefault(); this.pinSelection(); }, onCorrect: e => { e.preventDefault(); this.openCorr(S.pinPop.text); } } : { has: false },
       hasPinToast: !!S.pinToast, pinToast: S.pinToast || '', goDraft: () => { this.setState({ pinToast: '' }); this.go('draft'); }, plainRef: this.plainRef, omniRef: this.omniRef,
-      rdPins: (() => { const n = view === 'reader' ? this.activePins().filter(p => p.docId === S.readDoc).length : 0; return { has: n > 0, label: plural(n, 'pin') + ' from this source →' }; })(), goalNav, navGroups, goalCards, noGround, hasGoalCards, checks, hasChecks: checks.length > 0, omniUrl, omniOpen,
+      rdPins: (() => { const n = view === 'reader' ? this.activePins().filter(p => p.docId === S.readDoc).length : 0; return { has: n > 0, label: plural(n, 'pin') + ' from this source →' }; })(), navGroups, omniUrl, omniOpen,
       ...(() => {
         if (view !== 'search' || !qv) return { sr: { sub: '', names: [], docs: [], figs: [], sts: [], co: [], others: [] } };
         const c = this.qc(A); const q = c.q;
@@ -7543,14 +7334,7 @@ class Component extends DCLogic {
       ...svVals,
       sourceKindsUseful: tabs.length > 2, sourceOptionsActive: svTab !== '__all' || svMode !== 'cards', sourceOptionsLabel: 'Source options' + (svTab !== '__all' ? ' · ' + svTab : '') + (svMode !== 'cards' ? ' · Table' : ''), showSourceGroupLabels: svVals.svCardGroups.length > 1, hasGaps: gaps.length > 0, toolsOpen: ['names', 'records', 'connections', 'ingest'].includes(view), timeFilterActive: !!f.range, timeControlLabel: f.range ? 'Time filter · active' : 'Filter by time',
       hasFacets: false, srcGroups: svVals.svCardGroups.map(g => ({ ...g, ...this.capL('sg:' + g.label, g.items, 60) })), srcFacets,
-      topic: topicStr, hasTopic: this._fold.length > 0, onTopic: e => this.setMeta('__topic', e.target.value),
-      about: (this.metaAll()[this.corpusId()] || {}).__about || '', onAbout: e => this.setMeta('__about', e.target.value), aboutPlaceholder: 'A summary of what these sources, taken together, are about.',
-      inferredTopic: inferred ? inferred.name : '', topicPlaceholder: inferred ? 'e.g. ' + inferred.name : 'e.g. the bridge collapse',
-      canAdopt: !this._fold.length && !!inferred, adoptTopic: () => inferred && this.setMeta('__topic', inferred.name),
-      foldLine: this._fold.length ? (() => { const all = A.sts.filter(s => this._cnt.has(s.doc)); const k = all.filter(s => this.inFold(s)).length; return k + ' of ' + all.length + ' statements fall inside the fold.'; })() : 'No topic yet, so everything counts.',
-      showOutside: !!S.showOutside, toggleOutside: () => this.setState({ showOutside: !S.showOutside }),
       hasPairsHidden: D.edgeHidden > 0, pairsHidden: plural(D.edgeHidden, 'other pair') + ' share a statement only once, or no more often than chance would give, so ' + (D.edgeHidden === 1 ? 'it is' : 'they are') + ' left out.',
-      hasSeen: seenDocs.length > 0, seenLine: plural(seenDocs.length, 'opened link') + ' not yet kept as ' + (seenDocs.length === 1 ? 'a source' : 'sources'), goSources: () => this.go('sources'),
       readerSeen: !!(S.readDoc && A.docById[S.readDoc] && this.mOf(A.docById[S.readDoc]).status === 'seen'),
       readerFold: S.readDoc && this._fold.length ? ' ' + (A.stsByDoc[S.readDoc] || []).filter(s => this.inFold(s)).length + ' of its statements touch the topic.' : '',
       readerKeep: () => this.setMeta(S.readDoc, { status: 'source' }), readerDiscard: () => this.discard(S.readDoc),
@@ -7589,8 +7373,7 @@ class Component extends DCLogic {
       openAdd: () => { this._add = null; this.addState().baseAdded = (S.added[cid] || []).length; this.setState({ showAdd: true }); }, closeAdd: () => this.setState({ showAdd: false }),
       openNewWs: () => this.createWorkspace(), openTask: () => this.go('ingest'),
       closeAddBg: e => { if (e.target === e.currentTarget) this.setState({ showAdd: false }); },
-      goOverview: () => this.go('overview'), goSummary: () => this.go('summary'), summaryBtn: hi(view === 'summary'),
-      isEmpty, showWelcome: isEmpty && view !== 'ask', hasContent: !isEmpty, v: V, hdr, summaryRows,
+      isEmpty, showWelcome: isEmpty && view !== 'ask', hasContent: !isEmpty, v: V, hdr,
       docCards, gaps, nameGroups, nameTable, corr: this.corrVals(), typeBlocks, measures, noMeasures: !measures.length, ...(() => { const c = this.capL('stg', stGroups, 8); return { stGroups: c.items.map(g => ({ ...g, ...this.capL('stg:' + g.title, g.items, 4) })), stgMore: c }; })(),
       graphEl, timeInfo, ...orbX, ...(() => { const c = this.capL('pairs', pairs, 12); return { pairs: c.items, pairsMore: c }; })(), noPairs: !pairs.length, frameCols: frameCols.map(c => ({ ...c, ...this.capL('fr:' + c.label, c.items, 5) })), timeBars, ...(() => { const c = this.capL('topics', topicChips, 24); return { topicChips: c.items, topicMore: c }; })(), ...(() => { const c = this.capL('srcbars', [...sourceBars].sort((a, b) => +b.n - +a.n), 12); return { sourceBars: c.items, srcBarMore: c }; })(), shapes, noShapes: !shapes.length, hasRoutine: (this._routineN || 0) > 0, routineLine: plural(this._routineN || 0, 'routine agreement') + ' hidden: repeated by several sources, but about names and words that appear together in most sources anyway.', holds, breaks, noBreaks: !breaks.length,
       hdrShow: !isEmpty && view !== 'reader' && view !== 'profile' && view !== 'ask' && view !== 'draft',
