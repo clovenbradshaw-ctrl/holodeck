@@ -158,12 +158,18 @@ export async function turn(conv, IX, question, { base = OLLAMA, model = DEFAULT_
   // prompt: with no passages in view that prompt's "say what is missing"
   // instruction makes the model answer "how are you" with a request for
   // passages. Plain conversation gets the plain prompt instead.
-  // THE SUBJECT FOLD, for the turn. Not the whole of every source — the part of
-  // the workspace that bears on what is being discussed: the turn's own
-  // retrieved passages, read through the engine and folded at the question's
-  // subject. One ladder over the subject, drawn from wherever its sentences
-  // live. Zero model. `docs` is accepted for callers that want a whole-source
-  // fold; the subject fold is the default.
+  // THE SUBJECT FOLD — ON, AND ADDITIVE. Its job is the VOID: when the material
+  // yields too few readable claims about the subject, the fold says so
+  // explicitly (DEF·Ground) instead of vanishing, and carries what the material
+  // DOES state, grounded. A silent absence is what a model fills from memory, so
+  // the void is never optional. The earlier harm — the fold DISPLACING the
+  // verbatim source — is closed by construction: the material always rides
+  // beside the fold now (see build() below), so the fold can add a reading and
+  // a void without taking the source's own words away. (Earlier "fold worse
+  // than raw" runs measured a pipeline that never sent material at all — a
+  // contentless question took the no-material branch; the real, material-present
+  // run showed the fold a wash at worst. An even earlier "3/3 turn" was a
+  // tautology.) summarize:false remains available to omit it entirely.
   let synopsis = null; let garyCheck = null;
   if (summarize) {
     try {
@@ -172,22 +178,37 @@ export async function turn(conv, IX, question, { base = OLLAMA, model = DEFAULT_
     } catch (e) { synopsis = null; }
   }
   let offered = ranked.slice();
-  const hasMaterial = offered.length > 0 || !!((computed && computed.text) || (reading && reading.text) || (synopsis && synopsis.text));
+  // A VOID fold is itself a fact in view — the workspace's silence — so it makes
+  // the turn a MATERIAL turn (the reporter prompt), never small talk. Without
+  // this, a question that retrieves nothing falls to CHAT_PROMPT and the model
+  // answers a research question with a greeting (measured: "What did the audit
+  // find about the missing contract funds?" → "I'm ready to help! What can I do
+  // for you?"). The variable was named for the mirror and used as the door.
+  const hasMaterial = offered.length > 0 || !!(synopsis && synopsis.text) || !!((computed && computed.text) || (reading && reading.text));
   const chatMode = isSmallTalk(question) || !hasMaterial;
   const activePrompt = chatMode ? CHAT_PROMPT : BASE_PROMPT;
-  // THE FOLD AS INFORMATION, AND GARY'S CHECK. The summary is a set of the
-  // material's own sentences about the subject — a FACT in view, not a task.
-  // Wording matters to a small mouth: the first build labeled it like an
-  // instruction ("the source summarized from its own sentences...") and put it
-  // first, and the model answered the label instead of the question. Here it is
-  // stated as what it is, the person's own question stays the final turn
-  // (buildTurnMessages puts it last), and Gary reads the composed messages
-  // against his rules before they ship. A REFUSE finding withholds the fold
-  // rather than sending a prompt he objects to.
+  // THE FOLD AS INFORMATION, AND GARY'S CHECK.
+  //
+  // A NON-VOID fold is the material's own selected sentences about the subject —
+  // a FACT in view, placed BESIDE the verbatim material (never in place of it:
+  // measured, the fold alone carried less than the source's own words and
+  // displaced them). It is stated as what it is, the person's own question stays
+  // the final turn, and Gary reads the composed messages before they ship.
+  //
+  // A VOID fold (subjectSummary.void) is the summary's REAL job: when the
+  // material yields too few readable claims to fold, the model is told the
+  // emptiness EXPLICITLY — what the material does state, grounded, and that it
+  // states nothing on the subject. A silent absence is what a model fills from
+  // memory (the "William R. Hargis" incident); the mechanical reader is the one
+  // faculty that can declare the void at the point of the subject, so it does.
   const foldAsFact = synopsis && synopsis.text
-    ? 'The material\u2019s own sentences about this, verbatim:\n' + synopsis.text
+    ? (synopsis.void
+      ? 'What the material states, and does not state, about this:\n' + synopsis.text
+      : 'The material\u2019s own sentences about this, verbatim:\n' + synopsis.text)
     : null;
   const build = (off, facts, fold) => {
+    // The verbatim material ALWAYS rides (the surf's spans when the surf bound,
+    // else the deduped source). The fold is added beside it, never instead.
     const raw = facts && !facts.empty ? spanBlock : buildSourceBlock(dedupeSourceText(off, relations));
     let sb = [facts ? facts.text : null, fold, raw].filter(Boolean).join('\n\n');
     if (reading && reading.text) sb = (sb ? sb + '\n\n' : '') + 'What the reader established about the names asked about:\n' + reading.text;
@@ -331,7 +352,18 @@ const nameFold = (x) => String(x == null ? '' : x).normalize('NFD').replace(/[\u
  *  the question's names build, one ladder over the subject. */
 export async function subjectSummary(passages, { question = '', size = 5, reader: R = null } = {}) {
   const list = (passages || []).filter(p => p && typeof p.text === 'string' && p.text.trim().length > 40);
-  if (!list.length) return null;
+  // THE VOID AT THE RETRIEVAL BOUNDARY. No passage shares a word with the
+  // question — the workspace states nothing it could find on this. That is the
+  // void in its strongest form, and it must be SAID, not returned as null (which
+  // makes the turn fall to small talk, the model answering a research question
+  // with "how can I help?"). This is a fact about the material, never a
+  // prohibition, so Gary passes it.
+  if (!list.length) {
+    return {
+      void: true, at: 'retrieval', n: 0, forWhom: false, one: '', five: [], three: [], spans: [], monotone: true, closest: [],
+      text: 'No passage in the workspace shares a word with this question, so nothing here states anything about it. There is no grounded material to answer from — say plainly that the workspace is silent on this rather than answering from general knowledge.',
+    };
+  }
   const rr = R || (await reader());
   // one synthetic analysis over the retrieved passages, addressed by their own
   // source + span so every claim grounds back into the real document
@@ -355,7 +387,6 @@ export async function subjectSummary(passages, { question = '', size = 5, reader
         polarity: c.polarity || '+', rel: cleanText(c.label || ''), verdict: c.verdict, year: null });
     }
   }
-  if (A.sts.length < MIN_CLAIMS_FOR_LADDER) return null;
   // the subject's identity: the claims that name what the question names
   let forWhom = null;
   const qNames = questionNames(question).map(nameFold);
@@ -366,8 +397,34 @@ export async function subjectSummary(passages, { question = '', size = 5, reader
   const DOC = '__subject__';
   const one = { docs: [{ id: DOC, title: 'the subject', year: null }], docById: { [DOC]: { id: DOC, title: 'the subject', year: null } }, sts: A.sts.map(s => ({ ...s, doc: DOC })), byId: {}, stsByDoc: {} };
   for (const s of one.sts) one.byId[s.id] = s; one.stsByDoc[DOC] = one.sts;
-  let L; try { L = ladder(one, DOC, forWhom ? { forWhom } : {}); } catch (e) { return null; }
-  return { text: 'One sentence: ' + L.one.lines[0] + (size >= 5 ? '\n' + L.five.lines.map(l => '· ' + l).join('\n') : ''), one: L.one.lines[0], five: L.five.lines, three: L.three.lines, spans: L.five.spans, monotone: L.monotone, n: one.sts.length, forWhom: !!forWhom };
+  // THE VOID (DEF·Ground, Clearing). When the material yields too few claims to
+  // fold — the subject is absent, or the material is opinion the reader cannot
+  // reduce to relations — the summary must NOT vanish. A silent absence is
+  // exactly what a model fills from memory (the "William R. Hargis" incident,
+  // fact-block.js's own header). So this returns EVERYTHING it did find, with a
+  // typed emptiness and the closest grounded spans, never `null`. The void is
+  // the mechanical summary's real job: it is the one reader that can say, at the
+  // point of the subject, WHAT the material does and does not state.
+  if (A.sts.length < MIN_CLAIMS_FOR_LADDER) {
+    const closest = A.sts.slice(0, 6).map(st => ({ text: cleanText(st.text), span: { doc: st.doc, s: st.s, e: st.e } }));
+    const empty = A.sts.length === 0;
+    return {
+      void: true, n: A.sts.length, forWhom: !!forWhom, one: '', five: [], three: [], spans: [], monotone: true,
+      closest,
+      // Every clause here is a FACT about the material the reader can stand on,
+      // never a prohibition aimed at the mouth (Gary's information-not-
+      // prohibition rule): it states what is present and what is not.
+      text: (empty
+        ? `The material yields no readable claim about ${qNames.length ? 'the subject asked about' : 'this'} at all — it is present but the reader could reduce none of it to a relation. There is therefore no grounded summary to give.`
+        : `The material yields only ${A.sts.length} readable claim${A.sts.length === 1 ? '' : 's'} about this — too few to select a summary from. The closest it does state, verbatim:\n` +
+          A.sts.slice(0, 6).map(st => '· ' + cleanText(st.text)).join('\n')),
+    };
+  }
+  let L; try { L = ladder(one, DOC, forWhom ? { forWhom } : {}); }
+  catch (e) {
+    return { void: true, n: A.sts.length, forWhom: !!forWhom, one: '', five: [], three: [], spans: [], monotone: true, closest: A.sts.slice(0, 6).map(st => ({ text: cleanText(st.text), span: { doc: st.doc, s: st.s, e: st.e } })), text: `The summary could not be built from ${A.sts.length} readable claim(s): ${String(e && e.message || e)}` };
+  }
+  return { void: false, text: 'One sentence: ' + L.one.lines[0] + (size >= 5 ? '\n' + L.five.lines.map(l => '· ' + l).join('\n') : ''), one: L.one.lines[0], five: L.five.lines, three: L.three.lines, spans: L.five.spans, monotone: L.monotone, n: one.sts.length, forWhom: !!forWhom };
 }
 const cleanText = (s) => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
 

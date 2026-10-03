@@ -69,6 +69,13 @@ const clean = (s) => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
 // NL → GFP → (language grammar) → NL, never NL → NL.
 const GFP = await import('../eoreader7/native/kernel/gfp-claim.js').catch(() => import('./vendor/eoreader7/native/kernel/gfp-claim.js')).catch(() => null);
 
+// The English evaluative lens (one giver for the fold and the archons). Vendored
+// byte-identical; imported at the top so `stanceOf`/`STANCE_GIVER` are bound for
+// conclusionOf and worth() on first call, never left in a temporal dead zone.
+const _stance = await import('./vendor/eoreader7/native/organs/stance.js').catch(() => ({ stanceOf: () => 0, GIVER: null }));
+export const stanceOf = _stance.stanceOf;
+export const STANCE_GIVER = _stance.GIVER;
+
 /** claimsFromReport(report, { docId }) -> the engine's OWN relation-reader
  *  output (organs/hypergraph.js::read()) turned into the claim shape the
  *  summary consumes. This is the ONLY honest source of claims: no regex, no
@@ -538,20 +545,15 @@ export function conclusionOf(claims, A) {
   return { names: top(names, 5), frames: top(frames, 3), measures: top(figs, 3), stance: Math.sign(stance), n: claims.length };
 }
 
-// THE ENGLISH EVALUATIVE LENS (Handle: the adapter's own grammar — an English
-// convention, not universal; a language's stance markers are its own). Used
-// only to let a fold-at-an-identity see a VERDICT as the inversion of the
-// identity's held evaluation, never as a content classifier.
-export const STANCE_GIVER = "English evaluative lens (adapter grammar) — not universal; replace per language";
-const STANCE_POS = /\b(good|best|better|warranted|justified|supports?|supported|works?|working|effective|reasonable|sensible|targeted|necessary|needed|solved?|improves?|improved|safe|safety|benefit\w*|goal|should|recommend\w*|valuable|worth|smart|common sense)\b/i;
-const STANCE_NEG = /\b(overreach|unnecessary|waste\w*|problem\w*|harm\w*|danger\w*|bad|fail\w*|broken|boondoggle|whin\w*|wrong|risk\w*|costly|excessive|unwarranted|fraud\w*|dismiss\w*|affront|silly|nonsense)\b/i;
-/** stanceOf(text) -> +1 (positive), -1 (negative), 0 (neutral) on the English lens. */
-export function stanceOf(text) {
-  const t = String(text ?? "");
-  const pos = (t.match(new RegExp(STANCE_POS, "gi")) || []).length;
-  const neg = (t.match(new RegExp(STANCE_NEG, "gi")) || []).length;
-  return Math.sign(pos - neg);
-}
+// THE ENGLISH EVALUATIVE LENS — ONE giver for the whole system: organs/stance.js
+// in eoreader7 owns it (vendored byte-identical under vendor/), the fold imports
+// it, and the archons' Gornick probe (the-fold/archon-rules.js) reads the same
+// lens, so a stance the fold selects FOR and a stance the delivery is judged
+// AGAINST can never disagree. The import is at the TOP (ESM hoists it, and
+// conclusionOf above needs it bound before first call — an absolute-path
+// re-export here previously broke on any machine but this one and left stanceOf
+// in its temporal dead zone, a load-time failure found by the surf/fold
+// experiment, 2026-10-02).
 
 /** windowOf(orders, derivers) -> the shallowest depth within a set of claims at
  *  which the document's own conclusion is settled — dmdWindow over the ordered

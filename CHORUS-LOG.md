@@ -1,4 +1,13 @@
 
+## 2026-10-02 — the mechanical summary's real job is the VOID; wired as an additive fact (main, summary-ladder)
+fast: 4 files · law: ok
+| lens | citation | file:line | verdict | one line |
+| Diaconis | the effect was measured on the wrong branch | holodeck-ask.js:181 | fixed | the earlier fold experiments measured a NO-MATERIAL turn (a contentless question retrieved 0 passages and fell to CHAT_PROMPT); the material-present run shows fold on/off a wash. Corrected in the header |
+| Feynman | a verdict with no citation trail | holodeck-ask.js:342 | fixed | subjectSummary now returns a typed VOID (never null) with the closest grounded spans; the no-retrieval void is tested (holodeck-void.test.mjs) |
+| Simon/Chekhov | a real mechanism shipped unwired | holodeck-ask.js:209 | fixed | hasMaterial now treats a void fold as material, so a research question the workspace is silent on gets the reporter prompt + void, not small talk (measured: "I'm ready to help!" → "The workspace is silent on this.") |
+| Dijkstra | an absolute path / machine scope | holodeck-summary.js:545 | fixed | the stance re-export pointed at /Users/mlacy/.../eoreader7 (broke on any other machine) and left stanceOf in its temporal dead zone; vendored stance.js and imported it at the top |
+clean: Holmes, Greenberg, Alexander, Ostrom
+
 ## 2026-10-02 — FALSIFIED: the "3/3 turn" was majority-echo; restated honestly (main, summary-ladder)
 fast: 2 files · law: ok
 | lens | citation | file:line | verdict | one line |
