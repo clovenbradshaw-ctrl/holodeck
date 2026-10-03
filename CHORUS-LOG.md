@@ -1,4 +1,11 @@
 
+## 2026-10-02 — FALSIFIED: the "3/3 turn" was majority-echo; restated honestly (main, summary-ladder)
+fast: 2 files · law: ok
+| lens | citation | file:line | verdict | one line |
+| Diaconis | the effect the test found is an artifact of the test | holodeck-ask.js:15 | fixed | the identity was set to -docStance, so the fold surfaced MAJORITY claims by construction and the metric rewarded echoing them (0/4 minority picks); a turn is a minority inversion the construction could not surface. Restated: held-identity fold carries the genuine turn 3/5 vs baseline 2/5, empty/null 0/5 on one specimen |
+| Feynman | a verdict with no citation trail | holodeck-ask.js:17 | fixed | the 3/3 headline is retracted in the header with the actual measured numbers and the falsifier named (falsify-turn2.mjs) |
+clean: Holmes, Frankfurt, Greenberg, Alexander, Ostrom
+
 ## 2026-10-02 — the subject fold improved to a decisive, grounded win; markup blanked (main, summary-ladder)
 fast: 3 files · 24 tests pass · law: ok
 | lens | citation | file:line | verdict | one line |

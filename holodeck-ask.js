@@ -15,16 +15,25 @@ import { ladder, conclusionOf, stanceOf, select } from './holodeck-summary.js';
 // Gary, the prompt archon: he owns what the mouth is handed, in what order, and
 // what never enters. The subject fold is INPUT, so it goes through his door.
 //
-// MEASURED (summary-fold-experiment.mjs, gemma2:2b, every arm through Gary):
-// FOLD-AT-IDENTITY CARRIES THE TURN 3/3; raw-source baseline 1/3; the empty
-// fold (no identity) 0/3; an unrelated-subject null 0/3 — with ZERO fabricated
-// figures in every arm. Two things made the difference, both closed from the
-// first run's named gaps: (1) the fold must be at an IDENTITY — the prior the
-// material holds, inverted — or it does not see the turn at all (empty 0/3 vs
-// identity 3/3); (2) markup must be blanked before folding — a CSS-heavy
-// document was folded as "CSS styles for social bookmarking buttons" until
-// blankMarkup (holodeck-reader.js) removed it, after which it folded its real
-// content. Gary's door keeps the fold a FACT in view and the question last.
+// MEASURED, THEN FALSIFIED AND RESTATED. The first experiment reported
+// "fold-at-identity carries the turn 3/3" against a raw baseline of 1/3. That
+// was MISPABELED: its identity was set to the OPPOSITE of the document's
+// dominant stance, so the fold surfaced the document's MAJORITY-stance claims
+// by construction, and the "carried" metric (answer stance != identity stance)
+// simply rewarded echoing them. It measured MAJORITY-ECHO, not a turn. A turn
+// is a minority inversion, and the construction could not surface one (0/4
+// minority picks against 2/4 when folding at a HELD identity).
+//
+// The honest result, the tautology removed (falsify-turn2.mjs, one specimen,
+// the turn's own tokens): folding at a HELD identity (a reader who holds the
+// document's majority, so the MINORITY audit finding is what overturns it)
+// carries 3/5; the raw baseline 2/5; the empty fold 0/5; an unrelated null
+// 0/5. A weaker but real effect on one specimen, and the null is clean. The
+// mechanism — fold at an identity, and the turn is what inverts it — is sound;
+// the headline number was not. Two things remain closed from the first run:
+// the fold must be at an IDENTITY or it does not see a turn (empty 0/5), and
+// markup must be blanked (a CSS document folded as "CSS styles" until
+// blankMarkup). Gary's door keeps the fold a FACT and the question last.
 import { makeGary } from './vendor/eoreader7/native/organs/gary.js';
 let _gary = null; const gary = () => _gary || (_gary = makeGary());
 import { coverage, stripSelfCitations } from './vendor/eoreader7/native/organs/cite.js';
