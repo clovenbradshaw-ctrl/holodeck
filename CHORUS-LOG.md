@@ -57,3 +57,12 @@ fast: 3 files added · 16 tests pass · law: ok
 | Diaconis | null touched | holodeck-summary.test.mjs | noted | resolver edges are null-controlled (word salad manufactures none) |
 | Simon/Chekhov | new organs tested | holodeck-summary.test.mjs | noted | 16 pins; the engine path is a manual integration, not yet a test import |
 clean: Dijkstra (identity is exact-string by design), Pearl, Ostrom, Frankfurt, Alexander, Kondo
+
+## 2026-10-02 — local work swept in: topic scoping chips, conversation tabs, notes toggle, the pyodide fallback engine, the four summary-fold experiment drivers, and the holodeck-latest lineage merged (main, merge)
+fast: 7 files · 59 tests pass (jupyter-runtime passes with ~/holodeck-notebook-venv on PATH; ipykernel/nbformat were missing from homebrew python3) · law: ok (WARN pre-existing cites P186 P199 P22 P232 P244 P32 P4 P55 P80 and dup S17/S96 — carried by earlier commits in range, not this one)
+| lens | citation | file:line | verdict | one line |
+| Simon/Chekhov | real mechanism shipped unwired | holodeck-pyodide.js | noted | wired: holodeck-notebook.js:135 browserEngine() is the no-server fallback; verified import path |
+| Kondo | stray root drivers | experiment-codegen-summary.mjs | noted | the four summary-fold drivers are scratch nothing imports; committed per explicit user instruction, named in the commit message |
+| Diaconis | merge resolution | index.html:7641 | fixed | the Summary mode (HEAD) and Regions mode (merged lineage) both kept, additive props, no shared state touched |
+| Marshall | merge legality | — | noted | both lineages merged without amending either; holodeck-latest's branch and backup tag untouched |
+clean: Holmes, Pearl, Ostrom, Frankfurt, Alexander, Greenberg (no new language-scoped or identity logic added; the merged screen-regions code was already linted in its own lineage)
