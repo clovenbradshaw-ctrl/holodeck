@@ -9,21 +9,22 @@ import * as FOLD from './vendor/the-fold/fold.js';
 import { chunkSource, retrieve, buildSourceBlock, openQuestions, readRange, tokenize, foldDiacritics } from './vendor/eoreader7/native/organs/source.js';
 import { meetingBoundaries } from './vendor/eoreader7/native/organs/speaker.js';
 import { buildFactBlock, dedupeSourceText } from './vendor/eoreader7/native/organs/fact-block.js';
-import { makeEngineRelationReader, readCorpus } from './holodeck-reader.js';
+import { makeEngineRelationReader, readCorpus, blankMarkup } from './holodeck-reader.js';
 let _reader = null; const reader = () => _reader || (_reader = makeEngineRelationReader());
 import { ladder, conclusionOf, stanceOf, select } from './holodeck-summary.js';
 // Gary, the prompt archon: he owns what the mouth is handed, in what order, and
 // what never enters. The subject fold is INPUT, so it goes through his door.
 //
 // MEASURED (summary-fold-experiment.mjs, gemma2:2b, every arm through Gary):
-// the fold beats raw-source context and beats an unrelated-subject null on
-// carrying the turn (2/3 vs 1/3 each), with ZERO fabricated figures in every
-// arm. Two honest limits the same run found, recorded rather than hidden: the
-// empty fold (no identity) equals the identity fold here — the identity's
-// stance is not yet adding beyond the fold itself — and one CSS-heavy document
-// was folded as "CSS styles," a fold starved by markup (the raw arm's own
-// lesson). Gary's door is what keeps the fold a FACT in view and the person's
-// question the last turn; the fold is not a task.
+// FOLD-AT-IDENTITY CARRIES THE TURN 3/3; raw-source baseline 1/3; the empty
+// fold (no identity) 0/3; an unrelated-subject null 0/3 — with ZERO fabricated
+// figures in every arm. Two things made the difference, both closed from the
+// first run's named gaps: (1) the fold must be at an IDENTITY — the prior the
+// material holds, inverted — or it does not see the turn at all (empty 0/3 vs
+// identity 3/3); (2) markup must be blanked before folding — a CSS-heavy
+// document was folded as "CSS styles for social bookmarking buttons" until
+// blankMarkup (holodeck-reader.js) removed it, after which it folded its real
+// content. Gary's door keeps the fold a FACT in view and the question last.
 import { makeGary } from './vendor/eoreader7/native/organs/gary.js';
 let _gary = null; const gary = () => _gary || (_gary = makeGary());
 import { coverage, stripSelfCitations } from './vendor/eoreader7/native/organs/cite.js';
@@ -328,12 +329,15 @@ export async function subjectSummary(passages, { question = '', size = 5, reader
   const A = { docs: [], docById: {}, sts: [], byId: {}, stsByDoc: {} };
   const seen = new Set();
   for (const p of list) {
+    // blank markup IN PLACE (length-preserving) so CSS/HTML is never folded as
+    // prose — the offsets are unchanged, content-anchoring still lands.
+    const clean = blankMarkup(p.text);
     let report = null, read = null;
-    try { report = rr([{ ref: p.ref || (p.source + '#' + p.start + '-' + p.end), text: p.text }]); } catch (e) { continue; }
-    try { read = report.read(p.text); } catch (e) { continue; }
+    try { report = rr([{ ref: p.ref || (p.source + '#' + p.start + '-' + p.end), text: clean }]); } catch (e) { continue; }
+    try { read = report.read(clean); } catch (e) { continue; }
     for (const c of (read.claims || [])) {
       const sp = (c.spans || [])[0]; if (!sp || !sp.text) continue;
-      const at = p.text.indexOf(sp.text); if (at < 0) continue;
+      const at = clean.indexOf(sp.text); if (at < 0) continue;
       const s = (p.start || 0) + at, e = s + sp.text.length;
       const key = p.source + ':' + s + '-' + e; if (seen.has(key)) continue; seen.add(key);
       A.sts.push({ id: key, doc: p.source, s, e, text: cleanText(sp.text), readText: sp.text,

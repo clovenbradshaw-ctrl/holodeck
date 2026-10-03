@@ -28,20 +28,42 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { splitSentences } from './vendor/eoreader7/native/adapters/text/spans.js';
+import { extractSurfaces } from './vendor/eoreader7/native/adapters/text/surfaces.js';
 import { select, ladder, resolverEdges, tokens, vectors, cosine } from './holodeck-summary.js';
 
-const NAME_RUN = /\b(?:[A-Z][A-Za-z'’.-]+)(?:\s+(?:[A-Z][A-Za-z'’.-]+|of|the|and|on|for)){0,4}\b/g;
 const FIG_RE = /\$?\d[\d,.]*\s?(?:%|percent|million|billion|feet|ft|people|deaths|incidents)?/gi;
 const VERB_RE = /\b(is|are|was|were|has|have|had|does|do|did|will|would|can|could|should|shows?|found|reported|includes?|says?|said|makes?|took|taken|resulted|occurred|estimates?|recommends?|support|oppose|implement|pass|increase|decrease|reduc\w*|investigat\w*)\b/i;
 const clean = (s) => String(s).replace(/\s+/g, ' ').trim();
 
-/** The analysis the ladder consumes, built from a raw source with the same
- *  span discipline the test file uses: offsets on every sentence, names as
- *  capitalized runs, figures as number-ish tokens, a claim 8+ words with a verb. */
+/** The analysis the ladder consumes, built from a raw source with the REAL
+ *  reader's discipline: sentences by `splitSentences` (not a regex), names by
+ *  `extractSurfaces` (the material's own surface reader — a name is a surface
+ *  the reader individuates, never a capitalized run), figures by token.
+ *
+ *  WHY THE REAL READER (2026-10-02, the experiment's own finding): the
+ *  stand-in capitalized-run heuristic read a wikitext stylesheet
+ *  (".mw-parser-output .wn-social-bookmarks-box{background-color:#FFFFFF…}")
+ *  as claims and made it the document's "turn" — a summary folded at an
+ *  identity picked CSS. The reader that the fold must ride is the one that
+ *  segments prose and individuates names, so the surfaces reader supplies the
+ *  names and the splitter supplies the spans. A source with no individuated
+ *  surfaces keeps whatever names it has; the figures are always read from the
+ *  bytes. */
 export function analysisFromText(text, docId) {
   const sents = splitSentences(text);
+  // Names, per sentence, from the reader's own surface evidence: each surface
+  // is mapped to the sentences whose bytes contain it.
+  const surfaces = extractSurfaces([{ name: docId, text }], {}) || [];
+  const bySentence = new Map();
+  for (const s of surfaces) {
+    if (!s.surface || s.surface.length < 3) continue;
+    const idx = text.indexOf(s.surface);
+    if (idx < 0) continue;
+    const at = bySentence.get(idx);
+    if (at) at.push(s.surface); else bySentence.set(idx, [s.surface]);
+  }
   const sts = sents.map((s, i) => {
-    const names = [...new Set((s.text.match(NAME_RUN) || []).map((x) => x.trim()))].filter((n) => n.length > 2);
+    const names = [...new Set((bySentence.get(s.offset) || []).filter((n) => n.length > 2))];
     const figs = (s.text.match(FIG_RE) || []).map((raw) => ({ raw: raw.trim(), value: parseFloat(raw.replace(/[^\d.]/g, '')), unit: /%|percent/i.test(raw) ? 'percent' : '' }));
     const words = (s.text.match(/[A-Za-z]{2,}/g) || []).length;
     return { id: docId + ':' + i, doc: docId, s: s.offset, e: s.offset + s.text.length, text: s.text, names, figs, ref: /^Figure \d|^Credit:|^nd$/i.test(s.text.trim()), claimy: words >= 8 && VERB_RE.test(s.text), year: 2026 };

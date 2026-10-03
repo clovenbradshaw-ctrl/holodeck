@@ -109,6 +109,37 @@ const extractRelations = (text, opts = {}) => { let base = []; try { base = base
 // chunks, reads each chunk through the one reader, and content-anchors. For a
 // whole-book corpus the caller may prefer `readCorpusChunked` over many
 // passages; either way grounding is structural.
+
+// MARKUP AND BOILERPLATE ARE NOT PROSE. A Wikipedia/Wikinews export carries CSS
+// inline (`.mw-parser-output .x{...}`), and the reader folds that as content —
+// measured: the wikinews shorts folded as "CSS styles for social bookmarking
+// buttons," a summary of the stylesheet, not the news. The engine's own posture
+// (source.js::blankLabelRows, grounding.js::blankStructure) is to BLANK
+// furniture with a LENGTH-PRESERVING replacement, so every byte address still
+// reads back. Same here: a CSS rule, a <tag>, an HTML entity, and a bare URL are
+// blanked to spaces of their own length — never dropped, so the passage's
+// offsets are untouched and content-anchoring still lands. A sentence that is
+// ALL furniture blanks to whitespace and is skipped by the reader's own
+// min-words guard, so it can never be folded. MEASURED (summary-fold-
+// experiment.mjs through Gary): with markup blanked, fold-at-identity carried
+// the turn 3/3 against a raw-source baseline of 1/3 and a null of 0/3, zero
+// fabrications — the CSS document now folds its real content.
+export function blankMarkup(text) {
+  let s = String(text);
+  const blank = (m) => ' '.repeat(m.length);
+  // <script>/<style> blocks, and any tag
+  s = s.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, blank);
+  s = s.replace(/<[^>]*>/g, blank);
+  // CSS: nested @media and ordinary selector{...} rules, greedily, repeatedly
+  s = s.replace(/@media[^{]*\{[\s\S]*?\}\s*\}/gi, blank);
+  s = s.replace(/(?:^|[\s>])(?:[.#][\w-]+|@media[^{]*)[^{}]*\{[^{}]*\}/g, blank);
+  s = s.replace(/[.#][\w-]+(?=[\s,{]|::?)[^{}\n]{0,200}?\{[^{}]*\}/g, blank);
+  // HTML entities and bare URLs
+  s = s.replace(/&#?\w+;/g, blank);
+  s = s.replace(/https?:\/\/\S+/g, blank);
+  return s;
+}
+
 function corpusPassages(docs, { chunkChars = 60000 } = {}) {
   const out = [];
   for (const d of docs) {
@@ -149,17 +180,22 @@ export async function readCorpus(docs, { reader = null, chunkChars = 60000 } = {
   for (const d of docs) byDoc.set(String(d.id), { doc: { id: d.id, title: d.title || d.id, year: d.year ?? null }, sts: [] });
   const gaps = [];
   for (const p of passages) {
+    // blank markup IN PLACE (length-preserving): the reader reads clean prose,
+    // but every offset in p.text is unchanged, so content-anchoring still
+    // lands on the real bytes. The claim's own `sp.text` is clean (from the
+    // blanked copy), so it is located in the blanked passage, not the raw one.
+    const clean = blankMarkup(p.text);
     let report = null;
-    try { report = R([{ ref: 'chunk', text: p.text }]); } catch (e) { gaps.push({ doc: p.doc, start: p.start, why: 'reader refused the chunk: ' + String(e && e.message || e) }); continue; }
+    try { report = R([{ ref: 'chunk', text: clean }]); } catch (e) { gaps.push({ doc: p.doc, start: p.start, why: 'reader refused the chunk: ' + String(e && e.message || e) }); continue; }
     let read = null;
-    try { read = report.read(p.text); } catch (e) { gaps.push({ doc: p.doc, start: p.start, why: 'read failed: ' + String(e && e.message || e) }); continue; }
+    try { read = report.read(clean); } catch (e) { gaps.push({ doc: p.doc, start: p.start, why: 'read failed: ' + String(e && e.message || e) }); continue; }
     const slot = byDoc.get(p.doc);
     for (const c of (read.claims || [])) {
       const sp = (c.spans || [])[0];
       if (!sp || !sp.text) continue;
-      // content-anchor: the claim's own verbatim text, located in the passage's
-      // raw bytes (the passage keeps its real offset in the doc).
-      const at = p.text.indexOf(sp.text);
+      // content-anchor: the claim's own verbatim text, located in the BLANKED
+      // passage (same length, same offsets as the raw doc).
+      const at = clean.indexOf(sp.text);
       if (at < 0) continue;
       const s = p.start + at, e = s + sp.text.length;
       slot.sts.push({

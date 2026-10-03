@@ -1,4 +1,13 @@
 
+## 2026-10-02 — the subject fold improved to a decisive, grounded win; markup blanked (main, summary-ladder)
+fast: 3 files · 24 tests pass · law: ok
+| lens | citation | file:line | verdict | one line |
+| Feynman | no constant tuned to a golden | holodeck-reader.js:120 | noted | blankMarkup is length-preserving and rule-based (CSS/tag/entity/URL), not tuned; the experiment's 3/3 vs 1/3 is reported as measured, not asserted |
+| Greenberg | markup is not universal prose | holodeck-reader.js:112 | fixed | CSS/HTML is blanked before folding (a declared, script-agnostic rule); the reader never assumes markup is content |
+| Alexander | composition seam | holodeck-ask.js:167 | fixed | the fold composes as a fact through Gary; subjectSummary and readCorpus both blank markup, so every reader path agrees |
+| Simon/Chekhov | new/untested | holodeck-reader.test.mjs | fixed | blankMarkup pinned: length preserved, CSS/script gone, a prose sentence keeps its offset |
+clean: Holmes, Frankfurt, Dijkstra, Ostrom
+
 ## 2026-10-02 — the mechanical summary folds the whole corpus instantly, wired into the chat and the reader (main, summary-ladder)
 fast: 6 files · 30 tests pass · law: ok
 | lens | citation | file:line | verdict | one line |

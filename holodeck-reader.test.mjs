@@ -10,7 +10,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readCorpus, makeEngineRelationReader } from './holodeck-reader.js';
+import { readCorpus, makeEngineRelationReader, blankMarkup } from './holodeck-reader.js';
 
 // A real paragraph of English with recurring names and a relation the engine reads.
 const PARA = [
@@ -38,6 +38,17 @@ test('readCorpus — chunking does not lose the reading (chunked ≥ single-pass
   const single = R([{ ref: 'x', text: PARA }]).read(PARA).claims || [];
   const { A } = await readCorpus([DOC], { reader: R, chunkChars: 60 });
   assert.ok(A.sts.length >= single.length, `chunked ${A.sts.length} < single ${single.length}`);
+});
+
+test('blankMarkup — CSS and tags are blanked, length is preserved, prose survives', () => {
+  const src = 'News today. .mw-parser-output .box{color:#FFFFFF;border:1px solid red} More news here. <script>var x=1</script> Done.';
+  const out = blankMarkup(src);
+  assert.equal(out.length, src.length, 'length preserved — every offset still reads back');
+  assert.ok(!/color:#FFFFFF|border:1px|var x=1/.test(out), 'no CSS declaration or script body survives');
+  // the words that remain sit at the same index as in the source
+  assert.equal(out.indexOf('More news here.'), src.indexOf('More news here.'), 'a prose sentence keeps its offset');
+  assert.ok(out.includes('News today.'), 'prose survives');
+  assert.ok(out.includes('Done.'), 'prose survives');
 });
 
 test('readCorpus — a source too small to read yields no claims, never a fabricated one', async () => {
