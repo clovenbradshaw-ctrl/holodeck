@@ -37,6 +37,18 @@ fast: 6 files · 30 tests pass · law: ok
 | Frankfurt | placeholder | index.html:664 | clean | hasSyn guards a real block |
 clean: Diaconis, Pearl, Kondo
 
+## 2026-10-02 — perspectives read the text's own words; the surface sheds its chrome, and an import opens its reading replay by itself (main, merge + kondo)
+fast: 3 files · 14 tests pass · law: ok (WARN pre-existing S17/S96 duplicates in eoreader7/native/READING-SPEC.md, not this diff)
+| lens | citation | file:line | verdict | one line |
+| Feynman | a numeric constant in a comparison | holodeck-reader.js:277 | noted | the lemma pick is length ≥ 3 then shortest — a register rule, not a tuned threshold |
+| Dijkstra | locale/script scope | holodeck-reader.js:284 | noted | the head is read through the English pos prior by design; it picks an act label, never merges referents |
+| Greenberg | capitalisation gate / script scope | holodeck-reader.js:246 | fixed | the comment now declares the prior and register English: a script the prior cannot tag yields no act, shown as no chip; isNameWord only chooses "the" in an English label |
+| Holmes | identity fold from surface | holodeck-reader.js:276 | noted | canonical() folds a verb's forms via the lemmatizer, not referents; nothing is fused |
+| Ostrom | scope of the count | index.html:236 | noted | p.n counts the scoped statements the reading was derived from; the preview names "of N statements" |
+| Frankfurt | placeholder | index.html:237 | noted | the rows are computed labels carrying the material's own hits |
+| Simon/Chekhov | real mechanism shipped unwired | holodeck-ingest-player.js | noted | open() is hdFinish's dynamic import target; verified live (replay auto-opens, 33 events), chipFor retired by request |
+clean: none
+
 ## 2026-10-02 — the summary function, over anything, grounded and clickable (main, summary-ladder)
 fast: 3 files added · 16 tests pass · law: ok
 | lens | citation | file:line | verdict | one line |

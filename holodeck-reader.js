@@ -10,6 +10,7 @@ import { resolvePronouns } from './vendor/eoreader7/native/adapters/text/pronoun
 import { relationExtractorsFor } from './vendor/eoreader7/native/adapters/text/relations-language.js';
 import { classifyWord, dominantClass } from './vendor/eoreader7/native/adapters/text/wordclass.js';
 import { createLemmatizer, morphologyFromPrior } from './vendor/eoreader7/native/adapters/text/morphology.js';
+import { stanceWords } from './vendor/eoreader7/native/organs/stance.js';
 import * as P from './vendor/eoreader7/native/adapters/text/priors.js';
 
 const DETERMINERS = new Set([...P.DEFINITE_DETERMINERS, ...P.INDEFINITE_DETERMINERS]);
@@ -235,4 +236,82 @@ export async function makeEngineRelationReader(extra = {}) {
     blankFurniture: text => blankLabelRows(text, { minRun: 4, maxCell: 60 }),
     resolvePronouns, nounPhraseSubjects: true, phrasalPredicates: true, ...extra,
   });
+}
+
+// ── PERSPECTIVES (2026-10-02) ───────────────────────────────────────────────
+// A PERSPECTIVE is a read-as name derived from the material's own words, in the
+// strip's own register (gerund + complement: "Connecting two things"). The
+// word is the act a statement's own text states: a STANCE CLASS when the
+// material takes a position ("opposed to" → oppose), else the statement's VERB
+// head as the engine's own pos prior reads it (a modal never, a copula never;
+// the prior and the register are English — a script it cannot tag yields no
+// act, shown as no chip), else the English evaluative lens's own word
+// ("right", "effective") as a last resort. The object is the statement's second participant by role (its
+// end2), the text's own name, at most three words — "the" before a common
+// noun, none before a name. Zero model, deterministic, and every label is
+// folded through the same stance machinery the reader binds claims with, so a
+// stance class can never disagree with the reading that grounded it.
+const MODAL = new Set('shall will would can could may might must should do does did'.split(' '));
+const COPULA = new Set('is are was were be been being am'.split(' '));
+const gerundOf = w => w.endsWith('e') ? w.slice(0, -1) + 'ing' : w + 'ing';
+const isNameWord = o => /^[A-Z]/.test(o) && !/\b(the|a|of|for|to|and|by)\b/i.test(o);
+// The sentence-level stance test for PERSPECTIVES. The reader's own STANCE_CLASS
+// fires bare "against"/"anti" — right for a relation label ("spoke against"),
+// a false positive on a sentence's ordinary noun phrase ("Discrimination
+// Against Women"). Here only verb-carrying opposition counts; "opposed to" is
+// the copular form the reader already binds.
+const STANCE_SENT = [
+  ['support', /\b(?:supports?|supported|supporting|support(?:ive)?|backs?|backed|backing|endors(?:e|es|ed|ing)|favou?rs?|favou?red|favou?ring|champions?|championed|advocat(?:e|es|ed|ing)|defends?|defended|prais(?:e|es|ed|ing)|pro|solidarity|ally)\b/i],
+  ['oppose', /\b(?:oppos(?:e|es|ed|ing)|condemn(?:s|ed|ing)?|criticiz(?:e|es|ed|ing)|criticis(?:e|es|ed|ing)|denounc(?:e|es|ed|ing)|boycott(?:s|ed|ing)?|resist(?:s|ed|ing)?|protest(?:s|ed|ing)?|is\s+against|are\s+against|was\s+against|were\s+against|be\s+against|being\s+against)\b/i],
+];
+const stanceOfSentence = t => { const s = String(t || ''); for (const [k, re] of STANCE_SENT) if (re.test(s)) return k; return null; };
+
+/** perspectivesOf(sts, { top }) -> [{ act, tier, label, n, obj, hits }] — the
+ *  most-attested acts the material itself states, each named in the strip's
+ *  register and carrying the verbatim statements it was read from. `sts` are
+ *  statements ({ text, names }) in the workspace analysis's own shape. */
+export async function perspectivesOf(sts, { top = 6 } = {}) {
+  const { posPrior, lemmatizer } = await loadPriors();
+  const pos = posPrior || {};
+  const tagOf = w => { const t = pos[w]; if (!t) return null; let best = null, bn = 0; for (const [k, n] of Object.entries(t)) if (n > bn) { bn = n; best = k; } return best; };
+  const canonical = w => {
+    if (lemmatizer) { const ls = [...lemmatizer.lemmasOf(w)].filter(l => l.length >= 3); if (ls.length) return ls.sort((a, b) => a.length - b.length)[0]; }
+    return w.replace(/ies$/, 'y').replace(/ing$/, '').replace(/ed$/, '').replace(/s$/, '');
+  };
+  const actOf = st => {
+    const text = String(st.text || '');
+    const cls = stanceOfSentence(text);
+    if (cls) return { act: cls, tier: 'stance' };
+    const head = text.toLowerCase().replace(/[^a-z ]/g, ' ').split(/\s+/).filter(Boolean).find(w => {
+      const t = tagOf(w); if (t !== 'VERB' && t !== 'AUX') return false;
+      return !MODAL.has(w) && !(t === 'AUX' && !COPULA.has(w));
+    });
+    if (head) { const stem = canonical(head); if (stem.length >= 3) return { act: stem, tier: 'act' }; }
+    const sw = stanceWords(text);
+    const lens = [...(sw.pos || []), ...(sw.neg || [])].map(w => String(w).toLowerCase()).find(w => w.length >= 3);
+    return lens ? { act: lens, tier: 'lens' } : null;
+  };
+  const objectOf = st => cleanText(String((st.names || [])[1] || '')).split(' ').slice(0, 3).join(' ');
+  const acts = new Map();
+  for (const st of sts || []) {
+    if (cleanText(st.text || '').length < 8) continue;
+    const a = actOf(st); if (!a) continue;
+    const e = acts.get(a.act) || { act: a.act, tier: a.tier, n: 0, obj: '', hits: [] };
+    e.n++;
+    const obj = objectOf(st);
+    if (obj && !e.obj) e.obj = obj;
+    if (e.hits.length < 3) e.hits.push(cleanText(st.text).slice(0, 110));
+    acts.set(a.act, e);
+  }
+  const out = [];
+  for (const e of acts.values()) {
+    const cap = e.act[0].toUpperCase() + e.act.slice(1);
+    // the strip's register is gerund + complement for ACTS and STANCES; an
+    // evaluative LENS word is evidence, named as the text states it, never
+    // forced into a verb it is not ("Achievement", not "Achievementing").
+    const label = e.tier === 'lens' ? cap
+      : gerundOf(e.act)[0].toUpperCase() + gerundOf(e.act).slice(1) + (e.obj ? ' ' + (isNameWord(e.obj) ? e.obj : 'the ' + e.obj) : '');
+    out.push({ ...e, label });
+  }
+  return out.sort((a, b) => b.n - a.n).slice(0, top);
 }

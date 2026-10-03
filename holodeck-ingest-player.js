@@ -58,8 +58,6 @@ const CSS = `
 .hdp-ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .hdp-ctl .rd{font:12px 'JetBrains Mono',monospace;color:var(--ink2);font-variant-numeric:tabular-nums;margin-left:auto}
 .hdp-seg{display:inline-flex;gap:2px;margin-left:10px}
-.hdp-chip{position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:9998;background:var(--s2);color:var(--ink);border:1px solid var(--line2);border-radius:999px;padding:7px 14px;font:500 13px 'Hanken Grotesk',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.25)}
-.hdp-chip:hover{border-color:var(--acc)}
 @media (max-width:820px){.hdp-body{grid-template-columns:1fr;grid-template-rows:40% 60%}.hdp-log{border-right:0;border-bottom:1px solid var(--line)}}
 `;
 
@@ -91,13 +89,7 @@ let styled = false, current = null;
 export function open(T, opt = {}) {
   if (current) current.close();
   if (!styled) { const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st); styled = true; }
-  const chip = document.querySelector('.hdp-chip'); if (chip) chip.remove();
   current = mount(T, opt);
-}
-export function chipFor(T) {
-  document.querySelectorAll('.hdp-chip').forEach(c => c.remove());
-  const b = document.createElement('button'); b.className = 'hdp-chip'; b.type = 'button'; b.textContent = '↺ Replay the reading of “' + (T.label.length > 40 ? T.label.slice(0, 39) + '…' : T.label) + '”';
-  b.onclick = () => open(T); document.body.appendChild(b);
 }
 
 function mount(T, opt = {}) {

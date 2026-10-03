@@ -181,11 +181,6 @@ button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visi
       <button onClick="{{ stripToggleSources }}" title="Sources — what is admitted" style="display:flex;align-items:center;gap:7px;background:var(--s1);border:1px solid var(--line2);border-radius:8px;padding:4px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2);white-space:nowrap;position:relative;z-index:56" style-hover="border-color:var(--acc)"><span style="font:500 13px 'JetBrains Mono';color:var(--acc)">▦</span><b style="font-weight:600;color:var(--ink)">{{ stripSourcesLabel }}</b><span style="color:var(--dim);font-size:11px">▾</span></button>
       <button onClick="{{ stripToggleSegment }}" title="Segment — filter and cut the sources" style="display:flex;align-items:center;gap:7px;background:var(--s1);border:1px solid var(--line2);border-radius:8px;padding:4px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2);white-space:nowrap;position:relative;z-index:56" style-hover="border-color:var(--acc)"><span style="font:500 13px 'JetBrains Mono';color:var(--acc)">⑃</span><b style="font-weight:600;color:var(--ink)">{{ stripSegLabel }}</b><span style="color:var(--dim);font-size:11px">▾</span></button>
       <button onClick="{{ stripToggleRead }}" title="Read as — what × where × scale" style="display:flex;align-items:center;gap:7px;background:var(--s1);border:1px solid {{ stripChipBorder }};border-radius:8px;padding:4px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink2);white-space:nowrap;position:relative;z-index:56" style-hover="border-color:var(--acc)"><span style="font:500 13px 'JetBrains Mono';color:{{ stripGlyphColor }}">◫</span><sc-if value="{{ stripManual }}" hint-placeholder-val="{{ false }}"><span style="background:{{ readingTint }};color:#141126;border-radius:5px;padding:1px 6px;font:700 10px 'JetBrains Mono';letter-spacing:.08em">MANUAL</span></sc-if><b style="font-weight:600;color:var(--ink)">{{ stripReadLabel }}</b><span style="color:var(--dim);font-size:11px">▾</span></button>
-      <span id="hd-reading" title="{{ stripAutoWhy }}" style="display:flex;align-items:baseline;gap:7px;min-width:0;overflow:hidden;white-space:nowrap;margin-left:2px;position:relative;z-index:56">
-        <span style="font:400 11px 'JetBrains Mono';color:var(--dim)">{{ stripReadFine }}</span>
-        <sc-if value="{{ readingAuto }}" hint-placeholder-val="{{ false }}"><span style="font:400 11px 'Hanken Grotesk';color:var(--dim)">auto</span></sc-if>
-        <sc-if value="{{ stripManual }}" hint-placeholder-val="{{ false }}"><span style="font:600 11px 'Hanken Grotesk';color:{{ readingTint }}">manual</span><button onClick="{{ stripAutoToggle }}" style="cursor:pointer;border:1px solid var(--line2);border-radius:6px;padding:1px 8px;background:var(--s1);font:500 11px 'Hanken Grotesk';color:var(--ink2)">back to auto</button></sc-if>
-      </span>
       <sc-if value="{{ stripAnyOpen }}" hint-placeholder-val="{{ false }}"><div onClick="{{ stripClose }}" style="position:fixed;inset:0;z-index:55"></div></sc-if>
       <sc-if value="{{ stripOpenSources }}" hint-placeholder-val="{{ false }}">
         <div style="position:absolute;top:100%;left:20px;z-index:60;width:400px;max-height:56vh;overflow:auto;background:var(--s1);border:1px solid var(--line2);border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.55)">
@@ -237,6 +232,11 @@ button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visi
               <button onClick="{{ stripAutoToggle }}" title="Auto reads the scope and picks the cell with the most signal; picking any field takes over" style="cursor:pointer;display:flex;align-items:center;gap:7px;border:1px solid {{ stripAutoBorder }};border-radius:8px;padding:4px 11px;background:{{ stripAutoBg }};font:600 12px 'Hanken Grotesk';color:var(--ink)"><span style="width:9px;height:9px;border-radius:50%;border:1px solid {{ readingTint }};background:{{ stripAutoDotBg }}"></span>Auto <span style="font:400 10px 'JetBrains Mono';color:{{ stripAutoStateColor }}">{{ stripAutoState }}</span></button>
               <span style="font:400 11px 'Hanken Grotesk';color:var(--mut)">{{ stripAutoHint }}</span>
             </div>
+            <div style="display:flex;flex-direction:column;gap:5px;padding:8px 10px;border:1px solid var(--line);border-left:3px solid var(--amber);border-radius:9px;background:rgba(251,191,36,.05)">
+              <div style="display:flex;align-items:baseline;gap:8px"><span style="font:600 10px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--dim)">THE TEXT'S OWN WORDS</span><span style="font:400 11px 'Hanken Grotesk';color:var(--mut)">filter by the acts the material itself states</span><button onClick="{{ stripPerspClear }}" style="margin-left:auto;background:none;border:0;color:var(--acc);cursor:pointer;font:500 11px 'Hanken Grotesk';padding:0">clear</button></div>
+              <div style="display:flex;flex-wrap:wrap;gap:5px"><sc-for list="{{ stripPerspRows }}" as="p" hint-placeholder-count="3"><button onClick="{{ p.onClick }}" title="{{ p.tier }} — picked by the stance machinery, count of statements that state it" style="cursor:pointer;display:flex;align-items:center;gap:6px;border:1px solid {{ p.on ? 'var(--amber)' : 'var(--line2)' }};border-radius:8px;padding:4px 10px;background:{{ p.bg }};color:{{ p.color }};font:500 12px 'Hanken Grotesk';white-space:nowrap"><span style="font:400 10px 'JetBrains Mono';color:var(--dim)">{{ p.n }}×</span>{{ p.label }}</button></sc-for></div>
+              <sc-if value="{{ stripPerspOn }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--line);padding-top:5px;font:400 11px 'Hanken Grotesk';color:var(--mut)"><span>the reading sees these statements:</span><sc-for list="{{ stripPerspHits }}" as="h" hint-placeholder-count="1"><span style="color:var(--ink2)">“{{ h.text }}”</span></sc-for></div></sc-if>
+            </div>
             <sc-for list="{{ stripReadRows }}" as="r" hint-placeholder-count="3">
               <div style="display:grid;grid-template-columns:92px minmax(0,1fr);gap:9px;align-items:center">
                 <span style="font:600 10px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--dim);text-align:right">{{ r.lab }}</span>
@@ -251,24 +251,10 @@ button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visi
     <sc-if value="{{ scope.show }}" hint-placeholder-val="{{ false }}">
       <div class="hd-scope" style="padding:0 20px 10px;display:flex;gap:6px 14px;align-items:baseline;flex-wrap:wrap;font:400 12px 'Hanken Grotesk';color:var(--mut)">
         <button onClick="{{ scope.onAll }}" style="all:unset;cursor:pointer;color:var(--ink2)">{{ scope.sourcesLine }}</button>
-        <span>View: {{ scope.viewLabel }}</span>
-        <sc-if value="{{ scope.hasLens }}"><span>Lens: {{ scope.lens }}</span></sc-if>
         <sc-if value="{{ scope.hasSegment }}"><button onClick="{{ scope.onClearSegment }}" style="all:unset;cursor:pointer;color:var(--acc)">{{ scope.segmentLabel }} · clear ×</button></sc-if>
         <sc-for list="{{ scope.filters }}" as="ch"><button onClick="{{ ch.onClear }}" style="all:unset;cursor:pointer;color:var(--acc)">{{ ch.k }}: {{ ch.v }} ×</button></sc-for>
-        <details style="margin-left:auto;max-width:100%">
-          <summary style="cursor:pointer">Scope details</summary>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;padding:10px 0">
-            <sc-for list="{{ scope.sourceItems }}" as="s"><button onClick="{{ s.onClick }}" style="background:var(--s1);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;cursor:pointer">{{ s.label }}</button></sc-for>
-            <sc-if value="{{ scope.hasMoreSources }}"><button onClick="{{ scope.onMoreSources }}" style="background:none;border:0;color:var(--acc);cursor:pointer">+{{ scope.moreSources }} more</button></sc-if>
-          </div>
-          <sc-if value="{{ hasTopics }}"><div style="display:flex;flex-wrap:wrap;gap:8px;padding-bottom:8px">
-            <span>Topics:</span><sc-for list="{{ scope.segments }}" as="t"><button onClick="{{ t.onJump }}" style="background:none;border:0;color:var(--acc);cursor:pointer">{{ t.label }} ({{ t.n }})</button></sc-for>
-            <sc-if value="{{ scope.hasStray }}"><button onClick="{{ scope.onStray }}" style="background:none;border:0;color:var(--acc);cursor:pointer">Outside these topics ({{ scope.strayN }})</button></sc-if>
-          </div></sc-if>
-        </details>
       </div>
     </sc-if>
-    <div aria-label="Current viewpoint" style="padding:0 20px 8px;font:400 12px/1.5 'Hanken Grotesk';color:var(--mut)">{{ viewpoint }}</div>
   </header>
 
   <div class="hd-body hd-content" style="max-width:1230px;padding:20px;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
@@ -4230,7 +4216,7 @@ class Component extends DCLogic {
       this._overviewRoot = root; this._overviewMount = M.mountOverview(root, { ...options, docs: this.analysis().docs });
     }).catch(e => { this._overviewLoading = null; root.textContent = 'Overview unavailable: ' + e.message; });
   }
-  state = { corpus: null, added: loadAdded(), view: new URLSearchParams(location.search).has('work') ? 'ask' : 'summary', akMode: new URLSearchParams(location.search).get('work') === 'notebook' ? 'notebook' : new URLSearchParams(location.search).get('work') === 'fold' ? 'generate' : 'chat', akFocus: new URLSearchParams(location.search).get('fullscreen') === '1', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, showSettings: false, draftText: '', fw: {}, note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), topicsQ: '', topicsPage: 0, dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true }, wsRenaming: false, wsNameDraft: '', stripOpen: null, stripDocs: null, stripGroup: 'fold', stripEO: '', stripGaps: [], stripRead: { mode: 'Relate', domain: 'Interpretation', grain: 'Pattern' }, stripReadAuto: true, stripConds: [], stripConn: 'all', stripSegTab: 'conditions' };
+  state = { corpus: null, added: loadAdded(), view: new URLSearchParams(location.search).has('work') ? 'ask' : 'summary', akMode: new URLSearchParams(location.search).get('work') === 'notebook' ? 'notebook' : new URLSearchParams(location.search).get('work') === 'fold' ? 'generate' : 'chat', akFocus: new URLSearchParams(location.search).get('fullscreen') === '1', sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, showSettings: false, draftText: '', fw: {}, note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), topicsQ: '', topicsPage: 0, dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true }, wsRenaming: false, wsNameDraft: '', stripOpen: null, stripDocs: null, stripGroup: 'fold', stripEO: '', stripGaps: [], stripRead: { mode: 'Relate', domain: 'Interpretation', grain: 'Pattern' }, stripReadAuto: true, stripPersp: null, stripConds: [], stripConn: 'all', stripSegTab: 'conditions' };
   _html = {};
 
   componentDidMount() {
@@ -6275,7 +6261,7 @@ class Component extends DCLogic {
     else hdT('paradigm', 'none', 'No paradigm: nothing here shares two or more uncommon names (reach ≤ ' + (Math.sqrt(A.docs.length) + 1).toFixed(1) + ' sources) with another source');
     hdT('store', 'done', 'Ingest finished'); T.ms = performance.now() - T.t0; T.focus = [...T.focus]; HD_TR = null;
     (window.__hdTraces = window.__hdTraces || []).push(T); if (window.__hdTraces.length > 8) window.__hdTraces.shift();
-    import(new URL('holodeck-ingest-player.js', location.href).href).then(M => M.chipFor(T)).catch(e => console.warn('ingest player', e));
+    import(new URL('holodeck-ingest-player.js', location.href).href).then(M => M.open(T)).catch(e => console.warn('ingest player', e));
   }
   // Sources already in the workspace were read with the surface's own finder only; the engine reads each
   // added source at add-time. This re-runs the engine over what is already here, once it is reachable, and
@@ -6605,6 +6591,7 @@ class Component extends DCLogic {
   }
   stripSetGroup(g) { this.setState({ stripGroup: g }); }
   stripSetRead(k, v) { this.setState({ stripReadAuto: false, stripRead: { ...(this.state.stripRead || {}), [k]: v } }); }
+  stripSetPersp(k) { this.setState({ stripPersp: this.state.stripPersp === k ? null : k }); }
   stripEOApply() {
     const src = (this.state.stripEO || '').trim();
     if (!src) { this.setState({ stripGaps: [], stripDocs: null }); return; }
@@ -6657,6 +6644,23 @@ class Component extends DCLogic {
     const segRows = Object.entries(groupsOut).slice(0, 6).map(([label, items]) => ({ label, n: plural(items.length, 'source'), line: items.slice(0, 4).map(x => x.title).join(' · ') + (items.length > 4 ? ' …' : '') }));
     const readRow = (key, lab, vals, words) => ({ lab, opts: vals.map(v => { const on = r[key] === v;
       return { label: words[v], bg: on ? '#8b5cf6' : 'var(--s2)', color: on ? '#fff' : 'var(--ink2)', onClick: () => this.stripSetRead(key, v) }; }) });
+    // PERSPECTIVES — the text's own words, filterable beside the structural
+    // pick (holodeck-reader.perspectivesOf: stance class → verb head → lens
+    // word; label = gerund + the statement's own object, the strip's register).
+    // Derived once per scope; a fingerprint of doc-set + count invalidates the
+    // cache, never a content comparison.
+    const perspSig = [...new Set(scopedSts.map(s => s.doc))].sort().join(',') + '#' + scopedSts.length;
+    if (this._perspSig !== perspSig) { this._perspSig = perspSig; this._perspRows = null; }
+    if (!this._perspRows && scopedSts.length) {
+      this._perspRows = [];
+      (this._perspM ? Promise.resolve(this._perspM) : import(new URL('holodeck-reader.js', location.href).href).then(M => { this._perspM = M; return M; }))
+        .then(M => M.perspectivesOf(scopedSts, { top: 6 })).then(rows => { this._perspRows = rows || []; this.forceUpdate(); }).catch(() => {});
+    }
+    const perspSel = S.stripPersp ? (this._perspRows || []).find(p => p.act === S.stripPersp) : null;
+    const perspOn = !!perspSel;
+    const perspRows = (this._perspRows || []).map(p => ({ label: p.label, n: p.n, tier: p.tier, on: perspSel === p,
+      bg: perspSel === p ? '#fbbf24' : 'var(--s2)', color: perspSel === p ? '#141126' : 'var(--ink2)', onClick: () => this.stripSetPersp(p.act) }));
+    const perspHits = perspOn ? perspSel.hits.map(t => ({ text: t })) : [];
     const kinds = [...new Set(counted.map(d => d.kind || d.type).filter(Boolean))];
     const pubs = [...new Set(counted.map(d => d.publisher).filter(Boolean))];
     const condRows = (S.stripConds || []).map(c => { const f = COND_FIELDS.find(x => x.k === c.field) || COND_FIELDS[0];
@@ -6687,27 +6691,27 @@ class Component extends DCLogic {
       stripEOVal: S.stripEO || '', stripEOGlyphs: eoqlGlyphText(S.stripEO || ''),
       stripGaps: (S.stripGaps || []).map(g => ({ text: g })),
       stripSegRows: segRows,
-      stripReadLabel: STRIP_VOCAB[op + '|' + r.grain],
-      stripReadFine: op + '·' + r.grain + ' · terrain ' + STRIP_TERRAIN[r.domain][r.grain] + ' · stance ' + STRIP_STANCE[r.mode][r.grain],
+      stripReadLabel: perspOn ? perspSel.label : STRIP_VOCAB[op + '|' + r.grain],
+      stripReadFine: perspOn ? ('the text’s own words · ' + perspSel.tier + ' “' + perspSel.act + '” · ' + perspSel.n + ' of ' + scopedSts.length + ' statements · cell ' + op + '·' + r.grain) : (op + '·' + r.grain + ' · terrain ' + STRIP_TERRAIN[r.domain][r.grain] + ' · stance ' + STRIP_STANCE[r.mode][r.grain]),
       stripAutoOn: !!S.stripReadAuto,
       stripManual: !S.stripReadAuto,
-      stripChipBorder: S.stripReadAuto ? 'var(--line2)' : (MODE_TINT[r.mode] || 'var(--acc)'),
-      stripGlyphColor: S.stripReadAuto ? 'var(--mut)' : (MODE_TINT[r.mode] || 'var(--acc)'),
+      stripChipBorder: perspOn ? '#fbbf24' : (S.stripReadAuto ? 'var(--line2)' : (MODE_TINT[r.mode] || 'var(--acc)')),
+      stripGlyphColor: perspOn ? '#fbbf24' : (S.stripReadAuto ? 'var(--mut)' : (MODE_TINT[r.mode] || 'var(--acc)')),
       stripAutoState: S.stripReadAuto ? 'ON' : 'OFF',
       stripAutoBorder: S.stripReadAuto ? (MODE_TINT[r.mode] || 'var(--acc)') : 'var(--line2)',
       stripAutoBg: S.stripReadAuto ? 'var(--sel)' : 'var(--s1)',
       stripAutoDotBg: S.stripReadAuto ? (MODE_TINT[r.mode] || 'var(--acc)') : 'transparent',
       stripAutoStateColor: S.stripReadAuto ? (MODE_TINT[r.mode] || 'var(--acc)') : 'var(--dim)',
-      stripAutoWhy: whyText,
       stripAutoHint: S.stripReadAuto ? whyText : 'manual — pick any field, or switch Auto back on',
       stripAutoToggle: () => this.setState({ stripReadAuto: !S.stripReadAuto }),
       hasReading: inScope.length > 0,
-      readingName: STRIP_VOCAB[op + '|' + r.grain],
-      readingFine: op + '·' + r.grain + ' · terrain ' + STRIP_TERRAIN[r.domain][r.grain] + ' · stance ' + STRIP_STANCE[r.mode][r.grain],
-      readingAuto: !!S.stripReadAuto,
+      readingName: perspOn ? perspSel.label : STRIP_VOCAB[op + '|' + r.grain],
+      readingFine: perspOn ? (perspSel.tier + ' “' + perspSel.act + '” · ' + perspSel.n + ' of ' + scopedSts.length + ' statements') : (op + '·' + r.grain + ' · terrain ' + STRIP_TERRAIN[r.domain][r.grain] + ' · stance ' + STRIP_STANCE[r.mode][r.grain]),
       readingTint: MODE_TINT[r.mode] || 'var(--acc)',
-      readingNote: S.stripReadAuto ? ('auto — most signal here: ' + whyText) : ('leading with ' + (r.domain === 'Existence' ? 'things' : r.domain === 'Structure' ? 'links' : 'meanings') + ' · ' + (r.mode === 'Differentiate' ? 'cuts' : r.mode === 'Relate' ? 'bonds' : 'makes')),
+      readingNote: perspOn ? ('reading by the material’s own words — ' + perspSel.n + ' of ' + scopedSts.length + ' statements state “' + perspSel.act + '”') : (S.stripReadAuto ? ('auto — most signal here: ' + whyText) : ('leading with ' + (r.domain === 'Existence' ? 'things' : r.domain === 'Structure' ? 'links' : 'meanings') + ' · ' + (r.mode === 'Differentiate' ? 'cuts' : r.mode === 'Relate' ? 'bonds' : 'makes'))),
       stripReadRows: [readRow('mode', 'WHAT YOU DO', STRIP_MODES, STRIP_PLAIN_MODE), readRow('domain', 'WHAT YOU SEE', STRIP_DOMAINS, STRIP_PLAIN_DOMAIN), readRow('grain', 'SCALE', STRIP_GRAINS, STRIP_PLAIN_GRAIN)],
+      stripPerspRows: perspRows, stripPerspOn: perspOn, stripPerspHits: perspHits,
+      stripPerspClear: () => this.setState({ stripPersp: null }),
       stripOpenSources: S.stripOpen === 'sources', stripOpenSegment: S.stripOpen === 'segment', stripOpenRead: S.stripOpen === 'read', stripAnyOpen: !!S.stripOpen,
       stripToggleSources: () => this.setState({ stripOpen: S.stripOpen === 'sources' ? null : 'sources' }),
       stripToggleSegment: () => this.setState({ stripOpen: S.stripOpen === 'segment' ? null : 'segment' }),
@@ -7163,18 +7167,11 @@ class Component extends DCLogic {
       if (tg) return { label: tg.label, onClear: () => this.setF('topicGroup', null) };
       if (this._topicStr) return { label: 'Topic: ' + this._topicStr, onClear: () => this.setMeta('__topic', '') };
       return null; })();
-    const inScopeDocs = (docsIn.length ? docsIn : A.docs.filter(d => this._cnt.has(d.id))).filter(d => !this.isLiveDoc(d));
-    const scopeSourceItems = inScopeDocs.slice(0, 6).map(d => ({ label: short(d.title, 26), onClick: () => this.read(d.id) }));
     const scope = {
       show: !isEmpty,
       sourcesLine: (this._cnt && this._cnt.size !== A.docs.length) ? this._cnt.size + ' of ' + plural(A.docs.length, 'source') + ' in scope' : plural(A.docs.length, 'source') + ' in scope',
-      sourceItems: scopeSourceItems, hasMoreSources: inScopeDocs.length > scopeSourceItems.length, moreSources: String(inScopeDocs.length - scopeSourceItems.length),
-      onMoreSources: () => this.go('sources'), onAll: () => this.go('sources'),
+      onAll: () => this.go('sources'),
       hasSegment: !!scopeSeg, segmentLabel: scopeSeg ? scopeSeg.label : '', onClearSegment: scopeSeg ? scopeSeg.onClear : null,
-      segments: P.groups.slice(0, 5).map(p => ({ label: p.label, n: String(p.n), onJump: () => onTopicGroup(p) })),
-      hasStray: showTopicsStray, strayN: topicsStrayN, onStray: onTopicsStray,
-      viewLabel: VIEW_LABEL[view] || 'Overview',
-      hasLens: view === 'surprise' && !!S.suLens, lens: view === 'surprise' && S.suLens ? this.lensLabel(S.suLens) : '',
       filters: chips.map(ch => ({ k: ch.k, v: short(String(ch.v), 26), onClear: ch.onClear })),
     };
     // a fold row's own click both shows what it is (name, count, one-line description, always visible)
@@ -7349,7 +7346,6 @@ class Component extends DCLogic {
     _m('header+chips+extra');
     return {
       ...this._extra,
-      viewpoint: this.positionLine(this.positionSnapshot()),
       ...this.stripVals(S, A, D),
       ...svVals,
       sourceKindsUseful: tabs.length > 2, sourceOptionsActive: svTab !== '__all' || svMode !== 'cards', sourceOptionsLabel: 'Source options' + (svTab !== '__all' ? ' · ' + svTab : '') + (svMode !== 'cards' ? ' · Table' : ''), showSourceGroupLabels: svVals.svCardGroups.length > 1, hasGaps: gaps.length > 0, toolsOpen: ['names', 'records', 'connections', 'ingest'].includes(view), timeFilterActive: !!f.range, timeControlLabel: f.range ? 'Time filter · active' : 'Filter by time',
@@ -7381,7 +7377,7 @@ class Component extends DCLogic {
       toggleRail: () => { const open = !S.railOpen; try { localStorage.setItem('fold-explorer-rail', open ? '1' : '0'); } catch (e) {} this.setState({ railOpen: open }); },
       themeIcon: S.theme === 'dark' ? '☀' : '☾', themeTitle: S.theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode',
       dragging: S.dragging, isBusy: !!S.busy, busy: S.busy,
-      hasJust: !!J && view !== 'reader', just, dismissJust: () => this.setState({ just: null }), showDropStrip: view === 'summary',
+      just, dismissJust: () => this.setState({ just: null }), showDropStrip: isEmpty || (view !== 'reader' && view !== 'profile' && view !== 'ask' && view !== 'draft'),
       demo: { title: demo.title, label: demo.url ? demo.title + ' — Wikipedia link' : demo.title + '.txt', onClick: () => demo.url ? this.ingestUrl(demo.url, { title: demo.title, year: demo.year, fallback: demo.text }) : this.addDocs([{ title: demo.title, year: demo.year, type: 'Text', text: demo.text }]), onDragStart: e => { if (demo.url) { e.dataTransfer.setData('text/uri-list', demo.url); e.dataTransfer.setData('text/plain', demo.url); e.dataTransfer.setData('application/x-fold-fallback', demo.text); } else e.dataTransfer.setData('text/plain', demo.text); e.dataTransfer.setData('application/x-fold-title', demo.title); e.dataTransfer.setData('application/x-fold-year', String(demo.year)); e.dataTransfer.effectAllowed = 'copy'; } },
       onCorpus: e => this.setState({ corpus: e.target.value, view: 'summary', sel: null, f: {}, readDoc: null }),
       onSearch: e => this.setState({ q: e.target.value }),
