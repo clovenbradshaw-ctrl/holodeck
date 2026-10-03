@@ -73,3 +73,12 @@ reload, and the export is nbformat 4.
 
 None of the F1–F9 results above are widened by this: they were measured against the local Jupyter server for the run above, and no
 criterion has been re-run against Pyodide mode. F1's bundle route is server-only and is refused, honestly, in the tab.
+
+### Amendment — 2026-10-03 (appended; nothing above changed)
+
+The run-7 R8-phone result above ("the host page's own layout is ~520 px wide on a 390 px phone … the drawer does not cover the screen") no
+longer reproduces on the current host layout: below 720 px the rail stacks full-width instead of docking at 250 px, so the page no longer
+lays out wider than a phone. Measured with `tools/phone-fit.mjs` at 320, 390 and 600 px — the start page empty and with a dropped
+document, the rail shown, and Ask the Fold's Chat and Notebook modes — `document.scrollWidth` equals the visible width in every case, with
+no console errors. This folded in with the PR #2 merge; the overlay-drawer variant that PR first described was not taken, because this
+layout already fits.

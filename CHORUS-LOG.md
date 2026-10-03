@@ -90,3 +90,10 @@ fast: 2 files · 1 browser test pass (unit hang/overview failures pre-existing o
 | Frankfurt | a number standing in for a missing prior | index.html:374 | noted | hasFacets stays hardcoded false on the merged page (pre-existing on gh), so the facets block renders nothing — noted, not re-wired, in this diff |
 | Kondo | dead or cluttering | index.html:373 | fixed | the summary page's editorial stack (topic input, paradigms + forkParadigm, About This, Lead statements + headlines(), Worth checking, noGround, goal cards + the dead GOALS/goalNav/counts/heads/ex/readScore tree, goOverview button, seenLine/Review) is removed and stashed (STASH.md 2026-10-03); the Sources view body moved into v.summary, its nav item and view id retired, go('sources') call sites re-aimed at summary |
 clean: LeviStrauss (nothing in the stash solves an open problem this diff names; nothing reclaimed)
+
+## 2026-10-03 — merge PR #2 (Ask the Fold → Data notebook) against a moved main (merge/pr2)
+fast: 2 files (plus the merge) · none affected (phone-fit is a person-run tool; the pane and its tests came from main) · law: WARN pre-existing S17/S96 in ../eoreader7/native/READING-SPEC.md
+| lens | citation | file:line | verdict | one line |
+| Feynman | a numeric constant in a comparison | tools/phone-fit.mjs:9 | noted | the W<700 is the CDP mobile-emulation profile, not a pass threshold; the fit check itself is scrollWidth <= visualViewport.width |
+| Simon/Chekhov | new source no test imports | tools/phone-fit.mjs | noted | a person-run CDP driver (like tools/notebook-falsify.mjs); run live at 320/390/600 with no overflow and no console errors |
+clean: no other lens routed (every conflicted file resolves to main)
