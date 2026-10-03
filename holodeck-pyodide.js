@@ -168,11 +168,13 @@ const ENGINES = new Map();
 /** pyodideEngine({ workspace, by, store }) -> the one engine for that workspace in this page (loading starts at once). */
 export function pyodideEngine(opts = {}) {
   const workspace = String(opts.workspace || 'default');
-  if (!ENGINES.has(workspace)) ENGINES.set(workspace, createEngine({ ...opts, workspace }));
+  if (!ENGINES.has(workspace)) ENGINES.set(workspace, createPyodideEngine({ ...opts, workspace }));
   return ENGINES.get(workspace);
 }
 
-function createEngine({ workspace = 'default', by = 'human:in-browser', store = browserStore, autoload = true } = {}) {
+/** createPyodideEngine({ workspace, by, store, autoload }) — the engine itself; exported so the ledgers and workspace can be
+ *  exercised without a browser (autoload:false + a Map-backed store), the same way the pane's other guarantees are tested. */
+export function createPyodideEngine({ workspace = 'default', by = 'human:in-browser', store = browserStore, autoload = true } = {}) {
   const key = 'hd:pyodide:v1:' + workspace;
   let data = read();
   let pyodide = null, pyVersion = null, loadError = null, loadPromise = null;
@@ -322,7 +324,7 @@ function createEngine({ workspace = 'default', by = 'human:in-browser', store = 
 
   async function engineFetch(url, opts = {}) {
     let path = String(url), query = '';
-    try { const u = new URL(String(url), 'http://pyodide.local/'); path = u.pathname; query = u.searchParams.get('c') || ''; } catch (e) {}
+    try { const u = new URL(String(url), 'http://localhost/'); path = u.pathname; query = u.searchParams.get('c') || ''; } catch (e) {}
     try {
       if (path.endsWith('/notebook/state')) return jsonResponse(state(pick(query).id));
       if (path.endsWith('/notebook/ipynb')) return jsonResponse(toIpynb(stateOf(pick(query).id)));

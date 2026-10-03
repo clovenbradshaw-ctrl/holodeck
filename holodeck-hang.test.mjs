@@ -13,7 +13,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import H from './holodeck-hang.js';
+import './holodeck-hang.js'; // the page loads this as a classic script (the hang is the global HDHang); the file must stay export-free
+const H = globalThis.HDHang;
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const read = p => fs.readFileSync(path.join(HERE, p), 'utf8');

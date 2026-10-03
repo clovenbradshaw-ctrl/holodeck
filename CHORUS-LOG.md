@@ -66,3 +66,14 @@ fast: 7 files · 59 tests pass (jupyter-runtime passes with ~/holodeck-notebook-
 | Diaconis | merge resolution | index.html:7641 | fixed | the Summary mode (HEAD) and Regions mode (merged lineage) both kept, additive props, no shared state touched |
 | Marshall | merge legality | — | noted | both lineages merged without amending either; holodeck-latest's branch and backup tag untouched |
 clean: Holmes, Pearl, Ostrom, Frankfurt, Alexander, Greenberg (no new language-scoped or identity logic added; the merged screen-regions code was already linted in its own lineage)
+
+## 2026-10-03 — the in-tab Pyodide runtime: no server, no install — the pane starts its own Python (main, pyodide-fallback)
+fast: 5 files · 21 tests pass (incl. the real-browser pyodide-notebook.browser.mjs: cells, numpy, matplotlib inline, ledgers verified, reload, nbformat 4 export) · law: ok
+| lens | citation | file:line | verdict | one line |
+| Feynman | a swallowed error | holodeck-pyodide.js:327 | noted | the empty catch on URL parsing is best-effort: on failure the raw string is tried as the path, and the route checks simply miss — no wrong claim |
+| Dijkstra | host allowlist | holodeck-notebook.test.mjs:71 | noted | hostsIn + BASELINE pin that the page adds NO new hosts; cdn.jsdelivr.net (Pyodide) is asserted already on the baseline, so the CDN is not a new dependency |
+| Ostrom | scope of the absence | holodeck-notebook.test.mjs:78 | noted | "no new external hosts" is claimed against the pre-existing baseline, not an invented one |
+| Frankfurt | placeholder | index.html:792 | noted | the hint-placeholder-val attributes are the standing dc-template pattern; the notes toggle they guard is real (notesOpen wired) |
+| Alexander | composition seam | holodeck-notebook.js:239 | noted | the starting/connect empty states are mutually exclusive alternatives; retry only exists off the starting path, engine.fetch composes with the pane's F() |
+| Simon/Chekhov | real mechanism shipped unwired | holodeck-notebook.js:135 | fixed | the pyodide fallback was already wired here; what was UNWIRED was the hang organ — holodeck-hang.js:275's ESM export broke the classic script parse on every page load since f7a3690, so hang decisions never ran in the browser; index.html now loads it type=module, verified live (HDHang on page, zero pageerrors) |
+clean: Holmes, Pearl, Diaconis, Greenberg, Kondo, Marshall

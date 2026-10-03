@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
 <script src="./holodeck-region.js"></script>
-<script src="./holodeck-hang.js"></script>
+<script type="module" src="./holodeck-hang.js"></script>
 <script src="./holodeck-echo.js"></script>
 </head>
 <body>
@@ -789,7 +789,7 @@ button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visi
                       </div>
                     </sc-if>
                     <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;padding-top:4px">
-                      <sc-if value="{{ t.hasNotesLine }}" hint-placeholder-val="{{ false }}"><button onClick="{{ t.onNotesToggle }}" style="background:none;border:0;padding:0;cursor:pointer;font:500 13px ‘Hanken Grotesk’;color:{{ t.notesOpen ? 'var(--ink2)' : 'var(--dim)' }}" style-hover="color:var(--acc)">{{ t.notesOpen ? 'Hide what the model was given' : 'What the model was given' }}</button></sc-if>
+                      <sc-if value="{{ t.hasNotesLine }}" hint-placeholder-val="{{ false }}"><button onClick="{{ t.onNotesToggle }}" style="background:none;border:0;padding:0;cursor:pointer;font:500 13px ‘Hanken Grotesk’;color:{{ t.notesOpen ? 'var(--ink2)' : 'var(--dim)' }}" style-hover="color:var(--acc)">{{ t.notesLabel }}</button></sc-if>
                       <span style="font:500 12px ‘JetBrains Mono’;color:var(--dim);flex:1;min-width:0">{{ t.rec }}</span>
                       <sc-if value="{{ t.canGen }}" hint-placeholder-val="{{ false }}"><button onClick="{{ t.onGen }}" title="Turn this answer’s cited passages into a Draft document" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:4px 12px;cursor:pointer;font:500 13px ‘Hanken Grotesk’;color:var(--acc)" style-hover="border-color:var(--acc)">Generate a document →</button></sc-if>
                     </div>
@@ -858,7 +858,7 @@ button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visi
                       </div>
                     </sc-if>
                     <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px">
-                      <sc-if value="{{ t.hasNotesLine }}" hint-placeholder-val="{{ false }}"><button onClick="{{ t.onNotesToggle }}" style="background:none;border:0;padding:0;cursor:pointer;font:500 13px ‘Hanken Grotesk’;color:{{ t.notesOpen ? 'var(--ink2)' : 'var(--dim)' }}" style-hover="color:var(--acc)">{{ t.notesOpen ? 'Hide what the model was given' : 'What the model was given' }}</button></sc-if>
+                      <sc-if value="{{ t.hasNotesLine }}" hint-placeholder-val="{{ false }}"><button onClick="{{ t.onNotesToggle }}" style="background:none;border:0;padding:0;cursor:pointer;font:500 13px ‘Hanken Grotesk’;color:{{ t.notesOpen ? 'var(--ink2)' : 'var(--dim)' }}" style-hover="color:var(--acc)">{{ t.notesLabel }}</button></sc-if>
                       <span style="font:500 12px ‘JetBrains Mono’;color:var(--ink2);flex:1;min-width:0">{{ t.rec }}</span>
                       <sc-if value="{{ t.canGen }}" hint-placeholder-val="{{ false }}"><button onClick="{{ t.onGen }}" title="Turn this answer’s cited passages into a Draft document" style="background:none;border:1px solid var(--line2);border-radius:8px;padding:4px 12px;cursor:pointer;font:500 13px ‘Hanken Grotesk’;color:var(--acc)" style-hover="border-color:var(--acc)">Generate a document →</button></sc-if>
                     </div>
@@ -5466,7 +5466,7 @@ class Component extends DCLogic {
         hasSyn: !!(t.synopsis && t.synopsis.docs && t.synopsis.docs.length), synDocs: ((t.synopsis && t.synopsis.docs) || []).map(d => ({ title: d.title, one: d.one, five: d.five.map(l => ({ l })), n: d.n, forWhom: d.forWhom })), synOne: (t.synopsis && t.synopsis.docs && t.synopsis.docs[0]) ? t.synopsis.docs[0].one : '', hasNotes: !!(t.notes && t.notes.lines && t.notes.lines.length), notesLines: ((t.notes && t.notes.lines) || []).map(l => ({ l })), notesLine: t.notes ? (t.notes.empty ? 'The reader made no notes on these passages, and the model was told so.' : plural(t.notes.lines.length, 'note') + ' from ' + t.notes.coverage + '% of the sentences read · ' + plural(t.notes.spans, 'span') + ' of source text sent with them' + (t.notes.omitted ? ' · ' + t.notes.omitted + ' lower-ranked notes held back' : '')) : '', hasNotesLine: !!t.notes, hasRd: !!(t.reading && t.reading.lines && t.reading.lines.length), rdLines: ((t.reading && t.reading.lines) || []).map(l => ({ t: l.text, onClick: () => A.names[l.name] ? this.openProfile(l.name) : null })), hasComp: !!C, compHead: C ? C.head : '', compLines: C ? C.lines.map(l => ({ l })) : [], compSaid: C ? C.said : '', onComp: () => this.setState({ view: 'records', readDoc: null, dbT: C && C.type, dbAskDraft: C && C.q, dbRes: null }, () => C && this.dbRun(C.q)),
         rec: 'On record · turn ' + t.n + ' · ' + recBits.join(' · '), fold: t.foldLine, meter: 'Sent ' + t.sentChars.toLocaleString() + ' characters in place of a ' + t.transcriptChars.toLocaleString() + '-character transcript', meta: t.model + (t.tokens && t.tokens.secs ? ' · ' + t.tokens.secs.toFixed(1) + ' s' : '') + (t.refresh && !t.refresh.ok && t.refresh.why ? ' · summary kept: ' + short(t.refresh.why, 120) : ''),
         canGen: gen, onGen: () => this.askToDraft(t),
-        notesOpen: !!(S.akNotes && S.akNotes[i]), onNotesToggle: () => this.setState(st => ({ akNotes: { ...(st.akNotes || {}), [i]: !((st.akNotes || {})[i]) } })),
+        notesOpen: !!(S.akNotes && S.akNotes[i]), notesLabel: !!(S.akNotes && S.akNotes[i]) ? 'Hide what the model was given' : 'What the model was given', onNotesToggle: () => this.setState(st => ({ akNotes: { ...(st.akNotes || {}), [i]: !((st.akNotes || {})[i]) } })),
         i, onRun: e => { let q = t.question; try { const cell = e && e.target && e.target.closest ? e.target.closest('[data-cell]') : null; const ta = cell && cell.querySelector('textarea'); if (ta && String(ta.value).trim()) q = ta.value; } catch (er) {} this.askSend(String(q).trim()); } }; });
     const sm = conv.summary || {};
     const M = this._askM; let nextChars = 0; try { if (M) nextChars = M.FOLD.charCount(M.FOLD.buildTurnMessages({ basePrompt: 'x'.repeat(290), summary: sm, history: conv.history, question: '' })); } catch (e) {}

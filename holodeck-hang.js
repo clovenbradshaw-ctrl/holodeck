@@ -271,5 +271,3 @@
   root.HDHang = API;
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
-// ESM bridge: the falsification trials `import H from './holodeck-hang.js'`.
-export default (typeof globalThis !== 'undefined' ? globalThis : {}).HDHang;
