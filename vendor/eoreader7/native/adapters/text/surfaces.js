@@ -717,8 +717,15 @@ export const surfacesFromEvidence = (evidence, { functionWords = null, abbreviat
     if (surface.replace(/[^\p{L}\p{N}]/gu, "").length < minGlyphs) continue;
     if (words.length === 1) {
       if (abbrev && abbrev.has(surface)) continue;
-      if (functionWords && functionWords.has(diaNorm(surface))) continue;
       const lower = lowerCounts.get(diaNorm(surface)) ?? 0;
+      // The closed-class veto fires only on a word this text has ALSO written
+      // lowercase (found 2026-09-28: a biography's subject is its most frequent
+      // token, so the share-derived closed class held "merkel" and "murat" and
+      // the veto ran BEFORE the lower === 0 evidence the comment above calls
+      // the strongest there is — every bare-surname mention of the page's own
+      // topic was dropped). A function word is lowercase by nature; a word
+      // never seen lowercase is not one by this text's own evidence.
+      if (functionWords && lower > 0 && functionWords.has(diaNorm(surface))) continue;
       if (lower > 0 && !capitalisationIsSignificant(cap, lower)) continue;
     }
     surfaces.push({ surface, mentions: cap, sentences: sentenceIndex.get(surface).size });

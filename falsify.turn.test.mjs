@@ -12,7 +12,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { analysisFromText } from './falsify.summary.mjs';
-import { select, stanceOf } from './holodeck-summary.js';
+import { select, stanceLens } from './holodeck-summary.js';
 
 // majority: 6 positive claims; the buried turn: the audit's 2 negative claims.
 const DOC = [
@@ -28,8 +28,8 @@ const DOC = [
 
 const A = analysisFromText(DOC, 'prog');
 const claims = A.sts.filter((st) => !st.ref && st.claimy !== false);
-const docStance = Math.sign(claims.reduce((s, st) => s + stanceOf(st.text), 0)) || 1;
-const minorityOf = (r) => r.lines.filter((l) => stanceOf(l) !== docStance).length;
+const docStance = Math.sign(claims.reduce((s, st) => s + stanceLens(st.text), 0)) || 1;
+const minorityOf = (r) => r.lines.filter((l) => stanceLens(l) !== docStance).length;
 
 test('the old construction is a tautology: -docStance identity surfaces only majority claims', () => {
   const old = select(A, 'prog', { size: 4, forWhom: { conclusion: { names: [], measures: [], frames: ['fact'], stance: -docStance } } });

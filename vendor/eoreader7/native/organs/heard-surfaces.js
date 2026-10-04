@@ -174,7 +174,7 @@ const applyProcliticPeel = (text, proclitics, posPrior) =>
  * or `Set` for this material's language. Omitted, behaviour is
  * byte-identical to before this existed (no caller currently supplies it).
  */
-export function heardSurfaces(sentences, { minMentions, minShare, minMembers, nullArm = null, clean, posPrior = null, classifyWord = null, dominantClass = null, classShare = GRAMMAR_MIN_SHARE, proclitics = null } = {}) {
+export function heardSurfaces(sentences, { minMentions, minShare, minMembers, nullArm = null, clean, posPrior = null, classifyWord = null, dominantClass = null, classShare = GRAMMAR_MIN_SHARE, proclitics = null, index = null } = {}) {
   for (const [k, v] of Object.entries({ minMentions, minShare, minMembers }))
     if (!Number.isFinite(v)) throw new Error(`heardSurfaces: ${k} must be declared`);
   const gated = posPrior && classifyWord && dominantClass;
@@ -190,20 +190,33 @@ export function heardSurfaces(sentences, { minMentions, minShare, minMembers, nu
   // The vocabulary is the material's own recurring terms — no list, no
   // lexicon, no capital letters. A term must recur to be a candidate at
   // all, which is the one thing a listener certainly has.
-  const counts = new Map();
-  const sentenceCounts = new Map();
-  for (const s of heard) {
-    const seen = new Set();
-    for (const w of s.text.split(/[^\p{L}\p{N}']+/u)) {
-      if (w.length < 3) continue;
-      counts.set(w, (counts.get(w) ?? 0) + 1);
-      if (!seen.has(w)) { seen.add(w); sentenceCounts.set(w, (sentenceCounts.get(w) ?? 0) + 1); }
+  //
+  // With an EOCompanyIndex@1 (organs/company-index.js) the past is read
+  // once: only the sentences the index has not seen are added, and the
+  // tallies and company come from it. Byte-identical to the scan below
+  // (company-index.test.mjs); the null arm still needs sentences.
+  let counts, sentenceCounts, company;
+  if (index && index.schema === "EOCompanyIndex@1") {
+    if (nullArm) throw new TypeError("heardSurfaces: the null arm shuffles sentences — omit `index` when declaring nullArm");
+    for (let i = index.size; i < heard.length; i += 1) index.add(heard[i]);
+    counts = index.counts; sentenceCounts = index.sentenceCounts; company = index;
+  } else {
+    counts = new Map();
+    sentenceCounts = new Map();
+    for (const s of heard) {
+      const seen = new Set();
+      for (const w of s.text.split(/[^\p{L}\p{N}']+/u)) {
+        if (w.length < 3) continue;
+        counts.set(w, (counts.get(w) ?? 0) + 1);
+        if (!seen.has(w)) { seen.add(w); sentenceCounts.set(w, (sentenceCounts.get(w) ?? 0) + 1); }
+      }
     }
+    company = heard;
   }
   const vocabulary = [...counts.entries()].filter(([, n]) => n >= minMentions).map(([w]) => w);
   if (!vocabulary.length) return [];
 
-  const kinds = discoverCompanyKinds(heard, vocabulary, { minMentions, minShare, minMembers, nullArm, clean });
+  const kinds = discoverCompanyKinds(company, vocabulary, { minMentions, minShare, minMembers, nullArm, clean });
   const beings = new Set();
   for (const kind of kinds) if (isPositionallySigned(kind)) for (const m of kind.members) beings.add(m);
 

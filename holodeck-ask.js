@@ -11,7 +11,7 @@ import { meetingBoundaries } from './vendor/eoreader7/native/organs/speaker.js';
 import { buildFactBlock, dedupeSourceText } from './vendor/eoreader7/native/organs/fact-block.js';
 import { makeEngineRelationReader, readCorpus, blankMarkup } from './holodeck-reader.js';
 let _reader = null; const reader = () => _reader || (_reader = makeEngineRelationReader());
-import { ladder, conclusionOf, stanceOf, select } from './holodeck-summary.js';
+import { ladder, conclusionOf, select } from './holodeck-summary.js';
 // Gary, the prompt archon: he owns what the mouth is handed, in what order, and
 // what never enters. The subject fold is INPUT, so it goes through his door.
 //

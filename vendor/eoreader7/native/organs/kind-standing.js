@@ -77,17 +77,36 @@ the plant had no seeds, and called it the male southernwood.”’”
 // PURE. Sentences and surfaces arrive as arguments; this module reads no
 // engine of its own (the cast.js posture).
 
-/** A referent's company, as a raw count vector over `before=`/`after=` tokens. */
+/** A referent's company, as a raw count vector over `before=`/`after=` tokens.
+ *
+ *  Indexed, not scanned (2026-09-28): the first cut walked every sentence's
+ *  word list once PER SURFACE, and the recursive reader calls this on every
+ *  reprojection over every sentence read so far with the whole recurring
+ *  vocabulary as `surfaces` — profiled at 75% of a 200KB read and quadratic
+ *  over a book (400KB of War and Peace: 419s). Each sentence's words are now
+ *  indexed once by word, and a surface is looked up by its first word; the
+ *  counts are identical (every start position where the surface's words
+ *  match, overlaps included, in sentence order). */
 export function contextVectors(sentences, surfaces, { clean } = {}) {
+  // An EOCompanyIndex@1 (organs/company-index.js) answers from what it has
+  // already read; its own cleaner was fixed at creation, so `clean` here is
+  // the index's, never re-applied.
+  if (sentences?.schema === "EOCompanyIndex@1" && typeof sentences.vectors === "function") return sentences.vectors(surfaces);
   const toks = clean ?? ((t) => t.replace(/^[^\p{L}]+|[^\p{L}'’]+$/gu, ""));
   const vecs = new Map(surfaces.map((s) => [s, new Map()]));
+  const parts = surfaces.map((s) => s.split(" "));
+  const byFirst = new Map();
+  parts.forEach((pw, k) => { if (!byFirst.has(pw[0])) byFirst.set(pw[0], []); byFirst.get(pw[0]).push(k); });
   for (const sent of sentences) {
     const words = String(sent.text ?? sent).split(/\s+/).map(toks);
-    for (const s of surfaces) {
-      const pw = s.split(" ");
-      for (let i = 0; i + pw.length <= words.length; i++) {
-        if (!pw.every((w, k) => words[i + k] === w)) continue;
-        const v = vecs.get(s);
+    for (let i = 0; i < words.length; i++) {
+      const ks = byFirst.get(words[i]); if (!ks) continue;
+      for (const k of ks) {
+        const pw = parts[k];
+        if (i + pw.length > words.length) continue;
+        let ok = true; for (let j = 1; j < pw.length; j++) if (words[i + j] !== pw[j]) { ok = false; break; }
+        if (!ok) continue;
+        const v = vecs.get(surfaces[k]);
         const before = i > 0 ? words[i - 1].toLowerCase() : "^";
         const after = i + pw.length < words.length ? words[i + pw.length].toLowerCase() : "$";
         v.set(`before=${before}`, (v.get(`before=${before}`) ?? 0) + 1);
@@ -209,6 +228,7 @@ export function discoverCompanyKinds(sentences, vocabulary, { minMentions, minSh
   // stream's "d5" cleaned to "d", so no vocabulary word ever matched and
   // the kinds were silently empty). A non-text caller declares its own
   // cleaner (identity, usually); the default stays for text callers.
+  if (nullArm && sentences?.schema === "EOCompanyIndex@1") throw new TypeError("discoverCompanyKinds: the null arm shuffles sentences it is handed — hand it sentences, never an index");
   const vecs = contextVectors(sentences, vocabulary, { clean });
   const bySignature = new Map();
   for (const [word, v] of vecs) {

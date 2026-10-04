@@ -48,16 +48,7 @@ async function __loadCanonGround() {
   }
   return __canonGround;
 }
-// canon-ground.mjs is not part of this vendoring (see VENDORING.md's Ask-the-Fold
-// row): under Node it is loaded best-effort, and any failure -- missing file,
-// missing canon data on disk, a parse error -- degrades to the same "ground is
-// simply absent" state the browser path already has, rather than crashing the
-// whole module at import time.
-let __groundingGround = null;
-if (__isNode) {
-  try { __groundingGround = (await __loadCanonGround()).mechanics.find((m) => m.id === "grounding") ?? null; }
-  catch (e) { __groundingGround = null; }
-}
+const __groundingGround = __isNode ? (await __loadCanonGround()).mechanics.find((m) => m.id === "grounding") : null;
 export const GROUND = __groundingGround ? __groundingGround.ground : null;
 export const GROUND_REF = __groundingGround ? __groundingGround.ref : null;
 //
@@ -994,7 +985,7 @@ export function blankStructure(answer) {
  * empty `refs` here is the same fact as a finding there.
  */
 export function corroborateAtoms(answer, passages) {
-  if (!passages?.length) return { examined: false, atoms: [] };
+  if (!passages?.length) return { examined: false, clean: null, atoms: [], detail: "unexamined — no passages" };
   const per = passages.map((p) => ({
     ref: p.ref ?? null,
     source: String(p.ref ?? "").split("#")[0] || null,
@@ -1038,15 +1029,17 @@ export function corroborateAtoms(answer, passages) {
  * Every figure and name in the answer, checked against everything the turn was
  * handed.
  *
- * `examined` is not the same as `clean`. Clean is true both for "checked,
- * found nothing wrong" and for "there was nothing to check against", and those
- * are different facts that must not read alike — a caller wanting "verified
- * clean" reads `examined && clean`. A capped list says it was capped for the
- * same reason: a truncated report that looks complete is a lie of omission.
+ * `examined` is not the same as `clean`. When nothing was examined
+ * (`examined: false` — no passages were handed over), `clean` is null
+ * (neither true nor false) with `detail: "unexamined — no passages"`, so a
+ * caller reading `if (clean)` can never mistake "nothing to check against"
+ * for "checked, found nothing wrong". A caller wanting "verified clean"
+ * reads `clean === true && examined`. A capped list says it was capped for
+ * the same reason: a truncated report that looks complete is a lie of omission.
  */
 export function checkGrounding(answer, passages, { question = "", resolveName = null } = {}) {
   if (!passages?.length) {
-    return { sentences: 0, atomsChecked: 0, findings: [], clean: true, examined: false, truncated: null, groundRef: GROUND_REF };
+    return { sentences: 0, atomsChecked: 0, findings: [], clean: null, examined: false, detail: "unexamined — no passages", truncated: null, groundRef: GROUND_REF };
   }
   const index = buildUnionIndex(passages);
   // Per-passage entries for the number-company check only (numberSupporters,

@@ -70,10 +70,10 @@ const clean = (s) => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
 const GFP = await import('../eoreader7/native/kernel/gfp-claim.js').catch(() => import('./vendor/eoreader7/native/kernel/gfp-claim.js')).catch(() => null);
 
 // The English evaluative lens (one giver for the fold and the archons). Vendored
-// byte-identical; imported at the top so `stanceOf`/`STANCE_GIVER` are bound for
+// byte-identical; imported at the top so `stanceLens`/`STANCE_GIVER` are bound for
 // conclusionOf and worth() on first call, never left in a temporal dead zone.
-const _stance = await import('./vendor/eoreader7/native/organs/stance.js').catch(() => ({ stanceOf: () => 0, GIVER: null }));
-export const stanceOf = _stance.stanceOf;
+const _stance = await import('./vendor/eoreader7/native/organs/stance.js').catch(() => ({ stanceLens: () => 0, GIVER: null }));
+export const stanceLens = _stance.stanceLens;
 export const STANCE_GIVER = _stance.GIVER;
 
 /** claimsFromReport(report, { docId }) -> the engine's OWN relation-reader
@@ -534,7 +534,7 @@ export function conclusionOf(claims, A) {
     fieldsOf(st, A).ns.forEach((n) => names.set(n, (names.get(n) || 0) + 1));
     frames.set(st.frame || 'fact', (frames.get(st.frame || 'fact') || 0) + 1);
     fieldsOf(st, A).fs.forEach((f) => figs.set(f.measure, (figs.get(f.measure) || 0) + 1));
-    stance += stanceOf(st.text);
+    stance += stanceLens(st.text);
   }
   const top = (m, n) => [...m.entries()].sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]))).slice(0, n).map((x) => x[0]);
   // STANCE is part of the conclusion: an identity concludes not only names,
@@ -551,7 +551,7 @@ export function conclusionOf(claims, A) {
 // lens, so a stance the fold selects FOR and a stance the delivery is judged
 // AGAINST can never disagree. The import is at the TOP (ESM hoists it, and
 // conclusionOf above needs it bound before first call — an absolute-path
-// re-export here previously broke on any machine but this one and left stanceOf
+// re-export here previously broke on any machine but this one and left stanceLens
 // in its temporal dead zone, a load-time failure found by the surf/fold
 // experiment, 2026-10-02).
 

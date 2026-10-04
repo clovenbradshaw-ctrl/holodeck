@@ -29,7 +29,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import { splitSentences } from './vendor/eoreader7/native/adapters/text/spans.js';
-import { select, ladder, resolverEdges, attestPrior, turnAgainstPrior, tokens, observables, dmdBaseline, genreBaseline, excessOf, makeH, render, worth, conclusionOf, stanceOf } from './holodeck-summary.js';
+import { select, ladder, resolverEdges, attestPrior, turnAgainstPrior, tokens, observables, dmdBaseline, genreBaseline, excessOf, makeH, render, worth, conclusionOf, stanceLens } from './holodeck-summary.js';
 
 const TEXT = readFileSync(fileURLToPath(new URL('./fixtures/summary-goldens/no-turn-on-red.txt', import.meta.url)), 'utf8');
 const DOC = 'ntor';
@@ -261,5 +261,5 @@ test('R — the fold at an identity: a verdict is visible ONLY as a turn against
   const one = select(A, DOC, { size: 1, forWhom: { conclusion } });
   const pick = A.byId[one.spans[0].id];
   assert.ok(pick, 'the folded pick is a source claim');
-  assert.notEqual(stanceOf(pick.text), conclusion.stance, 'the pick is a turn against the identity — its stance inverts the held one');
+  assert.notEqual(stanceLens(pick.text), conclusion.stance, 'the pick is a turn against the identity — its stance inverts the held one');
 });

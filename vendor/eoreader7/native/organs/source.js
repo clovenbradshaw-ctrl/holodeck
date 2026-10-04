@@ -541,8 +541,8 @@ function isParseableJson(s) {
   }
 }
 
-export function chunkSource(name, text, { boundaries, identity, atmosphere, blankFurniture } = {}) {
-  const chunks = chunkSourceRaw(name, text, { boundaries, identity, atmosphere });
+export function chunkSource(name, text, { boundaries, identity, atmosphere, blankFurniture, mergeShortRuns = false } = {}) {
+  const chunks = chunkSourceRaw(name, text, { boundaries, identity, atmosphere, mergeShortRuns });
   return blankFurniture ? withPageBlanking(chunks, text, blankFurniture) : chunks;
 }
 
@@ -651,7 +651,7 @@ function withPageBlanking(chunks, text, blankFurniture) {
   });
 }
 
-function chunkSourceRaw(name, text, { boundaries, identity, atmosphere } = {}) {
+function chunkSourceRaw(name, text, { boundaries, identity, atmosphere, mergeShortRuns } = {}) {
   if (looksDelimited(name, text)) return chunkRows(name, text, identity);
   // The addresses stay true to the file as it sits on disk: the container is
   // skipped, not renumbered.
@@ -673,8 +673,8 @@ function chunkSourceRaw(name, text, { boundaries, identity, atmosphere } = {}) {
     // themselves declined) falls through to the same default below — never
     // a silent empty result where a caller expected chunks.
   }
-  if (offset) return chunkProse(name, body, offset, identity);
-  return chunkProse(name, text, 0, identity);
+  if (offset) return chunkProse(name, body, offset, identity, mergeShortRuns);
+  return chunkProse(name, text, 0, identity, mergeShortRuns);
 }
 
 /**
@@ -825,7 +825,7 @@ function makeChunk(name, text, start, end, label, identity) {
   };
 }
 
-function chunkProse(name, text, base, identity) {
+function chunkProse(name, text, base, identity, mergeShortRuns = false) {
   const chunks = [];
   const re = /\n\s*\n/g;
   let start = 0;
@@ -847,11 +847,24 @@ function chunkProse(name, text, base, identity) {
       terms: new Set(tokenize(body)),
     });
   };
+  const spans = [];
   while ((m = re.exec(text))) {
-    push(start, m.index);
+    spans.push({ from: start, to: m.index });
     start = re.lastIndex;
   }
-  push(start, text.length);
+  spans.push({ from: start, to: text.length });
+  const maxChars = mergeShortRuns.maxChars ?? 1200;
+  const shortChars = mergeShortRuns.shortChars ?? 100;
+  if (mergeShortRuns && (!Number.isInteger(maxChars) || maxChars < 1 || !Number.isInteger(shortChars) || shortChars < 1))
+    throw new TypeError("mergeShortRuns budgets must be positive integers");
+  const runs = [];
+  for (const span of spans) {
+    const short = text.slice(span.from, span.to).trim().length <= shortChars;
+    const last = runs.at(-1);
+    if (mergeShortRuns && short && last?.short && span.to - last.from <= maxChars) last.to = span.to;
+    else runs.push({ ...span, short });
+  }
+  for (const { from, to } of runs) push(from, to);
   return chunks;
 }
 

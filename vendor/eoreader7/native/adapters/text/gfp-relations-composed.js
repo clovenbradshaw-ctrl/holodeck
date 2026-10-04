@@ -20,6 +20,7 @@
 import { extractGfpRelations } from "./relations-gfp.js";
 import { relationExtractorsFor } from "./relations-language.js";
 import { splitSentences } from "./spans.js";
+import { clauseSpans } from "./clause-spans.js";
 
 /**
  * composedRelations(text, { posPrior, figures, roleConfig, classifyWord,
@@ -32,7 +33,13 @@ export function composedRelations(text, { posPrior = null, figures = null, roleC
   // the recurrence leg: the arrangement yield over the whole text
   const recurrence = extractGfpRelations(body, { posPrior: null, figures, minRec, clauseAware });
 
-  // the positional leg: one clause per sentence, its connector the precise head
+  // the positional leg: one clause per read, its connector the precise head.
+  // Measured wall (2026-10-02): per SENTENCE the reader refuses 47/60 real
+  // sentences as `ambiguous_verb` — a sentence holds several clauses and the
+  // reader honestly reads ONE. Splitting by the engine's OWN clause spans
+  // first (clause-spans.js, the same organ the GFP leg's clauseAware uses)
+  // turns each clause into its own read, so the positional leg settles the
+  // clauses that would otherwise be refused together.
   let positional = [];
   let positionalRan = false;
   if (roleConfig && posPrior && classifyWord && dominantClass) {
@@ -40,8 +47,11 @@ export function composedRelations(text, { posPrior = null, figures = null, roleC
     const readers = relationExtractorsFor({ language: roleConfig.language ?? "eng", roleConfig, posPrior, classifyWord, dominantClass, ...(verbForms ? { verbForms } : {}) });
     for (const s of splitSentences(body)) {
       const st = s.text ?? s;
-      const r = readers.extractRelations(st, {});
-      for (const rel of r) if (rel.end1 && rel.label && rel.end2) positional.push({ ...rel, sentence: st, basis: "positional clause" });
+      const clauses = clauseSpans(st).map((c) => (typeof c === "string" ? c : st.slice(c.start, c.end))).filter((t) => t.trim());
+      for (const clause of clauses.length ? clauses : [st]) {
+        const r = readers.extractRelations(clause, {});
+        for (const rel of r) if (rel.end1 && rel.label && rel.end2) positional.push({ ...rel, sentence: clause, basis: "positional clause" });
+      }
     }
   }
 

@@ -264,7 +264,43 @@ export function makeReferentIndex({ splitSentences, extractSurfaces, discoverRef
       return variantIds.size === 1 ? variantIds : ids;
     }
 
-    return { events, referents: new Set(best.keys()), resolve, represent: (id) => best.get(id) ?? null };
+    // resolveIn(text) — every token run of a text resolved the same way
+    // resolve() resolves one name: caseless (the fold lowercases — a
+    // Hebrew question and an English one go through the same line),
+    // longest-run-first with maximal munch, so "Rodya Pyotr Petrovitch"
+    // is «Rodya» + «Pyotr Petrovitch», never also «Petrovitch». The
+    // same face reading-log.js's readingIndexFromLog carries; added here
+    // so callers stop reimplementing it as a capital-only scan (the
+    // [A-Z]-regex resolveIn that returned nothing on lowercase prose).
+    // Capitals keep working through it (the fold is case-insensitive);
+    // lowercase gains the same path. New method only — resolve/represent
+    // are untouched.
+    const longestRun = (() => {
+      let n = 1;
+      for (const e of events) {
+        const k = fold(e.surface).split(/\s+/).filter(Boolean).length;
+        if (k > n) n = k;
+      }
+      return n;
+    })();
+    function resolveIn(text, { refuse = null } = {}) {
+      const toks = fold(String(text ?? "")).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+      const out = new Set();
+      for (let i = 0; i < toks.length; i++) {
+        for (let j = Math.min(toks.length, i + longestRun); j > i; j--) {
+          const run = toks.slice(i, j).join(" ");
+          // A caller-refused run (a stopword-only span — "what", "it is")
+          // is never offered for resolution, but shorter runs inside it
+          // still are ("what Cumberland" still reaches "Cumberland").
+          if (typeof refuse === "function" && refuse(run)) continue;
+          const hit = resolve(run);
+          if (hit.size) { for (const id of hit) out.add(id); i = j - 1; break; }
+        }
+      }
+      return out;
+    }
+
+    return { events, referents: new Set(best.keys()), resolve, resolveIn, represent: (id) => best.get(id) ?? null };
   };
 }
 
