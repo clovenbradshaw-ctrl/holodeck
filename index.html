@@ -2211,18 +2211,9 @@ button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visi
             </sc-for>
             <sc-if value="{{ isPlain }}" hint-placeholder-val="{{ false }}"><label style="display:flex;align-items:center;gap:6px;font:400 14px 'Hanken Grotesk';color:var(--mut);cursor:pointer"><input type="checkbox" checked="{{ showPos }}" onChange="{{ togglePos }}">Show character positions</label></sc-if>
             <span style="flex:1"></span>
-            <span style="font:400 14px 'Hanken Grotesk';color:var(--mut);text-wrap:pretty">{{ readerHint }} · select text to pin it</span>
             <sc-if value="{{ rdPins.has }}" hint-placeholder-val="{{ false }}"><button onClick="{{ goDraft }}" style="all:unset;cursor:pointer;font:600 14px 'Hanken Grotesk';color:var(--acc);white-space:nowrap" style-hover="text-decoration:underline">{{ rdPins.label }}</button></sc-if>
           </div>
           </div>
-          <sc-if value="{{ rdReading.has }}" hint-placeholder-val="{{ false }}">
-            <div style="border-top:1px solid var(--line);padding:10px 34px;background:var(--s2);display:flex;flex-direction:column;gap:4px;font:400 13px/1.5 'Hanken Grotesk';color:var(--mut)">
-              <span><b style="color:var(--ink2);font-weight:600">The reader on this source:</b> {{ rdReading.line }}</span>
-              <span><span style="color:var(--ink2)">Cast:</span> {{ rdReading.cast }}</span>
-              <span style="display:flex;gap:4px 12px;flex-wrap:wrap"><span style="color:var(--ink2)">Bonds:</span><sc-for list="{{ rdReading.bonds }}" as="b" hint-placeholder-count="3"><span style="white-space:nowrap">{{ b }}</span></sc-for></span>
-              <sc-if value="{{ rdReading.hasChurn }}" hint-placeholder-val="{{ false }}"><span style="display:flex;gap:4px 12px;flex-wrap:wrap"><span style="color:var(--amber)">Kept revising:</span><sc-for list="{{ rdReading.churn }}" as="c" hint-placeholder-count="2"><span style="white-space:nowrap">{{ c }}</span></sc-for></span></sc-if>
-            </div>
-          </sc-if>
           <sc-if value="{{ rdFaith.has }}" hint-placeholder-val="{{ false }}">
             <div style="border-top:1px solid var(--line);padding:10px 34px;font:400 13px/1.45 'Hanken Grotesk';color:var(--mut);background:var(--s2);text-wrap:pretty">{{ rdFaith.note }}</div>
           </sc-if>
@@ -7554,7 +7545,7 @@ class Component extends DCLogic {
       gsw: { track: S.ground.on ? 'var(--acc2)' : 'var(--line2)', left: S.ground.on ? '16px' : '2px' },
       toggleGround: () => this.setState(s => ({ ground: { ...s.ground, on: !s.ground.on } })),
       layers: [['names', 'Names', 'var(--acc)', 'People, organisations and places'], ['figures', 'Figures', 'var(--amber)', 'Numbers and amounts'], ['dates', 'Dates', 'var(--date)', 'Years, months and times'], ['sentences', 'Sentences', 'var(--sel2)', 'Make every sentence clickable']].map(([k, label, color, title]) => { const on = S.ground.on && S.ground[k]; return { label, title, color, op: S.ground.on ? (on ? 1 : 0.5) : 0.35, bd: on ? 'var(--line2)' : 'transparent', bg: on ? 'var(--s1)' : 'transparent', onClick: () => this.setState(s => ({ ground: { ...s.ground, on: true, [k]: s.ground.on ? !s.ground[k] : true } })) }; }),
-       readerHint: (() => { const d0 = S.readDoc && A.docById[S.readDoc]; if (d0 && S.readMode === 'original' && this.isLiveDoc(d0)) return 'The live page — read outside this workspace, so it carries no grounding'; return S.ground.on ? 'Click a name or sentence to inspect · links open here · Shift-click a link to inspect it' : 'Grounding off — the page as published. Links still open here.'; })(),
+       readerHint: (() => { const d0 = S.readDoc && A.docById[S.readDoc]; if (d0 && S.readMode === 'original' && this.isLiveDoc(d0)) return 'The live page — read outside this workspace, so it carries no grounding.'; return S.ground.on ? 'Click a name or sentence to inspect · links open here · select text to pin it.' : 'Grounding off — the page as published. Links still open here.'; })(),
       readerPad: S.readDoc && A.docById[S.readDoc] && (A.docById[S.readDoc].format === 'page' || ((A.docById[S.readDoc].faithful || A.docById[S.readDoc].binPath) && S.readMode === 'original')) ? '0' : A.docById[S.readDoc] && A.docById[S.readDoc].pdfSrc && S.readMode === 'original' ? '24px 16px' : '28px 34px', readerMax: S.readDoc && A.docById[S.readDoc] && (A.docById[S.readDoc].format === 'page' || ((A.docById[S.readDoc].faithful || A.docById[S.readDoc].binPath) && S.readMode === 'original')) ? 'none' : '900px',
       rdMedia: (() => { const d0 = S.readDoc && A.docById[S.readDoc]; const m = d0 && d0.media; if (!m) return { has: false };
         if (m.kind === 'youtube') { const LZ = d0.lazy ? (this._lazy || {})[d0.id] : null; const segN = LZ && !LZ.loading ? LZ.segN : m.segN; const timed = segN > 0 || segN === -1;
