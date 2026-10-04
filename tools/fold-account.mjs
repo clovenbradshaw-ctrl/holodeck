@@ -1,10 +1,12 @@
-// tools/fold-account.mjs — the one place an account is read in the five repos.
+// tools/fold-account.mjs — the one place an account is read in the fold's repos
+// (the five compute repos + janus, the mark).
 //
 // The declaration (fold-workspace.json, at the-fold's root) carries the account;
 // every URL anywhere is derived from it. A future account move edits the
 // declaration only, then runs tools/repoint-links.mjs and tools/check-account.mjs.
 //
-// REPO-AWARE. Only the five *migrating* repos move to the new account. Any other
+// REPO-AWARE. Only the five *migrating* repos move to the new account (janus is
+// created there, not migrated, but rides the same account rule). Any other
 // repo under the same org (a legacy sibling: ohs-custody, eoPriors,
 // eoreaderhandbook, legacy-engine.1, reading-training, …) STAYS on the legacy
 // account — repointing it would be a dead link. So a link is judged by the pair

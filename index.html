@@ -2873,7 +2873,7 @@ function hdEngineMerge(t, ns, eng, hy) {
   return out.sort((a, b) => a.s - b.s);
 }
 // read-only handle for tests: the real functions, so a harness can recompute what a trace claims happened
-setTimeout(() => { try { window.__holodeck = Object.freeze({ analyze, holoKit, paradigms, splitSentences, findNames, isJunk, readAny, hdHygiene, hdPos: w => hdPos(w), hdDeclReady: () => !!HD_DECL, hdEngineReady: () => !!HD_ENGINE, hdReaderReady: () => hdReaderReady() }); } catch (e) {} }, 0);
+setTimeout(() => { try { window.__holodeck = Object.freeze({ analyze, holoKit, paradigms, splitSentences, findNames, isJunk, readAny, hdHygiene, hdPos: w => hdPos(w), hdDeclReady: () => !!HD_DECL, hdEngineReady: () => !!HD_ENGINE, hdReaderReady: () => hdReaderReady(), hdAttrReady: () => hdAttrReady(), hdHoldReady: () => hdHoldReady(), summarizeHolders: (sts, names) => (HD_ATTR ? HD_ATTR.summarizeHolders(sts, names) : null) }); } catch (e) {} }, 0);
 const hdCut = (t, n) => { t = String(t || '').replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
 function splitSentences(text, tr) {
   const out = []; const re = /[^\n]+?(?:[.!?]+(?=\s|$)|(?=\n)|$)/g; let m;
@@ -2908,6 +2908,11 @@ let HD_POS = null;
 const HD_POS_P = (typeof fetch === 'function' ? fetch(new URL('vendor/eoreader7/native/priors/pos-eng.json', location.href)).then(r => r.ok ? r.json() : null).then(j => { HD_POS = (j && j.forms) || null; return !!HD_POS; }).catch(() => false) : Promise.resolve(false));
 const HD_NOM = ['NOUN', 'PROPN', 'ADJ', 'NUM', 'X', 'SYM'];
 const hdPos = w => { if (!HD_POS || (/^[A-Z]{1,3}$/.test(w))) return null; return HD_POS[String(w).toLowerCase().replace(/['’]s$/, '').replace(/[.,;:!?)"”]+$/, '')] || null; };
+const hdDom = w => { const c = hdPos(w); if (!c) return null; const e = Object.entries(c).sort((a, b) => b[1] - a[1]); return e[0] ? e[0][0] : null; };
+// the received verb vocabulary the SVO reader reads with: every form the POS
+// prior tags VERB/AUX-dominant. No hand list; the prior's own reading.
+let HD_VERBS = null;
+const hdVerbSet = () => { if (HD_VERBS) return HD_VERBS; const s = new Set(); if (HD_POS) for (const [w, c] of Object.entries(HD_POS)) { let top = null, bn = -1; for (const [k, n] of Object.entries(c)) if (n > bn) { bn = n; top = k; } if (top === 'VERB' || top === 'AUX') s.add(w); } return (HD_VERBS = s); };
 // SULLIVAN, wired in: a productive case fold over the received UniMorph declension
 // prior (declension-rus.json, its giver in its provenance). declension.js answers
 // PAIRWISE — "does this real observed surface reach that real observed surface" —
@@ -2940,6 +2945,22 @@ Promise.all([
   import(new URL('holodeck-reader.js', location.href)).then(M => M.makeEngineRelationReader()),
 ]).then(([P, Q, R]) => { HD_PROF = P; HD_ASK = Q; HD_READER = R; }).catch(() => {});
 const hdReaderReady = () => !!(HD_PROF && HD_ASK && HD_READER);
+// THE HOLDER-INDEXED READING (holodeck-holders.js): the vendored attribution
+// adapter, wired read-only. `hdPos` supplies the treebank verb prior; the
+// folded referent table (built at the end of analyze) supplies the admitted
+// cast. Absent the module or a prior, heldBy is a typed gap — never a guess.
+let HD_ATTR = null;
+import(new URL('holodeck-holders.js', location.href)).then(M => { HD_ATTR = M; }).catch(() => {});
+const hdAttrReady = () => !!HD_ATTR;
+// The pipeline the holder reader reads through: the engine's SVO relation
+// reader (relations.js) and its declared-speaker organ (speaker.js). Injected,
+// never re-derived (P3).
+let HD_HOLD = null;
+Promise.all([
+  import(new URL('vendor/eoreader7/native/adapters/text/relations.js', location.href)),
+  import(new URL('vendor/eoreader7/native/organs/speaker.js', location.href)),
+]).then(([REL, SPK]) => { HD_HOLD = { extractRelations: REL.extractRelations, speakerSections: SPK.speakerSections, speakerAt: SPK.speakerAt }; }).catch(() => {});
+const hdHoldReady = () => !!(HD_HOLD && HD_ATTR);
 // The RECEIVED ground for "normal": live_priors' General English set (books, encyclopedia articles, US/UK law), the same
 // baseline the surprise view uses, read for how often each word is capitalised mid-sentence. It is independent of the
 // material being judged, so a workspace full of junk cannot talk itself into calling its junk normal. Fetched once,
@@ -3464,6 +3485,29 @@ function analyze(corpus, htmlMap) {
   { const linkOf = Object.fromEntries(docs.map(d => [d.id, d.links || []]));
     sts.forEach(st => { const L = linkOf[st.doc]; if (!L || !L.length) return;
       for (const sp of st.spans) { const a0 = st.s + sp.s, b0 = st.s + sp.e; const hit = L.find(lk => lk.s < b0 && lk.e > a0); if (hit) (nameLinks[sp.name] = nameLinks[sp.name] || []).push({ href: hit.href, doc: st.doc }); } }); }
+  // ── WHO HOLDS EACH STATEMENT (read-only) ──────────────────────────────────
+  // Read through the pipeline, not a byte window: the engine's SVO reader
+  // (relations.js) reads each statement's matrix clause; the POS prior says
+  // which surfaces are verbs and nominals; the folded cast is what the reading
+  // already admitted; the speaker organ declares sectioned speakers. Each
+  // record is { holder, depth, via, basis, gap } in perspective.js's own
+  // vocabulary — a reporting frame's subject is ASSERTED, a plain statement is
+  // the READER's WITNESSED belief, and a TYPED gap wherever a holder was
+  // expected and none admitted, never a fabricated one.
+  if (HD_ATTR && HD_HOLD) {
+    try {
+      const admitted = new Set(Object.keys(names));
+      const byAlias = new Map();
+      Object.values(names).forEach(n => { byAlias.set(n.name, n.name); (n.aliases || []).forEach(a => byAlias.set(a, n.name)); });
+      const referentFor = s => { if (!s) return null; if (byAlias.has(s)) return byAlias.get(s); const t = String(s).replace(/^(?:the|a|an)\s+/i, ''); if (byAlias.has(t)) return byAlias.get(t); const c = canonOf(t); return admitted.has(c) ? c : null; };
+      const isVerb = w => { const d = hdDom(w); return d === 'VERB' || d === 'AUX'; };
+      const isNominal = w => { const d = hdDom(w); return d === 'NOUN' || d === 'PROPN' || d === 'PRON'; };
+      const verbs = hdVerbSet();
+      const relationsOf = t => { try { return HD_HOLD.extractRelations(t, { verbs, phrasalPredicates: true, nounPhraseSubjects: true, verbWall: verbs }) || []; } catch (e) { return []; } };
+      const held = HD_ATTR.attributeStatements(sts, docs, { relationsOf, isVerb, isNominal, referentFor, speakerSectionsOf: t => HD_HOLD.speakerSections(t), speakerAt: HD_HOLD.speakerAt });
+      sts.forEach(st => { st.heldBy = held.get(st.id) || null; });
+    } catch (e) { /* an organ failure leaves heldBy null — a gap, never a guess */ }
+  }
   return { stsByDoc, echoes, echoesNear, echoFloor, docs, sts, names, nameLinks, byId: Object.fromEntries(sts.map(s => [s.id, s])), docById: Object.fromEntries(docs.map(d => [d.id, d])) };
 }
 // paradigms: which documents actually belong to the same conversation, discovered rather than declared.

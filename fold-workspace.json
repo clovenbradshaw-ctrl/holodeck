@@ -16,6 +16,7 @@
     "penelope": { "role": "keeper", "dir": "penelope" },
     "khora": { "role": "perceiver", "dir": "khora", "legacyDir": "eoreader7" },
     "ethos": { "role": "corpus", "dir": "ethos", "legacyDir": "live_priors" },
-    "heimdall": { "role": "watcher", "dir": "heimdall" }
+    "heimdall": { "role": "watcher", "dir": "heimdall" },
+    "janus": { "role": "reasoner", "dir": "janus", "closure": true, "mark": true }
   }
 }
