@@ -1,160 +1,151 @@
-// holodeck-holders.js — the holder-indexed reading of prose, per statement.
+// holodeck-holders.js — WHO IS TELLING, per statement: the holder-indexed
+// reading, assembled the way the pipeline reads it.
 //
 // Perspective = Interpretation × Figure = Lens (cube.js's TERRAIN_BY_DOMAIN).
-// One holder's reading of one claim. The kernel names the cell
-// (perspective.js); this module fills it for the surface, read-only, without
-// inventing a holder. Every statement leaves here carrying `heldBy`:
+// The kernel names the cell (perspective.js); this module fills it for the
+// surface by reading -- per statement -- who holds it, and never inventing a
+// holder. Every statement leaves with `heldBy`:
 //
 //   { holder, depth, via, basis, gap }
 //
-// with `basis` in perspective.js's own closed set (witnessed | asserted |
-// reported | inherited) and `gap` a TYPED absence where no holder could be
-// admitted — never a fabricated one.
+// `basis` is perspective.js's own closed set (witnessed | asserted | reported |
+// inherited); `gap` is a TYPED absence where no holder could be admitted.
 //
-// READ THROUGH THE PIPELINE, NOT A BYTE WINDOW. An earlier cut leaned on
-// attribution.js's ±90-character `before`/`after` slices and paired any verb
-// with an adjacent name — a heuristic that over-attributed (a Russian work
-// title in guillemets made "России" a speaker) and could not tell a REPORTING
-// FRAME from an ordinary subject clause. This version reads the material the
-// way the rest of the pipeline does:
+// THE HOLDER IS A FRAME, NOT A WINDOW. An earlier cut paired a verb with a name
+// in a ±90-character window around a quotation mark. That is not how the
+// pipeline reads: the driver native/eval/nested-narration.mjs steps the text in
+// order and asks, at each offset, WHO IS TELLING -- over the frames the material
+// itself declares -- and lands one perspectiveOperation per telling. Reading a
+// novel as four tellers (Walton > Victor > the creature) is exactly that:
 //
-//   * THE CLAUSE LAYER (clause-spans.js) bounds what is read.
-//   * THE SVO READER (relations.js) reads each sentence's matrix
-//     {subject, verb, object} — the reader the engine already uses, not a
-//     second grammar.
-//   * A REPORTING FRAME is structural: a matrix clause whose object is a
-//     CLAUSE OF ITS OWN — it carries a finite verb AND a subject nominal
-//     before that verb. `X said the policy would change` is a frame;
-//     `X met the board` is not; `"not comply"` is not; `the man who left` is
-//     rejected by the relative-clause it carries. No hand-typed speech-verb
-//     list is consulted, and no word's meaning is assumed.
-//   * DECLARED SPEAKERS come from the pipeline's own speaker organ
-//     (speaker.js::speakerSections/speakerAt) — an epistolary heading, a
-//     letter, a journal, a named section. That is the modality's own
-//     declaration, read as a binding, never inferred.
+//   attribution.js::holderAt(offset, { narration, embedded })
+//     embedded quotation frame (depth 2)  OUTRANKS
+//     outer narration frame (depth 1)     OUTRANKS
+//     outside every known frame           -> no holder, a typed absence
 //
-// MEDIUM-BLIND (READING-SPEC S6). `relationsOf`, `isVerb`, `isNominal` and
-// `referentFor` are INJECTED — the app's received POS prior and its own
-// admitted cast. None may invent: `isVerb`/`isNominal` only classify a
-// surface, and `referentFor` only returns a referent the reading already
-// witnessed (P3 — priors are injected, never derived).
+// The frames are DECLARED, never inferred:
+//   * speaker.js::speakerSections — an epistolary heading, a letter, a journal,
+//     a named section. This is the always-on channel; the material says who is
+//     telling, and this reads the binding.
+//   * attribution.js::narrationFrames — an INJECTED frame prior (narratorSpans,
+//     the same coref prior's own curation the nested-narration driver uses).
+//     Absent a prior it returns a typed gap, never a guessed narrator (P3).
+//   * attribution.js::quotationFrames — a RUN of continued-quotation paragraphs
+//     is an embedded telling; its speaker, when declared, outranks the frame.
 //
-// THE HONEST GAPS ARE THE RESULT. `attribution_unwitnessed` (a reporting
-// frame whose subject is not an admitted referent — "the minister said"),
-// `embedded_speaker_unattributed` (a statement carrying a quotation, which
-// this cut does not attribute), and `no_frame` (nothing read a frame; the
-// reader's own witnessed belief) are each a NAMED missing perspective.
+// NL → RELATIVE GRAMMAR → EOT → RELATIVE GRAMMAR → NL. The holder read is the
+// frame layer over an EOT: the front leg reads each statement through the
+// language's OWN grammar (relations-language.js::relationExtractorsFor under
+// its RoleConfig@1) into EOGfpClaim@1 triples {end1, label, end2}; the back leg
+// renders a claim back through the same language's lens
+// (holodeck-lang.js::lensFor + kernel/gfp-claim.js::render). This module takes
+// `relationsOf` (the bound front leg) and attaches `st.eot`, so the surface
+// carries the language-neutral claim beside the holder. It never renders, and
+// it never reads a language through another language's RoleConfig.
 //
-// MEASURED, DISCLOSED LIMITS (falsify.holders.mjs / falsify.holders.lang.mjs):
-//   1. QUOTED SPEECH IS A GAP. The SVO reader's object ends at the comma
-//      before a quotation, so `X said, "…"` reads no frame; a statement
-//      carrying quote marks with no frame is reported unowned, never handed
-//      to the reader. A clause-bound quotation reader is the next work, and
-//      this gap names it.
-//   2. PRE-VERBAL ATTRIBUTION is a gap's neighbour: `According to X, P`
-//      reads `the plan is sound`, whose object bears no verb, so no frame is
-//      found. Named here, not silently handed to the reader in a later cut.
-//   3. THE SVO READER IS ENGLISH/SVO. On another language it is the WRONG
-//      reader unless the caller binds that language's own role reader
-//      (relations-positional.js with its RoleConfig); the POS prior alone
-//      does not make an English matcher read Spanish or Russian.
+// END KEYS (perspective-claims.js::claimEndKey, used by the driver): a claim
+// end becomes a being by priority -- resolved referent > the FRAME'S NARRATOR
+// (first person) > a bound pronoun > the bare surface. This module reads the
+// frame; pronoun binding is a separate organ (bindNarrationFrames) and is left
+// to the caller's assembly, named here rather than guessed.
+//
+// MEASURED, DISCLOSED LIMITS:
+//   1. A document with no declared heading and no injected frame prior has no
+//      narration frame: its statements are the READER's own, witnessed. That is
+//      perspective.js's true reading, not a default that hides a question.
+//   2. A single quotation inside un-framed prose is not a run, so it is not an
+//      embedded frame; a run whose speaker is not declared is a typed gap
+//      (embedded_speaker_unattributed), never handed to the reader.
+//   3. Sentence-level reporting ("the minister said X") is NOT a frame the
+//      nested-narration driver reads; it is its own organ (a reported clause is
+//      a nested proposition), named here so it is not silently lost.
 
-import { clauseSpans } from './vendor/eoreader7/native/adapters/text/clause-spans.js';
-import { READER, BASIS } from './vendor/eoreader7/native/kernel/perspective.js';
+import { holderAt, narrationFrames, quotationFrames } from './vendor/eoreader7/native/adapters/text/attribution.js';
+import { speakerSections } from './vendor/eoreader7/native/organs/speaker.js';
+import { READER, BASIS, perspectiveOperation, projectPerspectives } from './vendor/eoreader7/native/kernel/perspective.js';
 
 const freeze = Object.freeze;
-const WORD = /[\p{L}\p{N}][\p{L}\p{N}'’.-]*/gu;
-const QUOTE_MARK = /["\u201C\u201D\u00AB\u00BB]/;
 
-const words = (t) => [...String(t ?? '').matchAll(WORD)].map((m) => m[0]);
-
-/** A relative clause sitting inside the object makes it a modified noun, not
- *  a reported clause (`the man who left` is not `said`'s complement). */
-const relativeInside = (clauses, objectOffset) => clauses.some((c) => c.relation === 'relative' && c.start >= objectOffset);
-
-/** A clause of its own: a finite verb, with a nominal subject before it.
- *  `the policy would change` yes; `not comply` no (verb, no subject);
- *  `to reporters` no; `sound` no. */
-function isOwnClause(text, isVerb, isNominal) {
-  const toks = words(text);
-  const vi = toks.findIndex((w) => isVerb(w));
-  if (vi < 0) return false;
-  return toks.slice(0, vi).some((w) => isNominal(w));
+/** Every frame the document declares: its own headings (always), plus any
+ *  narration prior the caller injects. Sorted by offset; overlapping is fine —
+ *  holderAt takes the first containing frame. */
+function framesOf(text, framePrior) {
+  const out = [];
+  for (const s of speakerSections(text)) out.push(freeze({ narrator: s.speaker, heading: s.heading, byteStart: s.start, byteEnd: s.end, how: s.how }));
+  if (framePrior) {
+    let nf = null;
+    try { nf = narrationFrames(text, { framePrior }); } catch (e) { nf = null; }
+    for (const f of (nf?.frames ?? [])) out.push(freeze({ narrator: f.narrator, heading: f.fromAnchor ?? '', byteStart: f.byteStart, byteEnd: f.byteEnd, how: 'prior' }));
+  }
+  out.sort((a, b) => a.byteStart - b.byteStart);
+  return out;
 }
 
 /**
- * Attribute every statement in `sts` to a holder.
+ * Attribute every statement in `sts` to the frame that holds it.
  *
- * Injected (P3 — this organ derives none):
- *   relationsOf(text) -> [{ subject, verb, object, subjectOffset, objectOffset }]
- *                        the pipeline's SVO reader (relations.js), bound to the
- *                        material's own verb vocabulary
- *   isVerb(word)   -> boolean  the received POS prior's verb reading
- *   isNominal(word)-> boolean  the received POS prior's nominal reading
- *   referentFor(surface) -> canonical admitted referent | null
- * Optional:
- *   clausesOf(text) -> clause spans (defaults to the vendored clause-spans.js)
- *   speakerSectionsOf(text) -> declared sections (pipeline speaker.js)
- *   speakerAt(sections, offset) -> declared speaker | null
+ * `docs` carry the raw text (its newlines and byte offsets) so heading detection
+ * and quotation runs run over the material as received.
+ *
+ * Injected (P3):
+ *   framePrior        an optional narration prior (attribution.js's contract) —
+ *                     the same curation nested-narration.mjs injects
+ *   embeddedSpeakersOf(doc, quotes) -> Map(spanStart -> speaker), optional; a
+ *                     run whose speaker is declared is held by that speaker
+ *   relationsOf(text) -> EOGfpClaim@1 triples [{end1, label, end2, polarity}]
+ *                     from the language's OWN front leg; attached as `st.eot`,
+ *                     never read for the holder (the frame is the holder)
  */
-export function attributeStatements(sts, docs = [], {
-  relationsOf = null,
-  isVerb = null,
-  isNominal = null,
-  referentFor = null,
-  clausesOf = (t) => clauseSpans(t),
-  speakerSectionsOf = null,
-  speakerAt = null,
-} = {}) {
-  if (typeof relationsOf !== 'function' || typeof isVerb !== 'function' || typeof isNominal !== 'function' || typeof referentFor !== 'function') {
-    throw new TypeError('attributeStatements: relationsOf, isVerb, isNominal and referentFor are injected — this organ derives none (P3)');
+export function attributeStatements(sts, docs = [], { framePrior = null, embeddedSpeakersOf = null, relationsOf = null } = {}) {
+  const perDoc = new Map();
+  for (const d of docs || []) {
+    const text = d.text || '';
+    let quotes = { embeddedFrames: [] };
+    try { quotes = quotationFrames(text); } catch (e) { /* a malformed doc has no runs — a gap, never a guess */ }
+    const embedded = (quotes.embeddedFrames || []).map((r) => freeze({ start: r.start, end: r.end }));
+    let embeddedSpeakers = new Map();
+    if (embeddedSpeakersOf) { try { embeddedSpeakers = embeddedSpeakersOf(d, quotes) || new Map(); } catch (e) { embeddedSpeakers = new Map(); } }
+    perDoc.set(d.id, { narration: freeze({ frames: framesOf(text, framePrior) }), embedded, embeddedSpeakers });
   }
-  const sections = new Map();
-  for (const d of docs || []) if (speakerSectionsOf) { try { sections.set(d.id, speakerSectionsOf(d.text || '')); } catch (e) { sections.set(d.id, []); } }
-
   const out = new Map();
   for (const st of sts || []) {
-    // 1. DECLARED — the modality says who is speaking (epistolary heading,
-    //    letter, journal, named section). Read as a binding, never inferred.
-    if (speakerAt && sections.has(st.doc)) {
-      const declared = speakerAt(sections.get(st.doc), st.s);
-      if (declared) { out.set(st.id, freeze({ holder: referentFor(declared) || declared, depth: 1, via: freeze(['section']), basis: BASIS.ASSERTED, gap: null })); continue; }
-    }
-    // 2. REPORTING FRAME — the matrix clause whose object is a clause of its
-    //    own. The holder is the matrix subject, when the reading has admitted it.
-    let frame = null;
-    try {
-      const clauses = clausesOf(st.text);
-      for (const rel of relationsOf(st.text) || []) {
-        const at = Number.isFinite(rel.objectOffset) ? rel.objectOffset : null;
-        if (at == null) continue;
-        if (relativeInside(clauses, at)) continue;
-        if (!isOwnClause(st.text.slice(at), isVerb, isNominal)) continue;
-        frame = rel; break;
+    if (relationsOf) { try { st.eot = relationsOf(st.text); } catch (e) { st.eot = []; } }
+    const f = perDoc.get(st.doc);
+    if (f) {
+      const at = holderAt(st.s, { narration: f.narration, embedded: f.embedded, embeddedSpeakers: f.embeddedSpeakers });
+      if (at.holder) {
+        out.set(st.id, freeze({ holder: at.holder, depth: at.depth, via: freeze(['frame', at.basis && String(at.basis).startsWith('narration') ? 'narration' : 'embedded']), basis: BASIS.ASSERTED, gap: null }));
+        continue;
       }
-    } catch (e) { /* an organ failure leaves no frame — a gap, never a guess */ }
-    if (frame) {
-      const subject = referentFor(frame.subject);
-      if (subject) out.set(st.id, freeze({ holder: subject, depth: 1, via: freeze([]), basis: BASIS.ASSERTED, gap: null }));
-      else out.set(st.id, freeze({ holder: null, depth: 0, via: freeze([]), basis: null, gap: freeze({ type: 'attribution_unwitnessed', detail: 'a reporting frame was read but its subject is not an admitted referent — a holder slot left unfilled, which is a result' }) }));
-      continue;
+      if (at.gap === 'embedded_speaker_unattributed') {
+        out.set(st.id, freeze({ holder: null, depth: 0, via: freeze([]), basis: null, gap: freeze({ type: 'embedded_speaker_unattributed', detail: 'this statement sits inside a quotation run whose speaker is not declared — the line is unowned, a result' }) }));
+        continue;
+      }
+      if (at.gap === 'unassigned_by_prior') {
+        out.set(st.id, freeze({ holder: null, depth: 0, via: freeze([]), basis: null, gap: freeze({ type: 'unassigned_by_prior', detail: 'the section this statement sits in declares no speaker — a typed absence, never a nearest-guess' }) }));
+        continue;
+      }
     }
-    // 3. A quotation with no frame read: the speaker is not read here. Unowned,
-    //    never handed to the reader — the reader did not say the quoted words.
-    if (QUOTE_MARK.test(st.text)) {
-      out.set(st.id, freeze({ holder: null, depth: 0, via: freeze([]), basis: null, gap: freeze({ type: 'embedded_speaker_unattributed', detail: 'this statement carries a quotation whose speaker is not read by the clause/SVO layer — the line is unowned, which is a result' }) }));
-      continue;
-    }
-    // 4. PLAIN — the reading's own witnessed belief (perspective.js). A real
-    //    holder, not an absence: the reader holds it on its own behalf.
+    // No frame claims it: the reading's own witnessed belief (perspective.js).
     out.set(st.id, freeze({ holder: READER, depth: 0, via: freeze([]), basis: BASIS.WITNESSED, gap: null }));
   }
   return out;
 }
 
-/** Roll a statement list's heldBy records into the surface's summary: which
- *  holders were found, the typed gaps, and the admitted names that are spoken
- *  of but never speak (the latent cast — their point of view is not included). */
+/** The perspective projection over the statements' heldBy records — the same
+ *  projectPerspectives the nested-narration driver runs: every holder's beliefs,
+ *  kept apart (perspective.js). `latent` names the admitted cast that holds
+ *  nothing (spoken of, never telling). */
+export function projectHolders(sts, names = {}) {
+  const log = [];
+  for (const st of sts || []) { const h = st.heldBy; if (h && h.holder) log.push(perspectiveOperation({ holder: h.holder, claim: st.id, basis: h.basis })); }
+  const projected = projectPerspectives(log);
+  const holders = projected.holders.filter((h) => h !== READER);
+  const latent = Object.keys(names || {}).filter((n) => !projected.perspectives[n]).sort();
+  return freeze({ projected, holders: freeze(holders), latent: freeze(latent), readerActs: (projected.perspectives[READER]?.beliefs ?? []).length });
+}
+
+/** Roll a statement list's heldBy records into the surface's summary. */
 export function summarizeHolders(sts, names = {}) {
   const holders = new Map();
   const gaps = new Map();

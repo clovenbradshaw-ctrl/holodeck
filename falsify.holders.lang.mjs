@@ -1,23 +1,23 @@
-// falsify.holders.lang.mjs — THE HOLDER-INDEXED READING ON OTHER LANGUAGES, and
-// the LATENT PERSPECTIVES it exposes: the beings a source names but never lets
-// speak — their point of view is not included.
+// falsify.holders.lang.mjs — THE FRAME READ ON OTHER LANGUAGES, and the LATENT
+// PERSPECTIVES it exposes: the beings a source names but never lets speak —
+// their point of view is not included.
 //
-// The English build injects the English treebank verb prior and the app's own
-// admitted cast. Here each language injects ITS OWN prior (pos-spa, pos-rus —
-// never English read over another language, the repo's cardinal rule), and the
-// projection is perspective.js's own: asserted holders vs the reader's
-// witnessed beliefs, with every admitted referent that holds nothing at all
-// reported as a latent perspective.
+// The holder is the FRAME (who is telling), read through speaker.js's declared
+// headings + quotation runs; the EOT front leg is each language's OWN reader
+// under its RoleConfig@1 (relations-language.js). This driver REPORTS, per
+// language, what the frame read finds and whether that language registers a
+// RoleConfig at all — never reading one language through another's grammar.
 //
 //   npm run serve                 # in another shell, :8813
-//   node falsify.holders.lang.mjs # real es/ru corpora + synthetic dialogue
+//   node falsify.holders.lang.mjs # real es/ru corpora + a synthetic control
 //
 // THE FALSIFIERS
 //   SAFETY    no fabricated holder, in any language or script — a holder that
-//             is neither the reader nor an admitted referent fails.
-//   NO-BLEED  the English prior read over Spanish/Russian must NOT attribute a
-//             speaker (never another language's grammar silently).
-//   PER-LANG  each language's own prior DOES attribute its own speech verbs.
+//             is neither the reader nor a declared frame fails.
+//   NAMED GAP a language with no RoleConfig has no EOT (reported), and a
+//             non-English heading is not read by speaker.js (reported) —
+//             never a silent fall-back to English.
+//   TITLE     a quoted work title is not a speaker (unowned, never attributed).
 //   LATENT    a being spoken of but never speaking is reported, not omitted.
 
 import { openSurface } from './drive-holodeck.mjs';
@@ -72,28 +72,24 @@ async function readHolders(surf, docs, posFile) {
   return surf.page.evaluate(async ({ docs, posFile }) => {
     const A = window.__holodeck.analyze({ docs });
     const M = await import(new URL('holodeck-holders.js', location.href).href);
-    const REL = await import(new URL('vendor/eoreader7/native/adapters/text/relations.js', location.href).href);
-    let forms = null;
-    try { const r = await fetch(new URL('vendor/eoreader7/native/priors/' + posFile, location.href)); if (r.ok) forms = (await r.json()).forms || null; } catch (e) {}
-    const dom = (w) => { if (!forms) return null; const k = String(w || '').toLowerCase().replace(/['’]s$/, ''); const c = forms[k]; if (!c) return null; const e = Object.entries(c).sort((a, b) => b[1] - a[1]); return e[0] ? e[0][0] : null; };
-    const isVerb = (w) => { const d = dom(w); return d === 'VERB' || d === 'AUX'; };
-    const isNominal = (w) => { const d = dom(w); return d === 'NOUN' || d === 'PROPN' || d === 'PRON'; };
-    const verbs = forms ? new Set(Object.keys(forms).filter((w) => { const d = dom(w); return d === 'VERB' || d === 'AUX'; })) : new Set();
-    // NOTE (disclosed): the SVO reader is English/SVO — binding a Spanish or
-    // Russian verb set to it is a measurement of THAT limit, not a claim it
-    // reads those languages. A language needs its own role reader.
-    const relationsOf = (t) => { try { return REL.extractRelations(t, { verbs, phrasalPredicates: true, nounPhraseSubjects: true, verbWall: verbs }) || []; } catch (e) { return []; } };
-    const admitted = new Set(Object.keys(A.names));
-    const byAlias = new Map();
-    Object.values(A.names).forEach((n) => { byAlias.set(n.name, n.name); (n.aliases || []).forEach((a) => byAlias.set(a, n.name)); });
-    const referentFor = (s) => { if (!s) return null; if (byAlias.has(s)) return byAlias.get(s); return admitted.has(s) ? s : null; };
-    const held = M.attributeStatements(A.sts, A.docs, { relationsOf, isVerb, isNominal, referentFor });
+    // THE FRAME READ. Frames are read from the material's own declared
+    // headings (speaker.js, English-scoped) and, when injected, a narration
+    // prior. The EOT front leg is the language's OWN reader under its
+    // RoleConfig (relations-language.js); es/ru register none here, so no EOT
+    // is attached — a named gap, never an English matcher on their grammar.
+    // role-config files are named by the treebank code (eng/heb/arb); es/ru
+    // register none, so their front leg cannot run — a named gap, disclosed.
+    const lang = String(posFile).replace(/^pos-|\.json$/g, '');
+    let roleConfigExists = false;
+    try { roleConfigExists = !!(await fetch(new URL('vendor/eoreader7/native/priors/role-config-' + lang + '.json', location.href))).ok; } catch (e) { roleConfigExists = false; }
+    const held = M.attributeStatements(A.sts, A.docs, {});
     A.sts.forEach((st) => { st.heldBy = held.get(st.id); });
     const sum = M.summarizeHolders(A.sts, A.names);
     return {
       sts: A.sts.map((s) => ({ id: s.id, doc: s.doc, text: s.text, heldBy: s.heldBy })),
       names: Object.keys(A.names),
       holders: sum.holders, gaps: sum.gaps, silent: sum.silent,
+      roleConfigExists,
     };
   }, { docs, posFile });
 }
@@ -148,38 +144,29 @@ async function main() {
     }
 
     for (const c of [{ id: 'es', label: 'Spanish', docs: ES_DIALOGUE }, { id: 'ru', label: 'Russian', docs: RU_DIALOGUE }]) {
-      console.log('\n══ ' + c.label + ' — synthetic dialogue + cross-language control ══');
+      console.log('\n══ ' + c.label + ' — the frame read + front-leg availability ══');
       const own = await readHolders(surf, c.docs, PRIOR[c.id]);
       const proj = project(own);
       const fails = safety(own);
-      const speaker = proj.asserted;
-      console.log('  own prior (' + PRIOR[c.id] + '):');
-      for (const st of own.sts.filter((s) => s.heldBy && s.heldBy.holder && s.heldBy.holder !== READER)) console.log('    ' + cut(st.text).padEnd(60) + ' → ' + st.heldBy.holder);
-      const okOwn = speaker.length > 0;
-      if (!okOwn) fails.push('the language’s own prior found no speaker — the organ did not run in ' + c.label);
-      console.log('    asserted speakers: ' + (speaker.join(', ') || '(none)') + '  → ' + (okOwn ? 'PASS PER-LANG' : 'FAIL PER-LANG'));
-      console.log('    LATENT (' + proj.latent.length + '): ' + (proj.latent.slice(0, 20).join(' · ') + (proj.latent.length > 20 ? ' … (+' + (proj.latent.length - 20) + ')' : '') || '(none)'));
-      // NO-BLEED: the English prior must not attribute a Spanish/Russian speaker.
-      const eng = await readHolders(surf, c.docs, PRIOR.en);
-      const engSpeakers = project(eng).asserted;
-      const bleed = engSpeakers.length > 0;
-      const engFails = safety(eng);
-      if (bleed) fails.push('the English prior attributed ' + engSpeakers.join(', ') + ' in ' + c.label + ' — another language’s grammar leaked in');
-      console.log('    English prior on ' + c.label + ': asserted speakers = ' + (engSpeakers.join(', ') || '(none)') + '  → ' + (bleed ? 'FAIL NO-BLEED' : 'PASS NO-BLEED'));
-      for (const f of engFails) fails.push(f);
-      // TITLE CONTROL: a quoted work title has no speaker. The adapter accepts
-      // any verb beside an admitted name as a speech tag — this is the rule's
-      // over-reach, and the falsification it names.
+      // THE HONEST PER-LANGUAGE STATEMENT: frames are read from declared
+      // headings, and speaker.js's heading grammar is English — a non-English
+      // heading is a NAMED gap. The EOT front leg is the language's own reader
+      // under its RoleConfig; with none registered, there is no EOT.
+      console.log('  EOT front leg: ' + (own.roleConfigExists ? 'a RoleConfig is registered — usable, zero model' : 'ABSENT — no RoleConfig is registered for ' + c.id + ', so no EOT is read (a named gap, never English SVO on it)'));
+      console.log('  declared frames read (speaker.js, English-scoped): ' + (own.holders.filter((x) => x.holder !== READER).length ? own.holders.filter((x) => x.holder !== READER).map((x) => x.holder + '×' + x.statements).join(', ') : '(none — a non-English heading is not read, a named gap)'));
+      console.log('  holder reading: ' + (own.holders.length ? own.holders.map((x) => x.holder + '×' + x.statements).join(', ') : '(none)'));
+      console.log('  typed gaps: ' + (own.gaps.length ? own.gaps.map((x) => x.type + '×' + x.statements).join(', ') : '(none)'));
+      console.log('  LATENT POVs (' + proj.latent.length + '): ' + (proj.latent.slice(0, 20).join(' · ') + (proj.latent.length > 20 ? ' … (+' + (proj.latent.length - 20) + ')' : '') || '(none)'));
       const ctl = await readHolders(surf, [TITLE_CONTROL[c.id]], PRIOR[c.id]);
-      const ctlSpeakers = ctl.sts.filter((s) => s.heldBy && s.heldBy.holder && s.heldBy.holder !== READER).map((s) => s.heldBy.holder + ' @ “' + cut(s.text, 46) + '”');
-      if (ctlSpeakers.length) fails.push('a quoted work title was attributed to a speaker (' + ctlSpeakers.join('; ') + ') — the adapter reads any verb beside an admitted name as a speech tag');
-      console.log('    title control (a title is not a speaker): ' + (ctlSpeakers.length ? 'OVER-ATTRIBUTED → ' + ctlSpeakers.join('; ') : 'unowned') + '  → ' + (ctlSpeakers.length ? 'FAIL PRECISION' : 'PASS'));
-      console.log('  ' + (fails.length ? 'FAIL' : 'PASS'));
+      const ctlSpeakers = ctl.sts.filter((s) => s.heldBy && s.heldBy.holder && s.heldBy.holder !== READER).map((s) => s.heldBy.holder);
+      if (ctlSpeakers.length) fails.push('a quoted work title was attributed to a speaker (' + ctlSpeakers.join(', ') + ')');
+      console.log('  title control (a title is not a speaker): ' + (ctlSpeakers.length ? 'OVER-ATTRIBUTED → ' + ctlSpeakers.join(', ') : 'unowned') + '  → ' + (ctlSpeakers.length ? 'FAIL' : 'PASS'));
+      console.log('  ' + (fails.length ? 'FAIL' : 'PASS') + '  SAFETY: no fabricated holder');
       for (const f of fails) console.log('      - ' + f);
       failed += fails.length ? 1 : 0;
     }
 
-    console.log('\n' + (failed ? 'VERDICT: FAIL (' + failed + ' case(s))' : 'VERDICT: PASS — holders attributed per language, latent POVs reported, no fabrication, no language bleed'));
+    console.log('\n' + (failed ? 'VERDICT: FAIL (' + failed + ' case(s))' : 'VERDICT: PASS — the frame read is honest per language; a language with no RoleConfig has no EOT (a named gap), never another language’s grammar; no fabrication'));
     if (surf.consoleErrors.length) console.log('console errors:', JSON.stringify(surf.consoleErrors.slice(0, 5)));
     if (failed) process.exitCode = 1;
   } finally {

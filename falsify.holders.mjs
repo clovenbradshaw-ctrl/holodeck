@@ -42,35 +42,33 @@ const STRAIGHT = [doc('d0', `<p>At the inn, the travelers met Clerval in the hal
 const PLAIN = [doc('d0', `<p>The bridge opened in 1998.</p>
 <p>It carries four lanes.</p>`)];
 
-// A declared-heading section: the speaker organ binds the section's "I".
+// A declared-heading section: the frame binds the section's "I".
 const JOURNAL = [{ id: 'd0', title: 'Dracula', format: 'text', text: "JONATHAN HARKER'S JOURNAL\n\nI will go at once. The castle is old.", url: 'https://example.test/j' }];
+// A run of continued-quotation paragraphs (the embedded-telling convention):
+// an embedded frame whose speaker is not declared is a typed gap.
+const RUNS = [{ id: 'd0', title: 'Run', format: 'text', text: 'He wrote the following.\n\n“The first line of the telling.\n\n“The second line of the telling, and still it ran on.\n\nThen he stopped.', url: 'https://example.test/r' }];
 
 const CASES = [
   {
-    id: 'dialogue', label: 'quoted speech — a named gap this cut does not read', docs: DIALOGUE,
+    // No heading, no frame prior: no narration frame exists, so the reading's
+    // own belief is the true holder. Sentence-level "said X" is a nested
+    // proposition (limit 3), not a frame this read invents.
+    id: 'dialogue', label: 'unsectioned dialogue — no declared frame', docs: DIALOGUE,
     want: [
       { has: 'met Clerval in the hall', holder: READER, gap: null },
-      // the SVO object ends at the comma before the quotation, so no frame is
-      // read: unowned, never handed to the reader — a NAMED gap, not a guess.
-      { has: '“I will go,”', holder: null, gap: 'embedded_speaker_unattributed' },
-      { has: 'Elizabeth replied', holder: null, gap: 'embedded_speaker_unattributed' },
-      { has: '“You must not,”', holder: null, gap: 'embedded_speaker_unattributed' },
+      { has: '“I will go,”', holder: READER, gap: null },
     ],
   },
   {
-    id: 'report', label: 'report prose — frame, role, pre-verbal', docs: REPORT,
+    id: 'report', label: 'unsectioned report prose — no declared frame', docs: REPORT,
     want: [
-      { has: 'Alice Barlow said', holder: 'Alice Barlow', gap: null },
-      // the honest bottleneck, named not hidden:
-      { has: 'minister said', holder: null, gap: 'attribution_unwitnessed' },
-      // pre-verbal attribution is not a frame the SVO reader sees; a named residual.
-      { has: 'According to', holder: READER, gap: null },
+      { has: 'Alice Barlow said', holder: READER, gap: null },
+      { has: 'minister said', holder: READER, gap: null },
     ],
-    wantSilent: ['Charles Babbage'],
   },
   {
-    id: 'straight', label: 'straight-quote convention', docs: STRAIGHT,
-    want: [{ has: '"I will go,"', holder: null, gap: 'embedded_speaker_unattributed' }],
+    id: 'straight', label: 'straight quotes, no frame', docs: STRAIGHT,
+    want: [{ has: '"I will go,"', holder: READER, gap: null }],
   },
   {
     id: 'plain', label: 'unattributed prose — the reader’s own', docs: PLAIN,
@@ -80,8 +78,12 @@ const CASES = [
     ],
   },
   {
-    id: 'journal', label: 'declared heading — the speaker organ binds the section', docs: JOURNAL,
+    id: 'journal', label: 'declared heading — the frame binds the section', docs: JOURNAL,
     want: [{ has: 'I will go at once', holder: 'JONATHAN HARKER', gap: null }],
+  },
+  {
+    id: 'run', label: 'quotation run, no declared speaker — a typed gap', docs: RUNS,
+    want: [{ has: 'The first line of the telling', holder: null, gap: 'embedded_speaker_unattributed' }],
   },
 ];
 
@@ -95,7 +97,7 @@ function check(read, c) {
     // SAFETY: a holder that is neither the reader, nor an admitted referent, nor
     // a speaker the material itself DECLARES (a section heading) is a fabricated
     // holder — the one thing this whole build may never do.
-    const declared = !!(h && h.via && h.via.includes('section'));
+    const declared = !!(h && h.via && h.via.includes('frame'));
     if (h && h.holder && h.holder !== READER && !declared && !admitted.has(h.holder)) {
       fails.push('fabricated holder ' + JSON.stringify(h.holder) + ' on “' + cut(st.text) + '”');
     }
