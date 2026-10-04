@@ -15,7 +15,7 @@ page you are on when you press the toolbar button. It never prowls on its own.
 4. Pin the toolbar button (optional; needed only for the manual fallback).
 
 The fold origin must match where the fold is served. If the fold is not on
-`https://clovenbradshaw-ctrl.github.io/holodeck/`, edit `FOLD_URL` at the top of `background.js`,
+`https://scores-patch-points.github.io/the-fold/`, edit `FOLD_URL` at the top of `background.js`,
 reload the extension, and repeat step 3.
 
 ## How it works

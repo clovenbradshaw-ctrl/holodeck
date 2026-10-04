@@ -66,7 +66,7 @@ test("verifyState re-checks every chain it is shown, and names where one breaks"
 });
 
 // The page loaded many non-localhost hosts before this work (CDNs, fonts, Wikipedia, a Cloudflare worker). This work may add NONE.
-const BASELINE = ["api.allorigins.win", "api.codetabs.com", "api.github.com", "archive.org", "archive.ph", "cdn.jsdelivr.net", "clovenbradshaw-ctrl.github.io", "corsproxy.io", "en.wikipedia.org", "eolab.substack.com", "esm.run", "esm.sh", "example.com", "fonts.googleapis.com", "github.com", "holodeck-proxy.prometheoid.workers.dev", "httpbin.org", "i.ytimg.com", "r.jina.ai", "raw.githubusercontent.com", "unpkg.com", "web.archive.org", "www.youtube.com"]; // at holodeck 72aef8b
+const BASELINE = ["api.allorigins.win", "api.codetabs.com", "api.github.com", "archive.org", "archive.ph", "cdn.jsdelivr.net", "scores-patch-points.github.io", "corsproxy.io", "en.wikipedia.org", "eolab.substack.com", "esm.run", "esm.sh", "example.com", "fonts.googleapis.com", "github.com", "holodeck-proxy.prometheoid.workers.dev", "httpbin.org", "i.ytimg.com", "r.jina.ai", "raw.githubusercontent.com", "unpkg.com", "web.archive.org", "www.youtube.com"]; // at holodeck 72aef8b
 const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? (e.name === ".git" ? [] : walk(`${d}/${e.name}`)) : [`${d}/${e.name}`]));
 const hostsIn = (txt) => [...txt.matchAll(/https?:\/\/([a-zA-Z0-9.-]+)/g)].map((m) => m[1].toLowerCase()).filter((h) => !/^(localhost|127\.0\.0\.1)$/.test(h));
 test("notebook modules introduce no external hosts", () => {

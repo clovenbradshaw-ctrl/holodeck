@@ -15,7 +15,7 @@
 // never fetched. The worker's device generates its own 6-digit pairing code
 // and gives it to the person; this surface records it. The code never rides
 // in the link.
-export const HEIMDALL_SITE = "https://clovenbradshaw-ctrl.github.io/heimdall/";
+export const HEIMDALL_SITE = "https://scores-patch-points.github.io/heimdall/";
 export const CODES_TYPE = "org.heimdall.codes";
 export const INVITE_TTL_MS = 7 * 24 * 3600 * 1000;
 

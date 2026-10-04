@@ -8,7 +8,7 @@
 // FOLD_URL below to the real address. The content script on the fold page (when it is open) is what
 // turns the capture into an ingest; if the fold is not open we open it and retry delivery.
 
-const FOLD_URL = 'https://clovenbradshaw-ctrl.github.io/holodeck/index.html'; // adjust to where the fold is served
+const FOLD_URL = 'https://scores-patch-points.github.io/the-fold/index.html'; // adjust to where the fold is served
 
 function isFoldUrl(u) {
   if (!u) return false;

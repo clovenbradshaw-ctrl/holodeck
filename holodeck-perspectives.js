@@ -64,7 +64,19 @@ export const MIN_SENTENCE_CHARS = 20;
 // 95% of a novel as name-free.
 export const NAME_RECURRENCE = 2;
 
-const LP_RAW = 'https://raw.githubusercontent.com/clovenbradshaw-ctrl/live_priors/main/';
+// The corpus account follows the served page (scores-patch-points.github.io →
+// scores-patch-points), overridable at runtime with localStorage['hd:account'] —
+// one declaration (fold-workspace.json), no code hunt on an account move.
+const HD_ACCOUNT = (() => {
+  try {
+    const o = (typeof localStorage !== 'undefined' && localStorage.getItem('hd:account'));
+    if (o) return o;
+    const h = (typeof location !== 'undefined' && location.hostname) || '';
+    if (/\.github\.io$/.test(h)) return h.split('.')[0];
+  } catch (e) {}
+  return 'scores-patch-points';
+})();
+const LP_RAW = 'https://raw.githubusercontent.com/' + HD_ACCOUNT + '/ethos/main/';
 
 // Received closed classes (priors.js, lang/en — every entry names its
 // giver). A sentence-initial capital carries no evidence of a name (the
