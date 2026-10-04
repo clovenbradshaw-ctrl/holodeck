@@ -106,3 +106,12 @@ fast: 2 files · 14 affected tests pass · law: WARN pre-existing S17/S96 in ../
 | Frankfurt | placeholder | index.html:223 | false-positive-on-review | hint-placeholder-* are the standing dc-template compile metadata, not a value standing in for missing data |
 | Greenberg | capitalisation gate with no declared scope | holodeck-reader.js:316 | noted | isNameWord (/^[A-Z]/) and gerund order are English, and perspectivesOf's own comment declares it ("the prior and the register are English — a script it cannot tag yields no act, shown as no chip") |
 clean: no other lens routed
+
+## 2026-10-04 — the Kondo sweep of dead value keys after the one-filter strip (main, working)
+fast: 2 files · 1 affected test pass · law: ok (WARN pre-existing dup eoreader7 READING-SPEC S17/S96, carried)
+| lens | citation | file:line | verdict | one line |
+| Feynman | — | index.html:7225 | false-positive-on-review | `sourceKindsUseful: tabs.length > 2` is a disclosure gate on the line we edited, not a tuned verdict; logic unchanged |
+| Holmes | — | index.html:5590 | false-positive-on-review | `identitiesTotal`/`↔` display is pre-existing context on the same edited line; no merge added |
+| Kondo | P10 | index.html (sweep) | fixed | removed `corrVals`, `rdPanel`/`rdReading`, `readerHint`, `isOriginal`/`faithOn`, `repo` modal, `openNewWs`/`openTask`, `just` panel, `svGroups`, `hasSrcRows`, `showLabels`, `setFw`, `_o`; all stashed with addresses; `S.just` state kept (NEW badge) |
+| Lévi-Strauss | — | — | noted | no stashed piece matches this diff's open problems; 2 matches are pre-existing eoreader7/vendor |
+clean: none further routed

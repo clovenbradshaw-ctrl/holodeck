@@ -313,12 +313,6 @@ button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visi
                   </sc-for>
                 </div>
               </sc-if>
-              <sc-if value="{{ false }}" hint-placeholder-val="{{ true }}">
-                <div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between">
-                  <span style="font:400 14px/1.45 'Hanken Grotesk';color:var(--ink2);flex:1 1 320px;text-wrap:pretty">{{ hb.caption }}</span>
-                  <button onClick="{{ hb.onLoad }}" style="background:var(--sel);border:1px solid #8b5cf6;border-radius:8px;padding:7px 15px;cursor:pointer;font:600 13px 'Hanken Grotesk';color:var(--ink);white-space:nowrap" style-hover="border-color:var(--acc)">Bring in perspectives →</button>
-                </div>
-              </sc-if>
               <sc-if value="{{ hb.loading }}" hint-placeholder-val="{{ false }}"><span style="font:500 13px 'Hanken Grotesk';color:var(--mut)">Reading books, encyclopedia articles and statutes to learn what each expects…</span></sc-if>
             </div>
           </sc-if>
@@ -328,7 +322,6 @@ button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visi
     </div>
     <sc-if value="{{ scope.show }}" hint-placeholder-val="{{ false }}">
       <div class="hd-scope" style="padding:0 20px 10px;display:flex;gap:6px 14px;align-items:baseline;flex-wrap:wrap;font:400 12px 'Hanken Grotesk';color:var(--mut)">
-        <button onClick="{{ scope.onSources }}" title="Scope the workspace to particular sources" style="all:unset;cursor:pointer;color:var(--ink2);border-bottom:1px dotted var(--line2)" style-hover="color:var(--ink)">{{ scope.sourcesLine }}</button>
         <sc-if value="{{ scope.hasSegment }}"><button onClick="{{ scope.onClearSegment }}" style="all:unset;cursor:pointer;color:var(--acc)">{{ scope.segmentLabel }} · clear ×</button></sc-if>
         <sc-for list="{{ scope.filters }}" as="ch"><button onClick="{{ ch.onClear }}" style="all:unset;cursor:pointer;color:var(--acc)">{{ ch.k }}: {{ ch.v }} ×</button></sc-for>
         <sc-if value="{{ scope.hasTopics }}" hint-placeholder-val="{{ false }}">
@@ -440,20 +433,6 @@ button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visi
 
       <sc-if value="{{ v.overview }}" hint-placeholder-val="{{ false }}"><div id="overview-surface"></div></sc-if>
       <sc-if value="{{ v.summary }}" hint-placeholder-val="{{ true }}">
-        <sc-if value="{{ hasFacets }}" hint-placeholder-val="{{ false }}">
-          <div style="display:flex;flex-direction:column;gap:8px;background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:12px 14px">
-            <sc-for list="{{ srcFacets }}" as="fa" hint-placeholder-count="3">
-              <div style="display:grid;grid-template-columns:84px minmax(0,1fr);gap:10px;align-items:start">
-                <span style="padding-top:4px;font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">{{ fa.label }}</span>
-                <div style="display:flex;gap:6px;flex-wrap:wrap;min-width:0">
-                <sc-for list="{{ fa.opts }}" as="o" hint-placeholder-count="4">
-                  <button onClick="{{ o.onClick }}" style="display:flex;align-items:center;gap:6px;background:{{ o.bg }};border:1px solid {{ o.bd }};border-radius:999px;padding:2px 10px;cursor:pointer;font:500 13px 'Hanken Grotesk';color:var(--ink)" style-hover="border-color:var(--acc)"><span style="width:8px;height:8px;border-radius:50%;background:{{ o.color }}"></span>{{ o.label }}<span style="font:400 12px 'JetBrains Mono';color:var(--mut)">{{ o.n }}</span></button>
-                </sc-for>
-                </div>
-              </div>
-            </sc-for>
-          </div>
-        </sc-if>
         <div style="display:flex;flex-direction:column;gap:6px;padding-top:10px;border-top:1px solid var(--line);margin-top:10px">
           <span style="font:600 12px 'JetBrains Mono';letter-spacing:.08em;text-transform:uppercase;color:var(--dim)">Source options</span>
         <sc-if value="{{ svTabsOn }}" hint-placeholder-val="{{ true }}">
@@ -4306,7 +4285,7 @@ class Component extends DCLogic {
       this._overviewRoot = root; this._overviewMount = M.mountOverview(root, { ...options, docs: this.analysis().docs });
     }).catch(e => { this._overviewLoading = null; root.textContent = 'Overview unavailable: ' + e.message; });
   }
-  state = { corpus: null, added: loadAdded(), view: new URLSearchParams(location.search).has('work') ? 'ask' : 'summary', akMode: new URLSearchParams(location.search).get('work') === 'notebook' ? 'notebook' : new URLSearchParams(location.search).get('work') === 'fold' ? 'generate' : 'chat', akFocus: new URLSearchParams(location.search).get('fullscreen') === '1', akConvList: false, akNotes: {}, sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, showSettings: false, draftText: '', fw: {}, note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), topicsQ: '', topicsPage: 0, dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true }, wsRenaming: false, wsNameDraft: '', stripOpen: null, stripDocs: null, stripGroup: 'fold', stripEO: '', stripGaps: [], stripRead: { mode: 'Relate', domain: 'Interpretation', grain: 'Pattern' }, stripReadAuto: true, stripPersp: null, stripConds: [], stripConn: 'all', stripSegTab: 'conditions', folder: null, folderDraft: '' };
+  state = { corpus: null, added: loadAdded(), view: new URLSearchParams(location.search).has('work') ? 'ask' : 'summary', akMode: new URLSearchParams(location.search).get('work') === 'notebook' ? 'notebook' : new URLSearchParams(location.search).get('work') === 'fold' ? 'generate' : 'chat', akFocus: new URLSearchParams(location.search).get('fullscreen') === '1', akConvList: false, akNotes: {}, sel: null, f: {}, q: '', readDoc: null, showPos: false, showAdd: false, showSettings: false, draftText: '', fw: {}, note: '', theme: loadTheme(), railOpen: loadRailOpen(), segOpen: loadSegOpen(), topicsQ: '', topicsPage: 0, dragging: false, busy: '', just: null, readMode: 'original', htmlVer: 0, txAsk: null, txPrior: 'workspace', txLang: 'en', txModel: 'base', txBusy: false, txProg: '', ground: { on: true, names: true, figures: true, dates: true, sentences: true }, wsRenaming: false, wsNameDraft: '', stripRead: { mode: 'Relate', domain: 'Interpretation', grain: 'Pattern' }, folder: null, folderDraft: '' };
   _html = {};
 
   componentDidMount() {
@@ -5600,16 +5579,15 @@ class Component extends DCLogic {
   readingVals(A, view) {
     const S = this.state; const X = this._rix || this._localRix; const docOf = src => { const id = String(src).replace(/\.(txt|json)$/, ''); return A.docs.find(d => d.ohsId === id) || A.docById[id] || null; };
     const rdOn = view === 'reader' && S.readDoc && X; if (view === 'reader' && !X && !this._rixP) loadReadingIndex(false).then(v => { if (v && !this._rix) { this._rix = v; this.forceUpdate(); } }).catch(() => {}); if ((view === 'reader' || view === 'reading') && !this._localRix && !this._lrixP) this.loadLocalReading(); const rdDoc = rdOn ? A.docById[S.readDoc] : null; const srcOf = X ? (X.source ? n => X.source(n) : n => X.sources[n]) : null; const rdSrc = rdDoc ? (rdDoc.ohsId && srcOf ? (srcOf(rdDoc.ohsId + '.txt') || srcOf(rdDoc.ohsId + '.json')) : (this._localRix && this._localRix.sources[rdDoc.id])) : null;
-    const rdPanel = rdSrc ? { has: true, line: plural(rdSrc.chunks, 'encounter') + ' \u00b7 ' + Object.entries(rdSrc.ops).sort((a, b) => b[1] - a[1]).map(([k, v]) => k + ' ' + v).join(' \u00b7 '), cast: Object.entries(rdSrc.cast).slice(0, 12).map(([k, v]) => k + ' \u00d7' + v).join(', '), bonds: Object.entries(rdSrc.bonds).slice(0, 8).map(([k, v]) => k + ' \u00d7' + v), churn: Object.entries(rdSrc.idChurn).slice(0, 5).map(([k, v]) => k + ' \u00d7' + v), hasChurn: Object.keys(rdSrc.idChurn).length > 0 } : { has: false, bonds: [], churn: [] };
-    if (view !== 'reading') return { rdReading: rdPanel, rx: { on: false } };
-    if (!X) { this.loadReading(); const p = this._rixProg; return { rdReading: rdPanel, rx: { on: true, ready: false, notReady: true, wait: this._rixErr ? 'Could not build the reading index: ' + this._rixErr : p ? (p.stage + (p.pct != null ? ' ' + p.pct + '%' : '') + (p.mb ? ' \u00b7 ' + p.mb + ' MB' : '')) : 'Opening the reading\u2026', note: 'The reading is 1.67 GB once decompressed. It is decoded once in the background, kept in this browser\u2019s file store, and indexed; later visits open the index directly.' } }; }
+    if (view !== 'reading') return { rx: { on: false } };
+    if (!X) { this.loadReading(); const p = this._rixProg; return { rx: { on: true, ready: false, notReady: true, wait: this._rixErr ? 'Could not build the reading index: ' + this._rixErr : p ? (p.stage + (p.pct != null ? ' ' + p.pct + '%' : '') + (p.mb ? ' \u00b7 ' + p.mb + ' MB' : '')) : 'Opening the reading\u2026', note: 'The reading is 1.67 GB once decompressed. It is decoded once in the background, kept in this browser\u2019s file store, and indexed; later visits open the index directly.' } }; }
     const srcMeta = X.sourcesMeta ? X.sourcesMeta() : null; const nSrc = srcMeta ? Object.keys(srcMeta).length : Object.keys(X.sources).length;
     const bondRow = b => { const within = b.n - b.srcN; const bg = b.srcN >= 5 && b.n <= b.srcN * 1.25; return { pair: b.a + ' \u2014 ' + b.b, n: '\u00d7' + b.n, where: plural(b.srcN, 'source'), rel: Object.entries(b.rel || {}).sort((x, y) => y[1] - x[1]).slice(0, 3).map(([k]) => '\u201c' + k + '\u201d').join(' '), tag: bg ? 'background: once per page' : within > 0 ? 'recurs within sources' : '', tagCol: bg ? 'var(--dim)' : 'var(--ok)', neg: b.neg ? b.neg + ' negated' : '' }; };
     const bonds = (X.eachBond ? X.eachBond() : (X.bonds || [])).map(bondRow); const load = bonds.filter(b => b.tag !== 'background: once per page'), back = bonds.filter(b => b.tag === 'background: once per page');
     const castRows = (X.castTop ? X.castTop(60) : (X.cast || []).slice().sort((a, b) => b.srcN - a.srcN || b.mentions - a.mentions).slice(0, 60)).map(c => { const nm = c.surfaces[0]; const inCorpus = !!A.names[nm]; return { name: nm, alts: c.surfaces.slice(1, 4).join(' \u00b7 '), hasAlts: c.surfaces.length > 1, meta: plural(c.mentions, 'mention') + ' \u00b7 ' + plural(c.srcN, 'source') + ' \u00b7 ' + String(c.standing || '').replace(/_/g, ' '), onClick: inCorpus ? () => this.openProfile(nm) : () => { this.setState({ q: nm, qDraft: undefined }); this.go('search'); } }; });
     const churn = (X.identitiesTop ? X.identitiesTop(30) : (X.identities || []).slice(0, 30)).map(i => ({ pair: i.left + ' \u2194 ' + i.right, n: '\u00d7' + i.n, ev: Object.entries(i.events || {}).map(([k, v]) => k.replace(/^identity_/, '').replace(/_/g, ' ') + ' ' + v).join(' \u00b7 '), where: plural(i.srcN, 'source') }));
     const srcRows = (X.order || (srcMeta ? Object.keys(srcMeta) : Object.keys(X.sources))).map(s => { const x = srcMeta ? srcMeta[s] : X.sources[s]; const d = docOf(s); return { name: d ? d.title : s, file: s, line: plural(x.chunks, 'encounter') + ' \u00b7 ' + (x.ops.CON || 0) + ' CON \u00b7 ' + (x.ops.INS || 0) + ' INS \u00b7 ' + (x.ops.REC || 0) + ' REC', onOpen: d ? () => this.read(d.id) : () => {} , canOpen: !!d }; });
-    return { rdReading: rdPanel, rx: { on: true, ready: true, stats: [[X.encounters, 'encounters'], [nSrc, 'sources'], [X.castTotal, 'referents admitted'], [X.bondsTotal, 'bonds witnessed'], [X.canonTotal, 'canonical relations'], [X.identitiesTotal, 'identity hypotheses']].map(([n, l]) => ({ n: Number(n).toLocaleString(), l })),
+    return { rx: { on: true, ready: true, stats: [[X.encounters, 'encounters'], [nSrc, 'sources'], [X.castTotal, 'referents admitted'], [X.bondsTotal, 'bonds witnessed'], [X.canonTotal, 'canonical relations'], [X.identitiesTotal, 'identity hypotheses']].map(([n, l]) => ({ n: Number(n).toLocaleString(), l })),
       kinds: Object.entries(X.kinds).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ k, v: v.toLocaleString() })),
       cast: castRows, load: load.slice(0, 40), back: back.slice(0, 20), backN: String(back.length), loadN: String(load.length), churn, srcRows, built: 'Built ' + new Date(X.builtAt).toLocaleString() + ' in ' + (X.ms / 1000).toFixed(1) + ' s from ' + String(X.from).split('/').pop(), onRebuild: () => { this._rix = null; this._localRix = null; this._lrixSig = null; this._lrixDone = null; this.loadReading(true); this.loadLocalReading(); this.forceUpdate(); } } };
   }
@@ -5650,7 +5628,6 @@ class Component extends DCLogic {
       proxy: cfg.searchProxy || '', onProxy: e => this.setNetCfg({ searchProxy: e.target.value.trim() }), onFind: () => this.findNew(),
       cand: (n.cand || []).map(c => ({ title: c.title, url: c.url, meta: [c.ytid ? 'YouTube' : 'Web', c.published ? String(c.published).slice(0, 10) : '', 'from “' + c.watch + '”'].filter(Boolean).join(' · '), thumbBg: c.ytid ? 'url(https://i.ytimg.com/vi/' + c.ytid + '/mqdefault.jpg)' : 'none', isYt: !!c.ytid, onAdd: () => this.addCandidate(c, false), onAddPub: () => this.addCandidate(c, true) })), hasCand: !!(n.cand && n.cand.length),
       onPaste: e => { this._paste = e.target.value; }, onAddPasted: () => { const urls = (this._paste || '').match(/https?:\/\/\S+/g) || []; urls.forEach(u => { const yt = (u.match(/[?&]v=([\w-]{11})|youtu\.be\/([\w-]{11})/) || []); this.addCandidate({ url: u, ytid: yt[1] || yt[2] || null, title: u, watch: 'pasted' }, !!(s && !s.guest && R.pub)); }); },
-      task: this.taskVals(),
       onFile: e => { const f = e.target.files && e.target.files[0]; if (f) this.transcribeFile(f, null); e.target.value = ''; },
       asr: n.asr ? n.asr.stage + (n.asr.pct != null ? ' ' + n.asr.pct + '%' : '') : '', hasAsr: !!(n.asr && n.asr.stage !== 'done'), webgpu: typeof navigator !== 'undefined' && navigator.gpu ? 'WebGPU available: transcription runs on your graphics card.' : 'No WebGPU in this browser: transcription runs on the CPU and will be slow.',
       ytdl: (() => { try { return localStorage.getItem('hd:ytdl') || ''; } catch (e) { return ''; } })(),
@@ -5671,43 +5648,6 @@ class Component extends DCLogic {
     try { saveWorkspaceNames({ ...loadWorkspaceNames(), [id]: nm }); } catch (e) {}
     this.setState({ added, corpus: id, view: 'ingest', sel: null, f: {}, q: '', readDoc: null, just: null });
     this.toast('New workspace “' + nm + '” — describe its research task below.');
-  }
-  taskVals() {
-    const T = this._task || (this._task = { brief: '', wantWeb: true, wantWiki: true, wantYt: false, wantN: 8, urls: '', running: false, status: '', queries: [], log: [] });
-    return { brief: T.brief, wantWeb: !!T.wantWeb, wantWiki: !!T.wantWiki, wantYt: !!T.wantYt, wantN: String(T.wantN),
-      urls: T.urls, runLabel: T.running ? 'Running…' : 'Run task',
-      status: T.status || 'Seed URLs fetch first; web / Wikipedia / YouTube search lands next.',
-      queries: (T.queries || []).join(' · '), hasQueries: (T.queries || []).length > 0,
-      log: T.log || [], hasLog: (T.log || []).length > 0,
-      onBrief: e => { T.brief = e.target.value; }, onWeb: e => { T.wantWeb = e.target.checked; this.forceUpdate(); },
-      onWiki: e => { T.wantWiki = e.target.checked; this.forceUpdate(); }, onYt: e => { T.wantYt = e.target.checked; this.forceUpdate(); },
-      onN: e => { T.wantN = Math.max(1, Math.min(25, parseInt(e.target.value) || 8)); },
-      onUrls: e => { T.urls = e.target.value; }, onRun: () => this.runTask() };
-  }
-  taskLog(msg, kind) { const T = this._task || (this._task = { log: [] }); T.log = [{ t: new Date().toLocaleTimeString(), msg, col: kind === 'bad' ? 'var(--bad)' : 'var(--mut)' }, ...(T.log || [])].slice(0, 12); }
-  async runTask() {
-    const T = this._task || (this._task = { brief: '', wantN: 8, urls: '', queries: [], log: [] });
-    if (T.running) return; T.running = true; T.status = 'Running…'; this.forceUpdate();
-    try {
-      const seeds = (T.urls || '').match(/https?:\/\/\S+/g) || [];
-      const cap = Math.max(1, Math.min(25, T.wantN || 8));
-      const urls = seeds.slice(0, cap);
-      T.queries = [T.brief.trim()].filter(Boolean).slice(0, 1);
-      if (!urls.length) { T.status = 'No seed URLs yet — paste one URL per line above, then Run.'; this.taskLog('Nothing to fetch: no seed URLs.'); return; }
-      T.status = 'Fetching ' + urls.length + ' seed URL' + (urls.length === 1 ? '' : 's') + '…';
-      let done = 0, failed = 0;
-      for (const u of urls) { try { await this.ingestUrl(u, {}); done++; this.taskLog('Added ' + u); } catch (e) { failed++; this.taskLog('Could not fetch ' + u + ' (' + (e.message || e) + ')', 'bad'); } }
-      T.status = 'Added ' + done + ' of ' + urls.length + ' seed URL' + (urls.length === 1 ? '' : 's') + (failed ? ' · ' + failed + ' failed' : '') + '. Building holograph…';
-      this.forceUpdate();
-      await new Promise(r => setTimeout(r, 0));
-      const A = this.analysis();
-      const refs = A.referents ? A.referents.length : 0;
-      const edges = A.hyperedges ? A.hyperedges.length : 0;
-      T.status = 'Holograph ready — ' + refs + ' referent' + (refs === 1 ? '' : 's') + ', ' + edges + ' bond' + (edges === 1 ? '' : 's') + '.';
-      this.taskLog('Holograph built: ' + refs + ' referents, ' + edges + ' bonds.');
-      T.running = false; this.forceUpdate();
-      this.go('summary');
-    } finally { if (T.running) { T.running = false; this.forceUpdate(); } }
   }
   pinStatement(stId) {
     const A = this.analysis(); const st = A.byId[stId]; if (!st) return; const d = A.docById[st.doc]; const txt = clean(st.text);
@@ -6269,31 +6209,6 @@ class Component extends DCLogic {
     const t = String(target || '').replace(/\s+/g, ' ').trim().slice(0, 120);
     this.setState({ showCorr: true, corrTarget: t, corrDraft: t && !this.state.corrDraft ? '"' + t + '" is not correct as read' : this.state.corrDraft });
   }
-  corrVals() {
-    const S = this.state; const all = this.corrections();
-    const active = all.filter(c => c.status === 'active');
-    return {
-      has: true, show: !!S.showCorr,
-      onOpen: () => this.openCorr(S.pinPop && S.pinPop.text),
-      onClose: () => this.setState({ showCorr: false }),
-      onCloseBg: e => { if (e.target === e.currentTarget) this.setState({ showCorr: false }); },
-      target: S.corrTarget || '', onTarget: e => this.setState({ corrTarget: e.target.value }),
-      onFileModal: () => this.fileCorrection((S.corrTarget || '').trim() || null, (S.corrDraft || '').trim()),
-      title: active.length ? 'Corrections · ' + active.length + ' in force' : 'Corrections · the system learns here',
-      draft: S.corrDraft || '',
-      onDraft: e => this.setState({ corrDraft: e.target.value }),
-      onKey: e => { if (e.key === 'Enter') this.fileCorrection(null, (this.state.corrDraft || '').trim()); },
-      onFile: () => this.fileCorrection(null, (this.state.corrDraft || '').trim()),
-      items: all.slice().reverse().slice(0, 8).map(c => ({
-        text: (c.status === 'active' ? '✓ ' : '○ ') + c.text,
-        color: c.status === 'active' ? 'var(--ink)' : 'var(--dim)',
-        meta: (c.at || '').slice(0, 10) + (c.history && c.history.length > 1 ? ' · ' + c.history.length + ' revisions' : ''),
-        action: c.status === 'active' ? 'Retract' : 'Restore',
-        onToggle: () => this.reviseCorrection(c.id, c.status === 'active' ? 'retract' : 'restore')
-      })),
-      note: active.length ? 'Active corrections strike names everywhere in this workspace — past and future — until retracted. Nothing is ever deleted.' : 'See something wrong — a name that isn’t one, a wrong type? Say so in plain English above, or hit ✕ on any row. Nothing is ever deleted; retracting restores it.'
-    };
-  }
   applyCorrections(A, id) {    const sup = new Set(this.activeCorrections(id).map(c => c.target.toLowerCase()));
     if (!sup.size || !A || !A.names) return;
     A.names && Object.keys(A.names).forEach(n => { if (sup.has(n.toLowerCase())) delete A.names[n]; });
@@ -6650,7 +6565,7 @@ class Component extends DCLogic {
       const terms = [...new Set(ql.split(/[^a-z0-9]+/).filter(w => w && !QW.has(w) && !(/^\s*(what|which|how)\b/i.test(ql) && /^(find|finds|found|findings?|observations?)$/.test(w)) && (w.length >= 3 || /\d/.test(w))).map(w => { const s = qStem(w); orig[s] = orig[s] || w; return s; }))];
       const qNames = new Set(Object.values(A.names).filter(n => [n.name, ...(n.aliases || [])].some(f => { f = f.toLowerCase(); return f.length >= 3 && new RegExp('\\b' + f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(ql); })).map(n => n.name));
       let want = /^when\b|\bwhat (year|date|day|month|time)\b/.test(ql) ? 'date' : /\bhow (much|many|long|big|far|often)\b|\bwhat (was|is|were|are) the (cost|amount|number|total|price|budget)/.test(ql) ? 'fig' : /^(who|whom|whose)\b|\bwho\b/.test(ql) ? 'who' : /^where\b|\bwhere\b/.test(ql) ? 'place' : '';
-      { const sr = this.state.stripReadAuto ? (this._autoRead || this.state.stripRead) : this.state.stripRead; if (!want && sr && sr.domain) want = sr.domain === 'Existence' ? 'who' : sr.domain === 'Structure' ? 'fig' : ''; }
+      { const sr = this.state.stripRead; if (!want && sr && sr.domain) want = sr.domain === 'Existence' ? 'who' : sr.domain === 'Structure' ? 'fig' : ''; }
       const df = {}; terms.forEach(w => { df[w] = 0; }); toks.forEach(T => terms.forEach(w => { if (T.has(w)) df[w]++; }));
       const Np = pool.length || 1, idf = w => Math.log(1 + Np / (df[w] + 0.5)); const maxI = Math.max(1, ...terms.map(idf));
       const scored = []; const BP = this.boilerplate(A); const wantFind = !/^\s*(did|does|do|is|was|were|has|have|had)\b/i.test(qv) && (/\b(find|found|findings?|observations?)\b/i.test(qv) || /\bwhat (problems?|issues?|concerns?|went wrong)\b/i.test(qv));
@@ -6748,18 +6663,6 @@ class Component extends DCLogic {
     if (fast) { const r = { ...this._lastRV, ...this.draftVals(this.analysis()) }; this._lastRV = r; return r; }
     const r = this.renderValsFull(); this._lastRV = r; this._lastSt = this.state; return r;
   }
-  // ── the strip: three chips, real scope, EOQL in polish with glyphs out ──
-  stripToggleDoc(id) {
-    const counted = this.analysis().docs.filter(d => this.counted(d)).map(d => d.id);
-    const cur = this.state.stripDocs ? new Set(this.state.stripDocs) : new Set(counted);
-    cur.has(id) ? cur.delete(id) : cur.add(id);
-    this.setState({ stripDocs: [...cur] });
-  }
-  stripAllDocs() { this.setState({ stripDocs: null }); }
-  stripAddCond() { this.setState(s => ({ stripConds: [...(s.stripConds || []), { id: 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), field: 'title', op: 'contains', value: '' }] })); }
-  stripRmCond(id) { this.setState(s => ({ stripConds: (s.stripConds || []).filter(c => c.id !== id) })); }
-  stripClearConds() { this.setState({ stripConds: [] }); }
-  stripSetCond(id, key, val) { this.setState(s => ({ stripConds: (s.stripConds || []).map(c => { if (c.id !== id) return c; const n = { ...c, [key]: val }; if (key === 'field') { const f = COND_FIELDS.find(x => x.k === val) || COND_FIELDS[0]; n.op = (COND_OPS[f.type] || COND_OPS.text)[0][0]; n.value = ''; } return n; }) })); }
   // A topic is a PARADIGM: the connected component the holograph's own
   // connectors (restated claim, shared measure-anchor, shared bond) hold
   // together — what is really at stake across the sources, named by the
@@ -6773,159 +6676,7 @@ class Component extends DCLogic {
     const g = (this.paradigmGroups(A).groups || []).find(x => (x.docs || []).some(d => (d && d.id) === id));
     return g ? g.label : '';
   }
-  stripDocView(d, D) { return { title: d.title || '', name: d.title || '', kind: d.kind || d.type || '', type: d.type || '', year: d.year || 0, publisher: d.publisher || '', status: this.mOf(d).status || '', stmts: (D.perDoc || {})[d.id] || 0, topic: this.topicOfDoc(this.analysis(), d.id) || '' }; }
-  stripCondMatch(d, D) {
-    const conds = this.state.stripConds || []; if (!conds.length) return true;
-    const v = this.stripDocView(d, D); const all = (this.state.stripConn || 'all') === 'all';
-    const rs = conds.map(c => { const f = COND_FIELDS.find(x => x.k === c.field) || COND_FIELDS[0]; return condCmp(v[c.field], c.op, c.value, f.type); });
-    return all ? rs.every(Boolean) : rs.some(Boolean);
-  }
-  stripSetGroup(g) { this.setState({ stripGroup: g }); }
-  stripSetRead(k, v) { this.setState({ stripReadAuto: false, stripRead: { ...(this.state.stripRead || {}), [k]: v } }); }
-  stripSetPersp(k) { this.setState({ stripPersp: this.state.stripPersp === k ? null : k }); }
-  stripEOApply() {
-    const src = (this.state.stripEO || '').trim();
-    if (!src) { this.setState({ stripGaps: [], stripDocs: null }); return; }
-    const gaps = [];
-    const ast = eoqlParse(src, gaps);
-    const A = this.analysis();
-    const F = A.sts.filter(st => this.match(st, A));
-    const D = this.derive(A, F);
-    const counted = A.docs.filter(d => this.counted(d));
-    const view = d => ({ title: d.title || '', name: d.title || '', kind: d.kind || d.type || '', type: d.type || '', year: d.year || 0, publisher: d.publisher || '', status: this.mOf(d).status || '', stmts: (D.perDoc || {})[d.id] || 0 });
-    const keep = counted.filter(d => eoqlMatch(ast, view(d), gaps));
-    this.setState({ stripGaps: gaps.slice(0, 6), stripDocs: keep.map(d => d.id) });
-  }
-  stripVals(S, A, D) {
-    const counted = A.docs.filter(d => this.counted(d));
-    const scopeIds = (() => { let s = S.stripDocs ? new Set(S.stripDocs) : null;
-      if (S.stripConds && S.stripConds.length) { const keep = new Set(counted.filter(d => this.stripCondMatch(d, D)).map(d => d.id)); s = s ? new Set([...s].filter(id => keep.has(id))) : keep; }
-      return s; })();
-    const inScope = counted.filter(d => !scopeIds || scopeIds.has(d.id));
-    const scopedSts = A.sts.filter(st => !scopeIds || scopeIds.has(st.doc));
-    const namesN = (() => { const s = new Set(); scopedSts.forEach(st => (st.names || []).forEach(n => s.add(n))); return s.size; })();
-    const figsN = scopedSts.reduce((n, st) => n + ((st.figs || []).length), 0);
-    const pairsN = scopedSts.reduce((n, st) => { const k = (st.names || []).length; return n + (k > 1 ? k * (k - 1) / 2 : 0); }, 0);
-    const echoN = A.echoes && A.echoes.size ? A.echoes.size : (Array.isArray(A.echoes) ? A.echoes.length : 0);
-    const am = this._am || {};
-    const cutsN = ((am.differ || []).length) + ((am.echoConf || []).length) + ((am.unattributed || []).length);
-    const foldsN = this._P && this._P.groups ? this._P.groups.length : 0;
-    const autoRead = (() => {
-      const domS = { Existence: namesN, Structure: pairsN, Interpretation: cutsN * 3 + echoN * 2 };
-      const modeS = { Differentiate: cutsN * 3 + (am.echoConf || []).length * 3, Relate: echoN * 2 + pairsN * 0.4 + (am.single ? am.single.length : 0), Generate: foldsN * 5 + echoN * 1.5 + (am.differ || []).length };
-      const grainS = { Ground: inScope.length * 1.5, Figure: namesN + figsN, Pattern: foldsN * 4 + echoN * 2 + cutsN };
-      let best = null;
-      for (const m of STRIP_MODES) for (const d of STRIP_DOMAINS) for (const g of STRIP_GRAINS) {
-        const sc = (domS[d] || 0) + (modeS[m] || 0) + (grainS[g] || 0);
-        if (!best || sc > best.sc) best = { mode: m, domain: d, grain: g, sc };
-      }
-      return best;
-    })();
-    this._autoRead = autoRead;
-    const whyText = 'names ' + namesN + ' · pairs ' + pairsN + ' · cuts ' + cutsN + ' · echoes ' + echoN + ' · folds ' + foldsN;
-    const r = S.stripReadAuto ? autoRead : (S.stripRead || { mode: 'Relate', domain: 'Interpretation', grain: 'Pattern' });
-    const op = STRIP_OP[r.mode][r.domain];
-    const view = d => ({ title: d.title || '(untitled)', kind: d.kind || d.type || 'Source', year: d.year || 0, publisher: d.publisher || '', status: this.mOf(d).status || 'source', stmts: (D.perDoc || {})[d.id] || 0, topic: this.topicOfDoc(A, d.id) || '' });
-    const srcRows = counted.map(d => { const v = view(d), on = !scopeIds || scopeIds.has(d.id);
-      return { label: v.title, meta: v.kind + ' · ' + (v.year || '—') + ' · ' + v.stmts + ' stmts', bg: on ? 'var(--sel)' : 'transparent', bd: on ? '#8b5cf6' : 'var(--line)', onClick: () => this.stripToggleDoc(d.id) }; });
-    const gsel = S.stripGroup || 'fold';
-    const P = this._P || { groups: [] };
-    const groupOf = d => { if (gsel === 'whole') return 'All matched'; if (gsel === 'fold') { const g = (P.groups || []).find(x => (x.docs || []).includes(d.id)); return g ? g.label : 'no fold'; } if (gsel === 'topic') return view(d).topic || 'no topic'; return String(view(d)[gsel] || '—'); };
-    const groupsOut = {}, groupsOutIds = {}; inScope.forEach(d => { const k = groupOf(d); (groupsOut[k] = groupsOut[k] || []).push(view(d)); (groupsOutIds[k] = groupsOutIds[k] || []).push(d.id); });
-    const tg = S.f && S.f.topicGroup;
-    const segRows = Object.entries(groupsOut).slice(0, 6).map(([label, items]) => {
-      const row = { label, n: plural(items.length, 'source'), line: items.slice(0, 4).map(x => x.title).join(' · ') + (items.length > 4 ? ' …' : '') };
-      if (gsel === 'topic') {
-        row.hasOnClick = true;
-        row.on = !!(tg && tg.label === label && !tg.invert);
-        row.hint = row.on ? 'filtering · click to clear' : 'click to filter';
-        row.onClick = () => this.toggleTopicGroup({ label, docs: groupsOutIds[label] || [] });
-      }
-      row.noOnClick = !row.hasOnClick;
-      return row;
-    });
-    const topicWords = [...new Set(this.paradigmGroups(A).groups.map(g => g.label))].sort().slice(0, 80);
-    // PERSPECTIVES — the text's own words, filterable beside the structural
-    // pick (holodeck-reader.perspectivesOf: stance class → verb head → lens
-    // word; label = gerund + the statement's own object, the strip's register).
-    // Derived once per scope; a fingerprint of doc-set + count invalidates the
-    // cache, never a content comparison.
-    const perspSig = [...new Set(scopedSts.map(s => s.doc))].sort().join(',') + '#' + scopedSts.length;
-    if (this._perspSig !== perspSig) { this._perspSig = perspSig; this._perspRows = null; }
-    if (!this._perspRows && scopedSts.length) {
-      this._perspRows = [];
-      // the text's-own-words reader is its OWN module cache — never this._perspM,
-      // which holds holodeck-perspectives (the genre readers, with GENRES);
-      // sharing one slot made heroBarBase read GENRES off the wrong module.
-      (this._readerM ? Promise.resolve(this._readerM) : import(new URL('holodeck-reader.js', location.href).href).then(M => { this._readerM = M; return M; }))
-        .then(M => M.perspectivesOf(scopedSts, { top: 6 })).then(rows => { this._perspRows = rows || []; this.forceUpdate(); }).catch(() => {});
-    }
-    const perspSel = S.stripPersp ? (this._perspRows || []).find(p => p.act === S.stripPersp) : null;
-    const perspOn = !!perspSel;
-    const perspRows = (this._perspRows || []).map(p => ({ label: p.label, n: p.n, tier: p.tier, on: perspSel === p,
-      bg: perspSel === p ? '#fbbf24' : 'var(--s2)', color: perspSel === p ? '#141126' : 'var(--ink2)', onClick: () => this.stripSetPersp(p.act) }));
-    const perspHits = perspOn ? perspSel.hits.map(t => ({ text: t })) : [];
-    const kinds = [...new Set(counted.map(d => d.kind || d.type).filter(Boolean))];
-    const pubs = [...new Set(counted.map(d => d.publisher).filter(Boolean))];
-    const condRows = (S.stripConds || []).map(c => { const f = COND_FIELDS.find(x => x.k === c.field) || COND_FIELDS[0];
-      const opts = f.k === 'kind' ? kinds : f.k === 'publisher' ? pubs : f.k === 'status' ? ['source', 'seen'] : f.k === 'topic' ? topicWords : [];
-      return { id: c.id, field: c.field, op: c.op, value: c.value == null ? '' : String(c.value), isSelect: f.type === 'select', notSelect: f.type !== 'select',
-        fields: COND_FIELDS.map(x => ({ k: x.k, label: x.label })),
-        ops: (COND_OPS[f.type] || COND_OPS.text).map(o => ({ k: o[0], label: o[1] })),
-        vals: opts.map(v => ({ v, label: v })),
-        onField: e => this.stripSetCond(c.id, 'field', e.target.value),
-        onOp: e => this.stripSetCond(c.id, 'op', e.target.value),
-        onVal: e => this.stripSetCond(c.id, 'value', e.target.value),
-        onRemove: () => this.stripRmCond(c.id) }; });
-    return {
-      stripSourcesLabel: scopeIds ? (inScope.length + ' of ' + counted.length + ' sources') : ('All ' + counted.length + ' sources'),
-      stripSourceRows: [{ label: 'All sources', meta: String(counted.length), bg: !scopeIds ? 'var(--sel)' : 'transparent', bd: !scopeIds ? '#8b5cf6' : 'var(--line)', onClick: () => this.stripAllDocs() }].concat(srcRows),
-      stripSegLabel: inScope.length + ' of ' + counted.length + ' · ' + (gsel === 'whole' ? 'whole' : 'by ' + gsel) + (condRows.length ? ' · ' + condRows.length + (condRows.length === 1 ? ' filter' : ' filters') : ''),
-      stripCondRows: condRows,
-      stripHasConds: condRows.length > 0,
-      stripConn: S.stripConn || 'all',
-      stripOnConn: e => this.setState({ stripConn: e.target.value }),
-      stripAddCond: () => this.stripAddCond(),
-      stripClearConds: () => this.stripClearConds(),
-      stripOnConditions: (S.stripSegTab || 'conditions') === 'conditions',
-      stripOnEOQL: (S.stripSegTab || 'conditions') !== 'conditions',
-      stripTabConditions: () => this.setState({ stripSegTab: 'conditions' }),
-      stripTabEOQL: () => this.setState({ stripSegTab: 'eoql' }),
-      stripGroupRow: ['whole', 'fold', 'topic', 'kind', 'year', 'publisher', 'status'].map(g => ({ label: g === 'whole' ? 'whole' : 'by ' + g, bg: gsel === g ? '#8b5cf6' : 'var(--s2)', color: gsel === g ? '#fff' : 'var(--ink2)', onClick: () => this.stripSetGroup(g) })),
-      stripEOVal: S.stripEO || '', stripEOGlyphs: eoqlGlyphText(S.stripEO || ''),
-      stripGaps: (S.stripGaps || []).map(g => ({ text: g })),
-      stripSegRows: segRows,
-      stripReadLabel: perspOn ? perspSel.label : STRIP_VOCAB[op + '|' + r.grain],
-      stripReadFine: perspOn ? ('the text’s own words · ' + perspSel.tier + ' “' + perspSel.act + '” · ' + perspSel.n + ' of ' + scopedSts.length + ' statements · cell ' + op + '·' + r.grain) : (op + '·' + r.grain + ' · terrain ' + STRIP_TERRAIN[r.domain][r.grain] + ' · stance ' + STRIP_STANCE[r.mode][r.grain]),
-      stripAutoOn: !!S.stripReadAuto,
-      stripManual: !S.stripReadAuto,
-      stripChipBorder: perspOn ? '#fbbf24' : (S.stripReadAuto ? 'var(--line2)' : (MODE_TINT[r.mode] || 'var(--acc)')),
-      stripGlyphColor: perspOn ? '#fbbf24' : (S.stripReadAuto ? 'var(--mut)' : (MODE_TINT[r.mode] || 'var(--acc)')),
-      stripAutoState: S.stripReadAuto ? 'ON' : 'OFF',
-      stripAutoBorder: S.stripReadAuto ? (MODE_TINT[r.mode] || 'var(--acc)') : 'var(--line2)',
-      stripAutoBg: S.stripReadAuto ? 'var(--sel)' : 'var(--s1)',
-      stripAutoDotBg: S.stripReadAuto ? (MODE_TINT[r.mode] || 'var(--acc)') : 'transparent',
-      stripAutoStateColor: S.stripReadAuto ? (MODE_TINT[r.mode] || 'var(--acc)') : 'var(--dim)',
-      stripAutoHint: S.stripReadAuto ? whyText : 'manual — pick a perspective, or switch Auto back on',
-      stripAutoToggle: () => this.setState({ stripReadAuto: !S.stripReadAuto }),
-      hasReading: inScope.length > 0,
-      readingName: perspOn ? perspSel.label : STRIP_VOCAB[op + '|' + r.grain],
-      readingFine: perspOn ? (perspSel.tier + ' “' + perspSel.act + '” · ' + perspSel.n + ' of ' + scopedSts.length + ' statements') : (op + '·' + r.grain + ' · terrain ' + STRIP_TERRAIN[r.domain][r.grain] + ' · stance ' + STRIP_STANCE[r.mode][r.grain]),
-      readingTint: MODE_TINT[r.mode] || 'var(--acc)',
-      readingNote: perspOn ? ('reading by the material’s own words — ' + perspSel.n + ' of ' + scopedSts.length + ' statements state “' + perspSel.act + '”') : (S.stripReadAuto ? ('auto — most signal here: ' + whyText) : ('leading with ' + (r.domain === 'Existence' ? 'things' : r.domain === 'Structure' ? 'links' : 'meanings') + ' · ' + (r.mode === 'Differentiate' ? 'cuts' : r.mode === 'Relate' ? 'bonds' : 'makes'))),
-      stripPerspRows: perspRows, stripPerspOn: perspOn, stripPerspHits: perspHits,
-      stripPerspClear: () => this.setState({ stripPersp: null }),
-      stripOpenSources: S.stripOpen === 'sources', stripOpenSegment: S.stripOpen === 'segment', stripOpenRead: S.stripOpen === 'read', stripAnyOpen: !!S.stripOpen,
-      stripToggleSources: () => this.setState({ stripOpen: S.stripOpen === 'sources' ? null : 'sources' }),
-      stripToggleSegment: () => this.setState({ stripOpen: S.stripOpen === 'segment' ? null : 'segment' }),
-      stripToggleRead: () => this.setState({ stripOpen: S.stripOpen === 'read' ? null : 'read' }),
-      stripClose: () => this.setState({ stripOpen: null }),
-      stripEOChange: e => this.setState({ stripEO: e.target.value }),
-      stripEOKey: e => { if (e.key === 'Enter') this.stripEOApply(); },
-      stripEOApply: () => this.stripEOApply(),
-      stripEOClear: () => this.setState({ stripEO: '', stripGaps: [], stripDocs: null }),
-    };
-  }
+
   renderValsFull() {
     if (!this.state.ground) this.state.ground = { on: true, names: true, figures: true, dates: true, sentences: true };
     if (!this.state.readMode) this.state.readMode = 'original';
@@ -6954,12 +6705,7 @@ class Component extends DCLogic {
 
     const _T0 = performance.now(), _PT = this._prof = {}; let _pl = _T0; const _m = k => { const n = performance.now(); _PT[k] = Math.round(n - _pl); _pl = n; };
     // counts per terrain
-    let stripScope = S.stripDocs ? new Set(S.stripDocs) : null;
-    if (S.stripConds && S.stripConds.length) {
-      const keep = new Set(A.docs.filter(d => D.perDoc[d.id] && this.stripCondMatch(d, D)).map(d => d.id));
-      stripScope = stripScope ? new Set([...stripScope].filter(id => keep.has(id))) : keep;
-    }
-    const docsIn = A.docs.filter(d => D.perDoc[d.id] && (!stripScope || stripScope.has(d.id)));
+    const docsIn = A.docs.filter(d => D.perDoc[d.id]);
     const typesPresent = [...new Set(D.nameList.map(n => n.type))];
     const figCount = D.unitList.reduce((a, u) => a + u.items.length, 0);
     const single = D.nameList.filter(n => n.docs.size === 1);
@@ -7047,9 +6793,6 @@ class Component extends DCLogic {
     const pubMsD = d => { const t = Date.parse(d.published || ''); return !isNaN(t) ? t : d.year ? Date.UTC(d.year, 0, 1) : 9e15; };
     this._srcHidden = stFilterOn ? keptDocs.filter(d => fDoc(d) && !hasMatch(d)).length : 0;
     const kmap = {}; keptDocs.filter(fDoc).filter(hasMatch).forEach(d => { (kmap[d.kind || 'Source'] = kmap[d.kind || 'Source'] || []).push(d); });
-    const facet = (key, label, get, colors) => { const c = {}; keptDocs.forEach(d => { const v = get(d); c[v] = (c[v] || 0) + 1; }); const opts = Object.entries(c).sort((a, b) => b[1] - a[1]);
-      return { label, opts: opts.map(([v, n]) => { const on = f[key] === v; return { label: v, n: String(n), color: (colors && colors[v]) || 'var(--mut)', bg: on ? 'var(--sel)' : 'var(--s1)', bd: on ? '#8b5cf6' : 'var(--line2)', onClick: () => this.setF(key, on ? null : v) }; }) }; };
-    const srcFacets = hasKinds ? [facet('kind', 'Kind', d => d.kind || 'Source'), facet('medium', 'Medium', d => d.medium || 'Text', MEDIUM_C), facet('standing', 'Standing', d => d.standing || 'Source', STANDING_C)] : [];
     const srcGroups = [
       ...(seenDocs.length ? [{ label: 'Seen, not kept', n: String(seenDocs.length), desc: 'Opened, but not counted.', items: seenDocs.map(cardOf) }] : []),
       ...(hasKinds ? Object.entries(kmap).sort((a, b) => KIND_ORDER.indexOf(a[0]) - KIND_ORDER.indexOf(b[0])).map(([k, ds]) => ({ label: k, n: String(ds.length), desc: KIND_DESC[k] || '', items: ds.slice().sort((x, y) => pubMsD(x) - pubMsD(y)).map(cardOf) })) : Object.entries(gmap).sort((x, y) => (x[0] === '_') - (y[0] === '_') || y[1].docs.length - x[1].docs.length).map(([k, g]) => ({ label: g.label, n: String(g.docs.length), desc: k === '_' ? (Object.keys(distinctOf).length ? 'No difference from the rest is large enough to matter.' : keptDocs.length < 2 ? '' : 'No difference between them is large enough to matter yet.') : '', items: g.docs.map(cardOf) }))),
@@ -7077,7 +6820,6 @@ class Component extends DCLogic {
     const meetVals = {};
     const svVals = { ...meetVals, srcHiddenNote: this._srcHidden ? plural(this._srcHidden, 'other source') + ' with nothing in this selection ' + (this._srcHidden === 1 ? 'is' : 'are') + ' hidden' : '', svCards: svMode === 'cards', svTable: svMode === 'table', svTabsOn: svGroup === 'tabs',
       svModes: [['cards', 'Cards'], ['table', 'Table']].map(([k, l]) => ({ label: l, ...seg(svMode === k), onClick: () => this.setState({ svMode: k }) })),
-      svGroups: [['tabs', 'Tabs by kind'], ['sections', 'Sections by kind'], ['one', 'One list']].map(([k, l]) => ({ label: l, ...seg(svGroup === k), onClick: () => this.setState({ svGroup: k }) })),
       svTabs: tabs.map(t => ({ label: t.label, n: t.n, bd: t.id === svTab ? '#8b5cf6' : 'transparent', col: t.id === svTab ? 'var(--ink)' : 'var(--mut)', onClick: () => this.setState({ svTab: t.id }) })),
       svCols: tCols.map(([k, l]) => ({ label: l + (svSort === k ? (svDir > 0 ? ' ↑' : ' ↓') : ''), onClick: () => this.setState({ svSort: k, svDir: svSort === k ? -svDir : (k === 'title' || k === 'publisher' ? 1 : -1) }) })),
       svTables: tables, svCardGroups: svGroup === 'one' ? [{ label: 'All sources', n: String(allSrcItems.length), desc: '', items: allSrcItems.map(x => x.it), hasMore: false }] : svGroup === 'tabs' ? (svTab === '__all' ? srcGroups : svTab === 'Recordings' ? (() => { const vg = srcGroups.filter(g => /^(Video|Meeting recording)$/.test(g.label)); const items = vg.flatMap(g => g.items).map(it => ({ it, d: docByTitle.get(it.title) || {} })).sort((x, y) => (y.d.published || String(y.d.year || '')).localeCompare(x.d.published || String(x.d.year || ''))).map(x => x.it); return [...(items.length ? [{ label: 'Video', n: String(items.length), desc: 'Meetings and other recordings. Open one to watch it with its transcript beside it.', items, hasMore: false }] : []), ...srcGroups.filter(g => FAM(g.label) === 'Recordings' && !/^(Video|Meeting recording)$/.test(g.label))]; })() : srcGroups.filter(g => FAM(g.label) === svTab)) : srcGroups };
@@ -7331,9 +7073,7 @@ class Component extends DCLogic {
       if (this._topicStr) return { label: 'Topic: ' + this._topicStr, onClear: () => this.setMeta('__topic', '') };
       return null; })();
     const scope = {
-      show: !isEmpty,
-      sourcesLine: (this._cnt && this._cnt.size !== A.docs.length) ? this._cnt.size + ' of ' + plural(A.docs.length, 'source') + ' in scope' : plural(A.docs.length, 'source') + ' in scope',
-      onSources: () => this.setState({ stripOpen: S.stripOpen === 'sources' ? null : 'sources' }),
+      show: !isEmpty && (!!scopeSeg || chips.length > 0 || P.groups.length > 0),
       hasSegment: !!scopeSeg, segmentLabel: scopeSeg ? scopeSeg.label : '', onClearSegment: scopeSeg ? scopeSeg.onClear : null,
       filters: chips.map(ch => ({ k: ch.k, v: short(String(ch.v), 26), onClear: ch.onClear })),
       hasTopics: P.groups.length > 0,
@@ -7353,18 +7093,6 @@ class Component extends DCLogic {
     const hasSegments = segList.length > 0;
     const segOpen = S.segOpen; const segToggleLabel = 'Saved folds'; const segCount = String(segList.length);
     const toggleSegOpen = () => { const open = !segOpen; try { localStorage.setItem('fold-explorer-segopen', open ? '1' : '0'); } catch (e) {} this.setState({ segOpen: open }); };
-    const just = J ? (() => { const tr = (window.__hdTraces || []).slice().reverse().find(t => (t.focus || []).includes(J.first));
-      const oddN = new Map((J.odd || []).map(o => [o.subject, o])); const player = at => tr && import(new URL('holodeck-ingest-player.js', location.href).href).then(M => M.open(tr, { seek: at }));
-      const names = J.linked.slice(0, 8).map(n => ({ label: n, w: 600, col: 'var(--ink)', tip: 'Already in this workspace', onClick: selN(n) })).concat(J.fresh.slice(0, Math.max(0, 10 - Math.min(8, J.linked.length))).map(n => ({ label: n, w: 400, col: 'var(--ink2)', tip: 'New here', onClick: selN(n) })));
-      names.forEach(x => { const o = oddN.get(x.label); if (o) { x.col = 'var(--amber)'; x.label += ' ?'; x.tip = 'Archon Fort: ' + o.why; } });
-      const more = J.linked.length + J.fresh.length - names.length; if (more > 0) names.push({ label: '+' + more + ' more', w: 400, col: 'var(--dim)', tip: 'All names', onClick: () => this.go('names') });
-      return { title: J.title, summary: [plural(J.n, 'statement') + ' read from what you added', J.linked.length ? plural(J.linked.length, 'name') + ' already here' : '', J.echoN ? plural(J.echoN, 'echo', 'echoes') : ''].filter(Boolean).join(' · '),
-        hasOdd: !!(J.odd && J.odd.some(o => o.standing === 'stands')), odd: (J.odd || []).filter(o => o.standing === 'stands').slice(0, 3).map(o => ({ tag: 'Odd', label: o.subject, why: o.short, onInspect: () => player(o.at), onCorrect: () => this.fileCorrection(o.subject, '"' + o.subject + '" is not a name') })),
-        oddMore: (() => { const st = (J.odd || []).filter(o => o.standing === 'stands').length, ct = (J.odd || []).filter(o => o.standing === 'contested').length; const parts = [st > 3 ? (st - 3) + ' more odd' : '', ct ? ct + ' disputed' : ''].filter(Boolean); return parts.length ? parts.join(', ') + ', in the replay' : ''; })(), onOddAll: () => { const f = (J.odd || [])[0]; if (f) player(f.at); },
-        hasNames: names.length > 0, names, ...(() => { const groups = new Map(), lines = []; J.notes.forEach(n => { const m = /^From (\S+) · (.+)$/.exec(n); if (m) { if (!groups.has(m[1])) groups.set(m[1], []); groups.get(m[1]).push({ path: m[2] }); } else lines.push({ text: n }); });
-          return { noteLines: lines, noteGroups: [...groups].map(([repo, files]) => ({ repo, count: plural(files.length, 'file'), files })) }; })(),
-        hasReplay: !!tr, onReplay: () => tr && import(new URL('holodeck-ingest-player.js', location.href).href).then(M => M.open(tr)),
-        readLabel: (A.docById[J.first] && this.isLiveDoc(A.docById[J.first])) ? 'View the page →' : 'Read it →', onRead: () => this.read(J.first), onConnections: () => this.go('connections'), onPatterns: () => this.go('patterns') }; })() : { names: [] };
     const allYears = [...new Set(A.docs.map(d => d.year).filter(Boolean))].sort();
     const V = {}; ['overview', 'draft', 'summary', 'search', 'surprise', 'names', 'types', 'figures', 'statements', 'connections', 'framing', 'views', 'patterns', 'reader', 'profile', 'ingest', 'reading'].forEach(k => { V[k] = !isEmpty && view === k; });
 
@@ -7493,21 +7221,17 @@ class Component extends DCLogic {
     _m('header+chips+extra');
     return {
       ...this._extra,
-      ...this.stripVals(S, A, D),
       ...svVals,
-      sourceKindsUseful: tabs.length > 2, sourceOptionsActive: svTab !== '__all' || svMode !== 'cards', sourceOptionsLabel: 'Source options' + (svTab !== '__all' ? ' · ' + svTab : '') + (svMode !== 'cards' ? ' · Table' : ''), showSourceGroupLabels: svVals.svCardGroups.length > 1, hasGaps: gaps.length > 0, toolsOpen: ['names', 'records', 'connections', 'ingest'].includes(view), timeFilterActive: !!f.range, timeControlLabel: f.range ? 'Time filter · active' : 'Filter by time',
-      hasFacets: false, srcGroups: svVals.svCardGroups.map(g => ({ ...g, ...this.capL('sg:' + g.label, g.items, 60) })), srcFacets,
+      sourceKindsUseful: tabs.length > 2, showSourceGroupLabels: svVals.svCardGroups.length > 1, hasGaps: gaps.length > 0, toolsOpen: ['names', 'records', 'connections', 'ingest'].includes(view), timeFilterActive: !!f.range, timeControlLabel: f.range ? 'Time filter · active' : 'Filter by time',
+      srcGroups: svVals.svCardGroups.map(g => ({ ...g, ...this.capL('sg:' + g.label, g.items, 60) })),
       hasPairsHidden: D.edgeHidden > 0, pairsHidden: plural(D.edgeHidden, 'other pair') + ' share a statement only once, or no more often than chance would give, so ' + (D.edgeHidden === 1 ? 'it is' : 'they are') + ' left out.',
       readerSeen: !!(S.readDoc && A.docById[S.readDoc] && this.mOf(A.docById[S.readDoc]).status === 'seen'),
       readerFold: S.readDoc && this._fold.length ? ' ' + (A.stsByDoc[S.readDoc] || []).filter(s => this.inFold(s)).length + ' of its statements touch the topic.' : '',
       readerKeep: () => this.setMeta(S.readDoc, { status: 'source' }), readerDiscard: () => this.discard(S.readDoc),
-      justSeen: !!(S.just && A.docById[S.just.first] && !this.isLiveDoc(A.docById[S.just.first]) && this.mOf(A.docById[S.just.first]).status === 'seen'), justKeep: () => S.just && this.setMeta(S.just.first, { status: 'source' }),
       corpusId: cid, corpusOptions: opts, q: S.q, corpusName: this.corpusName(), segList, hasSegments, segOpen, segToggleLabel, segCount, toggleSegOpen, addAsFold, navTop, navRead, navExplore, navRest,
       topicsList, hasTopics, topicsNote, hasTopicsNote, topicsStrayN, showTopicsStray, onTopicsStray, scope,
       topicsHasSearch, topicsSearchVal, onTopicsSearch, topicsHasPager, topicsPagerLine, onTopicsPrev, onTopicsNext, topicsHasPrev, topicsHasNext, topicsPageN: (topicsPage + 1) + ' of ' + topicsPages,
-      addr: S.addr || '', onAddr: e => this.setState({ addr: e.target.value }), bookmarkletRef: this.bookmarkletRef,
-      onAddrKey: e => { if (e.key === 'Enter') { const u = (S.addr || '').trim(); if (u) { this.setState({ addr: '' }); this.ingestUrl(/^https?:\/\//.test(u) ? u : 'https://' + u, { open: true }); } } },
-      openAddr: () => { const u = (S.addr || '').trim(); if (u) { this.setState({ addr: '' }); this.ingestUrl(/^https?:\/\//.test(u) ? u : 'https://' + u, { open: true }); } },
+      bookmarkletRef: this.bookmarkletRef,
       toggleTheme: () => { const th = S.theme === 'dark' ? 'light' : 'dark'; try { localStorage.setItem('fold-explorer-theme', th); } catch (e) {} this.setState({ theme: th }); },
       workspaceClass: S.akFocus && view === 'ask' ? 'hd-workspace-surface hd-focus' : 'hd-workspace-surface',
       railOpen: S.railOpen, railIcon: S.railOpen ? '‹' : '›', railTitle: S.railOpen ? 'Collapse' : 'Expand',
@@ -7517,27 +7241,17 @@ class Component extends DCLogic {
       toggleRail: () => { const open = !S.railOpen; try { localStorage.setItem('fold-explorer-rail', open ? '1' : '0'); } catch (e) {} this.setState({ railOpen: open }); },
       themeIcon: S.theme === 'dark' ? '☀' : '☾', themeTitle: S.theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode',
       dragging: S.dragging, isBusy: !!S.busy, busy: S.busy,
-      just, dismissJust: () => this.setState({ just: null }), showDropStrip: isEmpty || (view !== 'reader' && view !== 'profile' && view !== 'ask' && view !== 'draft'),
+      showDropStrip: isEmpty || (view !== 'reader' && view !== 'profile' && view !== 'ask' && view !== 'draft'),
       demo: { title: demo.title, label: demo.url ? demo.title + ' — Wikipedia link' : demo.title + '.txt', onClick: () => demo.url ? this.ingestUrl(demo.url, { title: demo.title, year: demo.year, fallback: demo.text }) : this.addDocs([{ title: demo.title, year: demo.year, type: 'Text', text: demo.text }]), onDragStart: e => { if (demo.url) { e.dataTransfer.setData('text/uri-list', demo.url); e.dataTransfer.setData('text/plain', demo.url); e.dataTransfer.setData('application/x-fold-fallback', demo.text); } else e.dataTransfer.setData('text/plain', demo.text); e.dataTransfer.setData('application/x-fold-title', demo.title); e.dataTransfer.setData('application/x-fold-year', String(demo.year)); e.dataTransfer.effectAllowed = 'copy'; } },
       onCorpus: e => this.setState({ corpus: e.target.value, view: 'summary', sel: null, f: {}, readDoc: null, folder: null, folderDraft: '' }),
       onSearch: e => this.setState({ q: e.target.value }),
-      yearVal: f.year ? String(f.year) : '', yearOptions: [{ v: '', label: 'Any time' }, ...allYears.map(y => ({ v: String(y), label: 'up to ' + y }))],
-      onYear: e => this.setF('year', e.target.value ? +e.target.value : null),
-      hasFilters: chips.length > 0 && view !== 'search', chips, srcTuple, tupleLine: 'sources: ' + srcTuple.on + '/' + srcTuple.total + ' ' + srcTuple.being + ' on · ' + chips.length + ' filters', clearAll: () => this.setState(s => ({ f: {}, fw: {}, q: '', ...(s.view === 'search' ? { view: s.prevView || 'summary' } : {}) })),
-      filterNote: plural(F.length, 'statement') + ' of ' + A.sts.length + ' — every terrain now reflects only these.',
+      hasFilters: chips.length > 0 && view !== 'search', chips, srcTuple, clearAll: () => this.setState(s => ({ f: {}, fw: {}, q: '', ...(s.view === 'search' ? { view: s.prevView || 'summary' } : {}) })),
       filterCount: F.length.toLocaleString() + ' of ' + A.sts.length.toLocaleString() + ' statements',
       ts: this.timeStrip(A, F),
-      repo: (() => { const ci = this._corpusInfo || {}, wi = this._wsInfo || {}; const d8 = x => x ? String(x).slice(0, 16).replace('T', ' ') : '';
-        const corpusLine = !ci.from ? 'Loading…' : ci.from === 'repo' ? 'Loaded from the shared store · built ' + d8(ci.builtAt) + ' · ' + plural(ci.n || 0, 'source') + (ci.stale ? ' · the custody manifest is newer than this file' : '') + '.' : 'Not in the store — read directly from ' + plural(ci.n || 0, 'capture') + '.';
-        const locN = (S.added.ohs || []).length; const wsLine = (wi.found ? 'In the store · saved ' + d8(wi.savedAt) + (wi.merged ? ' · ' + plural(wi.merged, 'source') + ' merged in' : '') + '. ' : 'Not in the store. ') + 'This browser holds ' + plural(locN, 'added source') + ', ' + plural(Object.keys(this.metaAll().ohs || {}).length, 'decision') + ', ' + plural(Object.keys(this.readLog()).length, 'opened source') + '.';
-        return { show: !!S.showRepo, name: 'ohs', open: () => this.setState({ showRepo: true, repoMsg: '' }), close: () => this.setState({ showRepo: false }), closeBg: e => { if (e.target === e.currentTarget) this.setState({ showRepo: false }); },
-          dot: ci.from ? 'var(--ok)' : 'var(--mut)', title: 'Read-only source store',
-          corpusLine, wsLine, rebuild: () => { this.setState({ showRepo: false }); this.rebuildLive(); }, msg: '', hasMsg: false }; })(),
       openAdd: () => { this._add = null; this.addState().baseAdded = (S.added[cid] || []).length; this.setState({ showAdd: true }); }, closeAdd: () => this.setState({ showAdd: false }),
-      openNewWs: () => this.createWorkspace(), openTask: () => this.go('ingest'),
       closeAddBg: e => { if (e.target === e.currentTarget) this.setState({ showAdd: false }); },
       isEmpty, showWelcome: isEmpty && view !== 'ask', hasContent: !isEmpty, v: V, hdr,
-      docCards, gaps, nameGroups, nameTable, corr: this.corrVals(), typeBlocks, measures, noMeasures: !measures.length, ...(() => { const c = this.capL('stg', stGroups, 8); return { stGroups: c.items.map(g => ({ ...g, ...this.capL('stg:' + g.title, g.items, 4) })), stgMore: c }; })(),
+      docCards, gaps, nameGroups, nameTable, typeBlocks, measures, noMeasures: !measures.length, ...(() => { const c = this.capL('stg', stGroups, 8); return { stGroups: c.items.map(g => ({ ...g, ...this.capL('stg:' + g.title, g.items, 4) })), stgMore: c }; })(),
       graphEl, timeInfo, ...orbX, ...(() => { const c = this.capL('pairs', pairs, 12); return { pairs: c.items, pairsMore: c }; })(), noPairs: !pairs.length, frameCols: frameCols.map(c => ({ ...c, ...this.capL('fr:' + c.label, c.items, 5) })), timeBars, ...(() => { const c = this.capL('topics', topicChips, 24); return { topicChips: c.items, topicMore: c }; })(), ...(() => { const c = this.capL('srcbars', [...sourceBars].sort((a, b) => +b.n - +a.n), 12); return { sourceBars: c.items, srcBarMore: c }; })(), shapes, noShapes: !shapes.length, hasRoutine: (this._routineN || 0) > 0, routineLine: plural(this._routineN || 0, 'routine agreement') + ' hidden: repeated by several sources, but about names and words that appear together in most sources anyway.', holds, breaks, noBreaks: !breaks.length,
       hdrShow: !isEmpty && view !== 'reader' && view !== 'profile' && view !== 'ask' && view !== 'draft',
       crumbLast, crumbAnc, hasAnc, yearOn: !isEmpty && (view === 'views' || view === 'surprise'),
@@ -7545,7 +7259,6 @@ class Component extends DCLogic {
       gsw: { track: S.ground.on ? 'var(--acc2)' : 'var(--line2)', left: S.ground.on ? '16px' : '2px' },
       toggleGround: () => this.setState(s => ({ ground: { ...s.ground, on: !s.ground.on } })),
       layers: [['names', 'Names', 'var(--acc)', 'People, organisations and places'], ['figures', 'Figures', 'var(--amber)', 'Numbers and amounts'], ['dates', 'Dates', 'var(--date)', 'Years, months and times'], ['sentences', 'Sentences', 'var(--sel2)', 'Make every sentence clickable']].map(([k, label, color, title]) => { const on = S.ground.on && S.ground[k]; return { label, title, color, op: S.ground.on ? (on ? 1 : 0.5) : 0.35, bd: on ? 'var(--line2)' : 'transparent', bg: on ? 'var(--s1)' : 'transparent', onClick: () => this.setState(s => ({ ground: { ...s.ground, on: true, [k]: s.ground.on ? !s.ground[k] : true } })) }; }),
-       readerHint: (() => { const d0 = S.readDoc && A.docById[S.readDoc]; if (d0 && S.readMode === 'original' && this.isLiveDoc(d0)) return 'The live page — read outside this workspace, so it carries no grounding.'; return S.ground.on ? 'Click a name or sentence to inspect · links open here · select text to pin it.' : 'Grounding off — the page as published. Links still open here.'; })(),
       readerPad: S.readDoc && A.docById[S.readDoc] && (A.docById[S.readDoc].format === 'page' || ((A.docById[S.readDoc].faithful || A.docById[S.readDoc].binPath) && S.readMode === 'original')) ? '0' : A.docById[S.readDoc] && A.docById[S.readDoc].pdfSrc && S.readMode === 'original' ? '24px 16px' : '28px 34px', readerMax: S.readDoc && A.docById[S.readDoc] && (A.docById[S.readDoc].format === 'page' || ((A.docById[S.readDoc].faithful || A.docById[S.readDoc].binPath) && S.readMode === 'original')) ? 'none' : '900px',
       rdMedia: (() => { const d0 = S.readDoc && A.docById[S.readDoc]; const m = d0 && d0.media; if (!m) return { has: false };
         if (m.kind === 'youtube') { const LZ = d0.lazy ? (this._lazy || {})[d0.id] : null; const segN = LZ && !LZ.loading ? LZ.segN : m.segN; const timed = segN > 0 || segN === -1;
@@ -7577,9 +7290,9 @@ class Component extends DCLogic {
           model: S.txModel || 'base', onModel: e => this.setState({ txModel: e.target.value }), models: [['base', 'whisper-base · fast, multilingual'], ['small', 'whisper-small · slower, more accurate, multilingual'], ['smallen', 'whisper-small.en · English only, most accurate for English']].map(([v, l]) => ({ v, l })),
           onTerms: e => { this._txTerms = e.target.value; }, busy: !!S.txBusy, prog: S.txProg || '', onTx: () => this.transcribeLocal(d0), priorNote: 'Whisper runs locally here; the recording never leaves this machine. A transcript is a machine interpretation — the prior changes what it hears, and the choice stays on the record.' }; })(),
       isOriginalFlat: S.readMode !== 'plain' && S.readMode !== 'restated' && !(S.readDoc && A.docById[S.readDoc] && A.docById[S.readDoc].media),
-      isOriginal: S.readMode !== 'plain' && S.readMode !== 'restated' && S.readMode !== 'summary', isRestated: S.readMode === 'restated', rs: S.readMode === 'restated' && S.readDoc && A.docById[S.readDoc] ? this.restatedVals(A.docById[S.readDoc], A) : { note: '', sections: [], hasCover: false, cover: { pairs: [] } }, isSummary: S.readMode === 'summary', sm: S.readMode === 'summary' && S.readDoc && A.docById[S.readDoc] ? this.summaryVals(A.docById[S.readDoc], A) : { has: false, note: '', one: '', five: [], three: [], n: 0, mono: true }, isPlain: S.readMode === 'plain', readerRef: this.readerRef,
+      isRestated: S.readMode === 'restated', rs: S.readMode === 'restated' && S.readDoc && A.docById[S.readDoc] ? this.restatedVals(A.docById[S.readDoc], A) : { note: '', sections: [], hasCover: false, cover: { pairs: [] } }, isSummary: S.readMode === 'summary', sm: S.readMode === 'summary' && S.readDoc && A.docById[S.readDoc] ? this.summaryVals(A.docById[S.readDoc], A) : { has: false, note: '', one: '', five: [], three: [], n: 0, mono: true }, isPlain: S.readMode === 'plain', readerRef: this.readerRef,
       ...(() => { const d0 = S.readDoc && A.docById[S.readDoc]; const hf = !!(d0 && (d0.faithful || d0.binPath || d0.pdfSrc)); const onO = S.readMode === 'original' || (!hf && S.readMode === 'reading'), onR = hf && S.readMode === 'reading'; const pill = on => ({ bg: on ? 'var(--sel)' : 'transparent', color: on ? 'var(--ink)' : 'var(--mut)' });
-        return { hasFaithful: hf, modeR: pill(onR), modeReading: () => this.setState({ readMode: 'reading' }), faithOn: hf && S.readMode === 'original',
+        return { hasFaithful: hf, modeR: pill(onR), modeReading: () => this.setState({ readMode: 'reading' }),
           rdFaith: hf && S.readMode === 'original' ? { has: true, note: (d0.pdfSrc ? 'The PDF exactly as captured' + (d0.custody ? ' (' + d0.custody + ')' : '') + '.' : 'The page as captured' + (d0.custody ? ' (' + d0.custody + ')' : '') + '. Layout and styles load from ' + ohsPublisher(d0.url) + ' today and may have changed since; the words are the captured bytes.') + (this._faithFound ? ' ' + this._faithFound.found + ' of ' + plural(this._faithFound.total, 'statement') + ' located and marked; the rest differ in wording or layout — see Reading.' : '') } : { has: false }, _o: onO }; })(),
       modeO: (() => { const d0 = S.readDoc && A.docById[S.readDoc]; const hf = !!(d0 && (d0.faithful || d0.binPath || d0.pdfSrc)); const on = S.readMode === 'original' || (!hf && S.readMode === 'reading'); return { bg: on ? 'var(--sel)' : 'transparent', color: on ? 'var(--ink)' : 'var(--mut)' }; })(), modeP: { bg: S.readMode === 'plain' ? 'var(--sel)' : 'transparent', color: S.readMode === 'plain' ? 'var(--ink)' : 'var(--mut)' }, modeS: { bg: S.readMode === 'restated' ? 'var(--sel)' : 'transparent', color: S.readMode === 'restated' ? 'var(--ink)' : 'var(--mut)' }, modeRestated: () => this.setState({ readMode: 'restated' }),
 modeSum: { bg: S.readMode === 'summary' ? 'var(--sel)' : 'transparent', color: S.readMode === 'summary' ? 'var(--ink)' : 'var(--mut)' }, modeSummary: () => this.setState({ readMode: 'summary' }),

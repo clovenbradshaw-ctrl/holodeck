@@ -50,7 +50,6 @@ await nav.getByRole('button',{name:'Ask',exact:true}).click();
  await page.locator('summary').filter({hasText:'Time filter · active'}).waitFor();
  assert.equal(await page.getByText('When it happened',{exact:true}).isVisible(),true);
  await page.getByRole('button',{name:'Show everything',exact:true}).click();
- await page.locator('summary').filter({hasText:'Source options'}).click();
  await page.getByRole('button',{name:'Table',exact:true}).click();
  assert.equal(await page.getByRole('table').count(),1);
  await page.getByRole('button',{name:'Cards',exact:true}).click();
