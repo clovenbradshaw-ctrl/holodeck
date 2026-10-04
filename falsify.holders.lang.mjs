@@ -34,11 +34,11 @@ const text = (id, title, body, lang, url) => ({ id, title, format: 'text', text:
 
 const ES_DIALOGUE = [
   html('es0', 'corpus-es/Frida_Kahlo.html', 'Frida Kahlo', 'es'),
-  text('es1', 'Escena', 'En el patio, los vecinos vieron a Frida junto al caballete. Más tarde, Diego pintaba un mural. “Voy a pintar”, dijo Frida. “El color es vida”, afirmó Frida.', 'es', 'https://es.wikipedia.org/wiki/Frida_Kahlo'),
+  text('es1', 'Escena', 'En el patio, los vecinos vieron a Frida junto al caballete. Más tarde, Diego pintaba un mural. Frida dijo que el color era vida. Frida afirmó que iba a pintar.', 'es', 'https://es.wikipedia.org/wiki/Frida_Kahlo'),
 ];
 const RU_DIALOGUE = [
   html('ru0', 'corpus-ru/Пушкин,_Александр_Сергеевич.html', 'Пушкин', 'ru'),
-  text('ru1', 'Сцена', 'Во дворе соседи увидели Пушкина у окна. Позже Наталья читала письмо. «Я буду писать», — сказал Пушкин. «Слово — это всё», — заявил Пушкин.', 'ru', 'https://ru.wikipedia.org/wiki/Пушкин'),
+  text('ru1', 'Сцена', 'Во дворе соседи увидели Пушкина у окна. Позже Наталья читала письмо. Пушкин сказал, что слово — это всё.', 'ru', 'https://ru.wikipedia.org/wiki/Пушкин'),
 ];
 // A quotation that is NOT speech: a work title in guillemets, with an admitted
 // subject in front of a normal verb. The adapter accepts ANY verb beside an
@@ -72,20 +72,22 @@ async function readHolders(surf, docs, posFile) {
   return surf.page.evaluate(async ({ docs, posFile }) => {
     const A = window.__holodeck.analyze({ docs });
     const M = await import(new URL('holodeck-holders.js', location.href).href);
+    const REL = await import(new URL('vendor/eoreader7/native/adapters/text/relations.js', location.href).href);
     let forms = null;
     try { const r = await fetch(new URL('vendor/eoreader7/native/priors/' + posFile, location.href)); if (r.ok) forms = (await r.json()).forms || null; } catch (e) {}
-    const isVerb = (w) => {
-      if (!forms) return false;
-      const k = String(w || '').toLowerCase().replace(/['’]s$/, '');
-      const c = forms[k]; if (!c) return false;
-      const e = Object.entries(c).sort((a, b) => b[1] - a[1]);
-      return !!e[0] && (e[0][0] === 'VERB' || e[0][0] === 'AUX');
-    };
+    const dom = (w) => { if (!forms) return null; const k = String(w || '').toLowerCase().replace(/['’]s$/, ''); const c = forms[k]; if (!c) return null; const e = Object.entries(c).sort((a, b) => b[1] - a[1]); return e[0] ? e[0][0] : null; };
+    const isVerb = (w) => { const d = dom(w); return d === 'VERB' || d === 'AUX'; };
+    const isNominal = (w) => { const d = dom(w); return d === 'NOUN' || d === 'PROPN' || d === 'PRON'; };
+    const verbs = forms ? new Set(Object.keys(forms).filter((w) => { const d = dom(w); return d === 'VERB' || d === 'AUX'; })) : new Set();
+    // NOTE (disclosed): the SVO reader is English/SVO — binding a Spanish or
+    // Russian verb set to it is a measurement of THAT limit, not a claim it
+    // reads those languages. A language needs its own role reader.
+    const relationsOf = (t) => { try { return REL.extractRelations(t, { verbs, phrasalPredicates: true, nounPhraseSubjects: true, verbWall: verbs }) || []; } catch (e) { return []; } };
     const admitted = new Set(Object.keys(A.names));
     const byAlias = new Map();
     Object.values(A.names).forEach((n) => { byAlias.set(n.name, n.name); (n.aliases || []).forEach((a) => byAlias.set(a, n.name)); });
     const referentFor = (s) => { if (!s) return null; if (byAlias.has(s)) return byAlias.get(s); return admitted.has(s) ? s : null; };
-    const held = M.attributeStatements(A.sts, A.docs, { isVerb, referentFor });
+    const held = M.attributeStatements(A.sts, A.docs, { relationsOf, isVerb, isNominal, referentFor });
     A.sts.forEach((st) => { st.heldBy = held.get(st.id); });
     const sum = M.summarizeHolders(A.sts, A.names);
     return {
