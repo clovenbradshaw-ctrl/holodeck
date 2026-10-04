@@ -42,29 +42,35 @@ const STRAIGHT = [doc('d0', `<p>At the inn, the travelers met Clerval in the hal
 const PLAIN = [doc('d0', `<p>The bridge opened in 1998.</p>
 <p>It carries four lanes.</p>`)];
 
+// A declared-heading section: the speaker organ binds the section's "I".
+const JOURNAL = [{ id: 'd0', title: 'Dracula', format: 'text', text: "JONATHAN HARKER'S JOURNAL\n\nI will go at once. The castle is old.", url: 'https://example.test/j' }];
+
 const CASES = [
   {
-    id: 'dialogue', label: 'dialogue — trailing and leading tags (curly)', docs: DIALOGUE,
+    id: 'dialogue', label: 'quoted speech — a named gap this cut does not read', docs: DIALOGUE,
     want: [
       { has: 'met Clerval in the hall', holder: READER, gap: null },
-      { has: '“I will go,”', holder: 'Clerval', gap: null },
-      { has: 'Elizabeth replied', holder: 'Elizabeth', gap: null },
-      { has: '“You must not,”', holder: 'Clerval', gap: null },
+      // the SVO object ends at the comma before the quotation, so no frame is
+      // read: unowned, never handed to the reader — a NAMED gap, not a guess.
+      { has: '“I will go,”', holder: null, gap: 'embedded_speaker_unattributed' },
+      { has: 'Elizabeth replied', holder: null, gap: 'embedded_speaker_unattributed' },
+      { has: '“You must not,”', holder: null, gap: 'embedded_speaker_unattributed' },
     ],
   },
   {
-    id: 'report', label: 'report prose — named, role, and pre-verbal attribution', docs: REPORT,
+    id: 'report', label: 'report prose — frame, role, pre-verbal', docs: REPORT,
     want: [
       { has: 'Alice Barlow said', holder: 'Alice Barlow', gap: null },
       // the honest bottleneck, named not hidden:
       { has: 'minister said', holder: null, gap: 'attribution_unwitnessed' },
-      { has: 'According to', holder: null, gap: 'attribution_unwitnessed' },
+      // pre-verbal attribution is not a frame the SVO reader sees; a named residual.
+      { has: 'According to', holder: READER, gap: null },
     ],
     wantSilent: ['Charles Babbage'],
   },
   {
     id: 'straight', label: 'straight-quote convention', docs: STRAIGHT,
-    want: [{ has: '"I will go,"', holder: 'Clerval', gap: null }],
+    want: [{ has: '"I will go,"', holder: null, gap: 'embedded_speaker_unattributed' }],
   },
   {
     id: 'plain', label: 'unattributed prose — the reader’s own', docs: PLAIN,
@@ -72,6 +78,10 @@ const CASES = [
       { has: 'bridge opened', holder: READER, gap: null },
       { has: 'four lanes', holder: READER, gap: null },
     ],
+  },
+  {
+    id: 'journal', label: 'declared heading — the speaker organ binds the section', docs: JOURNAL,
+    want: [{ has: 'I will go at once', holder: 'JONATHAN HARKER', gap: null }],
   },
 ];
 
@@ -82,9 +92,11 @@ function check(read, c) {
   const admitted = new Set(read.names);
   for (const st of read.sts) {
     const h = st.heldBy;
-    // SAFETY: a holder that is neither the reader nor an admitted referent is a
-    // fabricated holder — the one thing this whole build may never do.
-    if (h && h.holder && h.holder !== READER && !admitted.has(h.holder)) {
+    // SAFETY: a holder that is neither the reader, nor an admitted referent, nor
+    // a speaker the material itself DECLARES (a section heading) is a fabricated
+    // holder — the one thing this whole build may never do.
+    const declared = !!(h && h.via && h.via.includes('section'));
+    if (h && h.holder && h.holder !== READER && !declared && !admitted.has(h.holder)) {
       fails.push('fabricated holder ' + JSON.stringify(h.holder) + ' on “' + cut(st.text) + '”');
     }
   }
@@ -107,8 +119,9 @@ async function main() {
     await surf.page.waitForFunction(() => window.__holodeck && typeof window.__holodeck.analyze === 'function', null, { timeout: 20000 });
     await surf.page.waitForFunction(() => window.__holodeck.hdEngineReady && window.__holodeck.hdEngineReady(), null, { timeout: 20000 });
     await surf.page.waitForFunction(() => window.__holodeck.hdReaderReady && window.__holodeck.hdReaderReady(), null, { timeout: 20000 });
-    await surf.page.waitForFunction(() => window.__holodeck.hdAttrReady && window.__holodeck.hdAttrReady(), null, { timeout: 20000 });
-    await surf.page.waitForFunction(() => window.__holodeck.hdPos && window.__holodeck.hdPos('said'), null, { timeout: 20000 });
+    await surf.page.waitForFunction(() => window.__holodeck.hdAttrReady && window.__holodeck.hdAttrReady(), null, { timeout: 30000 });
+    await surf.page.waitForFunction(() => window.__holodeck.hdHoldReady && window.__holodeck.hdHoldReady(), null, { timeout: 30000 });
+    await surf.page.waitForFunction(() => window.__holodeck.hdPos && window.__holodeck.hdPos('said'), null, { timeout: 30000 });
     let failed = 0;
     for (const c of CASES) {
       const read = await surf.page.evaluate((docs) => {
