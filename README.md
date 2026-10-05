@@ -1,3 +1,8 @@
+> ## ⚠️ LEGACY — frozen, no longer maintained
+> This repository is the **old copy** of `holodeck` and is kept for history only.
+> The Fold now lives under the `scores-patch-points` account: [scores-patch-points/holodeck](https://github.com/scores-patch-points/holodeck).
+> Do not file issues or send changes here.
+
 # the fold
 
 **The Fold is the whole system (naming, 2026-10-01); this is its reading and
